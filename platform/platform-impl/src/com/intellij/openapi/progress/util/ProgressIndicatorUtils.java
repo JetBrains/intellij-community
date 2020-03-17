@@ -15,7 +15,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -137,7 +139,9 @@ public class ProgressIndicatorUtils {
   }
 
   private static void cancelProcess(ProgressIndicator progressIndicator) {
-    if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+    if (!progressIndicator.isCanceled()) {
+      progressIndicator.cancel();
+    }
   }
 
   private static boolean isWriting(ApplicationEx application) {
@@ -302,19 +306,28 @@ public class ProgressIndicatorUtils {
   }
 
   public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {
-    awaitWithCheckCanceled(() -> waiter.await(50, TimeUnit.MILLISECONDS));
+    awaitWithCheckCanceled(() -> waiter.await(10, TimeUnit.MILLISECONDS));
   }
 
-  public static void awaitWithCheckCanceled(@NotNull Future<?> waiter) {
-    awaitWithCheckCanceled(() -> {
+  public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    while (true) {
+      checkCancelledEvenWithPCEDisabled(indicator);
       try {
-        waiter.get(50, TimeUnit.MILLISECONDS);
-        return true;
+        return future.get(10, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException e) {
-        return false;
+      catch (TimeoutException ignore) {
       }
-    });
+      catch (Throwable e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof CancellationException) {
+            throw new ProcessCanceledException(cause);
+        } else {
+          ExceptionUtil.rethrowUnchecked(e);
+          throw new RuntimeException(e);
+        }
+      }
+    }
   }
 
   public static void awaitWithCheckCancelled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
@@ -322,9 +335,10 @@ public class ProgressIndicatorUtils {
   }
 
   private static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     boolean success = false;
     while (!success) {
-      ProgressManager.checkCanceled();
+      checkCancelledEvenWithPCEDisabled(indicator);
       try {
         success = waiter.compute();
       }
@@ -332,6 +346,20 @@ public class ProgressIndicatorUtils {
         LOG.warn(e);
         throw new ProcessCanceledException(e);
       }
+    }
+  }
+
+  /** Use when otherwise a deadlock is possible. */
+  public static void checkCancelledEvenWithPCEDisabled(@Nullable ProgressIndicator indicator) {
+    if (indicator != null && indicator.isCanceled()) {
+      indicator.checkCanceled(); // maybe it'll throw with some useful additional information
+      throw new ProcessCanceledException();
+    }
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull Semaphore semaphore, @Nullable ProgressIndicator indicator) {
+    while (!semaphore.waitFor(10)) {
+      checkCancelledEvenWithPCEDisabled(indicator);
     }
   }
 }

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParameterInfoImpl implements JavaParameterInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfoImpl");
+  private static final Logger LOG = Logger.getInstance(ParameterInfoImpl.class);
 
   public int oldParameterIndex;
   private boolean useAnySingleVariable;

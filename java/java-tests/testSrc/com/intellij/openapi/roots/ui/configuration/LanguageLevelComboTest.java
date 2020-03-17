@@ -32,7 +32,7 @@ public class LanguageLevelComboTest extends LightPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(myProject, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(myProject);
     }
     catch (Throwable e) {
       addSuppressedException(e);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.openapi.application.ApplicationManager
@@ -28,9 +28,7 @@ class GithubSettingsConfigurable internal constructor(private val project: Proje
   Configurable.NoMargin {
 
   init {
-    ApplicationManager.getApplication().messageBus
-      .connect(project)
-      .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
+    ApplicationManager.getApplication().messageBus.connect(project).subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
         override fun tokenChanged(account: GithubAccount) {
           if (!isModified) reset()
         }

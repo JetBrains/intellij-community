@@ -31,7 +31,7 @@ public interface DiffCorrection {
   DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException;
 
   class TrueLineBlocks implements DiffCorrection, FragmentProcessor<FragmentsCollector> {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.DiffCorrection.TrueLineBlocks");
+    private static final Logger LOG = Logger.getInstance(TrueLineBlocks.class);
     private final DiffPolicy myDiffPolicy;
     @NotNull private final ComparisonPolicy myComparisonPolicy;
 

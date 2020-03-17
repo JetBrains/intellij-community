@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.conversion.CannotConvertException;
@@ -9,7 +9,9 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +54,7 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 
 public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
+  private static final Logger LOG = Logger.getInstance(PlatformProjectOpenProcessor.class);
 
   public enum Option {
     FORCE_NEW_FRAME, TEMP_PROJECT
@@ -99,24 +101,26 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     }
     Path baseDir = Paths.get(virtualFile.getPath());
     options.isNewProject = !ProjectUtil.isValidProjectPath(baseDir);
-    return doOpenProject(baseDir, options, -1);
+    return doOpenProject(baseDir, options);
   }
 
   @Override
   @Nullable
-  public Project openProjectAndFile(@NotNull VirtualFile virtualFile, int line, boolean tempProject) {
+  public Project openProjectAndFile(@NotNull VirtualFile virtualFile, int line, int column, boolean tempProject) {
     // force open in a new frame if temp project
     OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ tempProject);
     Path file = Paths.get(virtualFile.getPath());
     if (tempProject) {
-      return createTempProjectAndOpenFile(file, options, -1);
+      return createTempProjectAndOpenFile(file, options);
     }
     else {
-      return doOpenProject(file, options, line);
+      options.line = line;
+      options.column = column;
+      return doOpenProject(file, options);
     }
   }
 
-  /** @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)} */
+  /** @deprecated Use {@link #doOpenProject(Path, OpenProjectTask)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
@@ -125,10 +129,12 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                       int line,
                                       @SuppressWarnings("unused") @Nullable ProjectOpenedCallback callback,
                                       @SuppressWarnings("unused") boolean isReopen) {
-    return doOpenProject(Paths.get(virtualFile.getPath()), new OpenProjectTask(forceOpenInNewFrame, projectToClose), line);
+    OpenProjectTask options = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
+    options.line = line;
+    return doOpenProject(Paths.get(virtualFile.getPath()), options);
   }
 
-  /** @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)} */
+  /** @deprecated Use {@link #doOpenProject(Path, OpenProjectTask)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
@@ -138,12 +144,22 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                       @NotNull EnumSet<Option> options) {
     OpenProjectTask openProjectOptions = new OpenProjectTask(options.contains(Option.FORCE_NEW_FRAME), projectToClose);
     openProjectOptions.callback = callback;
-    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
+    openProjectOptions.line = line;
+    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions);
+  }
+
+  /** @deprecated Use {@link #createTempProjectAndOpenFile(Path, OpenProjectTask)} */
+  @Deprecated
+  @Nullable
+  @ApiStatus.Internal
+  public static Project createTempProjectAndOpenFile(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
+    options.line = line;
+    return createTempProjectAndOpenFile(file, options);
   }
 
   @Nullable
   @ApiStatus.Internal
-  public static Project createTempProjectAndOpenFile(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
+  public static Project createTempProjectAndOpenFile(@NotNull Path file, @NotNull OpenProjectTask options) {
     String dummyProjectName = file.getFileName().toString();
     Path baseDir;
     try {
@@ -158,16 +174,30 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     copy.setDummyProjectName(dummyProjectName);
     Project project = openExistingProject(file, baseDir, copy);
     if (project != null) {
-      openFileFromCommandLine(project, file, line);
+      openFileFromCommandLine(project, file, copy.line, copy.column);
     }
     return project;
   }
 
+  /** @deprecated Use {@link #doOpenProject(Path, OpenProjectTask)} */
+  @Deprecated
   @Nullable
   @ApiStatus.Internal
   public static Project doOpenProject(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
+    options.line = line;
+    return doOpenProject(file, options);
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static Project doOpenProject(@NotNull Path file, @NotNull OpenProjectTask options) {
+    LOG.info("Opening " + file);
     Path baseDir = file;
     if (!Files.isDirectory(baseDir)) {
+      if (LightEditUtil.openFile(file)) {
+        return LightEditUtil.getProject();
+      }
+
       baseDir = file.getParent();
       while (baseDir != null && !Files.exists(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER))) {
         baseDir = baseDir.getParent();
@@ -175,30 +205,25 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
       // no reasonable directory -> create new temp one or use parent
       if (baseDir == null) {
+        LOG.info("No project directory found");
         if (Registry.is("ide.open.file.in.temp.project.dir")) {
-          return createTempProjectAndOpenFile(file, options, line);
+          return createTempProjectAndOpenFile(file, options);
         }
 
         baseDir = file.getParent();
         options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER));
       }
+      else {
+        LOG.info("Project directory found: " + baseDir);
+      }
     }
 
-    SaveAndSyncHandler saveAndSyncHandler = ApplicationManager.getApplication().getServiceIfCreated(SaveAndSyncHandler.class);
-    if (saveAndSyncHandler != null) {
-      saveAndSyncHandler.blockSyncOnFrameActivation();
-    }
-    try {
+    try (AccessToken ignored = SaveAndSyncHandler.getInstance().disableAutoSave()) {
       Project project = openExistingProject(file, baseDir, options);
       if (project != null && file != baseDir && !Files.isDirectory(file)) {
-        openFileFromCommandLine(project, file, line);
+        openFileFromCommandLine(project, file, options.line, options.column);
       }
       return project;
-    }
-    finally {
-      if (saveAndSyncHandler != null) {
-        saveAndSyncHandler.unblockSyncOnFrameActivation();
-      }
     }
   }
 
@@ -207,6 +232,13 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   public static Project openExistingProject(@NotNull Path file,
                                             @Nullable("null for IPR project") Path projectDir,
                                             @NotNull OpenProjectTask options) {
+    if (options.getProject() != null) {
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+      if (projectManager != null && projectManager.isProjectOpened(options.getProject())) {
+        return null;
+      }
+    }
+
     Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
       Project[] openProjects = ProjectUtil.getOpenProjects();
@@ -322,8 +354,6 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       return Pair.empty();
     }
 
-    ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
-
     Module module = configureNewProject(project, baseDir, file, options.getDummyProjectName() == null, isNewProject);
 
     if (isNewProject) {
@@ -414,7 +444,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     return ProjectAttachProcessor.EP_NAME.findFirstSafe(processor -> processor.attachToProject(project, projectDir, callback)) != null;
   }
 
-  private static void openFileFromCommandLine(@NotNull Project project, @NotNull Path file, int line) {
+  private static void openFileFromCommandLine(@NotNull Project project, @NotNull Path file, int line, int column) {
     //noinspection CodeBlock2Expr
     StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -428,7 +458,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
         }
 
         Navigatable navigatable = line > 0
-                                  ? new OpenFileDescriptor(project, virtualFile, line - 1, 0)
+                                  ? new OpenFileDescriptor(project, virtualFile, line - 1, Math.max(column, 0))
                                   : PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1);
         navigatable.navigate(true);
       }, ModalityState.NON_MODAL);

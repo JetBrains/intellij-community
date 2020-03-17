@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -282,7 +283,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void openFileInEditor(@NotNull VirtualFile file);
 
-  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper toolWrapper);
+  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?, ?> toolWrapper);
 
   /**
    * @return all highlight infos for current file
@@ -450,13 +451,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from the usages
-   * @param usages
    */
   @NotNull
   String getUsageViewTreeTextRepresentation(@NotNull Collection<? extends UsageInfo> usages);
 
   /**
-   * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of <code>to</code>
+   * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of {@code to}
    * <p>
    * The result of the method could be more verbose than {@code getUsageViewTreeTextRepresentation(findUsages(to))}
    */
@@ -546,6 +546,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   LookupEx getLookup();
 
+  /**
+   * Returns element at caret in the current file ({@link #configureByFile(String)}).
+   * This element must be {@link com.intellij.psi.PsiNamedElement} or has reference to something:
+   * it must valid target for rename/find usage action. See {@link com.intellij.codeInsight.TargetElementUtil}.
+   * For any other type of element use {@link PsiFile#findElementAt(int)} or {@link #findElementByText(String, Class)}
+   */
   @NotNull
   PsiElement getElementAtCaret();
 
@@ -581,13 +587,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor);
 
   /**
-   *  Misnamed, actually it checks only parameter hints
-    */
+   * Misnamed, actually it checks only parameter hints
+   */
   void testInlays();
 
   /**
    * @param inlayPresenter function to render text of inlay. Inlays come to this function only if inlayFilter returned true
-   * @param inlayFilter filter to check only required inlays
+   * @param inlayFilter    filter to check only required inlays
    */
   void testInlays(Function<? super Inlay, String> inlayPresenter, Predicate<? super Inlay> inlayFilter);
 
@@ -633,8 +639,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Get elements found by the Goto Class action called with the given pattern
-   * @param pattern a pattern to search for elements
-   * @param searchEverywhere indicates whether "include non-project classes" checkbox is selected
+   * @param pattern           a pattern to search for elements
+   * @param searchEverywhere  indicates whether "include non-project classes" checkbox is selected
    * @param contextForSorting a PsiElement used for "proximity sorting" of the results. The sorting will be disabled if null given.
    * @return a list of the results (likely PsiElements) found for the given pattern
    */
@@ -657,6 +663,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   @NotNull
   default Disposable getProjectDisposable() {
-    return getProject();
+    return ((ProjectEx)getProject()).getEarlyDisposable();
   }
 }

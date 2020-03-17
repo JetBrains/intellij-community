@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.notification.Notification;
@@ -12,6 +12,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -32,8 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
-public class AllVcses implements AllVcsesI, Disposable {
-  private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.AllVcses");
+public final class AllVcses implements AllVcsesI, Disposable {
+  private final Logger LOG = Logger.getInstance(AllVcses.class);
   private final Map<String, AbstractVcs> myVcses;
 
   private final Object myLock;
@@ -170,12 +171,12 @@ public class AllVcses implements AllVcsesI, Disposable {
     TFS("TFS", "TFS", "https://plugins.jetbrains.com/plugin/4578-tfs");
 
     @NotNull private final String vcsName;
-    @NotNull private final String pluginId;
+    @NotNull private final PluginId pluginId;
     @NotNull private final String pluginUrl;
 
     ObsoleteVcs(@NotNull String vcsName, @NotNull String pluginId, @NotNull String pluginUrl) {
       this.vcsName = vcsName;
-      this.pluginId = pluginId;
+      this.pluginId = PluginId.getId(pluginId);
       this.pluginUrl = pluginUrl;
     }
 
@@ -192,7 +193,7 @@ public class AllVcses implements AllVcsesI, Disposable {
       notification.expire();
       installPlugin(vcs);
     }));
-    notification.addAction(NotificationAction.createSimple("Read more", () -> {
+    notification.addAction(NotificationAction.createSimple("Read More", () -> {
       BrowserUtil.browse("https://blog.jetbrains.com/idea/2019/02/unbundling-tfs-and-cvs-integration-plugins/");
     }));
     VcsNotifier.getInstance(myProject).notify(notification);
@@ -204,12 +205,12 @@ public class AllVcses implements AllVcsesI, Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           List<IdeaPluginDescriptor> plugins = RepositoryHelper.loadPlugins(indicator);
-          IdeaPluginDescriptor descriptor = ContainerUtil.find(plugins, d -> d.getPluginId().getIdString().equalsIgnoreCase(vcs.pluginId));
+          IdeaPluginDescriptor descriptor = ContainerUtil.find(plugins, d -> d.getPluginId() == vcs.pluginId);
           if (descriptor != null) {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              PluginManagerCore.enablePlugin(vcs.pluginId);
+              PluginManager.getInstance().enablePlugins(Collections.singletonList(descriptor), true);
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }

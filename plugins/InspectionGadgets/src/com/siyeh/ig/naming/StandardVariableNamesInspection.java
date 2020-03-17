@@ -79,13 +79,6 @@ public class StandardVariableNamesInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "standard.variable.names.display.name");
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }

@@ -31,12 +31,6 @@ public class InstanceofThisInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("instanceof.check.for.this.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
 
     return InspectionGadgetsBundle.message(infos[0] instanceof PsiInstanceOfExpression

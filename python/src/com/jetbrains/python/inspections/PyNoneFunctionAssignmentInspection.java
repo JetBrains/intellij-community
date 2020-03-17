@@ -28,12 +28,6 @@ import java.util.Map;
  * Used when an assignment is done on a function call but the inferred function doesn't return anything.
  */
 public class PyNoneFunctionAssignmentInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.none.function.assignment");
-  }
 
   @NotNull
   @Override

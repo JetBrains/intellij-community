@@ -20,7 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<GenericDebuggerRunnerSettings> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.GenericDebuggerParametersRunnerConfigurable");
+  private static final Logger LOG = Logger.getInstance(GenericDebuggerParametersRunnerConfigurable.class);
   private JPanel myPanel;
   private JTextField myAddressField;
   private JPanel myShMemPanel;

@@ -42,13 +42,7 @@ public class CheckNodeTest extends XPathInspection {
         return new MyVisitor(manager, isOnTheFly);
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Check Node Test";
-    }
-
-    @Override
+  @Override
     @NotNull
     @NonNls
     public String getShortName() {

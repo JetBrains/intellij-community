@@ -82,8 +82,8 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
 
     @Messages.YesNoResult
     public int show() {
-      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.YES_BUTTON);
-      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.NO_BUTTON);
+      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.getYesButton());
+      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.getNoButton());
       try {
         if (Messages.canShowMacSheetPanel() && !Messages.isApplicationInUnitTestOrHeadless()) {
           Window window = WindowManager.getInstance().suggestParentWindow(myProject);
@@ -120,9 +120,9 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
 
     @Messages.YesNoCancelResult
     public int show() {
-      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.YES_BUTTON);
-      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.NO_BUTTON);
-      String cancelText = ObjectUtils.chooseNotNull(myCancelText, Messages.CANCEL_BUTTON);
+      String yesText = ObjectUtils.chooseNotNull(myYesText, Messages.getYesButton());
+      String noText = ObjectUtils.chooseNotNull(myNoText, Messages.getNoButton());
+      String cancelText = ObjectUtils.chooseNotNull(myCancelText, Messages.getCancelButton());
       try {
         if (Messages.canShowMacSheetPanel() && !Messages.isApplicationInUnitTestOrHeadless()) {
           Window window = WindowManager.getInstance().suggestParentWindow(myProject);

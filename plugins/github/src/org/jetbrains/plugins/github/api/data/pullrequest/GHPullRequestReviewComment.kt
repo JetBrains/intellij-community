@@ -9,12 +9,13 @@ import org.jetbrains.plugins.github.api.data.GHNode
 import java.util.*
 
 class GHPullRequestReviewComment(id: String,
+                                 val databaseId: Long,
                                  val url: String,
                                  author: GHActor?,
                                  bodyHTML: String,
                                  createdAt: Date,
                                  val path: String,
-                                 val commit: GHCommitHash,
+                                 val commit: GHCommitHash?,
                                  val position: Int?,
                                  val originalCommit: GHCommitHash?,
                                  val originalPosition: Int,

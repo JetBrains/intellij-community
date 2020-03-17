@@ -10,13 +10,10 @@ import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList
 import com.intellij.util.containers.MultiMap
 
 class CheckinHandlersManagerImpl : CheckinHandlersManager() {
-  // Some plugins access this field using reflection
-  private val myRegisteredBeforeCheckinHandlers = mutableListOf(*CheckinHandlerFactory.EP_NAME.extensions)
-  private val factories get() = myRegisteredBeforeCheckinHandlers
   private val vcsFactories = MultiMap<VcsKey, VcsCheckinHandlerFactory>().apply {
     VcsCheckinHandlerFactory.EP_NAME.extensions.forEach { putValue(it.key, it) }
   }
 
   override fun getRegisteredCheckinHandlerFactories(vcses: Array<AbstractVcs>): List<BaseCheckinHandlerFactory> =
-    unmodifiableOrEmptyList(vcses.flatMap { vcsFactories.get(it.keyInstanceMethod) } + factories)
+    unmodifiableOrEmptyList(vcses.flatMap { vcsFactories.get(it.keyInstanceMethod) } + CheckinHandlerFactory.EP_NAME.extensions)
 }

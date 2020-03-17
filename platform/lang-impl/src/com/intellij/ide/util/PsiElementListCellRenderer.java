@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.PsiElementListCellRenderer");
+  private static final Logger LOG = Logger.getInstance(PsiElementListCellRenderer.class);
   private static final String LEFT = BorderLayout.WEST;
   private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
 
@@ -247,14 +247,18 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   @Nullable
   protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
     if (UISettings.getInstance().getShowIconInQuickNavigation()) {
-      final DefaultListCellRenderer renderer = ModuleRendererFactory.findInstance(value).getModuleRenderer();
-      if (renderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
-        // it won't display any new information
-        return null;
-      }
-      return renderer;
+      return getModuleRenderer(value);
     }
     return null;
+  }
+
+  private static DefaultListCellRenderer getModuleRenderer(Object value) {
+    final DefaultListCellRenderer renderer = ModuleRendererFactory.findInstance(value).getModuleRenderer();
+    if (renderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
+      // it won't display any new information
+      return null;
+    }
+    return renderer;
   }
 
   public abstract String getElementText(T element);
@@ -284,7 +288,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return ReadAction.compute(() -> {
       String elementText = getElementText(element);
       String containerText = getContainerText(element, elementText);
-      return containerText == null ? elementText : elementText + " " + containerText;
+      DefaultListCellRenderer moduleRenderer = getModuleRenderer(element);
+      return (containerText == null ? elementText : elementText + " " + containerText) +
+             (moduleRenderer != null ? moduleRenderer.getText() : "");
     });
   }
 

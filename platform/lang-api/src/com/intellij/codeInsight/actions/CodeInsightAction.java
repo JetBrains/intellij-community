@@ -30,11 +30,6 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
     }
   }
 
-  @Override
-  public boolean startInTransaction() {
-    return true;
-  }
-
   @Nullable
   protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
     return CommonDataKeys.EDITOR.getData(dataContext);

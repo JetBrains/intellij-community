@@ -33,7 +33,7 @@ import java.util.Set;
  * @author db
  */
 public class Result {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.Result");
+  private static final Logger LOG = Logger.getInstance(Result.class);
 
   private final Set<PsiElement> myVictims;
   private final Map<PsiElement, PsiType> myTypes;

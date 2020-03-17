@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -570,6 +571,7 @@ public class PatchReader {
           }
         }
       }
+      if (gitPatch) fileName = VcsFileUtil.unescapeGitPath(fileName);
       String newFileName = stripPatchNameIfNeeded(fileName, gitPatch, before);
       if (newFileName == null) return;
       if (before) {

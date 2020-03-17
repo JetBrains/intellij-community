@@ -37,7 +37,7 @@ class StubUpdatingForwardIndexAccessor implements ForwardIndexAccessor<Integer, 
     Map<Integer, SerializedStubTree> data = dataRef.get();
     SerializedStubTree tree = ContainerUtil.isEmpty(data) ? null : ContainerUtil.getFirstItem(data.values());
     if (tree != null) {
-      tree.restoreIndexedStubs(StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer.INSTANCE);
+      tree.restoreIndexedStubs();
     }
     return new StubCumulativeInputDiffBuilder(inputId, tree);
   }

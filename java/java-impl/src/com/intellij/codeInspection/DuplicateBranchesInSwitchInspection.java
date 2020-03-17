@@ -128,7 +128,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       registerProblem(branch, branch.getDefaultBranchMessage(), branch.newDeleteCaseFix(), branch.newMergeWithDefaultFix());
     }
 
-    private void registerProblem(@NotNull BranchBase duplicate, @NotNull String message, LocalQuickFix... fixes) {
+    private void registerProblem(@NotNull BranchBase duplicate, @NotNull String message, @NotNull LocalQuickFix... fixes) {
       ProblemDescriptor descriptor = InspectionManager.getInstance(myHolder.getProject())
         .createProblemDescriptor(duplicate.myStatements[0], duplicate.myStatements[duplicate.myStatements.length - 1],
                                  message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,

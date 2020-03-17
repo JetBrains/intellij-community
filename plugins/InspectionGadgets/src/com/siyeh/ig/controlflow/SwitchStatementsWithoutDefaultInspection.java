@@ -39,12 +39,6 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
   @SuppressWarnings("PublicField")
   public boolean m_ignoreFullyCoveredEnums = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("switch.statements.without.default.display.name");
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull

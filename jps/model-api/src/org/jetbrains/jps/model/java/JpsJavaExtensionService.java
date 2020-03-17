@@ -91,9 +91,13 @@ public abstract class JpsJavaExtensionService {
 
   public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath);
 
-  @Nullable
+  @NotNull
   public abstract JpsJavaCompilerConfiguration getCompilerConfiguration(@NotNull JpsProject project);
 
+  /**
+   * @deprecated use {@link JpsJavaExtensionService#getCompilerConfiguration(JpsProject)} instead
+   */
+  @Deprecated
   @NotNull
   public abstract JpsJavaCompilerConfiguration getOrCreateCompilerConfiguration(@NotNull JpsProject project);
 

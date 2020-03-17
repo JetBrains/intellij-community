@@ -335,24 +335,18 @@ class TestingTasksImpl extends TestingTasks {
     }
     else {
       jvmArgs.addAll([
-        "-Xmx1024m",
+        "-Xmx750m",
         "-Xms750m",
         "-Dsun.io.useCanonPrefixCache=false"
       ])
     }
 
     String tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
-
-    def configPath = "$context.paths.projectHome/out/tmp/config".toString()
-    def systemPath = "$context.paths.projectHome/out/tmp/system".toString()
-
-    removeConfigAndSystemDirectories(configPath, systemPath)
-
     Map<String, String> defaultSystemProperties = [
       "idea.platform.prefix"                   : options.platformPrefix,
       "idea.home.path"                         : context.paths.projectHome,
-      "idea.config.path"                       : configPath,
-      "idea.system.path"                       : systemPath,
+      "idea.config.path"                       : "$tempDir/config".toString(),
+      "idea.system.path"                       : "$tempDir/system".toString(),
       "intellij.build.compiled.classes.archives.metadata" : System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive"           : System.getProperty("intellij.build.compiled.classes.archive"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
@@ -404,12 +398,6 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
-  @CompileDynamic
-  private void removeConfigAndSystemDirectories(String configPath, String systemPath) {
-    context.ant.delete(dir: configPath)
-    context.ant.delete(dir: systemPath)
-  }
-
   @CompileDynamic
   private void runJUnitTask(List<String> jvmArgs, Map<String, String> systemProperties, Map<String, String> envVariables, List<String> bootstrapClasspath) {
     defineJunitTask(context.ant, "$context.paths.communityHome/lib")
@@ -537,7 +525,7 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private static boolean isUnderTeamCity() {
-    System.getProperty("teamcity.buildType.id") != null
+    System.getenv("TEAMCITY_VERSION") != null
   }
 
   static boolean dependenciesInstalled

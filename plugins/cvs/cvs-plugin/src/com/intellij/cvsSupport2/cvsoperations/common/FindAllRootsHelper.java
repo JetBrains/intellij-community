@@ -44,7 +44,7 @@ public class FindAllRootsHelper {
     return visitor.found;
   }
 
-  private static class MyVisitor extends VirtualFileVisitor {
+  private static class MyVisitor extends VirtualFileVisitor<Void> {
     private final List<VirtualFile> found = new LinkedList<>();
 
     @NotNull

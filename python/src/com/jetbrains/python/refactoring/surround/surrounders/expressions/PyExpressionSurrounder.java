@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PyExpressionSurrounder implements Surrounder {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.refactoring.surround.surrounders.expressions.PyExpressionSurrounder");
+  private static final Logger LOG = Logger.getInstance(PyExpressionSurrounder.class);
 
   @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {

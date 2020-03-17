@@ -169,7 +169,7 @@ public class XmlRefCountHolder {
     }
 
     @Override
-    public void visitElement(final PsiElement element) {
+    public void visitElement(@NotNull final PsiElement element) {
       if (element instanceof OuterLanguageElement) {
         visitOuterLanguageElement(element);
       }
@@ -191,7 +191,7 @@ public class XmlRefCountHolder {
     }
 
     @Override
-    public void visitComment(final PsiComment comment) {
+    public void visitComment(@NotNull final PsiComment comment) {
       doVisitAnyComment(comment);
       super.visitComment(comment);
     }

@@ -21,19 +21,22 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
 
   public void testAddFileType() {
     FileTypeIndexImpl index = FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtension(FileTypeIndexImpl.class);
-    myFixture.configureByText("foo.test", "abc");
+    VirtualFile file = myFixture.configureByText("foo.test", "abc").getVirtualFile();
     FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.allScope(getProject()));
 
-    FileType foo = registerFakeFileType();
     int version = index.getVersion();
+    FileType foo = registerFakeFileType();
     try {
-      assertNotSame(version, index.getVersion());
+      assertEquals(version, index.getVersion());
       Collection<VirtualFile> files = FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject()));
-      assertEquals(1, files.size());
+      assertOneElement(files);
+      assertEquals(foo, FileTypeIndex.getIndexedFileType(file, getProject()));
     }
     finally {
       FileTypeManagerEx.getInstanceEx().unregisterFileType(foo);
     }
+    assertEquals(PlainTextFileType.INSTANCE, FileTypeIndex.getIndexedFileType(file, getProject()));
+    assertEmpty(FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject())));
   }
 
   @NotNull

@@ -40,7 +40,7 @@ import java.util.*;
  * @author dsl
  */
 public class GenerateEqualsHelper implements Runnable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateEqualsHelper");
+  private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 
   @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
   @NonNls private static final String BASE_PARAM_NAME = "baseParamName";

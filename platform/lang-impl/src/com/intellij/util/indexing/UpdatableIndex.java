@@ -16,7 +16,6 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
@@ -37,10 +36,14 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
   boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException;
 
   @NotNull
-  Lock getReadLock();
+  default Lock getReadLock() {
+    return getLock().readLock();
+  }
 
   @NotNull
-  Lock getWriteLock();
+  default Lock getWriteLock() {
+    return getLock().writeLock();
+  }
 
   @NotNull
   ReadWriteLock getLock();
@@ -48,10 +51,10 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
   @NotNull
   Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
-  void setIndexedStateForFile(int fileId, @NotNull VirtualFile file);
+  void setIndexedStateForFile(int fileId, @NotNull IndexedFile file);
   void resetIndexedStateForFile(int fileId);
 
-  boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file);
+  boolean isIndexedStateForFile(int fileId, @NotNull IndexedFile file);
 
   long getModificationStamp();
 

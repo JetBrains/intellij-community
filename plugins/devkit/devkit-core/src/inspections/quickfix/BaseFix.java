@@ -55,7 +55,7 @@ abstract class BaseFix implements LocalQuickFix {
       doFix(project, descriptor, external);
     }
     catch (IncorrectOperationException e) {
-      Logger.getInstance("#" + getClass().getName()).error(e);
+      Logger.getInstance(getClass()).error(e);
     }
   }
 

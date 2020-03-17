@@ -1,11 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.ide.highlighter.FileTypeRegistrator;
+import com.intellij.ide.highlighter.FileTypeRegistrar;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileTypeEditor;
 import com.intellij.lang.Commenter;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
 import com.intellij.openapi.options.ExternalizableScheme;
@@ -63,8 +62,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   void initSupport() {
-    for (FileTypeRegistrator registrator : Extensions.getRootArea().getExtensionPoint(FileTypeRegistrator.EP_NAME).getExtensions()) {
-      registrator.initFileType(this);
+    for (FileTypeRegistrar registrar : FileTypeRegistrar.EP_NAME.getExtensions()) {
+      registrar.initFileType(this);
     }
   }
 

@@ -61,13 +61,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "enumeration.can.be.iteration.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "enumeration.can.be.iteration.problem.descriptor", infos[0]);

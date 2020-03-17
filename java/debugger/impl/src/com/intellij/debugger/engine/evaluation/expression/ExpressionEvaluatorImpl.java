@@ -24,7 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
 
 public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator");
+  private static final Logger LOG = Logger.getInstance(ExpressionEvaluator.class);
   private final Evaluator myEvaluator;
 
   public ExpressionEvaluatorImpl(Evaluator evaluator) {

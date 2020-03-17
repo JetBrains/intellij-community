@@ -53,6 +53,10 @@ public interface FileDocumentManagerListener extends EventListener {
   default void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
   }
 
+  default void unsavedDocumentDropped(@NotNull Document document) {
+    unsavedDocumentsDropped();
+  }
+
   default void unsavedDocumentsDropped() {
   }
 }

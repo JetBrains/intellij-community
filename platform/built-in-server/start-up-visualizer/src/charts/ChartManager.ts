@@ -3,14 +3,15 @@ import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
 
-import am4themes_animated from "@amcharts/amcharts4/themes/animated"
-
 am4core.options.onlyShowOnViewport = true
-am4core.useTheme(am4themes_animated)
 
 export interface ChartManager {
   render(data: DataManager): void
 
+  dispose(): void
+}
+
+export interface StatChartManager {
   dispose(): void
 }
 
@@ -29,6 +30,8 @@ export function addExportMenu(chart: am4charts.XYChart) {
     }
   }
   chart.exporting.menu = exportMenu
+  chart.exporting.menu.align = "right"
+  chart.exporting.menu.verticalAlign = "bottom"
 }
 
 export function configureCommonChartSettings(chart: am4charts.XYChart) {

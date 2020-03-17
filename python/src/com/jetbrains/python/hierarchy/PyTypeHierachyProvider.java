@@ -3,7 +3,7 @@ package com.jetbrains.python.hierarchy;
 
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyProvider;
-import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.TypeHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -40,6 +40,6 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
 
   @Override
   public void browserActivated(@NotNull HierarchyBrowser hierarchyBrowser) {
-    ((PyTypeHierarchyBrowser)hierarchyBrowser).changeView(TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE);
+    ((PyTypeHierarchyBrowser)hierarchyBrowser).changeView(TypeHierarchyBrowserBase.getTypeHierarchyType());
   }
 }

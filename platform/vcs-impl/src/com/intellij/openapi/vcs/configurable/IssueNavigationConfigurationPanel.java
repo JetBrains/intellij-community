@@ -19,7 +19,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -158,10 +157,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     myLinkTable.setModel(myModel);
   }
 
-    @Override
-    @Nls
+  @Override
   public String getDisplayName() {
-    return "Issue Navigation";
+    return VcsBundle.message("configurable.IssueNavigationConfigurationPanel.display.name");
   }
 
   @Override

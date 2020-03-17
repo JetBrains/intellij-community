@@ -2767,4 +2767,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}",
                  replace(in, "'_Instance?.'_MethodCall('_arguments*)", "$Instance$.$MethodCall$($arguments$)", true));
   }
+
+  public void testKeepModifierFormatting() {
+    String in = "@Deprecated\n" +
+                "public class X {}";
+    final String what = "class '_X {}";
+    final String replacement = "/** comment */\n" +
+                               "class $X$ {}";
+    final String expected = "/** comment */\n" +
+                            "@Deprecated\n" +
+                            "public class X {}";
+    assertEquals("keep newline in modifier list",
+                 expected, replace(in, what, replacement, true));
+  }
 }

@@ -43,9 +43,6 @@ public class RemoveMiddleManTest extends LightMultiFileTestCase {
     doTest(() -> {
       PsiClass aClass = myFixture.findClass("Test");
 
-      if (aClass == null) aClass = myFixture.findClass("p.Test");
-      assertNotNull("Class Test not found", aClass);
-
       final PsiField field = aClass.findFieldByName("myField", false);
       final Set<PsiMethod> methods = DelegationUtils.getDelegatingMethodsForField(field);
       List<MemberInfo> infos = new ArrayList<>();

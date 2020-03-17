@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -6,21 +6,34 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
-  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull ComponentManager componentManager) {
-    super(name, clazz.getName(), componentManager, new UndefinedPluginDescriptor(), false);
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@ApiStatus.Internal
+public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
+  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull PluginDescriptor pluginDescriptor) {
+    super(name, clazz.getName(), pluginDescriptor, false);
 
     myExtensionClass = clazz;
   }
 
-  InterfaceExtensionPoint(@NotNull String name,
-                          @NotNull String className,
-                          @NotNull ComponentManager componentManager,
-                          @NotNull PluginDescriptor pluginDescriptor,
-                          boolean dynamic) {
-    super(name, className, componentManager, pluginDescriptor, dynamic);
+  public InterfaceExtensionPoint(@NotNull String name,
+                                 @NotNull String className,
+                                 @NotNull PluginDescriptor pluginDescriptor,
+                                 boolean dynamic) {
+    super(name, className, pluginDescriptor, dynamic);
+  }
+
+  @NotNull
+  @Override
+  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+    result.setComponentManager(manager);
+    return result;
   }
 
   @Override
@@ -35,6 +48,17 @@ final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = shouldDeserializeInstance(extensionElement) ? extensionElement : null;
     return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, orderId, order, effectiveElement);
+  }
+
+  @Override
+  public boolean unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
+    Set<String> implementationClassNames = new HashSet<>();
+    for (Element element : elements) {
+      implementationClassNames.add(element.getAttributeValue("implementation"));
+    }
+    return unregisterExtensions((x, adapter) -> {
+      return !implementationClassNames.contains(adapter.getAssignableToClassName());
+    }, false, listenerCallbacks);
   }
 
   private static boolean shouldDeserializeInstance(@NotNull Element extensionElement) {

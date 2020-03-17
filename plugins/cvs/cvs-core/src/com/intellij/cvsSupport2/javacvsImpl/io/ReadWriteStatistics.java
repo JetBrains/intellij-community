@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.javacvsImpl.io;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.Progress;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * author: lesya
@@ -34,10 +33,6 @@ public class ReadWriteStatistics {
   private long myShownSentKBytes = 0;
 
   public static final int KB = 1024;
-  @NonNls private static final String READ_PROGRESS_MESSAGE = CvsBundle.message("progress.text.kb.read");
-  @NonNls private static final String SENT_PROGRESS_MESSAGE = CvsBundle.message("progress.text.kb.sent");
-  @NonNls private static final String PROGRESS_SENDING = CvsBundle.message("progress.text.sending.data.to.server");
-  @NonNls private static final String PROGRESS_READING = CvsBundle.message("progress.text.reading.data.from.server");
 
   public ReadWriteStatistics() {
     myProgress = Progress.create();
@@ -55,7 +50,7 @@ public class ReadWriteStatistics {
       myShownReadKBytes = myReadBytes / KB;
     }
 
-    showProgress(PROGRESS_READING);
+    showProgress(getProgressReading());
   }
 
   public void send(long bytes) {
@@ -65,7 +60,7 @@ public class ReadWriteStatistics {
       mySentFromLastUpdateBytes = 0;
       myShownSentKBytes = mySentBytes / KB;
     }
-    showProgress(PROGRESS_SENDING);
+    showProgress(getProgressSending());
   }
 
   private void showProgress(String mesasge) {
@@ -76,16 +71,32 @@ public class ReadWriteStatistics {
     }
     if (myShownReadKBytes > 0) {
       buffer.append(myShownReadKBytes);
-      buffer.append(READ_PROGRESS_MESSAGE);
+      buffer.append(getReadProgressMessage());
       if (myShownSentKBytes > 0) buffer.append("; ");
     }
 
     if (myShownSentKBytes > 0) {
       buffer.append(myShownSentKBytes);
-      buffer.append(SENT_PROGRESS_MESSAGE);
+      buffer.append(getSentProgressMessage());
     }
 
 
     myProgress.setText(buffer.toString());
+  }
+
+  private static String getReadProgressMessage() {
+    return CvsBundle.message("progress.text.kb.read");
+  }
+
+  private static String getSentProgressMessage() {
+    return CvsBundle.message("progress.text.kb.sent");
+  }
+
+  private static String getProgressSending() {
+    return CvsBundle.message("progress.text.sending.data.to.server");
+  }
+
+  private static String getProgressReading() {
+    return CvsBundle.message("progress.text.reading.data.from.server");
   }
 }

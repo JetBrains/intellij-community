@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -33,6 +34,6 @@ public class ShowLogAction extends AnAction implements DumbAware {
 
   @NotNull
   public static String getActionName() {
-    return "Show Log in " + RevealFileAction.getFileManagerName();
+    return ActionsBundle.message("show.log.in.action.text", RevealFileAction.getFileManagerName());
   }
 }

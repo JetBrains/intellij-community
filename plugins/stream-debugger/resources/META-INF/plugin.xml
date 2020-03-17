@@ -3,7 +3,7 @@
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
 
   <description><![CDATA[
       <p>Visualizes chains of operations on Java streams.</p>
@@ -48,5 +48,4 @@
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
     </action>
   </actions>
-
 </idea-plugin>

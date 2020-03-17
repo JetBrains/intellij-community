@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 class JavaPluginLayout {
-  static PluginLayout javaPlugin(boolean includeToolsJar, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
+  static PluginLayout javaPlugin(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
     return PluginLayout.plugin("intellij.java.plugin") {
       directoryName = "java"
       mainJarName = "java-impl.jar"
@@ -70,19 +70,9 @@ class JavaPluginLayout {
       withArtifact("debugger-agent-storage", "rt")
       withProjectLibrary("Eclipse")
       withProjectLibrary("jgoodies-common")
-      withProjectLibrary("maven-model")
       withProjectLibrary("debugger-memory-agent")//todo nik: convert to module-level library instead
 
       withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")
-      if (includeToolsJar) {
-        withGeneratedResources(new ResourcesGenerator() {
-          @Override
-          File generateResources(BuildContext context) {
-            def tools = new File(context.paths.jdkHome, "lib/tools.jar")
-            return tools.exists() ? tools : null
-          }
-        }, "lib")
-      }
       addition.delegate = delegate
       addition()
     }

@@ -14,7 +14,7 @@ import java.awt.*;
 
 public class FQNameCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
   private final Font FONT;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FQNameCellRenderer");
+  private static final Logger LOG = Logger.getInstance(FQNameCellRenderer.class);
 
   public FQNameCellRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();

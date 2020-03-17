@@ -123,7 +123,7 @@ public class IdRefReference extends BasicAttributeValueReference {
         }
 
         @Override
-        public void visitComment(final PsiComment comment) {
+        public void visitComment(@NotNull final PsiComment comment) {
           if (isDeclarationComment(comment)) result.add(comment);
 
           super.visitComment(comment);

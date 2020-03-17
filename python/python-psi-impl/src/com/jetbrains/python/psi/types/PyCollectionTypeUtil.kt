@@ -215,7 +215,7 @@ object PyCollectionTypeUtil {
     val funcName = qualifiedExpression.referencedName
     if (modificationMethods.containsKey(funcName)) {
       val referenceOwner = qualifiedExpression.qualifier as? PyReferenceOwner ?: return null
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
       if (referenceOwner.getReference(resolveContext).isReferenceTo(element)) {
         isModificationExist = true
         val function = modificationMethods[funcName]
@@ -254,7 +254,7 @@ object PyCollectionTypeUtil {
         }
       }
 
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
       val referenceOwner = node.operand as? PyReferenceOwner ?: return null
       val reference = referenceOwner.getReference(resolveContext)
       isModificationExist = if (reference.isReferenceTo(element)) true else return null

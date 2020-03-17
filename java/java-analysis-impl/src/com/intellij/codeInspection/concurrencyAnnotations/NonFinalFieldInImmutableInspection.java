@@ -17,13 +17,6 @@ public class NonFinalFieldInImmutableInspection extends AbstractBaseJavaLocalIns
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Non-final field in @Immutable class";
-  }
-
-  @Override
   @NotNull
   public String getShortName() {
     return "NonFinalFieldInImmutable";

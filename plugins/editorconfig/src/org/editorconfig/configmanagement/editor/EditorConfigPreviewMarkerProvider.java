@@ -137,6 +137,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
         return !file.isDirectory();
       }
     }.withRoots(rootDir);
+    descriptor.setForcedToUseIdeaFileChooser(true);
     FileChooserDialog fileChooser = FileChooserFactory.getInstance()
       .createFileChooser(descriptor, project, null);
     final VirtualFile[] virtualFiles = fileChooser.choose(project, VirtualFile.EMPTY_ARRAY);

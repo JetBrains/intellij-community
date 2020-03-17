@@ -90,7 +90,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       final private Set<Module> processed = new HashSet<>();
 
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         fileCount[0]++;
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final VirtualFile virtualFile = file.getVirtualFile();
@@ -183,7 +183,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       int myFileCount;
 
       @Override
-      public void visitFile(final PsiFile file) {
+      public void visitFile(@NotNull final PsiFile file) {
         myFileCount++;
         final VirtualFile virtualFile = file.getVirtualFile();
         final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
@@ -250,7 +250,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   protected void restartAnalysis(final Project project, final AnalysisScope scope) {
-    AppUIExecutor.onUiThread().inSmartMode(project).inTransaction(project).execute(() -> analyze(project, scope));
+    AppUIExecutor.onUiThread().inSmartMode(project).execute(() -> analyze(project, scope));
   }
 
   private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {

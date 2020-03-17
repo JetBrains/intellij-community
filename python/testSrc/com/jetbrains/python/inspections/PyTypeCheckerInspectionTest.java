@@ -521,6 +521,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-11977
+  public void testMetaclassInstanceMembersProvidedAndNoTypeCheckWarningWhenPassIntoMethodUseThisMembers() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
   // PY-28720
   public void testOverriddenBuiltinMethodAgainstTypingProtocol() {
     runWithLanguageLevel(
@@ -903,6 +908,23 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "b: Literal[\"22\"] = <warning descr=\"Expected type 'Literal[\\\"22\\\"]', got 'Literal[f\\\"32\\\"]' instead\">f\"32\"</warning>\n" +
                          "two = \"2\"\n" +
                          "c: Literal[\"22\"] = <warning descr=\"Expected type 'Literal[\\\"22\\\"]', got 'str' instead\">f\"2{two}\"</warning>")
+    );
+  }
+
+  // PY-33500
+  public void testImplicitGenericDunderCallCallOnTypedElement() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypeVar, Generic\n" +
+                         "\n" +
+                         "_T = TypeVar('_T')\n" +
+                         "\n" +
+                         "class Callback(Generic[_T]):\n" +
+                         "    def __call__(self, arg: _T):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def foo(cb: Callback[int]):\n" +
+                         "    cb(<weak_warning descr=\"Expected type 'int' (matched generic type '_T'), got 'str' instead\">\"42\"</weak_warning>)")
     );
   }
 

@@ -3,8 +3,8 @@ package com.intellij.ide.hierarchy.method;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 abstract class OverrideImplementMethodAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
+  private static final Logger LOG = Logger.getInstance(OverrideImplementMethodAction.class);
 
   @Override
   public final void actionPerformed(@NotNull final AnActionEvent event) {

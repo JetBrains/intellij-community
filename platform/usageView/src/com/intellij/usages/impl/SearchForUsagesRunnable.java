@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -206,21 +205,15 @@ class SearchForUsagesRunnable implements Runnable {
 
   @NotNull
   private static String detailedLargeFilesMessage(@NotNull Collection<? extends VirtualFile> largeFiles) {
-    String message = "";
+    String message;
     if (largeFiles.size() == 1) {
       final VirtualFile vFile = largeFiles.iterator().next();
-      message += "File " + presentableFileInfo(vFile) + " is ";
+      message = "File " + presentableFileInfo(vFile) + " is ";
     }
     else {
-      message += "Files<br> ";
-
-      int counter = 0;
-      for (VirtualFile vFile : largeFiles) {
-        message += presentableFileInfo(vFile) + "<br> ";
-        if (counter++ > 10) break;
-      }
-
-      message += "are ";
+      message = "Files<br> "
+      + StringUtil.join(ContainerUtil.getFirstItems(new ArrayList<>(largeFiles), 10), vFile -> presentableFileInfo(vFile), "<br> ")
+      + "<br> are ";
     }
 
     message += "too large and cannot be scanned";
@@ -246,8 +239,7 @@ class SearchForUsagesRunnable implements Runnable {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         if (e.getDescription().equals(FIND_OPTIONS_HREF_TARGET)) {
-          TransactionGuard.getInstance().submitTransactionAndWait(
-            () -> FindManager.getInstance(myProject).showSettingsAndFindUsages(targets));
+          FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
         }
       }
     };
@@ -260,8 +252,7 @@ class SearchForUsagesRunnable implements Runnable {
         if (e.getDescription().equals(SEARCH_IN_PROJECT_HREF_TARGET)) {
           PsiElement psiElement = getPsiElement(mySearchFor);
           if (psiElement != null) {
-            TransactionGuard.getInstance().submitTransactionAndWait(
-              () -> FindManager.getInstance(myProject).findUsagesInScope(psiElement, GlobalSearchScope.projectScope(myProject)));
+            FindManager.getInstance(myProject).findUsagesInScope(psiElement, GlobalSearchScope.projectScope(myProject));
           }
         }
       }
@@ -355,8 +346,9 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
-    ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-    if (indicator == null) throw new IllegalStateException("must run find usages under progress");
+    ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
+    if (current == null) throw new IllegalStateException("must run find usages under progress");
+    ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       CoreProgressManager.assertUnderProgress(indicator);
     }
@@ -370,9 +362,10 @@ class SearchForUsagesRunnable implements Runnable {
     UsageSearcher usageSearcher = mySearcherFactory.create();
 
     usageSearcher.generate(usage -> {
-      ProgressIndicator indicator1 = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-      if (indicator1 == null) throw new IllegalStateException("must run find usages under progress");
-      if (indicator1.isCanceled()) return false;
+      ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (currentIndicator == null) throw new IllegalStateException("must run find usages under progress");
+      ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(current);
+      ProgressManager.checkCanceled();
 
       if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
         myOutOfScopeUsages.incrementAndGet();
@@ -387,18 +380,18 @@ class SearchForUsagesRunnable implements Runnable {
           myFirstUsage.compareAndSet(null, usage);
         }
 
-        final UsageViewEx usageView = getUsageView(indicator1);
+        UsageViewEx usageView = getUsageView(originalIndicator);
 
-        TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(indicator1);
+        TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(originalIndicator);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, indicator1, myPresentation, usageCount, usageView);
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, originalIndicator, myPresentation, usageCount, usageView);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         if (usageView != null) {
           ApplicationManager.getApplication().runReadAction(() -> usageView.appendUsage(usage));
         }
       }
-      return !indicator1.isCanceled();
+      return true;
     });
     if (getUsageView(indicator) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());

@@ -25,7 +25,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.breadcrumbs.BreadcrumbsXmlWrapper;
+import com.intellij.xml.breadcrumbs.BreadcrumbsPanel;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -104,9 +104,9 @@ public class XmlTagTreeHighlightingConfigurable implements UnnamedConfigurable {
           final Editor editor = ((TextEditor)fileEditor).getEditor();
           XmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project);
 
-          final BreadcrumbsXmlWrapper breadcrumbsXmlWrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
-          if (breadcrumbsXmlWrapper != null) {
-            breadcrumbsXmlWrapper.queueUpdate();
+          final BreadcrumbsPanel breadcrumbs = BreadcrumbsPanel.getBreadcrumbsComponent(editor);
+          if (breadcrumbs != null) {
+            breadcrumbs.queueUpdate();
           }
         }
       }

@@ -21,7 +21,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.stream.Collectors
-
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -83,28 +82,19 @@ class DistributionJARsBuilder {
     def enabledPluginModules = getEnabledPluginModules()
     buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
-      (plugin.getActualModules(enabledPluginModules).values() + plugin.testModuleJars.values()).collectMany { // Android Studio
+      final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
+      plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
         def libraries =
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
             !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
               it.libraryName == library.name && it.relativeOutputPath == ""
-            }
+            } && !libsToUnpack.contains(library.name)
           }
         if (!libraries.isEmpty()) {
           buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect { "'$it.name'" }.join(",")}")
         }
         libraries
-      }
-    }
-
-    // Android Studio: both production and test scope libraries for testModuleJars
-    projectLibrariesUsedByPlugins += getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
-      plugin.testModuleJars.values().collectMany {
-        def module = buildContext.findRequiredModule(it)
-        JpsJavaExtensionService.dependencies(module).libraries.findAll {
-          !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
-        }
       }
     }
 
@@ -121,18 +111,20 @@ class DistributionJARsBuilder {
           withModule(it, jarName)
         }
       }
-      getPlatformApiModules(productLayout).each {
+      CommunityRepositoryModules.PLATFORM_API_MODULES.each {
         withModule(it, "platform-api.jar")
       }
-      getPlatformImplModules(productLayout).each {
+      CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES.each {
         withModule(it, "platform-impl.jar")
       }
-      getProductApiModules(productLayout).each {
+      productLayout.productApiModules.each {
         withModule(it, "openapi.jar")
       }
-      getProductImplModules(productLayout).each {
+
+      productLayout.productImplementationModules.each {
         withModule(it, productLayout.mainJarName)
       }
+
       productLayout.moduleExcludes.entrySet().each {
         layout.moduleExcludes.putAll(it.key, it.value)
       }
@@ -153,6 +145,8 @@ class DistributionJARsBuilder {
       withModule("intellij.json")
       withModule("intellij.spellchecker")
       withModule("intellij.platform.images")
+      withModule("intellij.platform.statistics")
+      withModule("intellij.platform.statistics.devkit")
 
       withModule("intellij.relaxng", "intellij-xml.jar")
       withModule("intellij.xml.analysis.impl", "intellij-xml.jar")
@@ -177,14 +171,16 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.boot", "bootstrap.jar")
       withModule("intellij.platform.resources", "resources.jar")
       withModule("intellij.platform.colorSchemes", "resources.jar")
-      withModule("intellij.platform.resources.en", productLayout.mainJarName)
+      withModule("intellij.platform.resources.en", "resources.jar")
       withModule("intellij.platform.jps.model.serialization", "jps-model.jar")
       withModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
       withModule("intellij.platform.externalSystem.rt", "external-system-rt.jar")
 
+      withModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
+
       if (allProductDependencies.contains("intellij.platform.coverage")) {
-        withModule("intellij.platform.coverage", productLayout.mainJarName)
+        withModule("intellij.platform.coverage")
       }
 
       projectLibrariesUsedByPlugins.each {
@@ -208,8 +204,7 @@ class DistributionJARsBuilder {
   }
 
   private Set<String> getEnabledPluginModules() {
-    buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.
-      collect { it.mainModule } as Set<String>
+    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
   }
 
   List<String> getPlatformModules() {
@@ -217,8 +212,8 @@ class DistributionJARsBuilder {
   }
 
   static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
-    getPlatformApiModules(modulesLayout) + getPlatformImplModules(modulesLayout) + getProductApiModules(modulesLayout) +
-    getProductImplModules(modulesLayout) + modulesLayout.additionalPlatformJars.values()
+    CommunityRepositoryModules.PLATFORM_API_MODULES + CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
+    modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
   }
 
   /**
@@ -227,22 +222,6 @@ class DistributionJARsBuilder {
   static List<String> getToolModules() {
     ["intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater",
      "intellij.android.updater.ui"]  // Android Studio: added by Change If9fe9db0 / commit 520343f
-  }
-
-  static List<String> getPlatformApiModules(ProductModulesLayout productLayout) {
-    productLayout.platformApiModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_API_MODULES : []
-  }
-
-  static List<String> getPlatformImplModules(ProductModulesLayout productLayout) {
-    productLayout.platformImplementationModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES : []
-  }
-
-  static List<String> getProductApiModules(ProductModulesLayout productLayout) {
-    productLayout.platformApiModules.isEmpty() ? productLayout.productApiModules : productLayout.platformApiModules
-  }
-
-  static List<String> getProductImplModules(ProductModulesLayout productLayout) {
-    productLayout.platformImplementationModules.isEmpty() ? productLayout.productImplementationModules : productLayout.platformImplementationModules
   }
 
   Collection<String> getIncludedProjectArtifacts() {
@@ -325,11 +304,11 @@ class DistributionJARsBuilder {
 
   static List<String> getModulesToCompile(BuildContext buildContext) {
     def productLayout = buildContext.productProperties.productLayout
-    productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
-    getPlatformApiModules(productLayout) +
-    getPlatformImplModules(productLayout) +
-    getProductApiModules(productLayout) +
-    getProductImplModules(productLayout) +
+    productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
+    CommunityRepositoryModules.PLATFORM_API_MODULES +
+    CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
+    productLayout.productApiModules +
+    productLayout.productImplementationModules +
     productLayout.additionalPlatformJars.values() +
     toolModules + buildContext.productProperties.additionalModulesToCompile +
     SVGPreBuilder.getModulesToInclude()
@@ -593,7 +572,7 @@ class DistributionJARsBuilder {
     }
 
     buildContext.messages.block("Build platform JARs in lib directory") {
-    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, [], platform.moduleJars, platform.testModuleJars) // Android Studio
+      buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
     }
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
@@ -652,11 +631,9 @@ class DistributionJARsBuilder {
   private void buildOsSpecificBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     for (OsFamily osFamily in OsFamily.values()) {
-      List<PluginLayout> osSpecificPlugins =
-        getPluginsByModules(buildContext, productLayout.bundledOsPluginModules[osFamily] ?: []) +
-        getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
-          satisfiesBundlingRequirements(it, osFamily)
-        }
+      List<PluginLayout> osSpecificPlugins = getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
+        satisfiesBundlingRequirements(it, osFamily)
+      }
 
       if (!osSpecificPlugins.isEmpty() && buildContext.shouldBuildDistributionForOS(osFamily.osId)) {
         def layoutBuilder = createLayoutBuilder()
@@ -688,6 +665,8 @@ class DistributionJARsBuilder {
         pluginXmlFiles.put(plugin, pluginXmlPath)
       }
 
+      def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
+                                                                         : buildContext.buildNumber
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
         pluginsToPublish.each { plugin ->
           def pluginXmlPath = pluginXmlFiles[plugin]
@@ -706,9 +685,7 @@ class DistributionJARsBuilder {
             buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
                                                : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
 
-          setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
-                                   buildContext.buildNumber,
-                                   compatibleBuildRange)
+          setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, buildContext.buildNumber, compatibleBuildRange)
           layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
         }
       }
@@ -728,15 +705,14 @@ Android Studio: This attempts to read a non-existent file. */
         def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins
 
         def directory = getActualPluginDirectoryName(plugin, buildContext)
-        String suffix = includeInCustomRepository ? "" : "-${getPluginVersion(plugin)}"
+        String suffix = includeInCustomRepository ? "" : "-$pluginVersion"
         def targetDirectory = whiteList.contains(plugin.mainModule)
           ? "$nonBundledPluginsArtifacts/auto-uploading"
           : nonBundledPluginsArtifacts
         def destFile = "$targetDirectory/$directory${suffix}.zip"
 
         if (includeInCustomRepository) {
-          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(),
-                                                                          pluginXml: pluginXmlFiles[plugin]))
+          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXmlFiles[plugin]))
         }
 
         ant.zip(destfile: destFile) {
@@ -751,7 +727,7 @@ Android Studio: This attempts to read a non-existent file. */
         }
       }
 
-      def helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext)
+      def helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext, pluginVersion)
       if (helpPlugin != null) {
         def spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, "$nonBundledPluginsArtifacts/auto-uploading", layoutBuilder)
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -781,10 +757,6 @@ Android Studio: This attempts to read a non-existent file. */
     def pluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
     return new PluginRepositorySpec(pluginZip: destFile,
                                     pluginXml: pluginXmlPath)
-  }
-
-  private String getPluginVersion(PluginLayout plugin) {
-    return plugin.versionEvaluator.apply(buildContext)
   }
 
   /**
@@ -818,8 +790,16 @@ Android Studio: This attempts to read a non-existent file. */
         File resourceFile = it.first.generateResources(buildContext)
         resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
       }
-      // Android Studio: modified by Change I2446cdf7 / commit 61212a8
-      buildByLayout(layoutBuilder, plugin, "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}", generatedResources, actualModuleJars, plugin.getTestModuleJars())
+
+      final String targetDir = "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}"
+
+      buildByLayout(layoutBuilder, plugin, targetDir, actualModuleJars, generatedResources)
+      if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, plugin, targetDir)
+      }
+      else if (!plugin.pathsToScramble.isEmpty()){
+        buildContext.messages.warning("Scrambling plugin $plugin.directoryName skipped: 'scrambleTool' isn't defined, but plugin defines paths to be scrambled")
+      }
     }
   }
 
@@ -884,9 +864,8 @@ Android Studio: This attempts to read a non-existent file. */
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
-  // Android Studio: added testModuleJars parameter
-  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, List<Pair<File, String>> additionalResources,
-                             MultiValuesMap<String, String> moduleJars, MultiValuesMap<String, String> testModuleJars = new MultiValuesMap<>(true)) {
+  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars,
+                             List<Pair<File, String>> additionalResources) {
     def ant = buildContext.ant
     def resourceExcluded = RESOURCES_EXCLUDED
     def resourcesIncluded = RESOURCES_INCLUDED
@@ -897,12 +876,6 @@ Android Studio: This attempts to read a non-existent file. */
       def modules = it.value
       def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
       actualModuleJars.putAll(jarPath, modules)
-    }
-    MultiValuesMap<String, String> actualTestModuleJars = new MultiValuesMap<>(true)
-    testModuleJars.entrySet().each {
-      def modules = it.value
-      def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
-      actualTestModuleJars.putAll(jarPath, modules)
     }
     layoutBuilder.layout(targetDirectory) {
       dir("lib") {
@@ -930,48 +903,9 @@ Android Studio: This attempts to read a non-existent file. */
                 }
               }
             }
-            // Android Studio
-            if (actualTestModuleJars.containsKey(jarPath)) {
-              actualTestModuleJars.get(jarPath).each { testModuleName ->
-                moduleTests(testModuleName) {
-                  if (layout.localizableResourcesJarName(testModuleName) != null) {
-                    ant.patternset(refid: resourceExcluded)
-                  }
-                  layout.moduleExcludes.get(testModuleName)?.each {
-                    //noinspection GrUnresolvedAccess
-                    ant.exclude(name: it)
-                  }
-                }
-              }
-            }
             layout.projectLibrariesToUnpack.get(jarPath)?.each {
               buildContext.project.libraryCollection.findLibrary(it)?.getFiles(JpsOrderRootType.COMPILED)?.each {
                 ant.zipfileset(src: it.absolutePath)
-              }
-            }
-          }
-        }
-        // Android Studio
-        actualTestModuleJars.entrySet().each {
-          def modules = it.value
-          def jarPath = it.key
-          if (!actualModuleJars.containsKey(jarPath)) { // done above
-            jar(jarPath, true) {
-              modules.each { moduleName ->
-                moduleTests(moduleName) {
-                  if (layout.localizableResourcesJarName(moduleName) != null) {
-                    ant.patternset(refid: resourceExcluded)
-                  }
-                  layout.moduleExcludes.get(moduleName)?.each {
-                    //noinspection GrUnresolvedAccess
-                    ant.exclude(name: it)
-                  }
-                }
-              }
-              layout.projectLibrariesToUnpack.get(jarPath)?.each {
-                buildContext.project.libraryCollection.findLibrary(it)?.getFiles(JpsOrderRootType.COMPILED)?.each {
-                  ant.zipfileset(src: it.absolutePath)
-                }
               }
             }
           }
@@ -1020,16 +954,6 @@ Android Studio: This attempts to read a non-existent file. */
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
-            each {
-              jpsLibrary(((JpsLibraryDependency)it).library)
-            }
-        }
-        // Android Studio
-        actualTestModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
-          .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
-          findModule(moduleName).dependenciesList.dependencies.
-            findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
-            findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.TEST_RUNTIME) ?: false }.
             each {
               jpsLibrary(((JpsLibraryDependency)it).library)
             }

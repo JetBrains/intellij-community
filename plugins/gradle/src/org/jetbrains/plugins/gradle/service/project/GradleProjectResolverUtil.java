@@ -28,9 +28,11 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
@@ -48,6 +50,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Vladislav.Soroka
@@ -179,6 +182,22 @@ public class GradleProjectResolverUtil {
 
     return GradleUtil.getConfigPath(gradleModule.getGradleProject(), rootProjectPath);
   }
+
+  @NotNull
+  public static String getModuleId(@NotNull ProjectResolverContext resolverCtx, @NotNull Build build, @NotNull Project project) {
+    ProjectIdentifier projectIdentifier = project.getProjectIdentifier();
+    String gradlePath = projectIdentifier.getProjectPath();
+    String compositePrefix = "";
+    boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+    if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
+      compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
+    }
+    else if (!isRootPath && build != resolverCtx.getModels().getMainBuild()) {
+      compositePrefix = build.getName();
+    }
+    return compositePrefix + getModuleId(gradlePath, project.getName());
+  }
+
 
   @NotNull
   public static String getModuleId(@NotNull ProjectResolverContext resolverCtx, @NotNull IdeaModule gradleModule) {
@@ -765,6 +784,23 @@ public class GradleProjectResolverUtil {
   public static DataNode<ModuleData> findModuleById(@Nullable final DataNode<ProjectData> projectNode, @NotNull final String path) {
     if (projectNode == null) return null;
     return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, node -> node.getData().getId().equals(path));
+  }
+
+  @ApiStatus.Internal
+  public static Stream<GradleProjectResolverExtension> createProjectResolvers(@Nullable ProjectResolverContext projectResolverContext) {
+    return GradleProjectResolverExtension.EP_NAME.extensions().map(extension -> {
+      try {
+        GradleProjectResolverExtension resolverExtension = extension.getClass().newInstance();
+        if (projectResolverContext != null) {
+          resolverExtension.setProjectResolverContext(projectResolverContext);
+        }
+        return resolverExtension;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      return null;
+    }).sorted(ExternalSystemApiUtil.ORDER_AWARE_COMPARATOR);
   }
 
   @Nullable

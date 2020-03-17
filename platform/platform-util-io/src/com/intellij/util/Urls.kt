@@ -26,7 +26,7 @@ object Urls {
   fun newUri(scheme: String?, path: String): Url = UrlImpl(scheme, null, path)
 
   @JvmStatic
-  fun newUrl(scheme: String, authority: String, path: String, rawParameters: String?): Url =
+  fun newUrl(scheme: String?, authority: String?, path: String?, rawParameters: String?): Url =
     UrlImpl(scheme, authority, path, rawParameters)
 
   @JvmStatic
@@ -95,7 +95,7 @@ object Urls {
   @JvmStatic
   fun parse(url: String, asLocalIfNoScheme: Boolean): Url? = when {
     url.isEmpty() -> null
-    asLocalIfNoScheme && !URLUtil.containsScheme(url) -> newLocalFileUrl(url)  // nodejs debug - files only in local filesystem
+    asLocalIfNoScheme && !URLUtil.containsScheme(url) -> newLocalFileUrl(url)
     else -> parseUrl(VfsUtilCore.toIdeaUrl(url))
   }
 

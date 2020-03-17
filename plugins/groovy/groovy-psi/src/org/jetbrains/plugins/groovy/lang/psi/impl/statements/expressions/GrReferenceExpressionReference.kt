@@ -77,7 +77,7 @@ private fun GrReferenceExpression.handleSpecialCases(): Collection<GroovyResolve
   return null
 }
 
-fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
+fun GrReferenceExpression.resolveKinds(): Set<GroovyResolveKind> {
   return resolveKinds(isQualified)
 }
 
@@ -102,9 +102,9 @@ fun rValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKin
   return AccessorAwareProcessor(name, place, kinds, accessorProcessors)
 }
 
-fun lValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>, argument: Argument): GrResolverProcessor<*> {
+fun lValueProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>, argument: Argument?): GrResolverProcessor<*> {
   val accessorProcessors = if (name.isPropertyName()) {
-    listOf(AccessorProcessor(name, PropertyKind.SETTER, listOf(argument), place))
+    listOf(AccessorProcessor(name, PropertyKind.SETTER, argument?.let(::listOf), place))
   }
   else {
     emptyList()

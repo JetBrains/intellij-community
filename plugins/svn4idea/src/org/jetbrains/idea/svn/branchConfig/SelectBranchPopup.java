@@ -30,8 +30,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class SelectBranchPopup {
-  private final static String CONFIGURE_MESSAGE = SvnBundle.message("configure.branches.item");
-
   private SelectBranchPopup() {
   }
 
@@ -81,7 +79,7 @@ public class SelectBranchPopup {
 
     addIfNotNull(items, configuration.getTrunk());
     items.addAll(configuration.getBranchLocations());
-    items.add(CONFIGURE_MESSAGE);
+    items.add(getConfigureMessage());
 
     BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title, component);
     step.showPopupAt(JBPopupFactory.getInstance().createListPopup(step));
@@ -98,8 +96,6 @@ public class SelectBranchPopup {
     @NotNull private final SvnBranchConfigurationNew myConfiguration;
     @NotNull private final BranchSelectedCallback myCallback;
     @Nullable private final Component myComponent;
-
-    private static final String REFRESH_MESSAGE = SvnBundle.message("refresh.branches.item");
 
     BranchBasesPopupStep(@NotNull Project project,
                                 @NotNull VirtualFile vcsRoot,
@@ -118,7 +114,7 @@ public class SelectBranchPopup {
 
     @Override
     public ListSeparator getSeparatorAbove(Object value) {
-      return CONFIGURE_MESSAGE.equals(value) ? new ListSeparator("") : null;
+      return getConfigureMessage().equals(value) ? new ListSeparator("") : null;
     }
 
     @NotNull
@@ -135,7 +131,7 @@ public class SelectBranchPopup {
 
     @Override
     public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
-      if (CONFIGURE_MESSAGE.equals(selectedValue)) {
+      if (getConfigureMessage().equals(selectedValue)) {
         return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }
 
@@ -167,7 +163,7 @@ public class SelectBranchPopup {
     private void showBranchPopup(@NotNull Url branchLocation) {
       List<SvnBranchItem> branches = myConfiguration.getBranches(branchLocation);
       List<Object> items = new ArrayList<>(branches);
-      items.add(REFRESH_MESSAGE);
+      items.add(getRefreshMessage());
 
       JBPopup popup =
         JBPopupFactory.getInstance().createPopupChooserBuilder(items)
@@ -175,7 +171,7 @@ public class SelectBranchPopup {
                       .setRenderer(new BranchRenderer())
                       .setResizable(true)
                       .setItemChosenCallback((v) -> {
-                        if (REFRESH_MESSAGE.equals(v)) {
+                        if (getRefreshMessage().equals(v)) {
                           loadBranches(branchLocation, () -> showBranchPopup(branchLocation));
                           return;
                         }
@@ -196,6 +192,10 @@ public class SelectBranchPopup {
       } else {
         listPopup.showInCenterOf(myComponent);
       }
+    }
+
+    private static String getRefreshMessage() {
+      return SvnBundle.message("refresh.branches.item");
     }
   }
 
@@ -240,5 +240,9 @@ public class SelectBranchPopup {
       }
       return this;
     }
+  }
+
+  private static String getConfigureMessage() {
+    return SvnBundle.message("configure.branches.item");
   }
 }

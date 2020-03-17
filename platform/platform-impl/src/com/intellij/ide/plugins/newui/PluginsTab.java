@@ -49,7 +49,7 @@ public abstract class PluginsTab {
       query = (String)data;
     }
     else if (data instanceof TagComponent) {
-      query = "/" + SearchQueryParser.getTagQuery(((TagComponent)data).getText());
+      query = SearchQueryParser.getTagQuery(((TagComponent)data).getText());
     }
     else {
       return;

@@ -57,12 +57,6 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("redundant.local.variable.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.ignore.option"),

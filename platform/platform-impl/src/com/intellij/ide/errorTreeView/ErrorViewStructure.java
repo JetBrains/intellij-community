@@ -68,6 +68,18 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return myRoot;
   }
 
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      for (Map.Entry<ErrorTreeElementKind, List<ErrorTreeElement>> entry : mySimpleMessages.entrySet()) {
+        final List<ErrorTreeElement> elements = entry.getValue();
+        if (elements != null && !elements.isEmpty()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   public boolean hasMessages(@NotNull Set<ErrorTreeElementKind> kinds) {
     synchronized (myLock) {
       for (Map.Entry<ErrorTreeElementKind, List<ErrorTreeElement>> entry : mySimpleMessages.entrySet()) {

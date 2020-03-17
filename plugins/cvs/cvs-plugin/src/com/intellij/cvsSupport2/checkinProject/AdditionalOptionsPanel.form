@@ -23,7 +23,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="check.box.tag.commited.after.checkin.option"/>
+              <text resource-bundle="messages/CvsBundle" key="check.box.tag.commited.after.checkin.option"/>
             </properties>
           </component>
           <component id="4406f" class="javax.swing.JCheckBox" binding="myOverrideExisting">
@@ -31,7 +31,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="check.box.tag.commited.after.checkin.override.existings"/>
+              <text resource-bundle="messages/CvsBundle" key="check.box.tag.commited.after.checkin.override.existings"/>
             </properties>
           </component>
           <component id="db6f1" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTagName">

@@ -49,9 +49,8 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
       QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(cls, element);
       if (qname != null) {
         qname = qname.append(cls.getName());
-        ElementManipulator<PyStringLiteralExpression> manipulator = ElementManipulators.getManipulator(e);
         myType = new PyClassTypeImpl(cls, false);
-        return manipulator.handleContentChange(e, myFullRange, qname.toString());
+        return ElementManipulators.handleContentChange(e, myFullRange, qname.toString());
       }
     }
     return null;

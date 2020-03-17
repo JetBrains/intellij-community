@@ -89,11 +89,23 @@ open class HProfVisitor {
   open fun visitStringInUTF8(id: Long, s: String) {}
   open fun visitLoadClass(classSerialNumber: Long, classObjectId: Long, stackSerialNumber: Long, classNameStringId: Long) {}
 
-  // TODO: Many of these are not implemented yet. Events are fired, but there are no parameters
-  open fun visitStackFrame() {}
+  open fun visitStackFrame(stackFrameId: Long,
+                           methodNameStringId: Long,
+                           methodSignatureStringId: Long,
+                           sourceFilenameStringId: Long,
+                           classSerialNumber: Long,
+                           lineNumber: Int) {
+  }
 
-  open fun visitStackTrace() {}
+  open fun visitStackTrace(stackTraceSerialNumber: Long,
+                           threadSerialNumber: Long,
+                           numberOfFrames: Int,
+                           stackFrameIds: LongArray) {
+  }
+
+  // TODO: Many of these are not implemented yet. Events are fired, but there are no parameters
   open fun visitAllocSites() {}
+
   open fun visitHeapSummary(totalLiveBytes: Long, totalLiveInstances: Long, totalBytesAllocated: Long, totalInstancesAllocated: Long) {}
   open fun visitStartThread() {}
   open fun visitEndThread(threadSerialNumber: Long) {}

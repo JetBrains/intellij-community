@@ -219,7 +219,7 @@ class BuildContextImpl extends BuildContext {
     if (proprietaryBuildTools.signTool != null) {
       messages.progress("Signing $path")
       proprietaryBuildTools.signTool.signExeFile(path, this)
-      messages.info("Signing done")
+      messages.info("Signed $path")
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
@@ -319,11 +319,6 @@ class BuildContextImpl extends BuildContext {
 
     if (productProperties.toolsJarRequired) {
       jvmArgs += " -Didea.jre.check=true"
-    }
-    // Android Studio: set JVM args to be included in studio.sh when bundling UI tests
-    if (options.includeUiTests) {
-      jvmArgs += " -Ddisable.config.import=true"
-      jvmArgs += " -Didea.gui.test.running.on.release=true"
     }
     return jvmArgs.trim()
   }

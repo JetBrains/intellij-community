@@ -33,15 +33,7 @@ public class HashSetInterner<T> extends Interner<T> {
   @Override
   @NotNull
   public T intern(@NotNull T name) {
-    T interned = mySet.get(name);
-    if (interned != null) {
-      return interned;
-    }
-
-    boolean added = mySet.add(name);
-    assert added;
-
-    return name;
+    return mySet.getOrAdd(name);
   }
 
   @Override

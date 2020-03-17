@@ -27,6 +27,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   protected static final EnumSet<RegExpGroup.Type> SUPPORTED_NAMED_GROUP_TYPES = EnumSet.of(RegExpGroup.Type.NAMED_GROUP);
   private final DefaultRegExpPropertiesProvider myPropertiesProvider;
 
+  private static final int myNumberOfGeneralCategoryProperties = 58;
   private final String[][] myPropertyNames = {
     {"Cn", "Unassigned"},
     {"Lu", "Uppercase letter"},
@@ -69,19 +70,6 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     {"LD", "Letter or digit"},
     {"L1", "Latin-1"},
     {"all", "All"},
-    {"ASCII", "Ascii"},
-    {"Alnum", "Alphanumeric characters"},
-    {"Alpha", "Alphabetic characters"},
-    {"Blank", "Space and tab characters"},
-    {"Cntrl", "Control characters"},
-    {"Digit", "Numeric characters"},
-    {"Graph", "Printable and visible"},
-    {"Lower", "Lowercase Alphabetic"},
-    {"Print", "Printable characters"},
-    {"Punct", "Punctuation characters"},
-    {"Space", "Space characters"},
-    {"Upper", "Uppercase alphabetic"},
-    {"XDigit", "Hexadecimal digits"},
     {"javaLowerCase", },
     {"javaUpperCase", },
     {"javaTitleCase", },
@@ -100,6 +88,20 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     {"javaWhitespace", },
     {"javaISOControl", },
     {"javaMirrored", },
+    /* end of general category properties */
+    {"ASCII", "Ascii"},
+    {"Alnum", "Alphanumeric characters"},
+    {"Alpha", "Alphabetic characters"},
+    {"Blank", "Space and tab characters"},
+    {"Cntrl", "Control characters"},
+    {"Digit", "Numeric characters"},
+    {"Graph", "Printable and visible"},
+    {"Lower", "Lowercase Alphabetic"},
+    {"Print", "Printable characters"},
+    {"Punct", "Punctuation characters"},
+    {"Space", "Space characters"},
+    {"Upper", "Uppercase alphabetic"},
+    {"XDigit", "Hexadecimal digits"},
   };
 
   public JavaRegExpHost() {
@@ -251,9 +253,49 @@ public class JavaRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
+  public boolean isValidPropertyName(@NotNull String name) {
+    return isScriptProperty(name) || isBlockProperty(name) || isCategoryProperty(name);
+  }
+
+  private static boolean isScriptProperty(@NotNull String propertyName) {
+    return "script".equalsIgnoreCase(propertyName) || "sc".equalsIgnoreCase(propertyName);
+  }
+
+  private static boolean isBlockProperty(@NotNull String propertyName) {
+    return "block".equalsIgnoreCase(propertyName) || "blk".equalsIgnoreCase(propertyName);
+  }
+
+  private static boolean isCategoryProperty(@NotNull String propertyName) {
+    return "general_category".equalsIgnoreCase(propertyName) || "gc".equalsIgnoreCase(propertyName);
+  }
+
+  @Override
+  public boolean isValidPropertyValue(@NotNull String propertyName, @NotNull String value) {
+    if (isScriptProperty(propertyName)) {
+      return isValidUnicodeScript(value);
+    }
+    else if (isBlockProperty(propertyName)) {
+      return isValidUnicodeBlock(value);
+    }
+    else if (isCategoryProperty(propertyName)) {
+      return isValidGeneralCategory(value);
+    }
+    return false;
+  }
+
+  public boolean isValidGeneralCategory(String value) {
+    for (int i = 0; i < myNumberOfGeneralCategoryProperties; i++) {
+      if (value.equals(myPropertyNames[i][0])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public boolean isValidCategory(@NotNull String category) {
     if (category.startsWith("In")) {
-      return isValidUnicodeBlock(category);
+      return isValidUnicodeBlock(category.substring(2));
     }
     if (category.startsWith("Is")) {
       category = category.substring(2);
@@ -303,16 +345,16 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     return false;
   }
 
-  private boolean isValidUnicodeBlock(@NotNull String category) {
+  private static boolean isValidUnicodeBlock(@NotNull String category) {
     try {
-      return Character.UnicodeBlock.forName(category.substring(2)) != null;
+      return Character.UnicodeBlock.forName(category) != null;
     }
     catch (IllegalArgumentException e) {
       return false;
     }
   }
 
-  private boolean isValidUnicodeScript(@NotNull String category) {
+  private static boolean isValidUnicodeScript(@NotNull String category) {
     try {
       return Character.UnicodeScript.forName(category) != null;
     }
@@ -358,7 +400,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
         return stringArray.length > 1 ? stringArray[1] : stringArray[0];
       }
     }
-    return null;  }
+    return null;
+  }
 
   @NotNull
   @Override

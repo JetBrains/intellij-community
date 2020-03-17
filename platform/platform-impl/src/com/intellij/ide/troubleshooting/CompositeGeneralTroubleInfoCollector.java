@@ -12,8 +12,7 @@ public class CompositeGeneralTroubleInfoCollector implements TroubleInfoCollecto
   @Override
   public String collectInfo(@NotNull Project project) {
     StringBuilder builder = new StringBuilder();
-    GeneralTroubleInfoCollector[] collectors = GeneralTroubleInfoCollector.EP_SETTINGS.getExtensions();
-    for (GeneralTroubleInfoCollector collector : collectors) {
+    for (GeneralTroubleInfoCollector collector : GeneralTroubleInfoCollector.EP_SETTINGS.getExtensions()) {
       builder.append("=== " + collector.getTitle() + " ===\n");
       builder.append(collector.collectInfo(project).trim());
       builder.append("\n\n");

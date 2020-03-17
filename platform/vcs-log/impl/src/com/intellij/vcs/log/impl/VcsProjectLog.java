@@ -8,7 +8,9 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -23,17 +25,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.function.BiConsumer;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
@@ -94,13 +97,13 @@ public class VcsProjectLog implements Disposable {
   }
 
   /**
-   * The instance of the {@link VcsLogUiImpl} or null if the log was not initialized yet.
+   * The instance of the {@link MainVcsLogUi} or null if the log was not initialized yet.
    */
   @Nullable
   public VcsLogUiImpl getMainLogUi() {
     VcsLogContentProvider logContentProvider = VcsLogContentProvider.getInstance(myProject);
     if (logContentProvider == null) return null;
-    return logContentProvider.getUi();
+    return (VcsLogUiImpl)logContentProvider.getUi();
   }
 
   @Nullable
@@ -111,6 +114,21 @@ public class VcsProjectLog implements Disposable {
   @NotNull
   public VcsLogTabsManager getTabsManager() {
     return myTabsManager;
+  }
+
+  @CalledInAwt
+  @Nullable
+  public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters) {
+    return openLogTab(filters, VcsLogManager.LogWindowKind.TOOL_WINDOW);
+  }
+
+  @CalledInAwt
+  @Nullable
+  public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters,
+                                 @NotNull VcsLogManager.LogWindowKind kind) {
+    VcsLogManager logManager = getLogManager();
+    if (logManager == null) return null;
+    return myTabsManager.openAnotherLogTab(logManager, filters, kind);
   }
 
   @CalledInAny
@@ -162,7 +180,7 @@ public class VcsProjectLog implements Disposable {
   @CalledInBackground
   private VcsLogManager createLog(boolean forceInit) {
     if (myDisposeStarted) return null;
-    Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders();
+    Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders(myProject);
     if (!logProviders.isEmpty()) {
       VcsLogManager logManager = myLogManager.getValue(logProviders);
       initialize(logManager, forceInit);
@@ -190,12 +208,12 @@ public class VcsProjectLog implements Disposable {
       if (logManager.isLogVisible()) {
         logManager.scheduleInitialization();
       }
-    }, ModalityState.any());
+    }, getModality());
   }
 
   @NotNull
-  private Map<VirtualFile, VcsLogProvider> getLogProviders() {
-    return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()), myProject);
+  static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
+    return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project);
   }
 
   public static VcsProjectLog getInstance(@NotNull Project project) {
@@ -208,8 +226,71 @@ public class VcsProjectLog implements Disposable {
 
   private static <T> T invokeAndWait(@NotNull Computable<T> computable) {
     Ref<T> result = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), getModality());
     return result.get();
+  }
+
+  @NotNull
+  private static ModalityState getModality() {
+    return ModalityState.any();
+  }
+
+  /**
+   * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
+   * waits for it in a background task, and executes the action after the log is ready.
+   */
+  @CalledInAwt
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
+    VcsProjectLog log = getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager != null) {
+      action.accept(log, manager);
+    }
+    else { // schedule showing the log, wait its initialization, and then open the tab
+      Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
+      new Task.Backgroundable(project, "Loading Commits") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            futureLogManager.get(5, TimeUnit.SECONDS);
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException e) {
+            LOG.error(e);
+          }
+          catch (TimeoutException e) {
+            LOG.warn(e);
+          }
+        }
+
+        @Override
+        public void onSuccess() {
+          VcsLogManager manager = log.getLogManager();
+          if (manager != null) {
+            action.accept(log, manager);
+          }
+        }
+      }.queue();
+    }
+  }
+
+  @CalledInBackground
+  @Nullable
+  public static VcsLogManager getOrCreateLog(@NotNull Project project) {
+    VcsProjectLog log = getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager == null) {
+      try {
+        manager = log.createLogInBackground(true).get();
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+    return manager;
   }
 
   private class LazyVcsLogManager {
@@ -225,7 +306,7 @@ public class VcsProjectLog implements Disposable {
         myValue = value;
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
-        }, ModalityState.any());
+        }, getModality());
       }
       return myValue;
     }

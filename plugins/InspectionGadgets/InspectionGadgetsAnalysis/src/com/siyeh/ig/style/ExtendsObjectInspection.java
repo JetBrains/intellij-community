@@ -28,12 +28,6 @@ public class ExtendsObjectInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("extends.object.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "ClassExplicitlyExtendsObject";
   }

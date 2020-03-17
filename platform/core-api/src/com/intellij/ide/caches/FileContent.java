@@ -23,6 +23,15 @@ public class FileContent extends UserDataHolderBase {
   }
 
   @NotNull
+  public byte[] getBytesOrEmptyArray() {
+    try {
+      return getBytes();
+    } catch (IOException e) {
+      return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    }
+  }
+
+  @NotNull
   public byte[] getBytes() throws IOException {
     if (myCachedBytes == null) {
       if (myVirtualFile.isValid()) {

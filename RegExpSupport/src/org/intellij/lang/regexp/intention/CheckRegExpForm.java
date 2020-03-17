@@ -7,9 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionId;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -154,13 +152,12 @@ public class CheckRegExpForm {
         action.registerCustomShortcutSet(CustomShortcutSet.fromString(shortcut), source);
       }
 
-      public void update() {
-        final TransactionId transactionId = TransactionGuard.getInstance().getContextTransaction();
+      private void update() {
         updater.cancelAllRequests();
         if (!updater.isDisposed()) {
           updater.addRequest(() -> {
             final RegExpMatchResult result = isMatchingText(myRegexpFile, mySampleText.getText());
-            TransactionGuard.getInstance().submitTransaction(myProject, transactionId, () -> setBalloonState(result));
+            ApplicationManager.getApplication().invokeLater(() -> setBalloonState(result), ModalityState.any(), __ -> updater.isDisposed());
           }, 200);
         }
       }

@@ -23,10 +23,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -69,12 +71,12 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
 
   @Override
   public void doFix(@NotNull Project project, @NotNull VirtualFile file) {
-    final Sdk projectSdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
-    if (projectSdk != null) {
-      final Module module = ModuleUtilCore.findModuleForFile(file, project);
-      if (module != null) {
-        WriteAction.run(() -> ModuleRootModificationUtil.setSdkInherited(module));
-      }
-    }
+    SdkPopupFactory
+      .newBuilder()
+      .withProject(project)
+      .withSdkTypeFilter(type -> type instanceof JavaSdkType)
+      .updateSdkForFile(file)
+      .buildPopup()
+      .showInFocusCenter();
   }
 }

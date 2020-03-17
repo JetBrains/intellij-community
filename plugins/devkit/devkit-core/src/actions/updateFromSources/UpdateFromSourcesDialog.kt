@@ -27,8 +27,7 @@ class UpdateFromSourcesDialog(private val project: Project,
 
   override fun createCenterPanel(): DialogPanel {
     panel = panel {
-      row {
-        label("IDE installation:")
+      row("IDE installation:") {
         textFieldWithBrowseButton({ state.workIdePath ?: PathManager.getHomePath() },
                                   { state.workIdePath = it },
                                   "Choose IDE Installation Directory", project,
@@ -36,7 +35,7 @@ class UpdateFromSourcesDialog(private val project: Project,
                                   FileChooserDescriptorFactory.createSingleFolderDescriptor())
       }
       row {
-        checkBox("Build disabled plugins", state::buildDisabledPlugins)
+        checkBox("Build disabled and non-bundled plugins", state::buildDisabledPlugins)
       }
       row {
         checkBox("Do not show this dialog again", { !state.showSettings }, { state.showSettings = !it },

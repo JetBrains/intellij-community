@@ -15,7 +15,10 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.actions.GraphAction;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpandGraphAction extends CollapseOrExpandGraphAction {
@@ -26,8 +29,12 @@ public class ExpandGraphAction extends CollapseOrExpandGraphAction {
   }
 
   @Override
-  protected void executeAction(@NotNull VcsLogUiImpl vcsLogUi) {
-    vcsLogUi.expandAll();
+  protected void executeAction(@NotNull MainVcsLogUi vcsLogUi) {
+    performLongAction(vcsLogUi, new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND),
+                      "Expanding " +
+                      (vcsLogUi.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
+                       ? "merges..."
+                       : "linear branches..."));
   }
 
   @NotNull

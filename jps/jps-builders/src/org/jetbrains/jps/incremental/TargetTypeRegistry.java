@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TargetTypeRegistry {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.TargetTypeRegistry");
+  private static final Logger LOG = Logger.getInstance(TargetTypeRegistry.class);
   private static class Holder {
     static final TargetTypeRegistry ourInstance = new TargetTypeRegistry();
   }

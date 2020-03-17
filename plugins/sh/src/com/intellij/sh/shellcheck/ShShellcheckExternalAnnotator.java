@@ -8,10 +8,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.ExternalAnnotator;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,15 +18,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
-import com.intellij.sh.shellcheck.intention.DisableInspectionIntention;
+import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,29 +109,38 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     if (document == null) {
       return;
     }
+
+    Collection<OuterLanguageElement> outerElements = PsiTreeUtil.findChildrenOfType(file, OuterLanguageElement.class);
+    List<TextRange> rangesOfOuterElements = ContainerUtil.map(outerElements, el -> el.getTextRange());
+
     for (Result result : shellcheckResponse.results) {
       CharSequence sequence = document.getCharsSequence();
       int startOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.line - 1), result.column);
       int endOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.endLine - 1), result.endColumn);
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
+
+      boolean isInOuter = ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range));
+      if (isInOuter) continue;
+
       long code = result.code;
       String message = result.message;
-      String scCode = "SC" + code;
-      String html =
+      @NonNls String scCode = "SC" + code;
+      @NonNls String html =
           "<html>" +
               "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
               "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
           "</html>";
-      Annotation annotation = holder.createAnnotation(severity(result.level), range, message, html);
+      AnnotationBuilder builder = holder.newAnnotation(severity(result.level), message).range(range).tooltip(html);
 
       String formattedMessage = format(message);
       Fix fix = result.fix;
       if (fix != null && !ArrayUtil.isEmpty(fix.replacements)) {
-        annotation.registerFix(new QuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
+        builder = builder.withFix(new ShQuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
       }
       String quotedMessage = quote(formattedMessage);
-      annotation.registerFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset));
-      annotation.registerFix(new DisableInspectionIntention(quotedMessage, scCode));
+      builder.withFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset))
+      .withFix(new ShDisableInspectionIntention(quotedMessage, scCode))
+        .create();
     }
   }
 

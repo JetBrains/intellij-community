@@ -40,7 +40,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
+  private static final Logger LOG = Logger.getInstance(SmartPsiElementPointerImpl.class);
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
@@ -198,7 +198,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     Document document = FileDocumentManager.getInstance().getCachedDocument(viewProvider.getVirtualFile());
     if (document != null &&
         ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
-      LOG.error("Smart pointers shouldn't be created during PSI changes");
+      LOG.error("Smart pointers must not be created during PSI changes");
     }
 
     SmartPointerElementInfo info = createAnchorInfo(element, containingFile);

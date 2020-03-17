@@ -25,6 +25,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
@@ -136,7 +137,7 @@ public final class InjectorUtils {
 
   @NotNull
   public static Collection<String> getActiveInjectionSupportIds() {
-    return ApplicationManager.getApplication().getService(LanguageInjectionSupportRegistry.class).ids();
+    return ContainerUtil.map(LanguageInjectionSupport.EP_NAME.getExtensionList(), LanguageInjectionSupport::getId);
   }
 
   @NotNull
@@ -146,28 +147,10 @@ public final class InjectorUtils {
 
   @Nullable
   public static LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
-    return ApplicationManager.getApplication().getService(LanguageInjectionSupportRegistry.class).findInjectionSupport(id);
-  }
-
-  @Service
-  private static final class LanguageInjectionSupportRegistry {
-    private final Map<String, LanguageInjectionSupport> myMap = new LinkedHashMap<>();
-
-    private LanguageInjectionSupportRegistry() {
-      for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
-        myMap.put(support.getId(), support);
-      }
+    for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
+      if (id.equals(support.getId())) return support;
     }
-
-    @Nullable
-    LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
-      return myMap.get(id);
-    }
-
-    @NotNull
-    public Set<String> ids() {
-      return myMap.keySet();
-    }
+    return null;
   }
 
   @NotNull

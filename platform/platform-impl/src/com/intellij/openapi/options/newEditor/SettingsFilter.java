@@ -196,4 +196,12 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     SearchableConfigurable.Parent parent = ConfigurableWrapper.cast(SearchableConfigurable.Parent.class, configurable);
     return parent != null && !parent.hasOwnContent();
   }
+
+  void reload() {
+    myLastSelected = null;
+    myFiltered = null;
+    myHits = null;
+    mySearch.setText("");
+    myContext.reload();
+  }
 }

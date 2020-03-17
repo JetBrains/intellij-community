@@ -6,16 +6,18 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -181,8 +183,19 @@ public class UsageViewImpl implements UsageViewEx {
 
     myBuilder = new UsageNodeTreeBuilder(myTargets, getActiveGroupingRules(project, getUsageViewSettings()), getActiveFilteringRules(project), myRoot, myProject);
 
-    final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
+    MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, this::rulesChanged);
+    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        rulesChanged();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        rulesChanged();
+      }
+    });
 
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
@@ -493,7 +506,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
-      ProgressWrapper.unwrap(progress).cancel();
+      ProgressWrapper.unwrapAll(progress).cancel();
     }
   }
 
@@ -653,7 +666,7 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings));
     }
 
-    Collections.sort(list, Comparator.comparingInt(UsageGroupingRule::getRank));
+    list.sort(Comparator.comparingInt(UsageGroupingRule::getRank));
     return list.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
@@ -895,7 +908,7 @@ public class UsageViewImpl implements UsageViewEx {
     return myPresentation.isDetachedMode() || myTree.isShowing();
   }
 
-  private boolean rulesChanged;
+  private boolean rulesChanged; // accessed in EDT only
   private void rulesChanged() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!shouldTreeReactNowToRuleChanges()) {
@@ -908,7 +921,7 @@ public class UsageViewImpl implements UsageViewEx {
       captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
     }
     final List<Usage> allUsages = new ArrayList<>(myUsageNodes.keySet());
-    Collections.sort(allUsages, USAGE_COMPARATOR);
+    allUsages.sort(USAGE_COMPARATOR);
     final Set<Usage> excludedUsages = getExcludedUsages();
     reset();
     myBuilder.setGroupingRules(getActiveGroupingRules(myProject, getUsageViewSettings()));
@@ -930,10 +943,10 @@ public class UsageViewImpl implements UsageViewEx {
         excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
         restoreUsageExpandState(states);
         updateImmediately();
+        if (myCentralPanel != null) {
+          updateUsagesContextPanels();
+        }
       }}));
-    if (myCentralPanel != null) {
-      updateUsagesContextPanels();
-    }
   }
 
   private void captureUsagesExpandState(@NotNull TreePath pathFrom, @NotNull Collection<? super UsageState> states) {
@@ -1084,11 +1097,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     @Override
-    public boolean startInTransaction() {
-      return true;
-    }
-
-    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
     }
@@ -1107,7 +1115,6 @@ public class UsageViewImpl implements UsageViewEx {
   /**
    * @return usage view which will be shown after re-run (either {@code this} if it knows how to re-run itself, or the new created one otherwise)
    */
-  @SuppressWarnings("WeakerAccess") // used in rider
   protected UsageView doReRun() {
     myChangesDetected = false;
     if (myRerunAction == null) {
@@ -1216,7 +1223,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
+  public void removeUsagesBulk(@NotNull Collection<? extends Usage> usages) {
     Usage toSelect = getNextToSelect(usages);
     UsageNode nodeToSelect = toSelect != null ? myUsageNodes.get(toSelect) : null;
 
@@ -1257,7 +1264,8 @@ public class UsageViewImpl implements UsageViewEx {
       .forEach(myExclusionHandler::excludeNode);
   }
 
-  private Stream<UsageNode> usagesToNodes(Stream<Usage> usages) {
+  @NotNull
+  private Stream<UsageNode> usagesToNodes(@NotNull Stream<? extends Usage> usages) {
     return usages
       .map(myUsageNodes::get)
       .filter(node -> node != NULL_NODE && node != null);
@@ -1316,40 +1324,19 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty()) return;
-    addUpdateRequest(() -> {
-      for (Node node : toUpdate) {
-        try {
-          if (isDisposed()) break;
-          if (!runReadActionWithRetries(() -> node.update(this, edtNodeChangedQueue))) {
-            ApplicationManager.getApplication().invokeLater(() -> queueUpdateBulk(toUpdate, onCompletedInEdt));
-            return;
+    ReadAction
+      .nonBlocking(() -> {
+        for (Node node : toUpdate) {
+          try {
+            node.update(this, edtNodeChangedQueue);
+          }
+          catch (IndexNotReadyException ignore) {
           }
         }
-        catch (IndexNotReadyException ignore) {
-        }
-      }
-      ApplicationManager.getApplication().invokeLater(onCompletedInEdt);
-    });
-  }
-
-  private boolean runReadActionWithRetries(@NotNull Runnable r) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      r.run();
-      return true;
-    }
-
-    final int MAX_RETRIES = 5;
-    for (int i = 0; i < MAX_RETRIES; i++) {
-      if (isDisposed()) {
-        return true;
-      }
-
-      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(r)) {
-        return true;
-      }
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-    }
-    return false;
+      })
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.defaultModalityState(), __ -> onCompletedInEdt.run())
+      .submit(updateRequests);
   }
 
   private void updateImmediatelyNodesUpToRoot(@NotNull Collection<? extends Node> nodes) {
@@ -1718,7 +1705,7 @@ public class UsageViewImpl implements UsageViewEx {
   @NotNull
   public List<Usage> getSortedUsages() {
     List<Usage> usages = new ArrayList<>(getUsages());
-    Collections.sort(usages, USAGE_COMPARATOR);
+    usages.sort(USAGE_COMPARATOR);
     return usages;
   }
 
@@ -1729,7 +1716,7 @@ public class UsageViewImpl implements UsageViewEx {
       usages.add(usage);
     }
 
-    Enumeration enumeration = node.children();
+    Enumeration<?> enumeration = node.children();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
       collectUsages(child, usages);
@@ -1741,7 +1728,7 @@ public class UsageViewImpl implements UsageViewEx {
       nodes.add((Node)node);
     }
 
-    Enumeration enumeration = node.children();
+    Enumeration<?> enumeration = node.children();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
       collectAllChildNodes(child, nodes);

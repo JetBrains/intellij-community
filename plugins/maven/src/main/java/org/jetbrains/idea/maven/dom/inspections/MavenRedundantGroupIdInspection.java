@@ -28,12 +28,6 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return MavenDomBundle.message("inspection.redundant.groupId.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "MavenRedundantGroupId";
   }

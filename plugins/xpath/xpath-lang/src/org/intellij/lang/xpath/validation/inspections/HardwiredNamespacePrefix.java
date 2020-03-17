@@ -88,14 +88,7 @@ public class HardwiredNamespacePrefix extends XPathInspection {
         return "name".equals(fc.getFunctionName());
     }
 
-    @Override
-    @Nls
-    @NotNull
-    public String getDisplayName() {
-        return "Hardwired Namespace Prefix";
-    }
-
-    @Override
+  @Override
     @NonNls
     @NotNull
     public String getShortName() {

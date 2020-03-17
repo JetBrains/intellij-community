@@ -41,7 +41,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class ComponentItem implements Cloneable, PaletteItem {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.ComponentItem");
+  private static final Logger LOG = Logger.getInstance(ComponentItem.class);
 
   public static final DataKey<ComponentItem> DATA_KEY = DataKey.create(ComponentItem.class.getName());
 

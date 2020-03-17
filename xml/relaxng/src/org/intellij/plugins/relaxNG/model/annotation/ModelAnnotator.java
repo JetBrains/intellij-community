@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG.model.annotation;
 
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -96,9 +95,8 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
     }
 
     @SuppressWarnings({ "unchecked" })
-    private void createGutterAnnotation(CommonElement t, GutterIconRenderer renderer) {
-      final Annotation a = myHolder.createAnnotation((T)t, HighlightSeverity.INFORMATION, null);
-      a.setGutterIconRenderer(renderer);
+    private void createGutterAnnotation(CommonElement t, @NotNull GutterIconRenderer renderer) {
+      myHolder.createAnnotation(HighlightSeverity.INFORMATION, (T)t, null, renderer);
     }
 
     @Override
@@ -117,7 +115,8 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
         final Set<Define> set = map.get(define.getName());
         if (set == null || set.size() == 0) {
           //noinspection unchecked
-          myHolder.createAnnotation((T)define, HighlightSeverity.ERROR, "Definition doesn't override anything from " + file.getName());
+          myHolder.createAnnotation(HighlightSeverity.ERROR, (T)define, "Definition doesn't override anything from " + file.getName(),
+                                    null);
           continue;
         }
 

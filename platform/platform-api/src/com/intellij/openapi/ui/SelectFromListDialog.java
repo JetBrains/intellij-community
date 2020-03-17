@@ -30,7 +30,7 @@ import java.awt.*;
 
 
 public class SelectFromListDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.SelectFromListDialog");
+  private static final Logger LOG = Logger.getInstance(SelectFromListDialog.class);
 
   private final ToStringAspect myToStringAspect;
   private final DefaultListModel<Object> myModel = new DefaultListModel<>();

@@ -68,7 +68,7 @@ public class PropertiesKeysConsistencyInspectionProvider implements Inconsistent
       keys.removeAll(parentKeys);
       for (String inconsistentKey : keys) {
         IProperty property = file.findPropertyByKey(inconsistentKey);
-        assert property != null;
+        if (property == null) continue;
         String message = InspectionsBundle.message("inconsistent.bundle.property.error", inconsistentKey, parent.getName());
         ProblemDescriptor descriptor = manager.createProblemDescriptor(property.getPsiElement(), message, false, LocalQuickFix.EMPTY_ARRAY,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);

@@ -20,7 +20,7 @@ import org.jdom.output.Format
 import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
-import java.util.Collections
+import java.util.*
 import javax.xml.transform.Result
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -38,8 +38,13 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     @JvmStatic
     @Throws(IOException::class)
     fun collapseMacrosAndWrite(element: Element, project: ComponentManager, writer: Writer) {
+      createOutputter(project).output(element, writer)
+    }
+
+    @JvmStatic
+    fun createOutputter(project: ComponentManager): JbXmlOutputter {
       val macroManager = PathMacroManager.getInstance(project)
-      JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter).output(element, writer)
+      return JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter)
     }
 
     @JvmStatic
@@ -597,16 +602,9 @@ private fun printComment(out: Writer, comment: Comment) {
 }
 
 private fun isAllWhitespace(obj: Content): Boolean {
-  val str: String
-  if (obj is Text) {
-    str = obj.text
-  }
-  else {
-    return false
-  }
-
-  for (i in 0 until str.length) {
-    if (!Verifier.isXMLWhitespace(str[i])) {
+  val str = (obj as? Text ?: return false).text
+  for (element in str) {
+    if (!Verifier.isXMLWhitespace(element)) {
       return false
     }
   }

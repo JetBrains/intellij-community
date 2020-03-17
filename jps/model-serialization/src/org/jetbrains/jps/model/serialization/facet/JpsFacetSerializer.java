@@ -37,6 +37,7 @@ public class JpsFacetSerializer {
   @NonNls public static final String TYPE_ATTRIBUTE = "type";
   @NonNls public static final String CONFIGURATION_TAG = "configuration";
   @NonNls public static final String NAME_ATTRIBUTE = "name";
+  @NonNls public static final String FACET_MANAGER_COMPONENT_NAME = "FacetManager";
 
   public static void loadFacets(JpsModule module, @Nullable Element facetManagerElement) {
     if (facetManagerElement == null) return;

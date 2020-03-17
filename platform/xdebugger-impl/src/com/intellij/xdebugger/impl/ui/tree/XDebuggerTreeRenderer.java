@@ -85,7 +85,9 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private void updateIcon(XDebuggerTreeNode node) {
-    Icon icon = node instanceof XValueNodeImpl && node.getTree().getPinToTopManager().isItemPinned((XValueNodeImpl)node) ?
+    Icon icon = node instanceof XValueNodeImpl &&
+                node.getTree().getPinToTopManager().isEnabled() &&
+                node.getTree().getPinToTopManager().isItemPinned((XValueNodeImpl)node) ?
                 PlatformDebuggerImplIcons.PinToTop.PinnedItem : node.getIcon();
     setIcon(icon);
   }

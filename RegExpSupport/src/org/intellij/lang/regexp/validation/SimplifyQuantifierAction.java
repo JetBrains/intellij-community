@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp.validation;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,9 @@ class SimplifyQuantifierAction implements IntentionAction {
     @Override
     @NotNull
     public String getText() {
-        return myReplacement == null ? "Remove '{1,1}'" : "Replace with '" + myReplacement + "'";
+        return myReplacement == null ? 
+               CommonQuickFixBundle.message("fix.remove", "{1,1}") : 
+               CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
     }
 
     @Override

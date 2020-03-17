@@ -57,14 +57,10 @@ public class TextComponentFoldingModel implements FoldingModel {
   }
 
   @Override
-  public void runBatchFoldingOperation(@NotNull Runnable operation) {
+  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition) {
   }
 
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaretFromCollapsedRegion) {
-  }
-
-  @Override
-  public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull Runnable operation) {
   }
 }

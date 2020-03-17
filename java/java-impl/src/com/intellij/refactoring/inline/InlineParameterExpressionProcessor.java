@@ -50,10 +50,11 @@ import java.util.*;
  * @author yole
  */
 public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineParameterExpressionProcessor");
+  private static final Logger LOG = Logger.getInstance(InlineParameterExpressionProcessor.class);
   public static final Key<Boolean> CREATE_LOCAL_FOR_TESTS = Key.create("CREATE_INLINE_PARAMETER_LOCAL_FOR_TESTS");
 
   private final PsiCallExpression myMethodCall;
+  @NotNull
   private final PsiMethod myMethod;
   private final PsiParameter myParameter;
   private PsiExpression myInitializer;
@@ -65,7 +66,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private UsageInfo[] myChangeSignatureUsages;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
-                                            final PsiMethod method,
+                                            @NotNull PsiMethod method,
                                             final PsiParameter parameter,
                                             final PsiExpression initializer,
                                             boolean createLocal) {
@@ -84,7 +85,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   @NotNull
   @Override
   protected String getCommandName() {
-    return InlineParameterHandler.REFACTORING_NAME;
+    return InlineParameterHandler.getRefactoringName();
   }
 
 
@@ -105,7 +106,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       if (i != parameterIndex && arguments[i] instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)arguments[i];
         final PsiElement element = referenceExpression.resolve();
-        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(element)) {
           final PsiParameter param = myMethod.getParameterList().getParameters()[i];
           final PsiExpression paramRef =
             JavaPsiFacade.getElementFactory(myMethod.getProject()).createExpressionFromText(param.getName(), myMethod);

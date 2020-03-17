@@ -7,6 +7,7 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
@@ -55,6 +56,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = hashMapOf()
+  override var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap()
   override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
@@ -243,7 +245,21 @@ internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
 fun createLayoutConstraints(): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(0, true)
-  lc.insets("0px")
+  lc.setInsets(0)
+  return lc
+}
+
+fun LC.setInsets(value: Int) {
+  val h = createUnitValue(value, isHorizontal = true)
+  val v = createUnitValue(value, isHorizontal = false)
+  insets = arrayOf(v, h, v, h)
+}
+
+fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
+  val lc = LC()
+  lc.gridGapX = gapToBoundSize(horizontalGap, isHorizontal = true)
+  lc.gridGapY = gapToBoundSize(verticalGap, isHorizontal = false)
+  lc.setInsets(0)
   return lc
 }
 

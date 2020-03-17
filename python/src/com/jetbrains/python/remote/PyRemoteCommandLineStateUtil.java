@@ -15,33 +15,10 @@ import java.io.File;
 /**
  * Use {@link PyRemoteCommandLinePatcherKt} instead
  */
-public final class PyRemoteCommandLineStateUtil {
+final class PyRemoteCommandLineStateUtil {
   private PyRemoteCommandLineStateUtil() {
   }
 
-  /**
-   * Patches the debug parameters of PyCharm debugger script when it is run in
-   * <i>client mode</i>.
-   * <p>
-   * Let's take as an example SSH Python interpreter. IDE listens for the
-   * connection from the debugger script on <i>loopback</i> interface on the
-   * host machine. The debugger script in this case runs on the remote machine.
-   * To let the debugger script establish the connection to IDE we create
-   * <i>remote port forwarding</i> from an arbitrary ephemeral port on the
-   * remote machine to the port on the host machine where IDE listens for the
-   * connection. This ephemeral port and <i>localhost</i> address is used
-   * to patch the parameters of the debugger script to let it instantiate the
-   * connection.
-   *
-   * @param helpersPath          the path to PyCharm helpers directory on the
-   *                             target machine
-   * @param remoteSocketProvider the provider that allows to establish a
-   *                             connection from the debugger process that
-   *                             might run on a remote machine (including
-   *                             virtual ones) and IDE
-   * @param debugParams          the debug parameters group of the script
-   * @throws RemoteSdkException
-   */
   static void patchDebugParams(@NotNull String helpersPath,
                                @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
                                @NotNull ParamsGroup debugParams)
@@ -62,11 +39,11 @@ public final class PyRemoteCommandLineStateUtil {
       .set(PyDebugRunner.findIndex(debugParams.getParameters(), PyDebugRunner.PORT_PARAM), Integer.toString(socket.getSecond()));
   }
 
-  public static void patchProfileParams(@NotNull String interpreterPath,
-                                        @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
-                                        @NotNull ParamsGroup profileParams,
-                                        @Nullable File workDirectory,
-                                        @NotNull PathMapper pathMapper)
+  static void patchProfileParams(@NotNull String interpreterPath,
+                                 @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
+                                 @NotNull ParamsGroup profileParams,
+                                 @Nullable File workDirectory,
+                                 @NotNull PathMapper pathMapper)
     throws RemoteSdkException {
     PyCommandLineStateUtil.remapParameters(interpreterPath, pathMapper, profileParams, workDirectory);
 
@@ -81,10 +58,11 @@ public final class PyRemoteCommandLineStateUtil {
       .set(2, Integer.toString(socket.getSecond()));
   }
 
-  public static void patchCoverageParams(@NotNull String interpreterPath,
-                                         @NotNull ParamsGroup coverageParams,
-                                         @Nullable File workDirectory,
-                                         @NotNull PathMapper pathMapper) {
+  static void patchCoverageParams(@NotNull String interpreterPath,
+                                  @NotNull ParamsGroup coverageParams,
+                                  @Nullable File workDirectory,
+                                  @NotNull PathMapper pathMapper)
+    throws RemoteSdkException {
 
     PyCommandLineStateUtil.remapParameters(interpreterPath, pathMapper, coverageParams, workDirectory);
 

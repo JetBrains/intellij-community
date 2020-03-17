@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -12,6 +13,7 @@ import java.util.*;
 /**
  * Set of VirtualFiles optimized for compact storage of very large number of files
  * Remove operations are not supported.
+ * NOT thread-safe.
  */
 public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
   // all non-VirtualFileWithId files and first several files are stored here
@@ -141,9 +143,15 @@ public class CompactVirtualFileSet extends AbstractSet<VirtualFile> {
     TIntHashSet idSet = this.idSet;
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     Iterator<VirtualFile> idsIterator = ids == null ? Collections.emptyIterator() :
-                                               ContainerUtil.mapIterator(ids.stream().iterator(), id -> virtualFileManager.findFileById(id));
+                                               ContainerUtil.mapIterator(ids.stream().iterator(), id -> {
+                                                 ProgressManager.checkCanceled();
+                                                 return virtualFileManager.findFileById(id);
+                                               });
     Iterator<VirtualFile> idSetIterator = idSet == null ? Collections.emptyIterator() :
-                                          ContainerUtil.mapIterator(idSet.iterator(), id -> virtualFileManager.findFileById(id));
+                                          ContainerUtil.mapIterator(idSet.iterator(), id -> {
+                                            ProgressManager.checkCanceled();
+                                            return virtualFileManager.findFileById(id);
+                                          });
     Iterator<VirtualFile> weirdFileIterator = weirdFiles.iterator();
     return ContainerUtil.filterIterator(ContainerUtil.concatIterators(idsIterator, idSetIterator, weirdFileIterator), Objects::nonNull);
   }

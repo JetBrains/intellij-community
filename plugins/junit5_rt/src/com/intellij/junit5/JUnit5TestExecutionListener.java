@@ -50,7 +50,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private String myRootName;
   private boolean mySuccessful = true;
   private String myIdSuffix = "";
-  private final Set<TestIdentifier> myActiveRoots = new HashSet<>();
+  private final Set<TestIdentifier> myActiveRoots = new LinkedHashSet<>();
   private boolean mySendTree;
 
   public JUnit5TestExecutionListener() {
@@ -81,7 +81,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     StringBuilder builder = new StringBuilder();
     builder.append("timestamp = ").append(entry.getTimestamp());
     entry.getKeyValuePairs().forEach((key, value) -> builder.append(", ").append(key).append(" = ").append(value));
-    myPrintStream.println(builder.toString());
+    myPrintStream.println("##teamcity[testStdOut" + idAndName(testIdentifier) + " out = '" + escapeName(builder.toString()) + "']");
   }
 
   @Override

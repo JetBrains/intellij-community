@@ -50,13 +50,6 @@ import java.util.stream.Collectors;
 public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
   private static final String COMMENT = "$comment";
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return JsonBundle.message("inspection.duplicate.keys.name");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

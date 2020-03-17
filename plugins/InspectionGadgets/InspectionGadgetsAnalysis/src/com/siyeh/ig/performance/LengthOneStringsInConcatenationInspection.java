@@ -35,13 +35,6 @@ public class LengthOneStringsInConcatenationInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "length.one.strings.in.concatenation.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "SingleCharacterStringConcatenation";
   }

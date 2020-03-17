@@ -53,10 +53,10 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     myExecutablePathSelector = new VcsExecutablePathSelector("Mercurial", this::testExecutable);
     panel.add(myExecutablePathSelector.getMainPanel());
 
-    myCheckIncomingOutgoingCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.check.incoming.outgoing"));
+    myCheckIncomingOutgoingCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.check.incoming.outgoing"));
     panel.add(UI.PanelFactory.panel(myCheckIncomingOutgoingCbx).createPanel());
 
-    myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
+    myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
     panel.add(UI.PanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
 
     mySyncControl = new JBCheckBox(DvcsBundle.getString("sync.setting"));
@@ -93,12 +93,12 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
       @Override
       public void onSuccess() {
         Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
-                                 HgVcsMessages.message("hg4idea.run.success.title"));
+                                 HgBundle.message("hg4idea.run.success.title"));
       }
 
       @Override
       public void onThrowable(@NotNull Throwable error) {
-        Messages.showErrorDialog(myMainPanel, error.getCause().getMessage(), HgVcsMessages.message("hg4idea.run.failed.title"));
+        Messages.showErrorDialog(myMainPanel, error.getCause().getMessage(), HgBundle.message("hg4idea.run.failed.title"));
       }
     }.queue();
   }

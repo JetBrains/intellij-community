@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -211,6 +213,18 @@ public abstract class SdkType implements SdkTypeId {
     return ContainerUtil.concat(list1, EP_NAME.getExtensionList()).toArray(new SdkType[0]);
   }
 
+  @Nullable
+  public static SdkType findByName(@Nullable String sdkName) {
+    if (sdkName == null) return null;
+
+    for (SdkType sdkType : getAllTypes()) {
+      if (Comparing.strEqual(sdkType.getName(), sdkName)) {
+        return sdkType;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public static <T extends SdkType> T findInstance(@NotNull Class<T> sdkTypeClass) {
     for (SdkType sdkType : EP_NAME.getExtensionList()) {
@@ -254,6 +268,8 @@ public abstract class SdkType implements SdkTypeId {
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
+   *
+   * @see #supportsCustomCreateUI()
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,

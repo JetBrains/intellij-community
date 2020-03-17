@@ -44,8 +44,7 @@ public class PropertyCollector {
    */
   @NotNull
   public List<MutableAccessor> collect(@NotNull Class<?> aClass) {
-    List<MutableAccessor> accessors;
-    accessors = new ArrayList<>();
+    List<MutableAccessor> accessors = new ArrayList<>();
 
     Map<String, Couple<Method>> nameToAccessors;
     // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
@@ -138,8 +137,8 @@ public class PropertyCollector {
       }
 
       NameAndIsSetter propertyData = getPropertyData(method.getName());
-      if (propertyData == null || propertyData.name.equals("class") ||
-          method.getParameterTypes().length != (propertyData.isSetter ? 1 : 0)) {
+      if (propertyData == null || method.getParameterCount() != (propertyData.isSetter ? 1 : 0) ||
+          propertyData.name.equals("class")) {
         continue;
       }
 

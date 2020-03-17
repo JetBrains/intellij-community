@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,8 +21,12 @@ import java.util.stream.Collectors;
  */
 @State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"))
 public class DateTimeFormatManager implements PersistentStateComponent<Element> {
+  public static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy";
   private boolean myPrettyFormattingAllowed = true;
-  private HashMap<String, String> myPatterns = new HashMap<>();
+  private String myPattern = DEFAULT_DATE_FORMAT;
+  private boolean myOverrideSystemDateFormat = false;
+  private boolean myUse24HourTime = true;
+
   @Nullable
   @Override
   public Element getState() {
@@ -36,30 +38,33 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
     XmlSerializerUtil.copyBean(loaded, this);
   }
 
+  public boolean isOverrideSystemDateFormat() {
+    return myOverrideSystemDateFormat;
+  }
+
+  public void setOverrideSystemDateFormat(boolean overrideSystemDateFormat) {
+    myOverrideSystemDateFormat = overrideSystemDateFormat;
+  }
+
+  public boolean isUse24HourTime() {
+    return myUse24HourTime;
+  }
+
+  public void setUse24HourTime(boolean use24HourTime) {
+    myUse24HourTime = use24HourTime;
+  }
+
   public void setPrettyFormattingAllowed(boolean prettyFormattingAllowed) {
     myPrettyFormattingAllowed = prettyFormattingAllowed;
   }
 
   @Nullable
-  public DateFormat getDateFormat(@NotNull String formatterID) {
-    String pattern = myPatterns.get(formatterID);
-    if (pattern == null) {
-      for (DateTimeFormatterBean formatterBean : DateTimeFormatterBean.EP_NAME.getExtensions()) {
-        if (formatterBean.id.equals(formatterID)) {
-          if (!StringUtil.isEmpty(formatterBean.format)) {
-            pattern = formatterBean.format;
-          }
-        }
-      }
+  public DateFormat getDateFormat() {
+    try {
+      return new SimpleDateFormat(myPattern);
     }
-
-    if (pattern != null) {
-      try {
-        return new SimpleDateFormat(pattern);
-      }
-      catch (IllegalArgumentException e) {
-        e.printStackTrace();
-      }
+    catch (IllegalArgumentException e) {
+      e.printStackTrace();
     }
     return null;
   }
@@ -68,17 +73,16 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
     return DateTimeFormatterBean.EP_NAME.getExtensionList().stream().map(bean -> bean.id).collect(Collectors.toSet());
   }
 
-  @Nullable
-  public String getDateFormatPattern(String formatterID) {
-    return myPatterns.get(formatterID);
+  @NotNull
+  public String getDateFormatPattern() {
+    return myPattern;
   }
 
-  public void setDateFormatPattern(String formatterID, @Nullable String pattern) {
-    //assert myPatterns.containsKey(formatterID) : "Unknown formatterID: " + formatterID
-    if (StringUtil.isEmpty(pattern)) {
-      myPatterns.remove(formatterID);
-    } else {
-      myPatterns.put(formatterID, pattern);
+  public void setDateFormatPattern(@NotNull String pattern) {
+    try {
+      new SimpleDateFormat(pattern);
+      myPattern = pattern;
+    } catch (Exception ignored) {
     }
   }
 
@@ -88,13 +92,5 @@ public class DateTimeFormatManager implements PersistentStateComponent<Element> 
 
   public static DateTimeFormatManager getInstance() {
     return ServiceManager.getService(DateTimeFormatManager.class);
-  }
-
-  public HashMap<String, String> getPatterns() {
-    return myPatterns;
-  }
-
-  public void setPatterns(HashMap<String, String> patterns) {
-    myPatterns = patterns;
   }
 }

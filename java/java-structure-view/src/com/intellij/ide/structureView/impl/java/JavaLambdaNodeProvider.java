@@ -2,6 +2,7 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -16,15 +17,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.SyntaxTraverser;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class JavaLambdaNodeProvider
-  implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner, DumbAware {
-  public static final String ID = "SHOW_LAMBDA";
-  public static final String JAVA_LAMBDA_PROPERTY_NAME = "java.lambda.provider";
+public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner, DumbAware {
+  @NonNls public static final String ID = "SHOW_LAMBDA";
+  @NonNls public static final String JAVA_LAMBDA_PROPERTY_NAME = "java.lambda.provider";
 
   @NotNull
   @Override
@@ -44,7 +45,7 @@ public class JavaLambdaNodeProvider
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return "Show Lambdas";
+    return IdeBundle.message("file.structure.toggle.show.collapse.show.lambdas");
   }
 
   @NotNull

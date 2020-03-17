@@ -31,14 +31,14 @@ import java.awt.*;
 /**
 * @author peter
 */
-public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
+public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
-  public void createToolWindowContent(@NotNull final Project project, @NotNull ToolWindow toolWindow) {
+  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     EventLog.getProjectComponent(project).initDefaultContent();
     toolWindow.setHelpId(EventLog.HELP_ID);
   }
 
-  static void createContent(Project project, ToolWindow toolWindow, EventLogConsole console, String title) {
+  static void createContent(@NotNull Project project, @NotNull ToolWindow toolWindow, @NotNull EventLogConsole console, @NotNull String title) {
     // update default Event Log tab title
     ContentManager contentManager = toolWindow.getContentManager();
     Content generalContent = contentManager.getContent(0);
@@ -46,7 +46,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
       generalContent.setDisplayName("General");
     }
 
-    final Editor editor = console.getConsoleEditor();
+    Editor editor = console.getConsoleEditor();
     JPanel editorPanel = new JPanel(new AbstractLayoutManager() {
       private int getOffset() {
         return JBUIScale.scale(4);
@@ -80,7 +80,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     panel.setContent(editorPanel);
     panel.addAncestorListener(new LogShownTracker(project));
 
-    ActionToolbar toolbar = createToolbar(project, editor, console);
+    ActionToolbar toolbar = createToolbar(project, console);
     toolbar.setTargetComponent(editor.getContentComponent());
     panel.setToolbar(toolbar.getComponent());
 
@@ -89,7 +89,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     contentManager.setSelectedContent(content);
   }
 
-  private static ActionToolbar createToolbar(Project project, Editor editor, EventLogConsole console) {
+  private static ActionToolbar createToolbar(Project project, EventLogConsole console) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_MARK_ALL_NOTIFICATIONS_AS_READ));
     group.add(new EventLogConsole.ClearLogAction(console));
@@ -127,7 +127,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
   }
 
-  private static class LogShownTracker extends AncestorListenerAdapter {
+  private static final class LogShownTracker extends AncestorListenerAdapter {
     private final Project myProject;
 
     LogShownTracker(Project project) {

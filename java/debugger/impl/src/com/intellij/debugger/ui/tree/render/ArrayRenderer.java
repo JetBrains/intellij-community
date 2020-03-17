@@ -55,7 +55,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 
 public class ArrayRenderer extends NodeRendererImpl{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
+  private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
   @NotNull
   @Override
   public String getText() {
-    return "Rename all occurrences";
+    return ShBundle.message("sh.rename.all.occurrences");
   }
 
   @Override

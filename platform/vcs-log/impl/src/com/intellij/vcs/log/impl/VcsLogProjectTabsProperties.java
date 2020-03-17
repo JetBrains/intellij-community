@@ -37,14 +37,11 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   public void loadState(@NotNull State state) {
     myState = state;
 
-    VcsLogUiPropertiesImpl.State mainState = myState.TAB_STATES.get(MAIN_LOG_ID);
-    if (mainState != null) {
-      List<Integer> columnOrder = mainState.COLUMN_ORDER;
-      mainState.COLUMN_ORDER = null;
-      if (columnOrder != null && !columnOrder.isEmpty()) {
-        myAppSettings.migrateColumnOrder(columnOrder);
-      }
+    // migration from the old toolwindow-only tabs
+    for (String tab : myState.OPEN_TABS) {
+      myState.OPEN_GENERIC_TABS.put(tab, VcsLogManager.LogWindowKind.TOOL_WINDOW);
     }
+    myState.OPEN_TABS.clear();
   }
 
   @Override
@@ -54,12 +51,12 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
     return new MyVcsLogUiPropertiesImpl(id);
   }
 
-  public void addTab(@NotNull String tabId) {
-    myState.OPEN_TABS.add(tabId);
+  public void addTab(@NotNull String tabId, @NotNull VcsLogManager.LogWindowKind kind) {
+    myState.OPEN_GENERIC_TABS.put(tabId, kind);
   }
 
   public void removeTab(@NotNull String tabId) {
-    myState.OPEN_TABS.remove(tabId);
+    myState.OPEN_GENERIC_TABS.remove(tabId);
   }
 
   public void resetState(@NotNull String tabId) {
@@ -67,8 +64,8 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   }
 
   @NotNull
-  public List<String> getTabs() {
-    return new ArrayList<>(myState.OPEN_TABS);
+  public Map<String, VcsLogManager.LogWindowKind> getTabs() {
+    return myState.OPEN_GENERIC_TABS;
   }
 
   public static void addRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField,
@@ -98,7 +95,9 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
 
   public static class State {
     public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = new TreeMap<>();
+    @Deprecated
     public LinkedHashSet<String> OPEN_TABS = new LinkedHashSet<>();
+    public LinkedHashMap<String, VcsLogManager.LogWindowKind> OPEN_GENERIC_TABS = new LinkedHashMap<>();
     public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
   }
 

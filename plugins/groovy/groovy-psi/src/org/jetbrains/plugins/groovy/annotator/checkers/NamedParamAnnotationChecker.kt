@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator.checkers
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GROOVY_TRANSFORM_NAMED_PARAM
@@ -10,8 +11,11 @@ class NamedParamAnnotationChecker : CustomAnnotationChecker() {
   override fun checkArgumentList(holder: AnnotationHolder, annotation: GrAnnotation): Boolean {
     if (GROOVY_TRANSFORM_NAMED_PARAM != annotation.qualifiedName) return false
     val annotationClass = ResolveUtil.resolveAnnotation(annotation) ?: return false
-    CustomAnnotationChecker.checkAnnotationArguments(holder, annotationClass, annotation.classReference,
-                                                     annotation.parameterList.attributes, false)
+    val r = checkAnnotationArguments(annotationClass, annotation.classReference,
+                                     annotation.parameterList.attributes, false)
+    if (r?.getFirst() != null) {
+      holder.newAnnotation(HighlightSeverity.ERROR, r.second).range(r.first).create()
+    }
 
     return true
   }

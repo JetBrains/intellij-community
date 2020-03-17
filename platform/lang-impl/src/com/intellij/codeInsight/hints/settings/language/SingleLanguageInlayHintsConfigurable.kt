@@ -35,11 +35,7 @@ class SingleLanguageInlayHintsConfigurable(project: Project, val language: Langu
   }
 
   override fun getId(): String {
-    return "inlay.hints." + language.id
-  }
-
-  override fun getHelpTopic(): String {
-    return getHelpTopic(language)
+    return getId(language)
   }
 
   companion object {
@@ -50,8 +46,8 @@ class SingleLanguageInlayHintsConfigurable(project: Project, val language: Langu
     }
 
     @JvmStatic
-    fun getHelpTopic(language: Language): String {
-      return "settings.inlayhints." + language.id
+    fun getId(language: Language): String {
+      return "inlay.hints." + language.id
     }
   }
 

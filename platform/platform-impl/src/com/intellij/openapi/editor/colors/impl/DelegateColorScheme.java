@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.FontSize;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,16 +97,6 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   @Override
   public void setEditorFontSize(int fontSize) {
     myDelegate.setEditorFontSize(fontSize);
-  }
-
-  @Override
-  public FontSize getQuickDocFontSize() {
-    return myDelegate.getQuickDocFontSize();
-  }
-
-  @Override
-  public void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    myDelegate.setQuickDocFontSize(fontSize);
   }
 
   @Override
@@ -201,5 +190,11 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   @Override
   public Properties getMetaProperties()  {
     return myDelegate.getMetaProperties();
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return myDelegate.getDisplayName();
   }
 }

@@ -25,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 class ExecuteJShellAction extends AnAction{
-  private static final AnAction ourInstance = new ExecuteJShellAction();
+  private static class Holder {
+    private static final AnAction ourInstance = new ExecuteJShellAction();
+  }
   private static final boolean myIsExecuteContextElement = false;
 
   private ExecuteJShellAction() {
@@ -140,6 +142,6 @@ class ExecuteJShellAction extends AnAction{
   }
 
   public static AnAction getSharedInstance() {
-    return ourInstance;
+    return Holder.ourInstance;
   }
 }

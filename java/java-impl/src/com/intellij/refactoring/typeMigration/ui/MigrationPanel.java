@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -154,7 +153,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     performButton.addActionListener(new ActionListener() {
       private void expandTree(MigrationNode migrationNode) {
         if (!migrationNode.getInfo().isExcluded() || migrationNode.areChildrenInitialized()) { //do not walk into excluded collapsed nodes: nothing to migrate can be found
-          final Collection<? extends AbstractTreeNode> nodes = migrationNode.getChildren();
+          final Collection<? extends AbstractTreeNode<?>> nodes = migrationNode.getChildren();
           for (final AbstractTreeNode node : nodes) {
             ApplicationManager.getApplication().runReadAction(() -> expandTree((MigrationNode)node));
           }
@@ -170,7 +169,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
               final HashSet<VirtualFile> files = new HashSet<>();
               final TypeMigrationUsageInfo[] usages = ReadAction.compute(() -> {
-                  final Collection<? extends AbstractTreeNode> children = ((MigrationRootNode)userObject).getChildren();
+                  final Collection<? extends AbstractTreeNode<?>> children = ((MigrationRootNode)userObject).getChildren();
                   for (AbstractTreeNode child : children) {
                     expandTree((MigrationNode)child);
                   }
@@ -214,12 +213,10 @@ public class MigrationPanel extends JPanel implements Disposable {
     rerunButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-          UsageViewContentManager.getInstance(myProject).closeContent(myContent);
-          final TypeMigrationDialog.MultipleElements dialog =
-            new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
-          dialog.show();
-        });
+        UsageViewContentManager.getInstance(myProject).closeContent(myContent);
+        final TypeMigrationDialog.MultipleElements dialog =
+          new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
+        dialog.show();
       }
     });
     panel.add(rerunButton, gc);
@@ -307,7 +304,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     private static void collectInfos(final Set<? super TypeMigrationUsageInfo> usageInfos, final MigrationNode currentNode) {
       usageInfos.add(currentNode.getInfo());
       if (!currentNode.areChildrenInitialized()) return;
-      final Collection<? extends AbstractTreeNode> nodes = currentNode.getChildren();
+      final Collection<? extends AbstractTreeNode<?>> nodes = currentNode.getChildren();
       for (AbstractTreeNode node : nodes) {
         collectInfos(usageInfos, (MigrationNode)node);
       }

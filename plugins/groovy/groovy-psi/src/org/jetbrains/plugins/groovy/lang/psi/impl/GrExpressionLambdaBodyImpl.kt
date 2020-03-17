@@ -22,7 +22,7 @@ class GrExpressionLambdaBodyImpl(node: ASTNode) : GroovyPsiElementImpl(node), Gr
 
   override fun toString(): String = "Lambda body"
 
-  override fun getControlFlow(): Array<Instruction> = ControlFlowBuilder(project).buildControlFlow(this)
+  override fun getControlFlow(): Array<Instruction> = ControlFlowBuilder().buildControlFlow(this)
 
   override fun isTopControlFlowOwner(): Boolean = true
 }

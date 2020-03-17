@@ -15,9 +15,7 @@
  */
 package com.intellij.java.navigation
 
-import com.intellij.ide.util.gotoByName.ChooseByNamePopup
-import com.intellij.ide.util.gotoByName.GotoClassModel2
-import com.intellij.ide.util.gotoByName.GotoFileModel
+
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -37,16 +35,12 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     def vFile = psiFile.virtualFile
     def path = vFile.path
 
-    def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), (PsiElement)null)
-    try {
-      assert ChooseByNameTest.calcPopupElements(popup, path) == [psiFile]
-      assert ChooseByNameTest.calcPopupElements(popup, FileUtil.toSystemDependentName(path)) == [psiFile]
-      assert ChooseByNameTest.calcPopupElements(popup, vFile.parent.path) == [psiFile.containingDirectory]
-      assert ChooseByNameTest.calcPopupElements(popup, path + ':0') == [psiFile]
-    }
-    finally {
-      popup.close(false)
-    }
+    def contributor = ChooseByNameTest.createFileContributor(project)
+
+    assert ChooseByNameTest.calcContributorElements(contributor, path) == [psiFile]
+    assert ChooseByNameTest.calcContributorElements(contributor, FileUtil.toSystemDependentName(path)) == [psiFile]
+    assert ChooseByNameTest.calcContributorElements(contributor, vFile.parent.path) == [psiFile.containingDirectory]
+    assert ChooseByNameTest.calcContributorElements(contributor, path + ':0') == [psiFile]
   }
 
   void "test prefer same-named classes visible in current module"() {
@@ -57,33 +51,24 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     ModuleRootModificationUtil.addDependency(myFixture.module, modules[2])
     (0..moduleCount-1).each { myFixture.addFileToProject("mod$it/Foo.java", "class Foo {}") }
 
-    def place = myFixture.addClass("class A {}")
-    def popup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), place)
-    try {
-      def resultModules = ChooseByNameTest.calcPopupElements(popup, 'Foo').collect {
-        ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name
-      }
-      assert resultModules[0] == 'mod2'
+    def place = myFixture.addClass("class A {}").containingFile
+    def contributor = ChooseByNameTest.createFileContributor(project, place)
+    def resultModules = ChooseByNameTest.calcContributorElements(contributor, 'Foo').collect {
+      ModuleUtilCore.findModuleForPsiElement(it as PsiElement).name
     }
-    finally {
-      popup.close(false)
-    }
+    assert resultModules[0] == 'mod2'
   }
 
   void "test paths relative to topmost module"() {
     PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm1', myFixture.tempDirFixture.findOrCreateDir("foo"))
     PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'm2', myFixture.tempDirFixture.findOrCreateDir("foo/bar"))
     def file = myFixture.addFileToProject('foo/bar/goo/doo.txt', '')
-    def popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), file)
-    try {
-      assert ChooseByNameTest.calcPopupElements(popup, "doo", false) == [file]
-      assert ChooseByNameTest.calcPopupElements(popup, "goo/doo", false) == [file]
-      assert ChooseByNameTest.calcPopupElements(popup, "bar/goo/doo", false) == [file]
-      assert ChooseByNameTest.calcPopupElements(popup, "foo/bar/goo/doo", false) == [file]
-    }
-    finally {
-      popup.close(false)
-    }
+    def contributor = ChooseByNameTest.createFileContributor(project, file)
+    assert ChooseByNameTest.calcContributorElements(contributor, "doo") == [file]
+    assert ChooseByNameTest.calcContributorElements(contributor, "goo/doo") == [file]
+    assert ChooseByNameTest.calcContributorElements(contributor, "bar/goo/doo") == [file]
+    assert ChooseByNameTest.calcContributorElements(contributor, "foo/bar/goo/doo") == [file]
   }
+
 
 }

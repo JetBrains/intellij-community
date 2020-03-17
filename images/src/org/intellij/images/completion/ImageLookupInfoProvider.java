@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class ImageLookupInfoProvider extends FileLookupInfoProvider {
-
   @Override
   public Couple<String> getLookupInfo(@NotNull VirtualFile file, Project project) {
     final String[] s = new String[] {null};

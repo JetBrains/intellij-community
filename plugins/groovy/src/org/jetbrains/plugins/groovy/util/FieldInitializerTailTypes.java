@@ -26,7 +26,7 @@ public class FieldInitializerTailTypes extends TailType {
 
   @Override
   public int processTail(Editor editor, int tailOffset) {
-    CommonCodeStyleSettings styleSettings = CommaTailType.getLocalCodeStyleSettings(editor, tailOffset);
+    CommonCodeStyleSettings styleSettings = CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset);
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
     int textLength = chars.length();

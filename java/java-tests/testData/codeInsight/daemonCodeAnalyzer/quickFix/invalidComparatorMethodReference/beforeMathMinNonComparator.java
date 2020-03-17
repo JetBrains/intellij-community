@@ -1,4 +1,4 @@
-// "Replace with Comparator.reverseOrder()" "false"
+// "Replace with 'Comparator.reverseOrder()'" "false"
 import java.util.function.IntBinaryOperator;
 
 public class Main {

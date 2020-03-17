@@ -18,7 +18,7 @@ import java.util.Arrays;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPerTarget;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
-import static org.jetbrains.jps.incremental.storage.Md5HashingService.*;
+import static org.jetbrains.jps.incremental.storage.MurmurHashingService.*;
 
 public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements TimestampStorage<FileStamp> {
   private final FileTimestampStorage myTimestampStorage;
@@ -27,8 +27,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
   private final File myFileStampRoot;
 
   public FileStampStorage(File dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), ProjectStamps.PORTABLE_CACHES ? new PortablePathStringDescriptor() : new PathStringDescriptor(),
-          new StateExternalizer());
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), PathStringDescriptor.INSTANCE, new StateExternalizer());
     myTimestampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
     myFileStampRoot = calcStorageRoot(dataStorageRoot);
     myRelativizer = relativizer;

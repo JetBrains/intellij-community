@@ -93,11 +93,12 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     // preserve \r\n as it is done in MultiHostRegistrarImpl
     myNewFile = factory.createFileFromText(newFileName, language, text, true, false);
     myNewVirtualFile = ObjectUtils.assertNotNull((LightVirtualFile)myNewFile.getVirtualFile());
-    myNewVirtualFile.setOriginalFile(injectedFile.getVirtualFile());
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
 
     assert myNewFile != null : "PSI file is null";
     assert myNewFile.getTextLength() == myNewVirtualFile.getContent().length() : "PSI / Virtual file text mismatch";
 
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));

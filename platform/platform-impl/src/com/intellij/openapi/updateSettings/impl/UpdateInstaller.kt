@@ -76,11 +76,11 @@ object UpdateInstaller {
 
     UpdateChecker.saveDisabledToUpdatePlugins()
 
-    val disabledToUpdate = UpdateChecker.disabledToUpdatePlugins
+    val disabledToUpdate = UpdateChecker.disabledToUpdate
     val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {
-        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
+        if (downloader.id !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
           readyToInstall += downloader
         }
         indicator.checkCanceled()

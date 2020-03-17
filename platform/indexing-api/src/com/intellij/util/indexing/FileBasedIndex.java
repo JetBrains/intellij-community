@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,12 @@ public abstract class FileBasedIndex {
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public DumbModeAccessType getCurrentDumbModeAccessType() {
+    throw new UnsupportedOperationException();
+  }
+
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
   public abstract void removeIndexableSet(@NotNull IndexableFileSet set);
@@ -57,7 +64,10 @@ public abstract class FileBasedIndex {
     throw new IllegalArgumentException("Virtual file doesn't support id: " + file + ", implementation class: " + file.getClass().getName());
   }
 
-  // note: upsource implementation requires access to Project here, please don't remove
+  /**
+   * @deprecated see {@link ManagingFS#findFileById(int)}
+   */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
+  @Deprecated
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
@@ -126,6 +136,14 @@ public abstract class FileBasedIndex {
                                                  @NotNull Processor<? super VirtualFile> processor,
                                                  @NotNull GlobalSearchScope filter);
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void ignoreDumbMode(@NotNull Runnable runnable,
+                             @NotNull Project project,
+                             @NotNull DumbModeAccessType dumbModeAccessType) {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * It is guaranteed to return data which is up-to-date within the given project.
    */
@@ -160,7 +178,6 @@ public abstract class FileBasedIndex {
             if(!acceptsFile(canonicalFile)) return false;
           }
         }
-        if (indicator != null) indicator.checkCanceled();
 
         processor.processFile(file);
         return true;
@@ -204,4 +221,14 @@ public abstract class FileBasedIndex {
   /** @deprecated inline true */
   @Deprecated
   public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
+
+  // TODO we should rebuild index automatically if this option is changed
+  @ApiStatus.Internal
+  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+
+  @ApiStatus.Internal
+  public static boolean isIndexAccessDuringDumbModeEnabled() {
+    return !ourDisableIndexAccessDuringDumbMode;
+  }
+  private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
 }

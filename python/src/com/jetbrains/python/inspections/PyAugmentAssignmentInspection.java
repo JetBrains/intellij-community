@@ -58,13 +58,6 @@ public class PyAugmentAssignmentInspection extends PyInspection {
   @NotNull
   private static final List<String> SEQUENCE_METHODS = Arrays.asList(PyNames.LEN, PyNames.ITER, PyNames.GETITEM, PyNames.CONTAINS);
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.augment.assignment");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
@@ -156,7 +149,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         return SEQUENCE_METHODS.stream().anyMatch(attributeNames::contains);
       }
 
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
 
       return !SEQUENCE_METHODS
         .stream()

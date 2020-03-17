@@ -38,7 +38,7 @@ public class InstallPluginInfo {
 
   public synchronized void toBackground(@Nullable StatusBarEx statusBar) {
     myPluginModel = null;
-    indicator.removeStateDelegate(null);
+    indicator.removeStateDelegates();
     if (statusBar != null) {
       String title = (install ? "Installing plugin " : "Update plugin ") + myDescriptor.getName();
       statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task(title));
@@ -54,7 +54,7 @@ public class InstallPluginInfo {
     if (myPluginModel == null) {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
-      if (success && restartRequired) {
+      if (success && !cancel && restartRequired) {
         ApplicationManager.getApplication().invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp());
       }
     }

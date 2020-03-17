@@ -17,7 +17,7 @@ public class XPathCharFilter extends CharFilter {
       // could be an XML file during XML autocompletion
 
       final LookupElement item = lookup.getCurrentItem();
-      if (item == null || !(item.getObject() instanceof org.intellij.lang.xpath.completion.Lookup)) {
+      if (!(item instanceof AbstractLookup)) {
         // current completion item isn't something XPath related, continue with other handlers
         return null;
       }

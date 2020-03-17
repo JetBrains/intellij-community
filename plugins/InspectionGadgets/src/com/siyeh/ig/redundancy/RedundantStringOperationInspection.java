@@ -4,6 +4,7 @@ package com.siyeh.ig.redundancy;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -20,15 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
-import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public class RedundantStringOperationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   enum FixType {
@@ -36,25 +38,31 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     REPLACE_WITH_ARGUMENTS
   }
 
-  private static final CallMatcher STRING_TO_STRING = instanceCall(JAVA_LANG_STRING, "toString").parameterCount(0);
-  private static final CallMatcher STRING_INTERN = instanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
-  private static final CallMatcher STRING_LENGTH = instanceCall(JAVA_LANG_STRING, "length").parameterCount(0);
-  private static final CallMatcher STRING_SUBSTRING = anyOf(
-    instanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int"),
-    instanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int", "int"));
+  private static final CallMatcher STRING_TO_STRING = exactInstanceCall(JAVA_LANG_STRING, "toString").parameterCount(0);
+  private static final CallMatcher STRING_INTERN = exactInstanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
+  private static final CallMatcher STRING_LENGTH = exactInstanceCall(JAVA_LANG_STRING, "length").parameterCount(0);
+  private static final CallMatcher STRING_SUBSTRING_ONE_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int");
+  private static final CallMatcher STRING_SUBSTRING_TWO_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int", "int");
+  private static final CallMatcher STRING_SUBSTRING = anyOf(STRING_SUBSTRING_ONE_ARG, STRING_SUBSTRING_TWO_ARG);
   private static final CallMatcher STRING_BUILDER_APPEND =
     instanceCall(CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher PRINTSTREAM_PRINTLN = instanceCall("java.io.PrintStream", "println")
     .parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER =
-    instanceCall(JAVA_LANG_STRING, "indexOf", "startsWith").parameterCount(2);
-  private static final CallMatcher STRING_LAST_INDEX_OF = instanceCall(JAVA_LANG_STRING, "lastIndexOf").parameterCount(2);
+    exactInstanceCall(JAVA_LANG_STRING, "indexOf", "startsWith").parameterCount(2);
+  private static final CallMatcher STRING_LAST_INDEX_OF = exactInstanceCall(JAVA_LANG_STRING, "lastIndexOf").parameterCount(2);
+  private static final CallMatcher STRING_IS_EMPTY = exactInstanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
+  private static final CallMatcher CASE_CHANGE = exactInstanceCall(JAVA_LANG_STRING, "toUpperCase", "toLowerCase");
+  private static final CallMatcher STRING_EQUALS = exactInstanceCall(JAVA_LANG_STRING, "equals").parameterTypes(JAVA_LANG_OBJECT);
 
-  @Nls
-  @NotNull
+  public boolean ignoreStringConstructor = false;
+
+  @Nullable
   @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("inspection.redundant.string.operation.display.name");
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(
+      InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), this,
+      "ignoreStringConstructor");
   }
 
   @NotNull
@@ -66,7 +74,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new RedundantStringOperationVisitor(holder, isOnTheFly);
+    return new RedundantStringOperationVisitor(holder, isOnTheFly, this);
   }
 
   private static class RedundantStringOperationVisitor extends JavaElementVisitor {
@@ -77,14 +85,18 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_INTERN, this::getInternProblem)
       .register(PRINTSTREAM_PRINTLN, call -> getRedundantArgumentProblem(getSingleEmptyStringArgument(call)))
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
-      .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem);
+      .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem)
+      .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
+      .register(STRING_EQUALS, this::getRedundantSubstringEqualsProblem);
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
+    private final RedundantStringOperationInspection myInspection;
 
-    RedundantStringOperationVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    RedundantStringOperationVisitor(ProblemsHolder holder, boolean isOnTheFly, RedundantStringOperationInspection inspection) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
+      myInspection = inspection;
       myManager = myHolder.getManager();
     }
 
@@ -102,7 +114,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (ConstructionUtils.isReferenceTo(classRef, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
         descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression));
       }
-      else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING)) {
+      else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING) && !myInspection.ignoreStringConstructor) {
         descriptor = getStringConstructorProblem(expression);
       }
       if (descriptor != null) {
@@ -114,21 +126,92 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       PsiExpressionList args = expression.getArgumentList();
       if (args == null) return null;
       if (args.isEmpty()) {
-        return myManager.createProblemDescriptor(expression, InspectionGadgetsBundle.message(
-          "inspection.redundant.string.constructor.message"),
-                                                 new StringConstructorFix(true),
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
+        LocalQuickFix[] fixes = {
+          new StringConstructorFix(true),
+          new SetInspectionOptionFix(
+            myInspection, "ignoreStringConstructor",
+            InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
+        return myManager.createProblemDescriptor(expression, (TextRange)null, 
+                                                 InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);
       }
       if (args.getExpressionCount() == 1) {
         PsiExpression arg = args.getExpressions()[0];
         if (TypeUtils.isJavaLangString(arg.getType()) &&
             (PsiUtil.isLanguageLevel7OrHigher(expression) || !STRING_SUBSTRING.matches(arg))) {
           TextRange range = new TextRange(0, args.getStartOffsetInParent());
+          LocalQuickFix[] fixes = {
+            new StringConstructorFix(false),
+            new SetInspectionOptionFix(
+              myInspection, "ignoreStringConstructor",
+              InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
           return myManager.createProblemDescriptor(expression, range,
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
-                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
-                                                   new StringConstructorFix(false));
+                                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly, fixes);
         }
+      }
+      return null;
+    }
+
+    private ProblemDescriptor getRedundantSubstringEqualsProblem(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (qualifierCall == null) return null;
+      PsiExpression receiver = qualifierCall.getMethodExpression().getQualifierExpression();
+      if (receiver == null) return null;
+      if (STRING_SUBSTRING_TWO_ARG.test(qualifierCall)) {
+        PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
+        PsiExpression[] args = qualifierCall.getArgumentList().getExpressions();
+        boolean lengthMatches = lengthMatches(equalTo, args[0], args[1]);
+        if (lengthMatches) {
+          PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+          if (anchor != null) {
+            return myManager.createProblemDescriptor(anchor, (TextRange)null,
+                                                     InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                                     new RemoveRedundantSubstringFix("startsWith"));
+          }
+        }
+      } 
+      if (STRING_SUBSTRING_ONE_ARG.test(qualifierCall)) {
+        PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
+        PsiExpression from = qualifierCall.getArgumentList().getExpressions()[0];
+        PsiExpression to = getLengthExpression(receiver, JavaPsiFacade.getElementFactory(myHolder.getProject()));
+        boolean lengthMatches = lengthMatches(equalTo, from, to);
+        if (lengthMatches) {
+          PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
+          if (anchor != null) {
+            return myManager.createProblemDescriptor(anchor, (TextRange)null,
+                                                     InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly,
+                                                     new RemoveRedundantSubstringFix("endsWith"));
+          }
+        }
+      } 
+      return null;
+    }
+
+    private boolean lengthMatches(PsiExpression equalTo, PsiExpression from, PsiExpression to) {
+      String str = tryCast(ExpressionUtils.computeConstantExpression(equalTo), String.class);
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myHolder.getProject());
+      if (str != null) {
+        PsiExpression lengthExpression =
+          factory.createExpressionFromText(String.valueOf(str.length()), equalTo);
+        if (ExpressionUtils.isDifference(from, to, lengthExpression)) return true;
+      }
+      PsiExpression lengthExpression = getLengthExpression(equalTo, factory);
+      return ExpressionUtils.isDifference(from, to, lengthExpression);
+    }
+
+    private static PsiExpression getLengthExpression(PsiExpression string, PsiElementFactory factory) {
+      return factory
+            .createExpressionFromText(ParenthesesUtils.getText(string, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".length()", string);
+    }
+
+    @Nullable
+    private ProblemDescriptor getRedundantCaseChangeProblem(PsiMethodCallExpression call) {
+      PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+      if (CASE_CHANGE.test(qualifierCall)) {
+        return getProblem(qualifierCall, "inspection.redundant.string.call.message");
       }
       return null;
     }
@@ -248,6 +331,46 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           callRange.getStartOffset());
       }
       return call.getTextRange();
+    }
+  }
+
+  private static class RemoveRedundantSubstringFix implements LocalQuickFix {
+    private final @NotNull String myBindCallName;
+    
+    RemoveRedundantSubstringFix(@NotNull String bindCallName) {
+      myBindCallName = bindCallName;
+    }
+    
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return "Use '" + myBindCallName + "' and remove redundant 'substring()' call";
+    }
+    
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove redundant 'substring()' call";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (substringCall == null) return;
+      PsiExpression stringExpr = substringCall.getMethodExpression().getQualifierExpression();
+      if (stringExpr == null) return;
+      PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(substringCall);
+      if (nextCall == null) return;
+      PsiExpression[] args = substringCall.getArgumentList().getExpressions();
+      if (args.length == 0) return;
+      CommentTracker ct = new CommentTracker();
+      if (!"endsWith".equals(myBindCallName) && !ExpressionUtils.isZero(args[0])) {
+        nextCall.getArgumentList().add(ct.markUnchanged(args[0]));
+      }
+      ExpressionUtils.bindCallTo(nextCall, myBindCallName);
+      ct.replaceAndRestoreComments(substringCall, stringExpr);
     }
   }
 

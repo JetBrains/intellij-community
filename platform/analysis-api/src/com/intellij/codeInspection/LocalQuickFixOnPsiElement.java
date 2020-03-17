@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.LocalQuickFixAndIntentionAction");
+  protected static final Logger LOG = Logger.getInstance(LocalQuickFixOnPsiElement.class);
   protected final SmartPsiElementPointer<PsiElement> myStartElement;
   protected final SmartPsiElementPointer<PsiElement> myEndElement;
 

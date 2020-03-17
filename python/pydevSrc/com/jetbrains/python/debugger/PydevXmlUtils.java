@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class PydevXmlUtils {
 
-  static SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+  private static final SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 
   private PydevXmlUtils() {
   }

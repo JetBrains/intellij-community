@@ -141,7 +141,7 @@ public class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassH
     if (element instanceof PsiVariable) {
       String name = ((PsiVariable)element).getName();
       if (myShadowedNames.contains(name)) return true;
-      if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+      if (PsiUtil.isJvmLocalVariable(element)) {
         myShadowedNames.add(name);
       }
     }

@@ -21,12 +21,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class NegatedEqualityExpressionInspection extends BaseInspection {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("negated.equality.expression.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

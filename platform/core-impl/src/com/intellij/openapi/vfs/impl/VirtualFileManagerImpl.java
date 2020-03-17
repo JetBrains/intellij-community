@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
+  protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
   // do not use extension point name to avoid map lookup on each event publishing
   private static final ExtensionPointImpl<VirtualFileManagerListener>

@@ -17,7 +17,7 @@ public final class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvide
   private final Icon myIcon;
   private final String myToolWindowId;
 
-  ToolWindowIcon(@NotNull Icon icon, String toolWindowId) {
+  ToolWindowIcon(@NotNull Icon icon, @NotNull String toolWindowId) {
     myIcon = icon;
     myToolWindowId = toolWindowId;
   }
@@ -30,7 +30,9 @@ public final class ToolWindowIcon implements RetrievableIcon, MenuBarIconProvide
 
   @NotNull
   @Override
-  public Icon getMenuBarIcon(boolean isDark) { return new ToolWindowIcon(IconLoader.getMenuBarIcon(myIcon, isDark), myToolWindowId); }
+  public Icon getMenuBarIcon(boolean isDark) {
+    return new ToolWindowIcon(IconLoader.getMenuBarIcon(myIcon, isDark), myToolWindowId);
+  }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {

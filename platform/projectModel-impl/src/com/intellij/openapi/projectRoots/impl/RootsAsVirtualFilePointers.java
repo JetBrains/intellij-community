@@ -25,7 +25,7 @@ import java.util.Map;
  * @author mike
  */
 public class RootsAsVirtualFilePointers implements RootProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootContainerImpl");
+  private static final Logger LOG = Logger.getInstance(RootsAsVirtualFilePointers.class);
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new THashMap<>();
 
   private final boolean myNoCopyJars;

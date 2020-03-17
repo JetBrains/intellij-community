@@ -124,6 +124,16 @@ public abstract class JavaDirectoryService {
   public abstract PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
 
   /**
+   * Creates a record class with the specified name in the directory.
+   *
+   * @param name the name of the record class to create (not including the file extension).
+   * @return the created record instance.
+   * @throws IncorrectOperationException if the operation failed for some reason.
+   */
+  @NotNull
+  public abstract PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
+
+  /**
    * Creates an annotation class with the specified name in the directory.
    *
    * @param name the name of the annotation class to create (not including the file extension).

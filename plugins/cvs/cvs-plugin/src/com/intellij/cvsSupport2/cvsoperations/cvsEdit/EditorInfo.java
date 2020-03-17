@@ -15,7 +15,7 @@ import java.util.TimeZone;
  */
 public class EditorInfo {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo");
+  private static final Logger LOG = Logger.getInstance(EditorInfo.class);
 
   public final static SyncDateFormat DATE_FORMAT;
   public final static SyncDateFormat DATE_FORMAT1;

@@ -15,26 +15,23 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.containers.ContainerUtil;
-import kotlin.collections.ArraysKt;
-import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class VMOptionsTest {
+  private static final Logger LOG = Logger.getInstance(VMOptionsTest.class);
   @Rule public TempDirectory myTempDir = new TempDirectory();
 
   private File myFile;
@@ -191,7 +188,7 @@ public class VMOptionsTest {
     VMOptions.writeEnableCDSArchiveOption(myCDSFile);
 
     String text = FileUtil.loadFile(myFile);
-    System.out.println(text);
+    LOG.debug(text);
 
     assertEquals("-someOption\n" +
                  "-Xmx512m\n" +
@@ -212,7 +209,7 @@ public class VMOptionsTest {
     VMOptions.writeEnableCDSArchiveOption(myCDSFile);
 
     String text = FileUtil.loadFile(myFile);
-    System.out.println(text);
+    LOG.debug(text);
     assertEquals("-someOption\n" +
                  "-Xmx512m\n" +
                  "-XX:MaxMetaspaceSize=128m\n" +

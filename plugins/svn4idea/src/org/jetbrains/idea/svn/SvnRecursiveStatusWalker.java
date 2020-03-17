@@ -33,7 +33,7 @@ import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class SvnRecursiveStatusWalker {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
+  private static final Logger LOG = Logger.getInstance(SvnRecursiveStatusWalker.class);
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Project myProject;
@@ -169,7 +169,7 @@ public class SvnRecursiveStatusWalker {
     Depth newDepth = Depth.INFINITY.equals(prevDepth) ? Depth.INFINITY : Depth.EMPTY;
     VirtualFileVisitor.Option[] options = newDepth.equals(Depth.EMPTY) ? ar(SKIP_ROOT, ONE_LEVEL_DEEP) : new VirtualFileVisitor.Option[0];
 
-    visitChildrenRecursively(vFile, new VirtualFileVisitor(options) {
+    visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>(options) {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {

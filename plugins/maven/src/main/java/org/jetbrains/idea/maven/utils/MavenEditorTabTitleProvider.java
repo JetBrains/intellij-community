@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,8 +27,6 @@ public class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
   public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     if (!projectsManager.isMavenizedProject()) return null;
-
-    if (!UniqueVFilePathBuilder.getInstance().hasFilesWithSameName(project, file)) return null;
 
     MavenProject mavenProject = projectsManager.findProject(file);
     if (mavenProject != null) {

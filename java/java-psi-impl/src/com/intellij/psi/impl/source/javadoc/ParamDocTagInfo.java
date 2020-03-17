@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.JavadocTagInfo;
@@ -44,16 +44,16 @@ class ParamDocTagInfo implements JavadocTagInfo {
 
   @Override
   public String checkTagValue(PsiDocTagValue value) {
-    if (value == null) return JavaErrorMessages.message("javadoc.param.tag.parameter.name.expected");
+    if (value == null) return JavaErrorBundle.message("javadoc.param.tag.parameter.name.expected");
     final ASTNode firstChildNode = value.getNode().getFirstChildNode();
     if (firstChildNode != null &&
         firstChildNode.getElementType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
       if (value.getNode().findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN) == null) {
-        return JavaErrorMessages.message("javadoc.param.tag.type.parameter.name.expected");
+        return JavaErrorBundle.message("javadoc.param.tag.type.parameter.name.expected");
       }
 
       if (value.getNode().findChildByType(JavaDocTokenType.DOC_TAG_VALUE_GT) == null) {
-        return JavaErrorMessages.message("javadoc.param.tag.type.parameter.gt.expected");
+        return JavaErrorBundle.message("javadoc.param.tag.type.parameter.gt.expected");
       }
     }
     return null;

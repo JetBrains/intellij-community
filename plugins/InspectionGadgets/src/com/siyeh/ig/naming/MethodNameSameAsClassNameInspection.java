@@ -57,13 +57,6 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.name.same.as.class.name.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.name.same.as.class.name.problem.descriptor");

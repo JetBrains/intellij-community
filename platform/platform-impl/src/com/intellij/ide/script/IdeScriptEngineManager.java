@@ -2,7 +2,7 @@
 package com.intellij.ide.script;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public abstract class IdeScriptEngineManager {
     public final String languageVersion;
     public final List<String> fileExtensions;
     public final String factoryClass;
-    public final PluginId pluginId;
+    public final PluginDescriptor plugin;
 
     EngineInfo(@NotNull String engineName,
                @Nullable String engineVersion,
@@ -42,14 +42,14 @@ public abstract class IdeScriptEngineManager {
                @Nullable String languageVersion,
                @NotNull List<String> fileExtensions,
                @NotNull String factoryClass,
-               @Nullable PluginId pluginId) {
+               @Nullable PluginDescriptor plugin) {
       this.engineName = engineName;
       this.engineVersion = engineVersion;
       this.languageName = languageName;
       this.languageVersion = languageVersion;
       this.fileExtensions = fileExtensions;
       this.factoryClass = factoryClass;
-      this.pluginId = pluginId;
+      this.plugin = plugin;
     }
   }
 }

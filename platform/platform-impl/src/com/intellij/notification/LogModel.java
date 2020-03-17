@@ -2,10 +2,8 @@
 package com.intellij.notification;
 
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.ObjectUtils;
@@ -14,7 +12,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -25,7 +22,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public final class LogModel implements Disposable {
+public final class LogModel  {
   public static final Topic<Runnable> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", Runnable.class, Topic.BroadcastDirection.NONE);
 
   private final List<Notification> myNotifications = new ArrayList<>();
@@ -34,9 +31,8 @@ public final class LogModel implements Disposable {
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<>();
 
-  LogModel(@Nullable Project project, @NotNull Disposable parentDisposable) {
+  LogModel(@Nullable Project project) {
     myProject = project;
-    Disposer.register(parentDisposable, this);
   }
 
   void addNotification(Notification notification) {
@@ -129,9 +125,5 @@ public final class LogModel implements Disposable {
 
   public Project getProject() {
     return myProject;
-  }
-
-  @Override
-  public void dispose() {
   }
 }

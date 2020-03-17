@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/src/main/compatibilityResources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
@@ -27,7 +26,7 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" scope="PROVIDED" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
@@ -80,6 +79,9 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.core" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
+    <orderEntry type="module" module-name="intellij.repository.search" />
   </component>
   <component name="copyright">
     <Base>

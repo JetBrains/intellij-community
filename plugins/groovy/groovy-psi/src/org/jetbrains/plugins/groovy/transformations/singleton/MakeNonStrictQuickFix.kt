@@ -21,10 +21,9 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.transformations.message
+import org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle.message
 
 internal class MakeNonStrictQuickFix : LocalQuickFix {
-
   @Nls
   override fun getFamilyName() = message("singleton.constructor.makeNonStrict")
 

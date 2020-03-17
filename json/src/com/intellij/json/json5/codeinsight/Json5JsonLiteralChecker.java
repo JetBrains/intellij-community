@@ -47,6 +47,6 @@ public class Json5JsonLiteralChecker implements JsonLiteralChecker {
 
   @Override
   public boolean isApplicable(PsiElement element) {
-    return JsonDialectUtil.getLanguage(element) == Json5Language.INSTANCE;
+    return JsonDialectUtil.getLanguageOrDefaultJson(element) == Json5Language.INSTANCE;
   }
 }

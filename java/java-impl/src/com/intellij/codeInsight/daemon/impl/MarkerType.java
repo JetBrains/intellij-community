@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -353,11 +354,32 @@ public class MarkerType {
     PsiElementListNavigator.openTargets(e, inheritors.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
-  private static class SubclassUpdater extends BackgroundUpdaterTask {
+  private static abstract class OverridingMembersUpdater extends BackgroundUpdaterTask {
+    private OverridingMembersUpdater(@Nullable Project project,
+                                     @NotNull String title,
+                                     @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+      super(project, title, createComparatorWrapper((Comparator)renderer.getComparator()));
+    }
+
+    protected void collectFunctionalInheritors(@NotNull ProgressIndicator indicator, PsiClass psiClass) {
+      FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
+        @Override
+        public boolean process(final PsiFunctionalExpression expr) {
+          if (!updateComponent(expr)) {
+            indicator.cancel();
+          }
+          ProgressManager.checkCanceled();
+          return super.process(expr);
+        }
+      });
+    }
+  }
+
+  private static class SubclassUpdater extends OverridingMembersUpdater {
     private final PsiClass myClass;
 
     private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
-      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper((Comparator)renderer.getComparator()));
+      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, renderer);
       myClass = aClass;
     }
 
@@ -393,24 +415,15 @@ public class MarkerType {
         }
       });
 
-      FunctionalExpressionSearch.search(myClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
-        @Override
-        public boolean process(final PsiFunctionalExpression expr) {
-          if (!updateComponent(expr)) {
-            indicator.cancel();
-          }
-          ProgressManager.checkCanceled();
-          return super.process(expr);
-        }
-      });
+      collectFunctionalInheritors(indicator, myClass);
     }
   }
 
-  private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {
+  private static class OverridingMethodsUpdater extends OverridingMembersUpdater {
     private final PsiMethod myMethod;
 
-    private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer renderer) {
-      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
+    private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
+      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, renderer);
       myMethod = method;
     }
 
@@ -447,17 +460,7 @@ public class MarkerType {
           }
         });
       if (ReadAction.compute(() -> myMethod.hasModifierProperty(PsiModifier.ABSTRACT))) {
-        PsiClass psiClass = ReadAction.compute(myMethod::getContainingClass);
-        FunctionalExpressionSearch.search(psiClass).forEach(new CommonProcessors.CollectProcessor<PsiFunctionalExpression>() {
-          @Override
-          public boolean process(final PsiFunctionalExpression expr) {
-            if (!updateComponent(expr)) {
-              indicator.cancel();
-            }
-            ProgressManager.checkCanceled();
-            return super.process(expr);
-          }
-        });
+        collectFunctionalInheritors(indicator, ReadAction.compute(myMethod::getContainingClass));
       }
     }
   }

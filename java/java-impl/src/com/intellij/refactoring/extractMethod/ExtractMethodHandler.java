@@ -60,9 +60,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class ExtractMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
-
-  public static final String REFACTORING_NAME = RefactoringBundle.message("extract.method.title");
+  private static final Logger LOG = Logger.getInstance(ExtractMethodHandler.class);
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
@@ -184,7 +182,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   public static void extractMethod(@NotNull Project project, @NotNull ExtractMethodProcessor processor) {
     CommandProcessor.getInstance().executeCommand(project,
                                                   () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
-                                                    () -> doRefactoring(project, processor)), REFACTORING_NAME, null);
+                                                    () -> doRefactoring(project, processor)), getRefactoringName(), null);
   }
 
   private static void doRefactoring(@NotNull Project project, @NotNull ExtractMethodProcessor processor) {
@@ -217,7 +215,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       if (showErrorMessages) {
         String message = RefactoringBundle
           .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_METHOD);
       }
       return null;
     }
@@ -227,7 +225,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
         if (showErrorMessages) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
-          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_METHOD);
         }
         return null;
       }
@@ -235,7 +233,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
         if (showErrorMessages) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.statement.outside.of.class"));
-          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_METHOD);
         }
         return null;
       }
@@ -243,14 +241,14 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
     String initialMethodName = Optional.ofNullable(ExtractMethodSnapshot.SNAPSHOT_KEY.get(file)).map(s -> s.myMethodName).orElse("");
     final ExtractMethodProcessor processor =
-      new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, initialMethodName, HelpID.EXTRACT_METHOD);
+      new ExtractMethodProcessor(project, editor, elements, null, getRefactoringName(), initialMethodName, HelpID.EXTRACT_METHOD);
     processor.setShowErrorDialogs(showErrorMessages);
     try {
       if (!processor.prepare(pass)) return null;
     }
     catch (PrepareFailedException e) {
       if (showErrorMessages) {
-        CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+        CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), getRefactoringName(), HelpID.EXTRACT_METHOD);
         highlightPrepareError(e, file, editor, project);
       }
       return null;
@@ -290,5 +288,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     LOG.assertTrue(virtualFile != null);
     final OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(project, virtualFile);
     return FileEditorManager.getInstance(project).openTextEditor(fileDescriptor, false);
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("extract.method.title");
   }
 }

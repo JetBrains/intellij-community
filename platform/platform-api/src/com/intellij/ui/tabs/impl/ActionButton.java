@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -21,13 +21,11 @@ class ActionButton extends IconButton implements ActionListener {
   private final AnAction myAction;
   private final String myPlace;
   private final TabInfo myTabInfo;
-  private final JBTabsImpl myTabs;
   private boolean myAutoHide;
   private boolean myToShow;
 
-  ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Consumer<MouseEvent> pass, Consumer<Boolean> hover, TimedDeadzone.Length deadzone) {
+  ActionButton(TabInfo tabInfo, AnAction action, String place, Consumer<MouseEvent> pass, Consumer<Boolean> hover, TimedDeadzone.Length deadzone) {
     super(null, action.getTemplatePresentation().getIcon());
-    myTabs = tabs;
     myTabInfo = tabInfo;
     myAction = action;
     myPlace = place;
@@ -120,7 +118,7 @@ class ActionButton extends IconButton implements ActionListener {
   private AnActionEvent createAnEvent(int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
     DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
-    return new AnActionEvent(null, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myTabs.myActionManager, modifiers);
+    return new AnActionEvent(null, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, ActionManager.getInstance(), modifiers);
   }
 
   public void setAutoHide(final boolean autoHide) {

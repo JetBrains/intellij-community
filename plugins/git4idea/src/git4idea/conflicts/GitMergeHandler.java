@@ -10,10 +10,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer.DiffEditorTitleCustomizerList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.ConflictSide;
@@ -35,11 +36,16 @@ public class GitMergeHandler {
   private static final Logger LOG = Logger.getInstance(GitMergeHandler.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final GitDefaultMergeDialogCustomizer myDialogCustomizer;
+  @NotNull private final MergeDialogCustomizer myDialogCustomizer;
 
-  public GitMergeHandler(@NotNull Project project) {
+  public GitMergeHandler(@NotNull Project project, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     myProject = project;
-    myDialogCustomizer = new GitDefaultMergeDialogCustomizer(project);
+    myDialogCustomizer = mergeDialogCustomizer;
+  }
+
+  @NotNull
+  public String loadMergeDescription() {
+    return myDialogCustomizer.getMultipleFileMergeDescription(emptyList());
   }
 
   public boolean canResolveConflict(@NotNull GitConflict conflict) {
@@ -62,8 +68,10 @@ public class GitMergeHandler {
     String centerTitle = myDialogCustomizer.getCenterPanelTitle(file);
     String rightTitle = myDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER);
 
+    DiffEditorTitleCustomizerList titleCustomizerList = myDialogCustomizer.getTitleCustomizerList(path);
+
     return new Resolver(myProject, conflict, isReversed, file, mergeData,
-                        windowTitle, Arrays.asList(leftTitle, centerTitle, rightTitle));
+                        windowTitle, Arrays.asList(leftTitle, centerTitle, rightTitle), titleCustomizerList);
   }
 
   public void acceptOneVersion(@NotNull Collection<? extends GitConflict> conflicts,
@@ -104,6 +112,7 @@ public class GitMergeHandler {
 
     @NotNull private final String myWindowTitle;
     @NotNull private final List<String> myContentTitles;
+    @NotNull private final DiffEditorTitleCustomizerList myTitleCustomizerList;
 
     private volatile boolean myIsValid = true;
 
@@ -113,7 +122,8 @@ public class GitMergeHandler {
                      @NotNull VirtualFile file,
                      @NotNull MergeData mergeData,
                      @NotNull String windowTitle,
-                     @NotNull List<String> contentTitles) {
+                     @NotNull List<String> contentTitles,
+                     @NotNull DiffEditorTitleCustomizerList titleCustomizerList) {
       myProject = project;
       myConflict = conflict;
       myIsReversed = isReversed;
@@ -121,6 +131,7 @@ public class GitMergeHandler {
       myFile = file;
       myWindowTitle = windowTitle;
       myContentTitles = contentTitles;
+      myTitleCustomizerList = titleCustomizerList;
     }
 
     @NotNull
@@ -170,6 +181,11 @@ public class GitMergeHandler {
     @NotNull
     public List<String> getContentTitles() {
       return myContentTitles;
+    }
+
+    @NotNull
+    public DiffEditorTitleCustomizerList getTitleCustomizerList() {
+      return myTitleCustomizerList;
     }
 
     public boolean checkIsValid() {

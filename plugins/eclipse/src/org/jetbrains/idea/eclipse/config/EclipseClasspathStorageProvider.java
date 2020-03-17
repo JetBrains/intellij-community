@@ -44,8 +44,6 @@ import java.io.IOException;
  * @author Vladislav.Kaznacheev
  */
 public class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
-  public static final String DESCR = EclipseBundle.message("eclipse.classpath.storage.description");
-
   @NotNull
   @Override
   @NonNls
@@ -57,7 +55,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   @Override
   @Nls
   public String getDescription() {
-    return DESCR;
+    return getDescr();
   }
 
   @Override
@@ -156,5 +154,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     catch (IOException e) {
       EclipseClasspathWriter.LOG.warn(e);
     }
+  }
+
+  public static String getDescr() {
+    return EclipseBundle.message("eclipse.classpath.storage.description");
   }
 }

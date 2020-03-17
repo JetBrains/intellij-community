@@ -32,7 +32,10 @@ import java.util.Collections;
 public class FileUrlLocationTest extends BasePlatformTestCase {
   public void testExcluded() {
     myFixture.addFileToProject("secondary/my_example_spec.xml", "");
-    ModuleRootModificationUtil.updateExcludedFolders(getModule(), ModuleRootManager.getInstance(getModule()).getContentRoots()[0], Collections.emptyList(), Collections.singletonList("/src"));
+    ModuleRootModificationUtil.updateExcludedFolders(
+      getModule(), ModuleRootManager.getInstance(getModule()).getContentRoots()[0],
+      Collections.emptyList(),
+      Collections.singletonList(ModuleRootManager.getInstance(getModule()).getContentRoots()[0].getUrl()));
      VirtualFile file = myFixture.configureByText(
       "my_example_spec.xml",
       "\n" +

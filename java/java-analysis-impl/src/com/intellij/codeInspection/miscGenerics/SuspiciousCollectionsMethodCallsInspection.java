@@ -6,7 +6,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
@@ -73,12 +72,6 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.suspicious.collections.method.calls.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
@@ -99,12 +92,10 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     final String plainMessage = SuspiciousMethodCallUtil
       .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, i);
     if (plainMessage != null && !exactType) {
-      TypeConstraint constraint = CommonDataflow.getExpressionFact(arg, DfaFactType.TYPE_CONSTRAINT);
-      if (constraint != null) {
-        PsiType type = constraint.getPsiType();
-        if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
-          return null;
-        }
+      TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
+      PsiType type = constraint.getPsiType(methodCall.getProject());
+      if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
+        return null;
       }
     }
 

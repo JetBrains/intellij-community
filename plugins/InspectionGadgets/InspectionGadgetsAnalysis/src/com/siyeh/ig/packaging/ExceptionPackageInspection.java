@@ -39,13 +39,6 @@ import java.util.List;
  */
 public class ExceptionPackageInspection extends BaseGlobalInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("exception.package.display.name");
-  }
-
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,

@@ -40,9 +40,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -632,7 +630,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         return line.contains("FOO");
       }
 
-      @Nullable
+      @NotNull
       @Override
       public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
         return "folded";

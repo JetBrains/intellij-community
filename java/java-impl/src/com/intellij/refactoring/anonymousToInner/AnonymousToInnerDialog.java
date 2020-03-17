@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class AnonymousToInnerDialog extends DialogWrapper{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerDialog");
+  private static final Logger LOG = Logger.getInstance(AnonymousToInnerDialog.class);
 
   private final Project myProject;
   private final PsiAnonymousClass myAnonClass;
@@ -44,7 +44,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     myAnonClass = anonClass;
     myShowCanBeStatic = showCanBeStatic;
 
-    setTitle(AnonymousToInnerHandler.REFACTORING_NAME);
+    setTitle(AnonymousToInnerHandler.getRefactoringName());
 
     for (VariableInfo info : variableInfos) {
       myVariableToInfoMap.put(info.variable, info);
@@ -154,7 +154,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-        AnonymousToInnerHandler.REFACTORING_NAME,
+        AnonymousToInnerHandler.getRefactoringName(),
         errorString,
         HelpID.ANONYMOUS_TO_INNER,
         myProject);

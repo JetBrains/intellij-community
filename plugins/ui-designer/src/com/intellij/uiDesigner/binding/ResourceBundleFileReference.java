@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 public final class ResourceBundleFileReference extends ReferenceInForm {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ResourceBundleFileReference");
+  private static final Logger LOG = Logger.getInstance(ResourceBundleFileReference.class);
 
   public ResourceBundleFileReference(final PsiPlainTextFile file, TextRange bundleNameRange) {
     super(file, bundleNameRange);

@@ -55,20 +55,17 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
     .put(BufferedImage.class.getName(), "UIUtil.createImage()")
     .build();
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkBody(method, manager, isOnTheFly);
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkBody(field, manager, isOnTheFly);
   }
 
-  @Nullable
-  private static ProblemDescriptor[] checkBody(@NotNull UElement uElement, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  private static ProblemDescriptor @Nullable [] checkBody(@NotNull UElement uElement, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> descriptors = new SmartList<>();
     uElement.accept(new AbstractUastVisitor() {
       @Override

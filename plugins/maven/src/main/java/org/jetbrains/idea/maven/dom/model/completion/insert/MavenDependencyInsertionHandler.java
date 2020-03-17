@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.onlinecompletion.MavenScopeTable;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
@@ -44,7 +45,7 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       return;
     }
     context.commitDocument();
-    MavenDomArtifactCoordinates domCoordinates = getDomCoordinatesFromCurrentTag(context, tag);
+    MavenDomShortArtifactCoordinates domCoordinates = getDomCoordinatesFromCurrentTag(context, tag);
     if (domCoordinates == null) {
       return;
     }
@@ -52,24 +53,25 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
   }
 
 
-  private static MavenDomArtifactCoordinates getDomCoordinatesFromCurrentTag(@NotNull InsertionContext context, @NotNull XmlTag tag) {
+  private static MavenDomShortArtifactCoordinates getDomCoordinatesFromCurrentTag(@NotNull InsertionContext context, @NotNull XmlTag tag) {
     DomElement element = DomManager.getDomManager(context.getProject()).getDomElement(tag);
     //todo: show notification
-    if (element instanceof MavenDomArtifactCoordinates) {
+    if (element instanceof MavenDomShortArtifactCoordinates) {
       tag.getValue().setText("");
-      return (MavenDomArtifactCoordinates)element;
+      return (MavenDomShortArtifactCoordinates)element;
     }
     //try parent
     element = DomManager.getDomManager(context.getProject()).getDomElement(tag.getParentTag());
-    if (element instanceof MavenDomArtifactCoordinates) {
-      return (MavenDomArtifactCoordinates)element;
+    if (element instanceof MavenDomShortArtifactCoordinates) {
+      return (MavenDomShortArtifactCoordinates)element;
     }
+
     return null;
   }
 
   protected void setDependency(@NotNull InsertionContext context,
-                                    MavenRepositoryArtifactInfo completionItem,
-                                    XmlFile contextFile, MavenDomArtifactCoordinates domCoordinates) {
+                               MavenRepositoryArtifactInfo completionItem,
+                               XmlFile contextFile, MavenDomShortArtifactCoordinates domCoordinates) {
     if (completionItem.getGroupId() == null) {
       return;
     }
@@ -101,6 +103,14 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       return; //allready present in parent file
     }
 
+    if (domCoordinates instanceof MavenDomArtifactCoordinates) {
+      insertVersion(context, completionItem, (MavenDomArtifactCoordinates)domCoordinates);
+    }
+  }
+
+  private static void insertVersion(@NotNull InsertionContext context,
+                                    MavenRepositoryArtifactInfo completionItem,
+                                    MavenDomArtifactCoordinates domCoordinates) {
     if (completionItem.getItems() != null && completionItem.getItems().length == 1 && completionItem.getVersion() != null) {
       domCoordinates.getVersion().setStringValue(completionItem.getVersion());
     }
@@ -114,5 +124,4 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
     }
   }
-
 }

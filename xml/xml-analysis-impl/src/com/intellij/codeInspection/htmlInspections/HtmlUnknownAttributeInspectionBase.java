@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -43,7 +43,7 @@ import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection");
+  private static final Logger LOG = Logger.getInstance(HtmlUnknownAttributeInspectionBase.class);
 
   public HtmlUnknownAttributeInspectionBase() {
     this("");
@@ -51,13 +51,6 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
 
   public HtmlUnknownAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.attribute");
   }
 
   @Override
@@ -109,7 +102,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
 
-          registerProblemOnAttributeName(attribute, XmlErrorMessages.message("attribute.is.not.allowed.here", attribute.getName()), holder,
+          registerProblemOnAttributeName(attribute, XmlErrorBundle.message("attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }

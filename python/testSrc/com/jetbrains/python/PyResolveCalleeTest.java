@@ -22,7 +22,7 @@ public class PyResolveCalleeTest extends PyTestCase {
     final PyCallExpression call = PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
 
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
     final List<PyCallExpression.PyMarkedCallee> callees = call.multiResolveCallee(resolveContext);
     assertEquals(1, callees.size());

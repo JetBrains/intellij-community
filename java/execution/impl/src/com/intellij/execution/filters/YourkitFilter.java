@@ -35,7 +35,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class YourkitFilter implements Filter{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.filters.YourkitFilter");
+  private static final Logger LOG = Logger.getInstance(YourkitFilter.class);
 
   private final Project myProject;
 

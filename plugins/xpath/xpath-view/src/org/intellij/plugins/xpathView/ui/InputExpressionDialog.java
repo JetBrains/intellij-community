@@ -207,7 +207,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         myXPathFile.accept(new PsiRecursiveElementVisitor(){
             @Override
-            public void visitElement(PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
                 if (element instanceof QNameElement) {
                     final PsiReference[] references = element.getReferences();
                     for (PsiReference reference : references) {

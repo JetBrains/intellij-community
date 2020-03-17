@@ -16,6 +16,7 @@
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -48,7 +49,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.StatusText;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,9 +114,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Copyright Profiles";
+    return IdeBundle.message("configurable.CopyrightProfilesPanel.display.name");
   }
 
   @Override

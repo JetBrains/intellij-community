@@ -102,6 +102,7 @@ public class Main {
     template.setToReformat(true)
     startTemplate(template)
     myFixture.type('in\n')
+    BaseCompleteMacro.waitForNextTab()
     myFixture.checkResult """
 import  java.util.*;
 public class Main {

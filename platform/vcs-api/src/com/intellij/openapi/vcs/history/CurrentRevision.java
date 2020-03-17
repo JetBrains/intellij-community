@@ -32,7 +32,6 @@ public class CurrentRevision implements VcsFileRevision {
   private static final Logger LOG = Logger.getInstance(CurrentRevision.class);
 
   private final VirtualFile myFile;
-  public static final String CURRENT = VcsBundle.message("vcs.revision.name.current");
   private final VcsRevisionNumber myRevisionNumber;
 
   public CurrentRevision(@NotNull VirtualFile file, @NotNull VcsRevisionNumber revision) {
@@ -42,7 +41,7 @@ public class CurrentRevision implements VcsFileRevision {
 
   @Override
   public String getCommitMessage() {
-    return "[" + CURRENT + "]";
+    return "[" + getCurrent() + "]";
   }
 
   @Override
@@ -92,5 +91,9 @@ public class CurrentRevision implements VcsFileRevision {
   @Override
   public RepositoryLocation getChangedRepositoryPath() {
     return null;  // use initial url..
+  }
+
+  public static String getCurrent() {
+    return VcsBundle.message("vcs.revision.name.current");
   }
 }

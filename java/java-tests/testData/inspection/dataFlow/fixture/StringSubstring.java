@@ -72,4 +72,20 @@ class StringSubstring {
     }
     return fullName;
   }
+
+  void testEmpty(String input) {
+    String s = input.substring(0, 1);
+    String s1 = s.substring(1);
+    if (<warning descr="Condition 's1.equals(\"\")' is always 'true'">s1.equals("")</warning>) {}
+    String s2 = s1.substring(0);
+    if (<warning descr="Condition 's2.equals(\"\")' is always 'true'">s2.equals("")</warning>) {}
+    String s3 = s2.substring(0);
+  }
+
+  void testDiff(String s1, String s2, int pos) {
+    if (<warning descr="Condition 's1.substring(pos, pos+4).equals(\"xyz\")' is always 'false'">s1.substring(pos, pos+4).equals("xyz")</warning>) {}
+    if (s1.substring(pos, pos+4).equals(s2)) {
+      if (<warning descr="Condition 's2.length() != 4' is always 'false'">s2.length() != 4</warning>) {}
+    }
+  }
 }

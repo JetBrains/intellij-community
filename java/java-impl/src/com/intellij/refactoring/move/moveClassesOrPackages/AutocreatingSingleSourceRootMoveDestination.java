@@ -34,6 +34,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
     mySourceRoot = sourceRoot;
   }
 
+  @NotNull
   @Override
   public PackageWrapper getTargetPackage() {
     return myPackage;
@@ -45,7 +46,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   @Override
-  public PsiDirectory getTargetIfExists(PsiFile source) {
+  public PsiDirectory getTargetIfExists(@NotNull PsiFile source) {
     return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, mySourceRoot);
   }
 
@@ -76,13 +77,13 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   @Override
-  public void analyzeModuleConflicts(final Collection<PsiElement> elements,
-                                     MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
+  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+                                     @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);
   }
 
   @Override
-  public boolean isTargetAccessible(Project project, VirtualFile place) {
+  public boolean isTargetAccessible(@NotNull Project project, @NotNull VirtualFile place) {
     final boolean inTestSourceContent = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(place);
     final Module module = ModuleUtilCore.findModuleForFile(place, project);
     if (mySourceRoot != null &&

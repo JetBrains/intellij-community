@@ -8,9 +8,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
-    <orderEntry type="library" exported="" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="library" exported="" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" />
@@ -43,5 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" exported="" />
+    <orderEntry type="library" name="jcef" level="project" />
   </component>
 </module>

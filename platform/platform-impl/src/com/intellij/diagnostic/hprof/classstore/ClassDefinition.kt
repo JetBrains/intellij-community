@@ -23,6 +23,7 @@ class ClassDefinition(val name: String,
                       val instanceSize: Int,
                       val superClassOffset: Int,
                       val refInstanceFields: Array<InstanceField>,
+                      private val primitiveInstanceFields: Array<InstanceField>,
                       val constantFields: LongArray,
                       val staticFields: Array<StaticField>) {
 
@@ -45,6 +46,9 @@ class ClassDefinition(val name: String,
     get() = computePrettyName(name)
 
   companion object {
+    val OBJECT_PREAMBLE_SIZE = 8
+    val ARRAY_PREAMBLE_SIZE = 12
+
     fun computePrettyName(name: String): String {
       if (!name.startsWith('['))
         return name
@@ -96,7 +100,7 @@ class ClassDefinition(val name: String,
     }
     return ClassDefinition(
       name, map(id), map(superClassId), instanceSize, superClassOffset,
-      refInstanceFields, newConstantFields, newStaticFields
+      refInstanceFields, primitiveInstanceFields, newConstantFields, newStaticFields
     )
   }
 
@@ -111,8 +115,44 @@ class ClassDefinition(val name: String,
     return result
   }
 
+  fun getRefField(classStore: ClassStore, index: Int): InstanceField {
+    var currentIndex = index
+    var currentClass = this
+    do {
+      val size = currentClass.refInstanceFields.size
+      if (currentIndex < size) {
+        return currentClass.refInstanceFields[currentIndex]
+      }
+      currentIndex -= size
+      currentClass = currentClass.getSuperClass(classStore) ?: throw IndexOutOfBoundsException("$index on class $name")
+    }
+    while (true)
+  }
+
+  /**
+   * Computes offset of a given field in the class (including superclasses)
+   * @return Offset of the field, or -1 if the field doesn't exist.
+   */
+  fun computeOffsetOfField(fieldName: String, classStore: ClassStore): Int {
+    var classOffset = 0
+    var currentClass = this
+    do {
+      var field = currentClass.refInstanceFields.find { it.name == fieldName }
+      if (field == null) {
+        field = currentClass.primitiveInstanceFields.find { it.name == fieldName }
+      }
+      if (field != null) {
+        return classOffset + field.offset
+      }
+      classOffset += currentClass.superClassOffset
+      currentClass = currentClass.getSuperClass(classStore) ?: return -1
+    }
+    while (true)
+  }
+
   fun copyWithName(newName: String): ClassDefinition {
-    return ClassDefinition(newName, id, superClassId, instanceSize, superClassOffset, refInstanceFields, constantFields, staticFields)
+    return ClassDefinition(newName, id, superClassId, instanceSize, superClassOffset, refInstanceFields, primitiveInstanceFields,
+                           constantFields, staticFields)
   }
 }
 

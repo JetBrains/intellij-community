@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -27,33 +28,17 @@ public class IteratorUtils {
   }
 
   /**
-   * @param context the context iterator.next() may be called in.
-   * @param target  the target variable iterator.next() is called on. Specify
-   *                null to check for "this"  as target variable.
-   * @return true, if iterator.next() is called, false otherwise
+   * @param context the body of hasNext() or hasPrevious() method
+   * @param target  the variable that contains an iterator. Specify
+   *                null to check for "this" as target variable.
+   * @return an illegal call expression, like iterator.next() or listIterator.previous()
    */
-  public static boolean containsCallToIteratorNext(PsiElement context,
-                                                   PsiVariable target,
-                                                   boolean checkTarget) {
+  @Nullable
+  public static PsiMethodCallExpression getIllegalCallInHasNext(PsiElement context, PsiVariable target, boolean checkTarget) {
     final CallsIteratorNextVisitor visitor =
       new CallsIteratorNextVisitor(target, checkTarget, false);
     context.accept(visitor);
-    return visitor.callsIteratorNext();
-  }
-
-  public static boolean containsCallToScannerNext(PsiElement context,
-                                                  PsiVariable target,
-                                                  boolean checkTarget) {
-    final CallsIteratorNextVisitor visitor =
-      new CallsIteratorNextVisitor(target, checkTarget, true);
-    context.accept(visitor);
-    return visitor.callsIteratorNext();
-  }
-
-  public static boolean isCallToHasNext(
-    PsiMethodCallExpression methodCallExpression) {
-    return MethodCallUtils.isCallToMethod(methodCallExpression,
-                                          CommonClassNames.JAVA_UTIL_ITERATOR, PsiType.BOOLEAN, "hasNext");
+    return visitor.getIllegalCall();
   }
 
   private static class CallsIteratorNextVisitor
@@ -64,10 +49,9 @@ public class IteratorUtils {
     private final boolean checkTarget;
     private final boolean checkScanner;
     private final PsiVariable target;
-    private boolean doesCallIteratorNext;
+    private PsiMethodCallExpression illegalCall;
 
-    private CallsIteratorNextVisitor(PsiVariable target, boolean checkTarget,
-                                     boolean checkScanner) {
+    private CallsIteratorNextVisitor(PsiVariable target, boolean checkTarget, boolean checkScanner) {
       this.checkTarget = checkTarget;
       this.target = target;
       this.checkScanner = checkScanner;
@@ -75,18 +59,11 @@ public class IteratorUtils {
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
-      if (doesCallIteratorNext) {
-        return;
-      }
       super.visitElement(element);
     }
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      if (doesCallIteratorNext) {
-        return;
-      }
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (checkScanner) {
         if (!MethodCallUtils.isCallToMethod(expression,
@@ -125,11 +102,13 @@ public class IteratorUtils {
           }
         }
       }
-      doesCallIteratorNext = true;
+      illegalCall = expression;
+      stopWalking();
     }
 
-    private boolean callsIteratorNext() {
-      return doesCallIteratorNext;
+    @Nullable
+    private PsiMethodCallExpression getIllegalCall() {
+      return illegalCall;
     }
   }
 }

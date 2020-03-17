@@ -33,17 +33,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.HtmlHighlightingLexer");
+  private static final Logger LOG = Logger.getInstance(HtmlHighlightingLexer.class);
 
   private static final int EMBEDDED_LEXER_ON = 0x1 << BASE_STATE_SHIFT;
   private static final int EMBEDDED_LEXER_STATE_SHIFT = BASE_STATE_SHIFT + 1;
-  private static final FileType ourInlineScriptFileType;
-  static {
-    // At the moment only JS.
-    HtmlInlineScriptTokenTypesProvider provider =
-      LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(Language.findLanguageByID("JavaScript"));
-    ourInlineScriptFileType = provider != null ? provider.getFileType() : null;
-  }
+
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
   protected Lexer elLexer;
   private Lexer embeddedLexer;
@@ -90,8 +84,9 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   protected Lexer getInlineScriptHighlightingLexer() {
-    SyntaxHighlighter syntaxHighlighter =
-      ourInlineScriptFileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
+    HtmlInlineScriptTokenTypesProvider provider = LanguageHtmlInlineScriptTokenTypesProvider.getInlineScriptProvider(Language.findLanguageByID("JavaScript"));
+    FileType fileType = provider != null ? provider.getFileType() : null;
+    SyntaxHighlighter syntaxHighlighter = fileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null) : null;
     return syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
   }
 

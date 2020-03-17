@@ -32,7 +32,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class BuilderRegistry {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.BuilderRegistry");
+  private static final Logger LOG = Logger.getInstance(BuilderRegistry.class);
   private static class Holder {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }

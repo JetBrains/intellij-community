@@ -120,8 +120,7 @@ public class ThreeStateCheckBox extends JCheckBox {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel() ||
-        StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       return;
     }
 

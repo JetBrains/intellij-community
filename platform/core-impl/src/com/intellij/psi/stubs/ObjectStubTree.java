@@ -36,6 +36,7 @@ public class ObjectStubTree<T extends Stub> {
   private static final Key<ObjectStubTree> STUB_TO_TREE_REFERENCE = Key.create("stub to tree reference");
   protected final ObjectStubBase myRoot;
   private String myDebugInfo;
+  private boolean myHasBackReference;
   private final List<T> myPlainList;
 
   public ObjectStubTree(@NotNull final ObjectStubBase root, final boolean withBackReference) {
@@ -100,11 +101,11 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   public void setDebugInfo(@NotNull String info) {
-    ObjectStubTree ref = getStubTree(myRoot);
+    ObjectStubTree<?> ref = getStubTree(myRoot);
     if (ref != null) {
       assert ref == this;
-      info += "; with backReference";
     }
+    myHasBackReference = ref != null;
     myDebugInfo = info;
   }
 
@@ -114,12 +115,12 @@ public class ObjectStubTree<T extends Stub> {
   }
 
   public String getDebugInfo() {
-    return myDebugInfo;
+    return myHasBackReference ? myDebugInfo + "; with backReference" : myDebugInfo;
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{myDebugInfo='" + myDebugInfo + '\'' + ", myRoot=" + myRoot + '}' + hashCode();
+    return getClass().getSimpleName() + "{myDebugInfo='" + getDebugInfo() + '\'' + ", myRoot=" + myRoot + '}' + hashCode();
   }
 
   private static class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>, TObjectObjectProcedure<Object,int[]> {

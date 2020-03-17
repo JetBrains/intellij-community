@@ -25,7 +25,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -344,7 +343,9 @@ public class MavenDomProjectProcessorUtils {
             return false;
           }
           for (MavenDomDependency dependency : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
-            processDependencyRecurrently(processor, dependency, recursionProtector);
+            if (processDependencyRecurrently(processor, dependency, recursionProtector)) {
+              return true;
+            }
           }
         }
       }

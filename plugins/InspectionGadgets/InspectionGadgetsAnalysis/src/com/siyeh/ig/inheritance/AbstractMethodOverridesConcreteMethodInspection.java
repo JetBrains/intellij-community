@@ -29,13 +29,6 @@ public class AbstractMethodOverridesConcreteMethodInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "abstract.method.overrides.concrete.method.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.method.overrides.concrete.method.problem.descriptor");

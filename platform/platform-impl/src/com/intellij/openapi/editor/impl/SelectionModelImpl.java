@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class SelectionModelImpl implements SelectionModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
+  private static final Logger LOG = Logger.getInstance(SelectionModelImpl.class);
 
   private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final EditorImpl myEditor;

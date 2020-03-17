@@ -4,9 +4,12 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -36,8 +39,32 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
 
+    registerFactories();
+
+    EP_NAME.addExtensionPointListener(new ExtensionPointListener<TextEditorHighlightingPassFactoryRegistrar>() {
+      @Override
+      public void extensionAdded(@NotNull TextEditorHighlightingPassFactoryRegistrar factoryRegistrar,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        factoryRegistrar.registerHighlightingPassFactory(TextEditorHighlightingPassRegistrarImpl.this, project);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull TextEditorHighlightingPassFactoryRegistrar factoryRegistrar,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+        myRegisteredPassFactories.clear();
+        myDirtyScopeTrackingFactories.clear();
+        registerFactories();
+      }
+    }, myProject);
+    Disposer.register(myProject, () -> {
+      myRegisteredPassFactories.clear();
+      myDirtyScopeTrackingFactories.clear();
+    });
+  }
+
+  public void registerFactories() {
     for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
-      factoryRegistrar.registerHighlightingPassFactory(this, project);
+      factoryRegistrar.registerHighlightingPassFactory(this, myProject);
     }
   }
 

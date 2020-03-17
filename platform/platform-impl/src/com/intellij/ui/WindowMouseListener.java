@@ -181,7 +181,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
    * for example, a layered component.
    */
   protected Component getView(Component component) {
-    return UIUtil.getWindow(component);
+    return ComponentUtil.getWindow(component);
   }
 
   /**
@@ -274,7 +274,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     public void addTo(Component comp) {
       if (methodsNotAvailable()) return;
 
-      final Window window = UIUtil.getWindow(comp);
+      final Window window = ComponentUtil.getWindow(comp);
       if (window == null) return;
 
       final boolean wasShown = getPeer(window) != null;
@@ -297,7 +297,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     public void removeFrom(Component comp) {
       if (methodsNotAvailable()) return;
 
-      comp = UIUtil.getWindow(comp);
+      comp = ComponentUtil.getWindow(comp);
       if (getPeer(comp) != null) {
         removeMouseListenerMethod.invoke(getPeer(comp), myListener);
         removeMouseMotionListenerMethod.invoke(getPeer(comp), myListener);

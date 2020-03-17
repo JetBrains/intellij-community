@@ -37,7 +37,7 @@ import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.findLastFieldInGroup;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
+  private static final Logger LOG = Logger.getInstance(AbstractJavaBlock.class);
 
   @NotNull protected final CommonCodeStyleSettings mySettings;
   @NotNull protected final JavaCodeStyleSettings myJavaSettings;
@@ -616,8 +616,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
         if (block instanceof AbstractJavaBlock) {
           final AbstractJavaBlock javaBlock = (AbstractJavaBlock)block;
-          if (nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION ||
-              nodeType == JavaElementType.REFERENCE_EXPRESSION && childType == JavaElementType.METHOD_CALL_EXPRESSION) {
+          if (nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION) {
             javaBlock.setReservedWrap(getReservedWrap(nodeType), nodeType);
             javaBlock.setReservedWrap(getReservedWrap(childType), childType);
           }

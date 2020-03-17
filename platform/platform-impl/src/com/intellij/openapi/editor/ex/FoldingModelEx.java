@@ -47,6 +47,11 @@ public interface FoldingModelEx extends FoldingModel {
 
   FoldRegion[] fetchTopLevel();
 
+  /**
+   * @param neverExpands If {@code true}, the created region is created in the collapsed state, and cannot be expanded
+   *                     ({@link FoldRegion#setExpanded(boolean)} does nothing for it). No marker will be displayed in gutter for such a
+   *                     region. 'Never-expanding' fold region cannot be part of a {@link FoldingGroup}.
+   */
   @Nullable
   FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
                               boolean neverExpands);

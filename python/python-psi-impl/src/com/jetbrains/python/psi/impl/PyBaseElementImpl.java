@@ -152,8 +152,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     List<PsiReference> referencesList = new ArrayList<>();
     final PsiFile file = element.getContainingFile();
     final PyResolveContext resolveContext = file != null ?
-                                     PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :
-                                     PyResolveContext.defaultContext();
+                                     PyResolveContext.implicitContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file.getProject(), file)) :
+                                     PyResolveContext.implicitContext();
     while (element != null) {
       addReferences(offset, element, referencesList, resolveContext);
       offset = element.getStartOffsetInParent() + offset;

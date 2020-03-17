@@ -18,6 +18,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -130,9 +131,10 @@ public abstract class Decompressor {
     //</editor-fold>
   }
 
-  private Condition<? super String> myFilter = null;
+  @Nullable private Condition<? super String> myFilter = null;
+  @Nullable private List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
-  private Consumer<? super File> myConsumer;
+  @Nullable private Consumer<? super File> myConsumer;
 
   public Decompressor filter(@Nullable Condition<? super String> filter) {
     myFilter = filter;
@@ -149,21 +151,40 @@ public abstract class Decompressor {
     return this;
   }
 
+  /**
+   * Extracts only items whose paths starts with the normalized prefix of {@code prefix + '/'} <br/>
+   * Paths are normalized before comparison. <br/>
+   * The prefix test is applied after {@link #filter(Condition)} predicate is tested. <br/>
+   * Some entries may clash, so use {@link #overwrite(boolean)} to control it. <br/>
+   * Some items with path that does not start from the prefix could be ignored
+   *
+   * @param prefix prefix to remove from every archive entry paths
+   * @return self
+   */
+  @NotNull
+  public Decompressor removePrefixPath(@Nullable final String prefix) throws IOException {
+    myPathsPrefix = prefix != null ? normalizePathAndSplit(prefix) : null;
+    return this;
+  }
+
   public final void extract(@NotNull File outputDir) throws IOException {
     openStream();
     try {
       Entry entry;
       while ((entry = nextEntry()) != null) {
-        String name = entry.name;
-
         if (myFilter != null) {
-          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(name, '/') ? name + '/' : name;
+          String entryName = entry.type == Type.DIR && !StringUtil.endsWithChar(entry.name, '/') ? entry.name + '/' : entry.name;
           if (!myFilter.value(entryName)) {
             continue;
           }
         }
 
-        File outputFile = entryFile(outputDir, name);
+        if (myPathsPrefix != null) {
+          entry = entry.mapPathPrefix(myPathsPrefix);
+          if (entry == null) continue;
+        }
+
+        File outputFile = entryFile(outputDir, entry.name);
 
         switch (entry.type) {
           case DIR:
@@ -194,7 +215,7 @@ public abstract class Decompressor {
           case SYMLINK:
             if (StringUtil.isEmpty(entry.linkTarget) ||
                 !FileUtil.isAncestor(outputDir, new File(FileUtil.toCanonicalPath(outputFile.getParent() + '/' + entry.linkTarget)), true)) {
-              throw new IOException("Invalid symlink entry: " + name + " -> " + entry.linkTarget);
+              throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget);
             }
             FileUtil.createParentDirs(outputFile);
             Files.createSymbolicLink(outputFile.toPath(), Paths.get(entry.linkTarget));
@@ -234,6 +255,15 @@ public abstract class Decompressor {
       this.isExecutable = isExecutable;
       this.linkTarget = linkTarget;
     }
+
+    @Nullable
+    protected Entry mapPathPrefix(@NotNull List<String> prefix) throws IOException {
+      List<String> ourPathSplit = normalizePathAndSplit(name);
+      if (prefix.size() >= ourPathSplit.size()) return null;
+      if (!ourPathSplit.subList(0,prefix.size()).equals(prefix)) return null;
+      String newName = StringUtil.join(ourPathSplit.subList(prefix.size(), ourPathSplit.size()), "/");
+      return new Entry(newName, this.type, this.isWritable, isExecutable, linkTarget);
+    }
   }
 
   protected abstract void openStream() throws IOException;
@@ -243,11 +273,21 @@ public abstract class Decompressor {
   protected abstract void closeStream() throws IOException;
   //</editor-fold>
 
-  @NotNull
-  public static File entryFile(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+  private static List<String> normalizePathAndSplit(@NotNull String path) throws IOException {
+    ensureValidPath(path);
+    String canonicalPath = FileUtil.toCanonicalPath(path, '/');
+    return FileUtil.splitPath(StringUtil.trimLeading(canonicalPath, '/'), '/');
+  }
+
+  private static void ensureValidPath(@NotNull String entryName) throws IOException {
     if (entryName.contains("..") && ArrayUtil.contains("..", entryName.split("[/\\\\]"))) {
       throw new IOException("Invalid entry name: " + entryName);
     }
+  }
+
+  @NotNull
+  public static File entryFile(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+    ensureValidPath(entryName);
     return new File(outputDir, entryName);
   }
 }

@@ -152,11 +152,11 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         mark("h");
         aClass.accept(new PsiRecursiveElementVisitor() {
           @Override
-          public void visitElement(final PsiElement element) {
+          public void visitElement(@NotNull final PsiElement element) {
             super.visitElement(element);
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
-            for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(getProject())) {
+            for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(getProject())) {
               HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
               v.analyze(myFile, true, infoHolder, () -> v.visit(element));
             }

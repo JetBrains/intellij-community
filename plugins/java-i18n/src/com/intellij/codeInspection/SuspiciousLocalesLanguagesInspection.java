@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
@@ -16,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +29,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionTool {
+public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
   private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<Set<String>>() {
     @NotNull
@@ -130,10 +130,10 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
   }
 
   private class MyOptions {
-    private final JBList myAdditionalLocalesList;
+    private final JBList<String> myAdditionalLocalesList;
 
     MyOptions() {
-      myAdditionalLocalesList = new JBList(new MyListModel());
+      myAdditionalLocalesList = new JBList<>(new CollectionListModel<>(myAdditionalLanguages, true));
       myAdditionalLocalesList.setCellRenderer(new DefaultListCellRenderer());
     }
 
@@ -156,7 +156,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
                 public boolean canClose(String inputString) {
                   if (inputString != null) {
                     myAdditionalLanguages.add(inputString);
-                    ((MyListModel)myAdditionalLocalesList.getModel()).fireContentsChanged();
+                    ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
                   }
                   return true;
                 }
@@ -169,7 +169,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
               final int index = myAdditionalLocalesList.getSelectedIndex();
               if (index > -1 && index < myAdditionalLanguages.size()) {
                 myAdditionalLanguages.remove(index);
-                ((MyListModel)myAdditionalLocalesList.getModel()).fireContentsChanged();
+                ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
               }
             }
           })
@@ -178,22 +178,6 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
           .createPanel(),
         BorderLayout.CENTER);
       return panel;
-    }
-
-    private class MyListModel extends AbstractListModel {
-      @Override
-      public int getSize() {
-        return myAdditionalLanguages.size();
-      }
-
-      @Override
-      public Object getElementAt(int index) {
-        return myAdditionalLanguages.get(index);
-      }
-
-      public void fireContentsChanged() {
-        fireContentsChanged(myAdditionalLanguages, -1, -1);
-      }
     }
   }
 }

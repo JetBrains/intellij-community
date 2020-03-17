@@ -17,12 +17,11 @@ package com.jetbrains.python.validation;
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -44,16 +43,8 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
       Optional
         .ofNullable(node.getNode())
         .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
-        .ifPresent(asyncNode -> getHolder().createErrorAnnotation(asyncNode, "function \"" + node.getName() + "\" cannot be async"));
+        .ifPresent(asyncNode -> getHolder().newAnnotation(HighlightSeverity.ERROR, "function \"" + node.getName() + "\" cannot be async").range(asyncNode).create());
     }
-  }
-
-  @Override
-  public void visitPyNumericLiteralExpression(PyNumericLiteralExpression node) {
-    String suffix = node.getIntegerLiteralSuffix();
-    if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
-    if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
-    getHolder().createErrorAnnotation(node, "Python does not support a trailing '" + suffix + "'.");
   }
 
   @Override
@@ -93,8 +84,8 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
 
   private void highlightAsKeyword(@Nullable ASTNode astNode) {
     if (astNode != null) {
-      final Annotation annotation = getHolder().createInfoAnnotation(astNode, null);
-      annotation.setTextAttributes(PyHighlighter.PY_KEYWORD);
+      getHolder().newSilentAnnotation(HighlightSeverity.INFORMATION).range(astNode)
+      .textAttributes(PyHighlighter.PY_KEYWORD).create();
     }
   }
 }

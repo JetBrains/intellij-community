@@ -1,0 +1,17 @@
+<idea-plugin implementation-detail="true">
+  <id>org.jetbrains.idea.reposearch</id>
+  <name>Jetbrains Repository Search</name>
+  <vendor>JetBrains</vendor>
+  <description>
+    <![CDATA[
+    Technical plugin, provides API for artifacts search
+    ]]>
+  </description>
+  <extensionPoints>
+    <extensionPoint name="provider"
+                    interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.idea.reposearch.DependencySearchService"/>
+  </extensions>
+</idea-plugin>

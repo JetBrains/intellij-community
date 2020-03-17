@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -51,7 +54,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
  * Author: msk
  */
 public class EditorWindow {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorWindow");
+  private static final Logger LOG = Logger.getInstance(EditorWindow.class);
 
   public static final DataKey<EditorWindow> DATA_KEY = DataKey.create("editorWindow");
 
@@ -64,7 +67,7 @@ public class EditorWindow {
   private final Stack<Pair<String, FileEditorOpenOptions>> myRemovedTabs = new Stack<Pair<String, FileEditorOpenOptions>>() {
     @Override
     public void push(Pair<String, FileEditorOpenOptions> pair) {
-      if (size() >= UISettings.getInstance().getEditorTabLimit()) {
+      if (size() >= getTabLimit()) {
         remove(0);
       }
       super.push(pair);
@@ -393,7 +396,7 @@ public class EditorWindow {
         public void focusGained(FocusEvent e) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!hasFocus()) return;
-            final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
+            final JComponent focus = myEditor.getSelectedWithProvider().getFileEditor().getPreferredFocusedComponent();
             if (focus != null && !focus.hasFocus()) {
               getGlobalInstance().requestFocus(focus, true);
             }
@@ -451,6 +454,7 @@ public class EditorWindow {
     LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
   }
 
+  @Nullable
   public EditorWithProviderComposite getSelectedEditor() {
     return getSelectedEditor(false);
   }
@@ -459,14 +463,13 @@ public class EditorWindow {
    * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
    *                    editor for which menu is invoked will be returned
    */
+  @Nullable
   public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
-    final TComp comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
-    if (comp != null) {
-      return comp.myEditor;
-    }
-    return null;
+    TComp comp = ObjectUtils.tryCast(myTabbedPane.getSelectedComponent(ignorePopup), TComp.class);
+    return comp == null ? null : comp.myEditor;
   }
 
+  @NotNull
   public EditorWithProviderComposite[] getEditors() {
     final int tabCount = getTabCount();
     final EditorWithProviderComposite[] res = new EditorWithProviderComposite[tabCount];
@@ -476,6 +479,7 @@ public class EditorWindow {
     return res;
   }
 
+  @NotNull
   public VirtualFile[] getFiles() {
     final int tabCount = getTabCount();
     final VirtualFile[] res = new VirtualFile[tabCount];
@@ -519,7 +523,7 @@ public class EditorWindow {
         if (initialIndex != null) {
           indexToInsert = initialIndex;
         }
-        else if (UISettings.getInstance().getOpenTabsAtTheEnd()) {
+        else if (RegistryManager.getInstance().is("ide.editor.tabs.open.at.the.end")) {
           indexToInsert = myTabbedPane.getTabCount();
         }
         else {
@@ -536,7 +540,7 @@ public class EditorWindow {
         final Icon template = AllIcons.FileTypes.Text;
         EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
         myTabbedPane.insertTab(file, emptyIcon, new TComp(this, editor), null, indexToInsert, editor);
-        trimToSize(UISettings.getInstance().getEditorTabLimit(), file, false);
+        trimToSize(file, false);
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
         }
@@ -828,7 +832,10 @@ public class EditorWindow {
   }
 
   @Nullable
-  public EditorWithProviderComposite findFileComposite(final VirtualFile file) {
+  public EditorWithProviderComposite findFileComposite(VirtualFile file) {
+    if (file instanceof BackedVirtualFile)
+      file = ((BackedVirtualFile)file).getOriginFile();
+
     for (int i = 0; i != getTabCount(); ++i) {
       final EditorWithProviderComposite editor = getEditorAt(i);
       if (editor.getFile().equals(file)) {
@@ -897,15 +904,16 @@ public class EditorWindow {
     }
   }
 
-  void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
+  void trimToSize(@Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
     getManager().getReady(this).doWhenDone(() -> {
       if (!isDisposed()) {
-        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
+        doTrimSize(fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
       }
     });
   }
 
-  private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
+  private void doTrimSize(@Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
+    int limit = getTabLimit();
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
     VirtualFile selectedFile = getSelectedFile();
     if (shouldCloseSelected(fileToIgnore)) {
@@ -921,6 +929,15 @@ public class EditorWindow {
         defaultCloseFile(file, transferFocus);
       }
     }
+  }
+
+  public static int getTabLimit() {
+    int limit = UISettings.getInstance().getEditorTabLimit();
+    if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
+        && UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
+      limit = 1;
+    }
+    return limit;
   }
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +23,7 @@ public interface Command<T> extends Supplier<T>, Consumer<T> {
      * Lets the specified consumer to accept the given value on the foreground thread.
      */
     public <T> void consume(Consumer<? super T> consumer, T value) {
-      if (consumer != null) foreground.runOrInvokeLater(() -> consumer.accept(value));
+      if (consumer != null) foreground.invoke(() -> consumer.accept(value));
     }
 
     /**
@@ -45,7 +31,7 @@ public interface Command<T> extends Supplier<T>, Consumer<T> {
      * and to accept this value on the foreground thread.
      */
     public <T> void process(Command<T> command) {
-      if (command != null) background.runOrInvokeLater(() -> consume(command, command.get()));
+      if (command != null) background.compute(command).onSuccess(value -> consume(command, value));
     }
 
     /**
@@ -54,7 +40,7 @@ public interface Command<T> extends Supplier<T>, Consumer<T> {
      */
     public <T> void process(Supplier<? extends T> supplier, Consumer<? super T> consumer) {
       if (supplier != null) {
-        background.runOrInvokeLater(() -> consume(consumer, supplier.get()));
+        background.compute(supplier).onSuccess(value -> consume(consumer, value));
       }
       else {
         consume(consumer, null);

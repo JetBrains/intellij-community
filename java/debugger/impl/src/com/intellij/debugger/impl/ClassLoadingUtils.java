@@ -65,7 +65,7 @@ public class ClassLoadingUtils {
    * May modify class loader in evaluationContext
    */
   @Nullable
-  public static ClassType getHelperClass(Class cls, EvaluationContext evaluationContext) throws EvaluateException {
+  public static ClassType getHelperClass(Class<?> cls, EvaluationContext evaluationContext) throws EvaluateException {
     // TODO [egor]: cache and load in bootstrap class loader
     String name = cls.getName();
     DebugProcess process = evaluationContext.getDebugProcess();

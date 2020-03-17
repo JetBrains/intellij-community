@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -67,6 +67,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -319,17 +320,21 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  public void rebuildAndSelectTail(final boolean requestFocus) {
+  public void rebuildAndSelectItem(final Function<List<NavBarItem>, Integer> indexToSelectCallback) {
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
     myUpdateQueue.queueSelect(() -> {
       if (!myList.isEmpty()) {
-        myModel.setSelectedIndex(myList.size() - 1);
+        myModel.setSelectedIndex(indexToSelectCallback.apply(myList));
         requestSelectedItemFocus();
       }
     });
 
     myUpdateQueue.flush();
+  }
+
+  public void rebuildAndSelectTail(final boolean requestFocus) {
+    rebuildAndSelectItem((list) -> list.size() - 1);
   }
 
   public void requestSelectedItemFocus() {
@@ -400,7 +405,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           return true;
         }
 
-        if (!StringUtil.equals(eachLabel.getText(), getPresentation().getPresentableText(eachElement))) {
+        if (!StringUtil.equals(eachLabel.getText(), getPresentation().getPresentableText(eachElement, false))) {
           return true;
         }
 
@@ -419,12 +424,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     else {
       return true;
     }
-  }
-
-
-  @Nullable
-  Window getWindow() {
-    return !isShowing() ? null : (Window)UIUtil.findUltimateParent(this);
   }
 
   void installPopupHandler(@NotNull JComponent component, int index) {
@@ -889,7 +888,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       JBList list = myNodePopup.getList();
       for (int i = 0; i < list.getModel().getSize(); i++) {
         Object eachElement = list.getModel().getElementAt(i);
-        String text = new NavBarItem(this, eachElement, myNodePopup).getText();
+        String text = new NavBarItem(this, eachElement, myNodePopup, true).getText();
         int selectedIndex = list.getSelectedIndex();
         if (selectedIndex != -1 && eachElement.equals(list.getSelectedValue())) {
           popupText.append("[").append(text).append("]");
@@ -908,5 +907,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @NotNull
   public NavBarUI getNavBarUI() {
     return NavBarUIManager.getUI();
+  }
+
+  boolean isUpdating() {
+    return myUpdateQueue.isUpdating();
   }
 }

@@ -24,13 +24,13 @@ public class MockChangeListManager extends ChangeListManagerEx {
   private final MockChangeList myDefaultChangeList;
 
   public MockChangeListManager() {
-    myDefaultChangeList = new MockChangeList(LocalChangeList.DEFAULT_NAME);
-    myChangeLists.put(LocalChangeList.DEFAULT_NAME, myDefaultChangeList);
+    myDefaultChangeList = new MockChangeList(LocalChangeList.getDefaultName());
+    myChangeLists.put(LocalChangeList.getDefaultName(), myDefaultChangeList);
     myActiveChangeList = myDefaultChangeList;
   }
 
   public void addChanges(Change... changes) {
-    MockChangeList changeList = myChangeLists.get(LocalChangeList.DEFAULT_NAME);
+    MockChangeList changeList = myChangeLists.get(LocalChangeList.getDefaultName());
     for (Change change : changes) {
       changeList.add(change);
     }

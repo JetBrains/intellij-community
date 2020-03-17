@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.ide.impl.ProjectUtil
@@ -97,8 +97,7 @@ open class RecentProjectListActionProvider {
     val names = mutableSetOf<String>()
     val duplicates = mutableSetOf<String>()
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    // A project name should not be considered duplicate if a project is both in recent projects and open projects (IDEA-211955)
-    for (path in ContainerUtil.union(openedPaths, recentPaths)) {
+    for (path in ContainerUtil.concat(openedPaths, recentPaths)) {
       val name = recentProjectManager.getProjectName(path)
       if (!names.add(name)) {
         duplicates.add(name)

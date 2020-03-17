@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -176,26 +176,40 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       boolean wasVisible = false;
 
       @Override
-      public void stateChanged() {
-        if (myToolWindow.isDisposed()) return;
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        if (myToolWindow.isDisposed()) {
+          return;
+        }
+
         boolean visible = myToolWindow.isVisible();
         if (!visible || wasVisible) {
           wasVisible = visible;
           return;
         }
+
         scheduleStructureUpdate();
         wasVisible = true;
       }
     });
 
     getShortcutsManager().addListener(() -> {
-      scheduleTaskAndRunConfigUpdate();
+      scheduleTasksUpdate();
+
+      scheduleStructureRequest(() -> {
+        assert myStructure != null;
+        myStructure.updateNodes(RunConfigurationNode.class);
+      });
     });
 
     getTaskActivator().addListener(new ExternalSystemTaskActivator.Listener() {
       @Override
       public void tasksActivationChanged() {
-        scheduleTaskAndRunConfigUpdate();
+        scheduleTasksUpdate();
+
+        scheduleStructureRequest(() -> {
+          assert myStructure != null;
+          myStructure.updateNodes(RunConfigurationNode.class);
+        });
       }
     });
 
@@ -223,35 +237,10 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    ExternalSystemApiUtil.subscribe(myProject, myExternalSystemId, new ExternalSystemSettingsListenerAdapter() {
-      @Override
-      public void onUseAutoImportChange(boolean currentValue, @NotNull final String linkedProjectPath) {
-        scheduleStructureRequest(() -> {
-          assert myStructure != null;
-          final List<ProjectNode> projectNodes = myStructure.getNodes(ProjectNode.class);
-          for (ProjectNode projectNode : projectNodes) {
-            final ProjectData projectData = projectNode.getData();
-            if (projectData != null && projectData.getLinkedExternalProjectPath().equals(linkedProjectPath)) {
-              projectNode.updateProject();
-              break;
-            }
-          }
-        });
-      }
-    });
-
     myToolWindow.setAdditionalGearActions(createAdditionalGearActionsGroup());
 
     scheduleStructureUpdate();
   }
-
-  private void scheduleTaskAndRunConfigUpdate() {
-    scheduleStructureRequest(() -> {
-      assert myStructure != null;
-      myStructure.updateNodesAsync(Arrays.asList(TaskNode.class, RunConfigurationNode.class));
-    });
-  }
-
 
   @Override
   public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
@@ -521,7 +510,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       for (T tasksNode : myStructure.getNodes(nodeClass)) {
         tasksNode.cleanUpCache();
       }
-      myStructure.updateNodesAsync(Collections.singleton(nodeClass));
+      myStructure.updateNodes(nodeClass);
+    });
+  }
+
+  private void scheduleTasksUpdate() {
+    scheduleStructureRequest(() -> {
+      assert myStructure != null;
+      myStructure.updateNodes(TaskNode.class);
     });
   }
 

@@ -37,8 +37,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
-  public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
+  private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
 
   private final boolean mySubExpressionValue;
 
@@ -100,7 +99,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getFamilyName() {
-    return FAMILY_NAME;
+    return getFamilyNameText();
   }
 
   @Override
@@ -352,7 +351,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     final IncorrectOperationException[] exception = {null};
     result[0].accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         // read in all children in advance since due to element replacement involving its siblings invalidation
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
@@ -399,7 +398,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     final Ref<Boolean> canBeSimplified = new Ref<>(Boolean.FALSE);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!canBeSimplified.get().booleanValue()) {
           super.visitElement(element);
         }
@@ -624,5 +623,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (operand == null) return null;
     String text = operand.getText();
     return PsiKeyword.TRUE.equals(text) ? Boolean.TRUE : PsiKeyword.FALSE.equals(text) ? Boolean.FALSE : null;
+  }
+
+  public static String getFamilyNameText() {
+    return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 }

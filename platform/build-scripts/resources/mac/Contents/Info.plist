@@ -79,8 +79,6 @@
         <string>$APP_PACKAGE/Contents</string>
       </dict>
 
-      <key>WorkingDirectory</key>
-      <string>$APP_PACKAGE/Contents/bin</string>
     </dict>
     <key>NSCameraUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the device's camera.</string>

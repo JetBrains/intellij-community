@@ -34,12 +34,6 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("map.replaceable.by.enum.map.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("map.replaceable.by.enum.map.problem.descriptor");
   }

@@ -264,8 +264,8 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     }
 
     @Override
-    protected TreeCellRenderer getContentEntryCellRenderer() {
-      return new ContentEntryTreeCellRenderer(this, getEditHandlers()) {
+    protected TreeCellRenderer getContentEntryCellRenderer(@NotNull ContentEntry contentEntry) {
+      return new ContentEntryTreeCellRenderer(this, contentEntry, getEditHandlers()) {
         @Override
         protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, final Icon originalIcon) {
           for (PyRootTypeProvider provider : myRootTypeProviders) {

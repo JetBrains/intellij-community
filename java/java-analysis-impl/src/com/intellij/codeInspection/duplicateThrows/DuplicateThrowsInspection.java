@@ -21,12 +21,6 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.duplicate.throws.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }

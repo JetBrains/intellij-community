@@ -35,21 +35,16 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
 public class ActionsTreeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil");
+  private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
-  public static final String MAIN_MENU_TITLE = KeyMapBundle.message("main.menu.action.title");
-  public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");
-  public static final String EDITOR_POPUP = KeyMapBundle.message("editor.popup.menu.title");
-
-  public static final String EDITOR_TAB_POPUP = KeyMapBundle.message("editor.tab.popup.menu.title");
-  public static final String FAVORITES_POPUP = KeyMapBundle.message("favorites.popup.title");
-  public static final String PROJECT_VIEW_POPUP = KeyMapBundle.message("project.view.popup.menu.title");
-  public static final String COMMANDER_POPUP = KeyMapBundle.message("commender.view.popup.menu.title");
-  public static final String J2EE_POPUP = KeyMapBundle.message("j2ee.view.popup.menu.title");
+  /**
+   * Use {code {@link #getMainMenuTitle()}} instead
+   */
+  @Deprecated
+  public static final String MAIN_MENU_TITLE = "Main menu";
 
   @NonNls
   private static final String EDITOR_PREFIX = "Editor";
-  @NonNls private static final String TOOL_ACTION_PREFIX = "Tool_";
 
   private ActionsTreeUtil() {
   }
@@ -60,7 +55,9 @@ public class ActionsTreeUtil {
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();
       visited.add(id);
-      if (PluginManagerCore.CORE_PLUGIN_ID.equals(id.getIdString())) continue;
+      if (PluginManagerCore.CORE_ID == id) {
+        continue;
+      }
       for (String actionId : ActionManagerEx.getInstanceEx().getPluginActions(id)) {
         result.put(actionId, descriptor.getName());
       }
@@ -132,7 +129,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createMainMenuGroup(Condition<? super AnAction> filtered) {
-    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
+    Group group = new Group(getMainMenuTitle(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
     return group;
@@ -247,7 +244,6 @@ public class ActionsTreeUtil {
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          if (id.startsWith(TOOL_ACTION_PREFIX)) continue;
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
           }
@@ -650,5 +646,37 @@ public class ActionsTreeUtil {
       if (newAction != null) return newAction;
     }
     return action;
+  }
+
+  public static String getMainMenuTitle() {
+    return KeyMapBundle.message("main.menu.action.title");
+  }
+
+  public static String getMainToolbar() {
+    return KeyMapBundle.message("main.toolbar.title");
+  }
+
+  public static String getEditorPopup() {
+    return KeyMapBundle.message("editor.popup.menu.title");
+  }
+
+  public static String getEditorTabPopup() {
+    return KeyMapBundle.message("editor.tab.popup.menu.title");
+  }
+
+  public static String getFavoritesPopup() {
+    return KeyMapBundle.message("favorites.popup.title");
+  }
+
+  public static String getProjectViewPopup() {
+    return KeyMapBundle.message("project.view.popup.menu.title");
+  }
+
+  public static String getCommanderPopup() {
+    return KeyMapBundle.message("commender.view.popup.menu.title");
+  }
+
+  public static String getJ2EEPopup() {
+    return KeyMapBundle.message("j2ee.view.popup.menu.title");
   }
 }

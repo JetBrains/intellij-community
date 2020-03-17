@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -36,6 +37,10 @@ class GHCloneDialogExtension : VcsCloneDialogExtension {
   }
 
   override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
+    throw AssertionError("Shouldn't be called")
+  }
+
+  override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
     return GHCloneDialogExtensionComponent(project,
                                            GithubAuthenticationManager.getInstance(),
                                            GithubApiRequestExecutorManager.getInstance(),

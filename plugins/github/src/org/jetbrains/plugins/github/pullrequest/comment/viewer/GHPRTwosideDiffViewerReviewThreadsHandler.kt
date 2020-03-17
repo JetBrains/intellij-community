@@ -2,38 +2,57 @@
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlaysManager
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.pullrequest.comment.ui.*
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
-class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
-                                                componentFactory: GHPREditorReviewThreadComponentFactory)
-  : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>(viewer, componentFactory) {
+class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
+                                                reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
+                                                viewer: TwosideTextDiffViewer,
+                                                componentsFactory: GHPRDiffEditorReviewComponentsFactory)
+  : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
-  private val editorsThreads: Map<Side, GHPREditorReviewThreadsModel>
+  private val commentableRangesLeft = SingleValueModel<List<LineRange>>(emptyList())
+  private val editorThreadsLeft = GHPREditorReviewThreadsModel()
+
+  private val commentableRangesRight = SingleValueModel<List<LineRange>>(emptyList())
+  private val editorThreadsRight = GHPREditorReviewThreadsModel()
 
   override val viewerReady = true
 
   init {
-    val editorThreadsLeft = GHPREditorReviewThreadsModel()
-    GHPREditorReviewThreadsController(editorThreadsLeft, componentFactory,
-                                      EditorComponentInlaysManager(viewer.editor1 as EditorImpl))
+    val inlaysManagerLeft = EditorComponentInlaysManager(viewer.editor1 as EditorImpl)
 
-    val editorThreadsRight = GHPREditorReviewThreadsModel()
-    GHPREditorReviewThreadsController(editorThreadsRight, componentFactory,
-                                      EditorComponentInlaysManager(viewer.editor2 as EditorImpl))
+    GHPREditorCommentableRangesController(commentableRangesLeft, componentsFactory, inlaysManagerLeft) {
+      Side.LEFT to it
+    }
+    GHPREditorReviewThreadsController(editorThreadsLeft, componentsFactory, inlaysManagerLeft)
 
-    editorsThreads = mapOf(Side.LEFT to editorThreadsLeft, Side.RIGHT to editorThreadsRight)
+    val inlaysManagerRight = EditorComponentInlaysManager(viewer.editor2 as EditorImpl)
+
+    GHPREditorCommentableRangesController(commentableRangesRight, componentsFactory, inlaysManagerRight) {
+      Side.RIGHT to it
+    }
+    GHPREditorReviewThreadsController(editorThreadsRight, componentsFactory, inlaysManagerRight)
   }
 
-  override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {
-    mappings.groupBy { it.side }.forEach { (side, mappings) ->
-      editorsThreads[side]?.update(mappings.groupBy { it.fileLineIndex })
-    }
+  override fun markCommentableRanges(ranges: List<Range>?) {
+    commentableRangesLeft.value = ranges?.let { GHPRCommentsUtil.getLineRanges(it, Side.LEFT) }.orEmpty()
+    commentableRangesRight.value = ranges?.let { GHPRCommentsUtil.getLineRanges(it, Side.RIGHT) }.orEmpty()
+  }
+
+  override fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?) {
+    editorThreadsLeft.update(threads
+                               ?.filter { it.diffSide == Side.LEFT }
+                               ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
+    editorThreadsRight.update(threads
+                                ?.filter { it.diffSide == Side.RIGHT }
+                                ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
   }
 }
 

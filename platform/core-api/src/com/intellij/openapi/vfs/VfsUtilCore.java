@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -17,6 +18,7 @@ import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ import java.util.Set;
  * Various utility methods for working with {@link VirtualFile}.
  */
 public class VfsUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
+  private static final Logger LOG = Logger.getInstance(VfsUtilCore.class);
 
   private static final String MAILTO = "mailto";
 
@@ -73,7 +75,7 @@ public class VfsUtilCore {
   /**
    * @return {@code true} if {@code url} is located under one of {@code rootUrls} or equal to one of them
    */
-  public static boolean isUnder(@NotNull String url, @Nullable Collection<String> rootUrls) {
+  public static boolean isUnder(@NotNull @NonNls String url, @Nullable @NonNls Collection<String> rootUrls) {
     if (rootUrls == null || rootUrls.isEmpty()) return false;
 
     for (String excludesUrl : rootUrls) {
@@ -84,7 +86,7 @@ public class VfsUtilCore {
     return false;
   }
 
-  public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
+  public static boolean isEqualOrAncestor(@NotNull @NonNls String ancestorUrl, @NotNull @NonNls String fileUrl) {
     if (ancestorUrl.equals(fileUrl)) return true;
     if (StringUtil.endsWithChar(ancestorUrl, '/')) {
       return fileUrl.startsWith(ancestorUrl);
@@ -238,7 +240,7 @@ public class VfsUtilCore {
    * @throws IOException if file failed to be copied
    */
   @NotNull
-  public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String newName) throws IOException {
+  public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull @NonNls String newName) throws IOException {
     VirtualFile newChild = toDir.createChildData(requestor, newName);
     newChild.setBOM(file.getBOM());
     newChild.setBinaryContent(file.contentsToByteArray(), -1, -1, requestor);
@@ -285,6 +287,7 @@ public class VfsUtilCore {
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws
                                                                                                            VirtualFileVisitor.VisitorException {
+    ProgressManager.checkCanceled();
     boolean pushed = false;
     try {
       final boolean allowVisitFile = visitor.allowVisitFile(file);

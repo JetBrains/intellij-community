@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -18,8 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class ToolWindowMoveAction extends DumbAwareAction {
-
+public final class ToolWindowMoveAction extends DumbAwareAction {
   public enum Anchor {
     LeftTop, LeftBottom, BottomLeft, BottomRight, RightBottom, RightTop, TopRight, TopLeft;
 
@@ -50,6 +49,7 @@ public class ToolWindowMoveAction extends DumbAwareAction {
       return super.toString();
     }
 
+    @NotNull
     public static Anchor fromWindowInfo(@NotNull WindowInfo info) {
       if (info.isSplit()) {
         if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftBottom;
@@ -61,7 +61,8 @@ public class ToolWindowMoveAction extends DumbAwareAction {
       if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftTop;
       if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomLeft;
       if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightTop;
-      /*if (info.getAnchor() == ToolWindowAnchor.TOP) */ return TopLeft;
+      /*if (info.getAnchor() == ToolWindowAnchor.TOP) */
+      return TopLeft;
     }
 
     @NotNull
@@ -84,17 +85,26 @@ public class ToolWindowMoveAction extends DumbAwareAction {
     private boolean isSplit() {
       return Arrays.asList(LeftBottom, BottomRight, RightBottom, TopRight).contains(this);
     }
+
     @NotNull
     private Icon getIcon() {
       switch (this) {
-        case LeftTop:return AllIcons.Actions.MoveToLeftTop;
-        case LeftBottom:return AllIcons.Actions.MoveToLeftBottom;
-        case BottomLeft:return AllIcons.Actions.MoveToBottomLeft;
-        case BottomRight:return AllIcons.Actions.MoveToBottomRight;
-        case RightBottom:return AllIcons.Actions.MoveToRightBottom;
-        case RightTop:return AllIcons.Actions.MoveToRightTop;
-        case TopRight:return AllIcons.Actions.MoveToTopRight;
-        default:return AllIcons.Actions.MoveToTopLeft;
+        case LeftTop:
+          return AllIcons.Actions.MoveToLeftTop;
+        case LeftBottom:
+          return AllIcons.Actions.MoveToLeftBottom;
+        case BottomLeft:
+          return AllIcons.Actions.MoveToBottomLeft;
+        case BottomRight:
+          return AllIcons.Actions.MoveToBottomRight;
+        case RightBottom:
+          return AllIcons.Actions.MoveToRightBottom;
+        case RightTop:
+          return AllIcons.Actions.MoveToRightTop;
+        case TopRight:
+          return AllIcons.Actions.MoveToTopRight;
+        default:
+          return AllIcons.Actions.MoveToTopLeft;
       }
     }
 
@@ -109,15 +119,13 @@ public class ToolWindowMoveAction extends DumbAwareAction {
   }
 
   @Nullable
-  protected ToolWindowManager getToolWindowManager(AnActionEvent e) {
+  private static ToolWindowManager getToolWindowManager(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    return project == null || project.isDisposed()
-           ? null
-           : ToolWindowManager.getInstance(project);
+    return (project == null || project.isDisposed()) ? null : ToolWindowManager.getInstance(project);
   }
 
   @Nullable
-  protected ToolWindow getToolWindow(AnActionEvent e) {
+  private static ToolWindow getToolWindow(@NotNull AnActionEvent e) {
     ToolWindowManager manager = getToolWindowManager(e);
     if (manager == null) {
       return null;
@@ -131,13 +139,14 @@ public class ToolWindowMoveAction extends DumbAwareAction {
     String id = manager.getActiveToolWindowId();
     return id == null ? null : manager.getToolWindow(id);
   }
-  @NotNull private final Anchor myAnchor;
+
+  @NotNull
+  private final Anchor myAnchor;
 
   public ToolWindowMoveAction(@NotNull Anchor anchor) {
     super(anchor.toString(), null, anchor.getIcon());
     myAnchor = anchor;
   }
-
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -153,8 +162,7 @@ public class ToolWindowMoveAction extends DumbAwareAction {
     e.getPresentation().setEnabled(toolWindow != null && !myAnchor.isApplied(toolWindow));
   }
 
-
-  public static class Group extends DefaultActionGroup {
+  public static final class Group extends DefaultActionGroup {
     private boolean isInitialized = false;
     public Group() {
       super(UIBundle.message("tool.window.move.to.action.group.name"), true);

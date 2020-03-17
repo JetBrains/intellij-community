@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -51,13 +52,6 @@ public class InnerClassVariableHidesOuterClassVariableInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inner.class.field.hides.outer.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "inner.class.field.hides.outer.problem.descriptor");
@@ -84,7 +78,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      final PsiClass aClass = field.getContainingClass();
+      PsiClass aClass = field.getContainingClass();
       if (aClass == null) {
         return;
       }
@@ -92,19 +86,18 @@ public class InnerClassVariableHidesOuterClassVariableInspection
       if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
         return;    //special case
       }
-      boolean reportStaticsOnly = aClass.hasModifierProperty(PsiModifier.STATIC);
       PsiClass ancestorClass = ClassUtils.getContainingClass(aClass);
       while (ancestorClass != null) {
         final PsiField ancestorField = ancestorClass.findFieldByName(fieldName, false);
         if (ancestorField != null) {
-          if (!m_ignoreInvisibleFields || !reportStaticsOnly || ancestorField.hasModifierProperty(PsiModifier.STATIC)) {
+          if (!m_ignoreInvisibleFields
+              || ancestorField.hasModifierProperty(PsiModifier.STATIC)
+              || !RefactoringUtil.isInStaticContext(aClass, ancestorClass)) {
             registerFieldError(field);
           }
         }
-        if (ancestorClass.hasModifierProperty(PsiModifier.STATIC)) {
-          reportStaticsOnly = true;
-        }
-        ancestorClass = ClassUtils.getContainingClass(ancestorClass);
+        aClass = ancestorClass;
+        ancestorClass = ClassUtils.getContainingClass(aClass);
       }
     }
   }

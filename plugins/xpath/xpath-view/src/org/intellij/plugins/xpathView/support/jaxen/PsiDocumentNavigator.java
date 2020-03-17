@@ -332,7 +332,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
       final Ref<XmlTag> ref = new Ref<>();
       rootTag.accept(new XmlRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (ref.get() == null) {
             super.visitElement(element);
           }

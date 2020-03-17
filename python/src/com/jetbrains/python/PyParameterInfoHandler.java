@@ -30,9 +30,6 @@ import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
 
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyMarkedCallee>> {
 
-  @NotNull
-  private static final String NO_PARAMS_MSG = CodeInsightBundle.message("parameter.info.no.parameters");
-
   @Override
   public boolean couldShowInLookup() {
     return true;
@@ -53,7 +50,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       final PyCallExpression call = argumentList.getCallExpression();
       if (call != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withRemote().withTypeEvalContext(typeEvalContext);
 
         context.setItemsToShow(
           PyUtil
@@ -101,11 +98,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    */
   @Override
   public void updateParameterInfo(@NotNull PyArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() != argumentList) {
-      context.removeHint();
-      return;
-    }
-
     // align offset to nearest expression; context may point to a space, etc.
     final List<PyExpression> flattenedArguments = PyUtil.flattenedParensAndLists(argumentList.getArguments());
     final int allegedCursorOffset = context.getOffset(); // this is already shifted backwards to skip spaces
@@ -185,7 +177,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       EnumSet[] flags = new EnumSet[hintFlags.size()];
       for (int i = 0; i < flags.length; i++) flags[i] = hintFlags.get(i);
       if (hints.length < 1) {
-        hints = new String[]{NO_PARAMS_MSG};
+        hints = new String[]{getNoParamsMsg()};
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
 
@@ -198,7 +190,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         for (String s : hints) signatureBuilder.append(s);
       }
       else {
-        signatureBuilder.append(XmlStringUtil.escapeString(NO_PARAMS_MSG));
+        signatureBuilder.append(XmlStringUtil.escapeString(getNoParamsMsg()));
       }
       context.setupUIComponentPresentation(
         signatureBuilder.toString(), -1, 0, false, false, false, context.getDefaultParameterColor()
@@ -394,5 +386,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       }
     );
     return hintsList;
+  }
+
+  private static String getNoParamsMsg() {
+    return CodeInsightBundle.message("parameter.info.no.parameters");
   }
 }

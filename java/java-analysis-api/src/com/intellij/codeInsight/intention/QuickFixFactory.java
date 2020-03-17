@@ -142,9 +142,6 @@ public abstract class QuickFixFactory {
                                                                  @NotNull PsiAnnotation... annotations);
 
   @NotNull
-  public abstract IntentionAction createSetupJDKFix();
-
-  @NotNull
   public abstract IntentionAction createAddExceptionToCatchFix();
 
   @NotNull
@@ -483,4 +480,10 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule);
+  
+  @NotNull
+  public abstract IntentionAction createAddParameterListFix(PsiMethod method);
+
+  @NotNull
+  public abstract IntentionAction createAddEmptyRecordHeaderFix(PsiClass record);
 }

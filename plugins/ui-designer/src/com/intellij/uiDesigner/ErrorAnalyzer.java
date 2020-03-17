@@ -34,7 +34,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class ErrorAnalyzer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ErrorAnalyzer");
+  private static final Logger LOG = Logger.getInstance(ErrorAnalyzer.class);
 
   /**
    * Value {@link ErrorInfo}

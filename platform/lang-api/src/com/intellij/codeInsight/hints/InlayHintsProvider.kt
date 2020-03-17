@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.psi.PsiFile
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
@@ -43,6 +44,7 @@ object InlayHintsProviderExtension : LanguageExtension<InlayHintsProvider<*>>(EX
  *
  * To test it you may use InlayHintsProviderTestCase.
  */
+@ApiStatus.Experimental
 interface InlayHintsProvider<T : Any> {
   /**
    * If this method is called, provider is enabled for this file

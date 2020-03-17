@@ -431,7 +431,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   @Override
   @Nls
   public String getDisplayName() {
-    return "Language Injections";
+    return IntelliLangBundle.message("configurable.InjectionsSettingsUI.display.name");
   }
 
   @Override

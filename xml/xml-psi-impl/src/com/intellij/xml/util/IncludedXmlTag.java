@@ -36,7 +36,7 @@ import java.util.Map;
  * @author peter
  */
 public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.IncludedXmlTag");
+  private static final Logger LOG = Logger.getInstance(IncludedXmlTag.class);
   public IncludedXmlTag(@NotNull XmlTag original, @Nullable PsiElement parent) {
     super(original, parent);
   }

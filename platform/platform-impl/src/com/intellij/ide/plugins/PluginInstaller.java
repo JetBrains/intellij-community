@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -43,7 +43,7 @@ import java.util.zip.ZipFile;
 /**
  * @author stathik
  */
-public class PluginInstaller {
+public final class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
 
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
@@ -105,8 +105,11 @@ public class PluginInstaller {
     StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
   }
 
-  public static boolean uninstallDynamicPlugin(IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-    boolean uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
+  public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+    boolean uninstalledWithoutRestart = /*parentComponent != null
+      ? DynamicPlugins.unloadPluginWithProgress(parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate)
+      : */DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
+
     if (uninstalledWithoutRestart) {
       FileUtil.delete(pluginDescriptor.getPath());
     }
@@ -201,16 +204,12 @@ public class PluginInstaller {
     PluginStateManager.addStateListener(listener);
   }
 
-  public static void removeStateListener(@NotNull PluginStateListener listener) {
-    PluginStateManager.removeStateListener(listener);
-  }
-
   public static boolean install(@NotNull InstalledPluginsTableModel model,
                                 @NotNull File file,
                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
                                 @Nullable Component parent) {
     try {
-      IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
+      IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file.toPath());
       if (pluginDescriptor == null) {
         MessagesEx.showErrorDialog(parent, "Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
         return false;
@@ -231,7 +230,7 @@ public class PluginInstaller {
       }
 
       IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
-      if (installedPlugin != null && ApplicationInfoEx.getInstanceEx().isEssentialPlugin(installedPlugin.getPluginId().getIdString())) {
+      if (installedPlugin != null && ApplicationInfoEx.getInstanceEx().isEssentialPlugin(installedPlugin.getPluginId())) {
         String message = "Plugin '" + pluginDescriptor.getName() + "' is a core part of " + ApplicationNamesInfo.getInstance().getFullProductName()
                          + ". In order to update it to a newer version you should update the IDE.";
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
@@ -265,7 +264,7 @@ public class PluginInstaller {
                                                                      IdeaPluginDescriptorImpl pluginDescriptor) {
     File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
     if (targetFile != null) {
-      IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
+      IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile.toPath(), PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
         DynamicPlugins.loadPlugin(targetDescriptor, false);
         return targetDescriptor;

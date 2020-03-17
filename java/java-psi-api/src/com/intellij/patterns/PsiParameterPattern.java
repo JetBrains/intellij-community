@@ -17,7 +17,7 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
     super(PsiParameter.class);
   }
 
-  public PsiParameterPattern ofMethod(final int index, final ElementPattern pattern) {
+  public PsiParameterPattern ofMethod(int index, ElementPattern pattern) {
     return with(new PatternConditionPlus<PsiParameter, PsiMethod>("ofMethod", pattern) {
       @Override
       public boolean processValues(PsiParameter t,
@@ -31,11 +31,24 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
       @Override
       public boolean accepts(@NotNull final PsiParameter t, final ProcessingContext context) {
         if (!super.accepts(t, context)) return false;
-        final PsiMethod psiMethod = (PsiMethod)t.getDeclarationScope();
+        PsiMethod psiMethod = (PsiMethod)t.getDeclarationScope();
 
-        final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         if (index < 0 || index >= parameters.length || !t.equals(parameters[index])) return false;
         return true;
+      }
+    });
+  }
+
+  public PsiParameterPattern ofMethod(ElementPattern<?> pattern) {
+    return with(new PatternConditionPlus<PsiParameter, PsiMethod>("ofMethod", pattern) {
+      @Override
+      public boolean processValues(PsiParameter t,
+                                   ProcessingContext context,
+                                   PairProcessor<PsiMethod, ProcessingContext> processor) {
+        PsiElement scope = t.getDeclarationScope();
+        if (!(scope instanceof PsiMethod)) return true;
+        return processor.process((PsiMethod)scope, context);
       }
     });
   }

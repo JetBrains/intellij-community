@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,10 +31,11 @@ public class TabsUtil {
 
   public static Font getLabelFont() {
     UISettings uiSettings = UISettings.getInstance();
+    Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
     if (uiSettings.getOverrideLafFonts()) {
-      return UIUtil.getLabelFont().deriveFont((float)uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
+      return font.deriveFont((float)uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
     }
 
-    return JBUI.CurrentTheme.ToolWindow.headerFont();
+    return font;
   }
 }

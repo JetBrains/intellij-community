@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -14,7 +14,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,7 +78,7 @@ import java.util.List;
 import java.util.*;
 
 public abstract class InplaceRefactoring {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
+  protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
   protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<>();
@@ -387,15 +386,7 @@ public abstract class InplaceRefactoring {
   }
 
   private void startTemplate(final TemplateBuilderImpl builder) {
-    final Disposable disposable = Disposer.newDisposable();
-    DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(disposable);
-
-    final MyTemplateListener templateListener = new MyTemplateListener() {
-      @Override
-      protected void restoreDaemonUpdateState() {
-        Disposer.dispose(disposable);
-      }
-    };
+    final MyTemplateListener templateListener = new MyTemplateListener();
 
     final int offset = myEditor.getCaretModel().getOffset();
 
@@ -413,6 +404,11 @@ public abstract class InplaceRefactoring {
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);
     highlightTemplateVariables(template, topLevelEditor);
+
+    final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
+    if (templateState != null) {
+      DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(templateState);
+    }
   }
 
   private void highlightTemplateVariables(Template template, Editor topLevelEditor) {
@@ -763,8 +759,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected boolean isIdentifier(final String newName, final Language language) {
-    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
-    return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
+    return LanguageNamesValidation.isIdentifier(language, newName, myProject);
   }
 
   protected static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {
@@ -783,7 +778,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  private PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
+  protected PsiElement getSelectedInEditorElement(@Nullable PsiElement nameIdentifier,
                                                 final Collection<? extends PsiReference> refs,
                                                 Collection<? extends Pair<PsiElement, TextRange>> stringUsages,
                                                 final int offset) {
@@ -917,33 +912,25 @@ public abstract class InplaceRefactoring {
     ourShowBalloonInHeadlessMode = showBalloonInHeadlessMode;
   }
 
-  private abstract class MyTemplateListener extends TemplateEditingAdapter {
-
-    protected abstract void restoreDaemonUpdateState();
-
+  private class MyTemplateListener extends TemplateEditingAdapter {
     @Override
     public void beforeTemplateFinished(@NotNull final TemplateState templateState, Template template) {
-      try {
-        final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-        myInsertedName = value != null ? value.toString().trim() : null;
+      final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+      myInsertedName = value != null ? value.toString().trim() : null;
 
-        TextRange range = templateState.getCurrentVariableRange();
-        final int currentOffset = myEditor.getCaretModel().getOffset();
-        if (range == null && myRenameOffset != null) {
-          range = new TextRange(myRenameOffset.getStartOffset(), myRenameOffset.getEndOffset());
-        }
-        myBeforeRevert =
-          range != null && range.getEndOffset() >= currentOffset && range.getStartOffset() <= currentOffset
-          ? myEditor.getDocument().createRangeMarker(range.getStartOffset(), currentOffset)
-          : null;
-        if (myBeforeRevert != null) {
-          myBeforeRevert.setGreedyToRight(true);
-        }
-        finish(true);
+      TextRange range = templateState.getCurrentVariableRange();
+      final int currentOffset = myEditor.getCaretModel().getOffset();
+      if (range == null && myRenameOffset != null) {
+        range = new TextRange(myRenameOffset.getStartOffset(), myRenameOffset.getEndOffset());
       }
-      finally {
-        restoreDaemonUpdateState();
+      myBeforeRevert =
+        range != null && range.getEndOffset() >= currentOffset && range.getStartOffset() <= currentOffset
+        ? myEditor.getDocument().createRangeMarker(range.getStartOffset(), currentOffset)
+        : null;
+      if (myBeforeRevert != null) {
+        myBeforeRevert.setGreedyToRight(true);
       }
+      finish(true);
     }
 
     @Override
@@ -981,12 +968,7 @@ public abstract class InplaceRefactoring {
         moveOffsetAfter(false);
       }
       finally {
-        try {
-          restoreDaemonUpdateState();
-        }
-        finally {
-          FinishMarkAction.finish(myProject, myEditor, myMarkAction);
-        }
+        FinishMarkAction.finish(myProject, myEditor, myMarkAction);
       }
     }
   }

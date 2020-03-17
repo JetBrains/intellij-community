@@ -44,6 +44,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +76,7 @@ import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/dialog_wrapper.html">DialogWrapper on SDK DevGuide</a>
  */
 public abstract class DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
+  private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
 
   public enum IdeModalityType {
     IDE,
@@ -135,7 +136,10 @@ public abstract class DialogWrapper {
   /**
    * The shared instance of default border for dialog's content pane.
    */
-  public static final Border ourDefaultBorder = new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
+  @NotNull
+  public static Border createDefaultBorder() {
+    return new JBEmptyBorder(UIUtil.getRegularPanelInsets());
+  }
 
   private static final String NO_AUTO_RESIZE = "NoAutoResizeAndFit";
 
@@ -331,6 +335,8 @@ public abstract class DialogWrapper {
    * or validation description with component where problem has been found.
    *
    * @return {@code null} if everything is OK or validation descriptor
+   * 
+   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
    */
   @Nullable
   protected ValidationInfo doValidate() {
@@ -346,6 +352,8 @@ public abstract class DialogWrapper {
    *
    * @return {@code List<ValidationInfo>} of invalid fields. List
    * is empty if no errors found.
+   * 
+   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
    */
   @NotNull
   protected List<ValidationInfo> doValidateAll() {
@@ -458,11 +466,11 @@ public abstract class DialogWrapper {
     if (getStyle() == DialogStyle.COMPACT) {
       return JBUI.Borders.empty();
     }
-    return ourDefaultBorder;
+    return createDefaultBorder();
   }
 
   protected static boolean isMoveHelpButtonLeft() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
+    return true;
   }
 
   private static boolean isRemoveHelpButton() {
@@ -1160,7 +1168,7 @@ public abstract class DialogWrapper {
    *
    * @return dimension service key
    */
-  @Nullable
+  @Nullable @NonNls
   protected String getDimensionServiceKey() {
     return null;
   }
@@ -1546,6 +1554,7 @@ public abstract class DialogWrapper {
   }
 
   /** Returns the help identifier, or {@code null} if no help is available. */
+  @NonNls
   @Nullable
   protected String getHelpId() {
     return null;

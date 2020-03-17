@@ -225,7 +225,7 @@ public class ShowAffectedTestsAction extends AnAction {
         List<PsiElement> physicalMethods = new SmartList<>();
         psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             UMethod method = UastContextKt.toUElement(element, UMethod.class);
             if (method != null) {
               ContainerUtil.addAllNotNull(physicalMethods, method.getSourcePsi());

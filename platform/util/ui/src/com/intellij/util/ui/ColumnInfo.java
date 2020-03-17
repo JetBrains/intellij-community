@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +9,7 @@ import javax.swing.table.TableCellRenderer;
 import java.util.Comparator;
 import java.util.Objects;
 
-public abstract class ColumnInfo <Item, Aspect> {
+public abstract class ColumnInfo<Item, Aspect> {
   private String myName;
   public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
 

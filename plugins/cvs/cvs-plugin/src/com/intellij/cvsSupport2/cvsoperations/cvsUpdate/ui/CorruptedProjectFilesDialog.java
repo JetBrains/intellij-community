@@ -38,7 +38,7 @@ import java.util.Collection;
 
 public class CorruptedProjectFilesDialog extends DialogWrapper {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.CorruptedProjectFilesDialog");
+  private static final Logger LOG = Logger.getInstance(CorruptedProjectFilesDialog.class);
 
   private JLabel myMessageLabel;
   private JLabel myIconLabel;

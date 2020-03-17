@@ -121,4 +121,12 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     return indicator instanceof ProgressWrapper ?
            ((ProgressWrapper)indicator).getOriginalProgressIndicator() : indicator;
   }
+
+  @NotNull
+  public static ProgressIndicator unwrapAll(@NotNull ProgressIndicator indicator) {
+    while (indicator instanceof ProgressWrapper) {
+      indicator = ((ProgressWrapper)indicator).getOriginalProgressIndicator();
+    }
+    return indicator;
+  }
 }

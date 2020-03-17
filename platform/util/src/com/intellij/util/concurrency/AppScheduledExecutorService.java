@@ -134,7 +134,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
       if (t != null) {
-        Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper").error("Worker exited due to exception", t);
+        Logger.getInstance(SchedulingWrapper.class).error("Worker exited due to exception", t);
       }
     }
 
@@ -209,7 +209,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     mainLock.lock();
     Set workers;
     try {
-      HashSet workersField = ReflectionUtil.getField(executor.getClass(), executor, HashSet.class, "workers");
+      Set workersField = ReflectionUtil.getField(executor.getClass(), executor, HashSet.class, "workers");
       workers = new HashSet(workersField); // to be able to iterate thread-safely outside the lock
     }
     finally {

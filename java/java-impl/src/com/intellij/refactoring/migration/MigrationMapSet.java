@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class MigrationMapSet {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationMapSet");
+  private static final Logger LOG = Logger.getInstance(MigrationMapSet.class);
 
   private ArrayList<MigrationMap> myMaps;
   @NonNls private static final String MIGRATION_MAP = "migrationMap";

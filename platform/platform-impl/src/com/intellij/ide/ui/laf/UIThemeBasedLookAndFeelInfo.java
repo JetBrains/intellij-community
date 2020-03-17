@@ -4,9 +4,11 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,6 +28,8 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
+  private static final String RELAUNCH_PROPERTY = "UITheme.relaunch";
+
   private final UITheme myTheme;
   private boolean myInitialised;
 
@@ -52,7 +56,6 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
 
     installBackgroundImage();
     installEditorScheme();
-
     myInitialised = true;
   }
 
@@ -68,6 +71,26 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       if (scheme != null) {
         cm.setGlobalScheme(scheme);
       }
+    }
+    else { // Offer a new Theme based EditorColorScheme for the first time after update.
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String themeName = myTheme.getEditorSchemeName();
+        if (StringUtil.isNotEmpty(themeName)) {
+          EditorColorsManager cm = EditorColorsManager.getInstance();
+          EditorColorsScheme globalScheme = cm.getGlobalScheme();
+          PropertiesComponent properties = PropertiesComponent.getInstance();
+
+          if (!properties.getBoolean(RELAUNCH_PROPERTY) &&
+              cm.isDefaultScheme(globalScheme) &&
+              !SchemeManager.getBaseName(globalScheme).equals(themeName)) {
+            EditorColorsScheme scheme = cm.getScheme(themeName);
+            if (scheme != null) {
+              cm.setGlobalScheme(scheme);
+            }
+          }
+          properties.setValue(RELAUNCH_PROPERTY, true);
+        }
+      });
     }
   }
 

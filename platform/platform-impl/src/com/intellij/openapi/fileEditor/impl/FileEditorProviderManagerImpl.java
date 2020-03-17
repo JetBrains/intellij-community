@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -51,7 +52,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
         hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
         if (provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
           String message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.getClass() + " is not DumbAware.";
-          Logger.getInstance(FileEditorProviderManagerImpl.class).error(message);
+          Logger.getInstance(FileEditorProviderManagerImpl.class).error(PluginException.createByClass(message, null, provider.getClass()));
         }
       }
     }

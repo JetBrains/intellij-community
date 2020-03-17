@@ -39,7 +39,7 @@ import java.util.List;
  * @author yole
  */
 public class StubElementTypeHolderEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubElementTypeHolderEP");
+  private static final Logger LOG = Logger.getInstance(StubElementTypeHolderEP.class);
 
   public static final ExtensionPointName<StubElementTypeHolderEP> EP_NAME = ExtensionPointName.create("com.intellij.stubElementTypeHolder");
 

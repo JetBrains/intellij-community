@@ -154,13 +154,6 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Forbidden code in App Engine applications";
-  }
-
-  @Override
   @NotNull
   public String getShortName() {
     return "AppEngineForbiddenCode";

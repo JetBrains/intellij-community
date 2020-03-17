@@ -29,7 +29,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
   private final Project myProject;
   private final ExtensionPointImpl<VcsBaseContentProvider> myAdditionalProviderPoint;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
+  private static final Logger LOG = Logger.getInstance(VcsFileStatusProvider.class);
 
   public static VcsFileStatusProvider getInstance(@NotNull Project project) {
     return project.getService(VcsFileStatusProvider.class);
@@ -39,7 +39,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
     myProject = project;
     myAdditionalProviderPoint = (ExtensionPointImpl<VcsBaseContentProvider>)VcsBaseContentProvider.EP_NAME.getPoint(project);
 
-    ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
+    project.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
         fileStatusesChanged();
@@ -90,24 +90,36 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
   @Override
   public void refreshFileStatusFromDocument(@NotNull final VirtualFile virtualFile, @NotNull final Document doc) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + virtualFile.getModificationStamp() + ", document.getModificationStamp()=" + doc.getModificationStamp());
+      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + virtualFile.getModificationStamp() +
+                ", document.getModificationStamp()=" + doc.getModificationStamp());
     }
+
+    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+    if (vcs == null) return;
+
     FileStatusManagerImpl fileStatusManager = (FileStatusManagerImpl)FileStatusManager.getInstance(myProject);
     FileStatus cachedStatus = fileStatusManager.getCachedStatus(virtualFile);
-    if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(virtualFile)) {
-      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
-      if (vcs == null) return;
-      if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified(virtualFile)) {
-        if (!((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG) {
-          RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-          if (rollbackEnvironment != null) {
-            rollbackEnvironment.rollbackIfUnchanged(virtualFile);
-          }
+    boolean isDocumentModified = isDocumentModified(virtualFile);
+
+    if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified) {
+      if (!((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject)).getState().SHOW_DIALOG) {
+        RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
+        if (rollbackEnvironment != null) {
+          rollbackEnvironment.rollbackIfUnchanged(virtualFile);
         }
       }
+    }
+
+    boolean isStatusChanged = cachedStatus != null && cachedStatus != FileStatus.NOT_CHANGED;
+    if (isStatusChanged != isDocumentModified) {
       fileStatusManager.fileStatusChanged(virtualFile);
-      ChangeProvider cp = vcs.getChangeProvider();
-      if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
+    }
+
+    ChangeProvider cp = vcs.getChangeProvider();
+    if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
+      FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
+      boolean isClmStatusChanged = status != FileStatus.NOT_CHANGED;
+      if (isClmStatusChanged != isDocumentModified) {
         VcsDirtyScopeManager.getInstance(myProject).fileDirty(virtualFile);
       }
     }

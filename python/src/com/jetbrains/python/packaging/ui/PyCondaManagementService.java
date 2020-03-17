@@ -97,7 +97,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void fetchAllRepositories(@NotNull CatchingConsumer<? super List<String>, ? super Exception> consumer) {
     if (useConda()) {
-      myExecutorService.submit(() -> {
+      myExecutorService.execute(() -> {
         try {
           final List<String> channels = ContainerUtil.notNullize(PyCondaPackageService.getInstance().listChannels());
           consumer.consume(channels);
@@ -162,7 +162,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
     if (useConda()) {
-      myExecutorService.submit(() -> {
+      myExecutorService.execute(() -> {
         try {
           consumer.consume(PyCondaPackageService.getInstance().listPackageVersions(packageName));
         }
@@ -180,7 +180,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
     final String packageName = pkg.getName();
     if (useConda()) {
-      myExecutorService.submit(() -> {
+      myExecutorService.execute(() -> {
         try {
           final String latestVersion = ContainerUtil.getFirstItem(PyCondaPackageService.getInstance().listPackageVersions(packageName));
           consumer.consume(latestVersion);

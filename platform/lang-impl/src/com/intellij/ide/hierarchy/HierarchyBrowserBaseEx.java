@@ -55,13 +55,24 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 
+/**
+ * Use {@link com.intellij.ide.hierarchy.newAPI.HierarchyBrowserBaseEx} instead
+ */
+@Deprecated
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.HierarchyBrowserBaseEx");
+  private static final Logger LOG = Logger.getInstance(HierarchyBrowserBaseEx.class);
 
-  public static final String SCOPE_PROJECT = IdeBundle.message("hierarchy.scope.project");
-  public static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
-  public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
-  public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
+  /**
+   * Use {code {@link #getScopeProject()}} instead
+   */
+  @Deprecated
+  public static final String SCOPE_PROJECT = "Production";
+
+  /**
+   * Use {code {@link #getScopeAll()}} instead
+   */
+  @Deprecated
+  public static final String SCOPE_ALL = "All";
 
   public static final String HELP_ID = "reference.toolWindows.hierarchy";
 
@@ -117,7 +128,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     for (Map.Entry<String, JTree> entry : type2treeMap.entrySet()) {
       JTree tree = entry.getValue();
       String type = entry.getKey();
-      String scope = state.SCOPE != null ? state.SCOPE : SCOPE_ALL;
+      String scope = state.SCOPE != null ? state.SCOPE : getScopeAll();
 
       OccurenceNavigatorSupport occurenceNavigatorSupport = new OccurenceNavigatorSupport(tree) {
         @Override
@@ -195,7 +206,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected abstract HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String type, @NotNull PsiElement psiElement);
 
   @Nullable
-  protected abstract Comparator<NodeDescriptor> getComparator();
+  protected abstract Comparator<NodeDescriptor<?>> getComparator();
 
   @NotNull
   protected abstract String getActionPlace();
@@ -267,14 +278,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
                 return PsiCopyPasteManager.asFileList(getPsiElements());
               }
             });
-          }
-
-          @Override
-          public void dragDropEnd() {
-          }
-
-          @Override
-          public void dropActionChanged(final int gestureModifiers) {
           }
         }, tree);
       }
@@ -601,7 +604,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     @Override
     public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY = flag;
-      final Comparator<NodeDescriptor> comparator = getComparator();
+      final Comparator<NodeDescriptor<?>> comparator = getComparator();
       myType2Sheet.values().stream().map(s->s.myStructureTreeModel).filter(m-> m != null).forEach(m->m.setComparator(comparator));
     }
 
@@ -700,10 +703,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @NotNull
   private Collection<String> getValidScopeNames() {
     List<String> result = new ArrayList<>();
-    result.add(SCOPE_PROJECT);
-    result.add(SCOPE_TEST);
-    result.add(SCOPE_ALL);
-    result.add(SCOPE_CLASS);
+    result.add(getScopeProject());
+    result.add(getScopeTest());
+    result.add(getScopeAll());
+    result.add(getScopeClass());
 
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
@@ -786,9 +789,25 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       public void actionPerformed(@NotNull AnActionEvent e) {
         EditScopesDialog.showDialog(myProject, null);
         if (!getValidScopeNames().contains(getCurrentScopeType())) {
-          selectScope(SCOPE_ALL);
+          selectScope(getScopeAll());
         }
       }
     }
+  }
+
+  public static String getScopeProject() {
+    return IdeBundle.message("hierarchy.scope.project");
+  }
+
+  public static String getScopeAll() {
+    return IdeBundle.message("hierarchy.scope.all");
+  }
+
+  public static String getScopeTest() {
+    return IdeBundle.message("hierarchy.scope.test");
+  }
+
+  public static String getScopeClass() {
+    return IdeBundle.message("hierarchy.scope.this.class");
   }
 }

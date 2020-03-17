@@ -12,7 +12,7 @@ from typing import overload as overload
 from typing import Text as Text
 from typing import Type as Type
 from typing import TYPE_CHECKING as TYPE_CHECKING
-from typing import TypeVar, Any, Mapping, ItemsView, KeysView, ValuesView, Dict, Type
+from typing import TypeVar, Any, Mapping, ItemsView, KeysView, Optional, ValuesView, Dict, Type
 
 _T = TypeVar('_T')
 _F = TypeVar('_F', bound=Callable[..., Any])
@@ -59,3 +59,11 @@ if sys.version_info >= (3, 5):
 
 if sys.version_info >= (3, 6):
     from typing import AsyncGenerator as AsyncGenerator
+
+def get_type_hints(
+    obj: Callable[..., Any], globalns: Optional[Dict[str, Any]] = ..., localns: Optional[Dict[str, Any]] = ...,
+    include_extras: bool = ...
+) -> Dict[str, Any]: ...
+
+Annotated: _SpecialForm = ...
+_AnnotatedAlias: Any = ...  # undocumented

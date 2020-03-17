@@ -33,13 +33,6 @@ import org.jetbrains.annotations.NotNull;
 public class RedundantStringFormatCallInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("redundant.string.format.call.display.name");
-  }
-
-  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("redundant.call.problem.descriptor");

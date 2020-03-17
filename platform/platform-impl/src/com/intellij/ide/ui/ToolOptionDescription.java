@@ -18,7 +18,7 @@ package com.intellij.ide.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -30,8 +30,8 @@ public class ToolOptionDescription extends BooleanOptionDescription {
   private final Project myProject;
   private final String myShortName;
 
-  public ToolOptionDescription(Tools tool, Project project) {
-    super(tool.getTool().getGroupDisplayName() + ": " + tool.getTool().getDisplayName(), "Errors");
+  public ToolOptionDescription(InspectionToolWrapper<?, ?> tool, Project project) {
+    super(tool.getGroupDisplayName() + ": " + tool.getDisplayName(), "Errors");
     myShortName = tool.getShortName();
     myProject = project;
   }

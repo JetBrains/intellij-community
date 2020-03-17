@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 
 @Tag("class-filter")
 public class ClassFilter implements JDOMExternalizable, Cloneable{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.classFilter.ClassFilter");
+  private static final Logger LOG = Logger.getInstance(ClassFilter.class);
   public static final ClassFilter[] EMPTY_ARRAY = new ClassFilter[0];
 
   @Attribute("pattern")

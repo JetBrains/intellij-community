@@ -22,9 +22,11 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.IntStream;
 
 /**
  * @author max
@@ -105,6 +107,28 @@ public class JavaI18nUtil extends I18nUtil {
     return false;
   }
 
+  static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
+                                          String annFqn,
+                                          @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
+    if (parent instanceof UPolyadicExpression) {
+      parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
+    }
+    UCallExpression callExpression = UastUtils.getUCallExpression(parent);
+    if (callExpression == null) return false;
+
+    List<UExpression> arguments = callExpression.getValueArguments();
+    OptionalInt idx = IntStream.range(0, arguments.size())
+      .filter(i -> UastUtils.isUastChildOf(expression, arguments.get(i), false))
+      .findFirst();
+
+    if (!idx.isPresent()) return false;
+
+    PsiMethod method = callExpression.resolve();
+    return method != null && isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, annFqn, null, nonNlsTargets);
+    
+  }
+
   @NotNull
   static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
     while (expression.getParent() instanceof PsiExpression) {
@@ -115,6 +139,23 @@ public class JavaI18nUtil extends I18nUtil {
       }
       expression = parent;
       if (expression instanceof PsiAssignmentExpression) break;
+    }
+    return expression;
+  }
+
+  @NotNull
+  static UExpression getTopLevelExpression(@NotNull UExpression expression) {
+    while (expression.getUastParent() instanceof UExpression) {
+      final UExpression parent = (UExpression)expression.getUastParent();
+      if (parent instanceof UBlockExpression || parent instanceof UReturnExpression) {
+        break;
+      }
+      if (parent instanceof UIfExpression &&
+          ((UIfExpression)parent).getCondition() == expression) {
+        break;
+      }
+      expression = parent;
+      if (UastExpressionUtils.isAssignment(expression)) break;
     }
     return expression;
   }
@@ -164,6 +205,34 @@ public class JavaI18nUtil extends I18nUtil {
       if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, resourceBundleRef, null)) return true;
     }
 
+    if (annFqn.equals(AnnotationUtil.NON_NLS) || annFqn.equals(AnnotationUtil.NLS)) {
+      String oppositeFQN = annFqn.equals(AnnotationUtil.NON_NLS) ? AnnotationUtil.NLS
+                                                                 : AnnotationUtil.NON_NLS;
+      if (AnnotationUtil.findAnnotation(param, oppositeFQN) != null) {
+        return false;
+      }
+
+      PsiClass containingClass = method.getContainingClass();
+      while (containingClass != null) {
+        PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(containingClass, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
+        if (classAnnotation != null) {
+          return classAnnotation.hasQualifiedName(annFqn);
+        }
+        containingClass = containingClass.getContainingClass();
+      }
+
+      PsiFile containingFile = method.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        String packageName = ((PsiClassOwner)containingFile).getPackageName();
+        PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
+        if (aPackage != null) {
+          final PsiAnnotation packageAnnotation = AnnotationUtil.findAnnotation(aPackage, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
+          if (packageAnnotation != null) {
+            return packageAnnotation.hasQualifiedName(annFqn);
+          }
+        }
+      }
+    }
     return false;
   }
 

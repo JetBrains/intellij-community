@@ -4,7 +4,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
@@ -939,12 +938,12 @@ public class ExpressionUtils {
     }
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
+      if (member.hasModifierProperty(PsiModifier.STATIC)) {
+        return factory.createReferenceExpression(memberClass);
+      }
       PsiClass containingClass = ClassUtils.getContainingClass(ref);
       if (containingClass == null) {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
-      }
-      if (containingClass != null && member.hasModifierProperty(PsiModifier.STATIC)) {
-        return factory.createReferenceExpression(containingClass);
       }
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
         containingClass = ClassUtils.getContainingClass(containingClass);
@@ -1122,6 +1121,7 @@ public class ExpressionUtils {
   public static boolean isNewObject(@Nullable PsiExpression expression) {
     return expression != null && nonStructuralChildren(expression).allMatch(call -> {
       if (call instanceof PsiNewExpression) return true;
+      if (call instanceof PsiArrayInitializerExpression) return true;
       if (call instanceof PsiMethodCallExpression) {
         ContractReturnValue returnValue =
           JavaMethodContractUtil.getNonFailingReturnValue(JavaMethodContractUtil.getMethodCallContracts((PsiCallExpression)call));
@@ -1142,11 +1142,28 @@ public class ExpressionUtils {
   public static boolean isDifference(@NotNull PsiExpression from, @NotNull PsiExpression to, @NotNull PsiExpression diff) {
     diff = PsiUtil.skipParenthesizedExprDown(diff);
     if (diff == null) return false;
-    if (isZero(from) && PsiEquivalenceUtil.areElementsEquivalent(to, diff)) return true;
+    EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
+    if (isZero(from) && eq.expressionsAreEquivalent(to, diff)) return true;
+    if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
     if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)diff).getROperand();
-      if (right != null && PsiEquivalenceUtil.areElementsEquivalent(to, left) && PsiEquivalenceUtil.areElementsEquivalent(from, right)) {
+      if (right != null && eq.expressionsAreEquivalent(to, left) && eq.expressionsAreEquivalent(from, right)) {
+        return true;
+      }
+    }
+    if (from instanceof PsiBinaryExpression && ((PsiBinaryExpression)from).getOperationTokenType().equals(JavaTokenType.MINUS)) {
+      PsiExpression left = ((PsiBinaryExpression)from).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)from).getROperand();
+      if (right != null && eq.expressionsAreEquivalent(to, left) && eq.expressionsAreEquivalent(diff, right)) {
+        return true;
+      }
+    }
+    if (to instanceof PsiBinaryExpression && ((PsiBinaryExpression)to).getOperationTokenType().equals(JavaTokenType.PLUS)) {
+      PsiExpression left = ((PsiBinaryExpression)to).getLOperand();
+      PsiExpression right = ((PsiBinaryExpression)to).getROperand();
+      if (right != null && (eq.expressionsAreEquivalent(left, from) && eq.expressionsAreEquivalent(right, diff)) ||
+          (eq.expressionsAreEquivalent(right, from) && eq.expressionsAreEquivalent(left, diff))) {
         return true;
       }
     }
@@ -1229,7 +1246,7 @@ public class ExpressionUtils {
    */
   public static boolean isLocallyDefinedExpression(PsiExpression expression) {
     return PsiTreeUtil.processElements(expression, e -> {
-      if (e instanceof PsiMethodCallExpression) return false;
+      if (e instanceof PsiCallExpression) return false;
       if (e instanceof PsiReferenceExpression) {
         PsiElement target = ((PsiReferenceExpression)e).resolve();
         if (target instanceof PsiField) {

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.openapi.util.RecursionManager
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 
 class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -49,7 +50,7 @@ public class TerminalOptionsConfigurable implements SearchableConfigurable, Disp
   @Nls
   @Override
   public String getDisplayName() {
-    return "Terminal";
+    return IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name");
   }
 
   @Override

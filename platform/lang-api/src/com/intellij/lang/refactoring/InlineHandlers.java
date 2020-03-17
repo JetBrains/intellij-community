@@ -25,7 +25,6 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class InlineHandlers extends LanguageExtension<InlineHandler> {
-
   private final static InlineHandlers INSTANCE = new InlineHandlers();
 
   private InlineHandlers() {

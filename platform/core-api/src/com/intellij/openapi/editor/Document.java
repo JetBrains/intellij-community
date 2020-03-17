@@ -145,7 +145,7 @@ public interface Document extends UserDataHolder {
    * @throws ReadOnlyModificationException         if the document is read-only.
    * @throws ReadOnlyFragmentModificationException if the fragment to be modified is covered by a guarded block.
    */
-  void insertString(int offset, @NotNull CharSequence s);
+  void insertString(int offset, @NonNls @NotNull CharSequence s);
 
   /**
    * Deletes the specified range of text from the document.

@@ -31,7 +31,7 @@ import java.util.Map;
  * On Windows, PTY is emulated by creating an invisible console window (see Pty4j and WinPty implementation).
  */
 public class PtyCommandLine extends GeneralCommandLine {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.PtyCommandLine");
+  private static final Logger LOG = Logger.getInstance(PtyCommandLine.class);
   private static final String RUN_PROCESSES_WITH_PTY = "run.processes.with.pty";
 
   private static final String UNIX_PTY_INIT = "unix.pty.init";

@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFQDNNames;
+import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Contract;
@@ -269,7 +270,7 @@ public class PyEvaluator {
       if (!myEnableResolve) {
         return null;
       }
-      final ResolveResult[] results = expression.getReference(PyResolveContext.noImplicits()).multiResolve(false);
+      final ResolveResult[] results = expression.getReference(PyResolveContext.defaultContext()).multiResolve(false);
       if (results.length != 1) {
         return null;
       }
@@ -302,7 +303,7 @@ public class PyEvaluator {
     }
 
     // Support dict([("k", "v")]) syntax
-    if (myEnableResolve && expression.isCallee(PythonFQDNNames.DICT_CLASS)) {
+    if (myEnableResolve && NameResolverTools.isCalleeShortCut(expression, PythonFQDNNames.DICT_CLASS)) {
       final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(expression, PyTupleExpression.class);
       if (!tuples.isEmpty()) {
         final Map<Object, Object> result = new HashMap<>();
@@ -470,7 +471,7 @@ public class PyEvaluator {
   @Nullable
   private Object evaluateOrGet(@Nullable final PyExpression expression) {
     final Object result = evaluate(expression);
-    if (result !=null) {
+    if (result != null) {
       return result;
     }
     return myAllowExpressionsAsValues ? expression : null;

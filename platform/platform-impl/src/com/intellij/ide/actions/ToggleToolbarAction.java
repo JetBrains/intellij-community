@@ -11,25 +11,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
 /**
  * @author gregsh
  */
-public class ToggleToolbarAction extends ToggleAction implements DumbAware {
-
+public final class ToggleToolbarAction extends ToggleAction implements DumbAware {
   @NotNull
   public static DefaultActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     return new DefaultActionGroup(new OptionsGroup(toolWindow),
@@ -45,27 +44,29 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
 
   @NotNull
   public static ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
-    toolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+    toolWindow.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentAdded(@NotNull ContentManagerEvent event) {
         JComponent component = event.getContent().getComponent();
-        setToolbarVisible(JBIterable.of(component), isToolbarVisible(toolWindow, properties));
+        setToolbarVisible(Collections.singletonList(component), isToolbarVisible(toolWindow, properties));
 
         // support nested content managers, e.g. RunnerLayoutUi as content component
-        ContentManager contentManager =
-          component instanceof DataProvider ? PlatformDataKeys.CONTENT_MANAGER.getData((DataProvider)component) : null;
-        if (contentManager != null) contentManager.addContentManagerListener(this);
+        ContentManager contentManager = component instanceof DataProvider ? PlatformDataKeys.CONTENT_MANAGER.getData((DataProvider)component) : null;
+        if (contentManager != null) {
+          contentManager.addContentManagerListener(this);
+        }
       }
     });
-    return new ToggleToolbarAction(properties, getShowToolbarProperty(toolWindow),
-                                   () -> JBIterable.of(toolWindow.getContentManager().getComponent()));
+    return new ToggleToolbarAction(properties, getShowToolbarProperty(toolWindow), () -> {
+      return Collections.singletonList(toolWindow.getContentManager().getComponent());
+    });
   }
 
   public static void setToolbarVisible(@NotNull ToolWindow toolWindow,
                                        @NotNull PropertiesComponent properties,
                                        @Nullable Boolean visible) {
     boolean state = visible == null ? isToolbarVisible(toolWindow, properties) : visible;
-    setToolbarVisibleImpl(getShowToolbarProperty(toolWindow), properties, JBIterable.of(toolWindow.getComponent()), state);
+    setToolbarVisibleImpl(getShowToolbarProperty(toolWindow), properties, Collections.singletonList(toolWindow.getComponent()), state);
   }
 
   public static void setToolbarVisible(@NotNull String id,
@@ -94,7 +95,6 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
   public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
     return isSelectedImpl(properties, getShowToolbarProperty(toolWindow));
   }
-
 
   private final PropertiesComponent myPropertiesComponent;
   private final String myProperty;
@@ -133,7 +133,6 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
     propertiesComponent.setValue(property, String.valueOf(visible), String.valueOf(true));
     setToolbarVisible(components, visible);
   }
-
 
   boolean isSelected() {
     return isSelectedImpl(myPropertiesComponent, myProperty);
@@ -180,7 +179,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
       JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;
       if (contentComponent == null || e == null) return EMPTY_ARRAY;
       List<AnAction> result = new SmartList<>();
-      for (final ActionToolbar toolbar : iterateToolbars(JBIterable.of(contentComponent))) {
+      for (final ActionToolbar toolbar : iterateToolbars(Collections.singletonList(contentComponent))) {
         JComponent c = toolbar.getComponent();
         if (c.isVisible() || !c.isValid()) continue;
         if (!result.isEmpty() && !(ContainerUtil.getLastItem(result) instanceof Separator)) {

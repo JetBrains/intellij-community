@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -113,15 +112,15 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
       return myMatchedUsers;
     }
 
+    @NotNull
+    @Override
+    public Collection<String> getValuesAsText() {
+      return ContainerUtil.map(myMatchedUsers, user -> VcsUserUtil.toExactString(user));
+    }
+
     @Override
     public boolean matches(@NotNull VcsCommitMetadata details) {
       return myMatchedUsers.contains(details.getAuthor());
-    }
-
-    @NotNull
-    @Override
-    public String getPresentation() {
-      return StringUtil.join(myMatchedUsers, user -> VcsUserUtil.toExactString(user), ", ");
     }
   }
 }

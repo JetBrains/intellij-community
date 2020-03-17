@@ -1,2 +1,2 @@
 def s = "foo"
-s.bar()<caret>
+s.barrr()<caret>

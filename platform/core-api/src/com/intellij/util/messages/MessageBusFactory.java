@@ -15,17 +15,17 @@ public abstract class MessageBusFactory {
   }
 
   @NotNull
-  public abstract MessageBus createMessageBus(@NotNull Object owner);
+  public abstract MessageBus createMessageBus(@NotNull MessageBusOwner owner);
   @NotNull
-  public abstract MessageBus createMessageBus(@NotNull Object owner, @NotNull MessageBus parentBus);
+  public abstract MessageBus createMessageBus(@NotNull MessageBusOwner owner, @NotNull MessageBus parentBus);
 
   @NotNull
-  public static MessageBus newMessageBus(@NotNull Object owner) {
+  public static MessageBus newMessageBus(@NotNull MessageBusOwner owner) {
     return getInstance().createMessageBus(owner);
   }
 
   @NotNull
-  public static MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
+  public static MessageBus newMessageBus(@NotNull MessageBusOwner owner, @Nullable MessageBus parentBus) {
     return parentBus == null ? newMessageBus(owner) : getInstance().createMessageBus(owner, parentBus);
   }
 }

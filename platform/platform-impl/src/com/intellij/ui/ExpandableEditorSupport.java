@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Comparing;
@@ -67,8 +66,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
       model.clearFoldRegions();
       for (int i = 0; i < text.length(); i++) {
         if (text.charAt(i) == '\n') {
-          FoldRegion region = model.createFoldRegion(i, i + 1, " \u23ce ", null, true);
-          if (region != null) region.setExpanded(false);
+          model.createFoldRegion(i, i + 1, " \u23ce ", null, true);
         }
       }
     });

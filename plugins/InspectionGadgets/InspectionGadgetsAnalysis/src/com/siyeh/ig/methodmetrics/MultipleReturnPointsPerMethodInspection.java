@@ -44,13 +44,6 @@ public class MultipleReturnPointsPerMethodInspection
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "multiple.return.points.per.method.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return 1;
   }

@@ -18,11 +18,12 @@ package org.intellij.plugins.relaxNG.compact.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class RncElementVisitor extends PsiElementVisitor {
 
   @Override
-  public final void visitElement(PsiElement element) {
+  public final void visitElement(@NotNull PsiElement element) {
     if (element instanceof RncElement) {
       visitElement((RncElement)element);
     } else {

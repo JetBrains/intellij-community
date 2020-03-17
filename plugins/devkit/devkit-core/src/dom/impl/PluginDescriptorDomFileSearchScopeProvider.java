@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +28,7 @@ public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePr
 
   @NotNull
   @Override
-  public List<SearchScope> getSearchScopes(@NotNull Project project) {
+  public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
     if (DumbService.isDumb(project) || !PsiUtil.isIdeaProject(project)) return Collections.emptyList();
 
     final Collection<VirtualFile> pluginDescriptorFiles =
@@ -40,7 +41,6 @@ public class PluginDescriptorDomFileSearchScopeProvider implements SearchScopePr
         return "All Production " + PluginDescriptorDomFileSearchScopeProvider.this.getDisplayName();
       }
 
-      @Nullable
       @Override
       public Icon getIcon() {
         return AllIcons.Nodes.Plugin;

@@ -30,7 +30,6 @@ import org.jetbrains.intellij.build.ResourcesGenerator
 abstract class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   final MultiValuesMap<String, String> moduleJars = new MultiValuesMap<>(true)
-  final MultiValuesMap<String, String> testModuleJars = new MultiValuesMap<>(true)  // Android Studio
   /** artifact name to relative output path */
   final Map<String, String> includedArtifacts = [:]
   /** list of additional resources which should be included into the distribution */

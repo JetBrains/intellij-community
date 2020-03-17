@@ -7,9 +7,22 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
@@ -19,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FileTypeUsageCounterCollector {
-  private static final Logger LOG = Logger.getInstance("#" + FileTypeUsageCounterCollector.class.getPackage().getName());
+  private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
@@ -28,8 +41,22 @@ public class FileTypeUsageCounterCollector {
     trigger(project, file, "edit");
   }
 
+  public static void triggerSelect(@NotNull Project project, @Nullable VirtualFile file) {
+    if (file != null) {
+      trigger(project, file, "select");
+    }
+    else {
+      final FeatureUsageData data = new FeatureUsageData().addAnonymizedPath(null);
+      FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", "select", data);
+    }
+  }
+
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
     trigger(project, file, "open");
+  }
+
+  public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
+    trigger(project, file, "close");
   }
 
   private static void trigger(@NotNull Project project,
@@ -91,6 +118,54 @@ public class FileTypeUsageCounterCollector {
         }
       }
       return ValidationResultType.REJECTED;
+    }
+  }
+
+  public static class MyAnActionListener implements AnActionListener {
+    private static final Key<Long> LAST_EDIT_USAGE = Key.create("LAST_EDIT_USAGE");
+
+    @Override
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      if (action instanceof EditorAction && ((EditorAction)action).getHandler() instanceof EditorWriteActionHandler) {
+        onChange(dataContext);
+      }
+    }
+
+    private static void onChange(DataContext dataContext) {
+      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+      if (editor == null) return;
+      Project project = editor.getProject();
+      if (project == null) return;
+      VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+      if (file != null) {
+        Long lastEdit = editor.getUserData(LAST_EDIT_USAGE);
+        if (lastEdit == null || System.currentTimeMillis() - lastEdit > 60 * 1000) {
+          editor.putUserData(LAST_EDIT_USAGE, System.currentTimeMillis());
+          triggerEdit(project, file);
+        }
+      }
+    }
+
+    @Override
+    public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
+      onChange(dataContext);
+    }
+  }
+
+  public static class MyFileEditorManagerListener implements FileEditorManagerListener {
+    @Override
+    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+      triggerOpen(source.getProject(), file);
+    }
+
+    @Override
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+      triggerClosed(source.getProject(), file);
+    }
+
+    @Override
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+      triggerSelect(event.getManager().getProject(), event.getNewFile());
     }
   }
 }

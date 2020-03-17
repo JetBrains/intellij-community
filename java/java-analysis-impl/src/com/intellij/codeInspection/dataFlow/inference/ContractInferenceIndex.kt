@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
@@ -93,7 +92,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
       }
     }
     var pureInitializer = true
-    if (!initializers.isEmpty()) {
+    if (initializers.isNotEmpty()) {
       val visitor = PurityInferenceVisitor(tree, aClass, fieldModifiers, true)
       for (initializer in initializers) {
         walkMethodBody(initializer, visitor::visitNode)
@@ -117,7 +116,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     val contractInference = ContractInferenceInterpreter(tree, method, body)
     val contracts = contractInference.inferContracts(statements)
 
-    val nullityVisitor = MethodReturnInferenceVisitor(tree, contractInference.getParameters(), body)
+    val nullityVisitor = MethodReturnInferenceVisitor(tree, contractInference.parameters, body)
     val purityVisitor = PurityInferenceVisitor(tree, body, fieldMap, ctor)
     for (statement in statements) {
       walkMethodBody(statement) {
@@ -164,7 +163,7 @@ fun getIndexedData(method: PsiMethodImpl): MethodData? {
       val spine = (file as PsiFileImpl).stubbedSpine
       var methodIndex = 0
       for (i in 0 until spine.stubCount) {
-        if (spine.getStubType(i) === JavaElementType.METHOD) {
+        if (spine.getStubType(i) === METHOD) {
           fileData[methodIndex]?.let { result[spine.getStubPsi(i) as PsiMethod] = it }
           methodIndex++
         }

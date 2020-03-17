@@ -6,7 +6,9 @@
   </idea-plugin>
   <idea-plugin url="file://cycle0.xml">
     <id>cycle0</id>
-    <depends>cycle1</depends>
+    <depends>
+      cycle1
+    </depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://cycle1.xml">
@@ -96,7 +98,7 @@
     <module value="com.intellij.modules.plugin0"/>
     <depends>plugin3</depends>
     <depends>com.intellij.modules.core</depends>
-    <depends optional="true" config-file="zzz">cycle0</depends>
+    <depends optional="true">cycle0</depends>
   </idea-plugin>
   <idea-plugin url="file://plugin1.xml">
     <id>plugin1</id>
@@ -114,16 +116,16 @@
   </idea-plugin>
   <idea-plugin url="file://optional_cycle0.xml">
     <id>optional_cycle0</id>
-    <depends optional="true" config-file="?">optional_cycle1</depends>
+    <depends optional="true">optional_cycle1</depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://optional_cycle1.xml">
     <id>optional_cycle1</id>
-    <depends optional="true" config-file="?">optional_cycle2</depends>
+    <depends optional="true">optional_cycle2</depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://optional_cycle2.xml">
     <id>optional_cycle2</id>
-    <depends optional="true" config-file="?">optional_cycle0</depends>
+    <depends optional="true">optional_cycle0</depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin></root>

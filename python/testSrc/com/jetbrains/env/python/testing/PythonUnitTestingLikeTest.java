@@ -334,7 +334,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testMultipleCases() {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
                                                                         PyUnitTestConfiguration.class) {
         @Override
         protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {

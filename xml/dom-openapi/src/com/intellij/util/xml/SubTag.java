@@ -15,6 +15,8 @@
  */
 package com.intellij.util.xml;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -30,7 +32,7 @@ public @interface SubTag {
   /**
    * @return child XML tag name if it can't be inferred from the getter name (see {@link com.intellij.util.xml.NameStrategy})
    */
-  String value() default "";
+  @NonNls String value() default "";
 
   /**
    * @return if there are several child XML tags with the same name (e.g. always 2), the number of the child tag we should deal with

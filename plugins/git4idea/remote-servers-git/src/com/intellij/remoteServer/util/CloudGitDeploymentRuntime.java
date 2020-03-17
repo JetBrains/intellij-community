@@ -316,11 +316,11 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected void addGitRemote(CloudGitApplication application) throws ServerRuntimeException {
-    doGitRemote(getRemoteName(), application, "add", CloudBundle.getText("failed.add.remote", getRemoteName()));
+    doGitRemote(getRemoteName(), application, "add", CloudBundle.message("failed.add.remote", getRemoteName()));
   }
 
   protected void resetGitRemote(CloudGitApplication application) throws ServerRuntimeException {
-    doGitRemote(getRemoteName(), application, "set-url", CloudBundle.getText("failed.reset.remote", getRemoteName()));
+    doGitRemote(getRemoteName(), application, "set-url", CloudBundle.message("failed.reset.remote", getRemoteName()));
   }
 
   protected void doGitRemote(String remoteName,
@@ -386,7 +386,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     fetchHandler.setSilent(false);
     fetchHandler.addParameters(getRemoteName());
     fetchHandler.addLineListener(createGitLineHandlerListener());
-    performRemoteGitTask(fetchHandler, CloudBundle.getText("fetching.application", getCloudName()));
+    performRemoteGitTask(fetchHandler, CloudBundle.message("fetching.application", getCloudName()));
 
     repository.update();
   }
@@ -530,7 +530,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
       handler.addParameters("-o");
       handler.addParameters(getRemoteName());
       handler.addLineListener(createGitLineHandlerListener());
-      performRemoteGitTask(handler, CloudBundle.getText("cloning.existing.application", getCloudName()));
+      performRemoteGitTask(handler, CloudBundle.message("cloning.existing.application", getCloudName()));
     }
   }
 }

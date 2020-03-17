@@ -39,7 +39,7 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).addResourcePattern("*.xml");
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).addResourcePattern("*.xml");
   }
 
   public void testSimple() {
@@ -107,7 +107,7 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     String excludedFile = createFile("res/excluded.java", "XXX");
     JpsModule m = addModule("m");
     m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)), JavaResourceRootType.RESOURCE);
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).getCompilerExcludes().addExcludedFile(
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).getCompilerExcludes().addExcludedFile(
       "file://" + FileUtil.toSystemIndependentName(excludedFile)
     );
     rebuildAllModules();

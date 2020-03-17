@@ -30,6 +30,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -1046,6 +1047,9 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testDependencyWithEnvironmentENVProperty() {
+    if(MavenUtil.newModelEnabled(myProject)){
+      throw new IllegalStateException("This test brokes all subsequent!");
+    }
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
     envDir = StringUtil.trimEnd(envDir, "/");
 
@@ -1654,16 +1658,16 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "</dependencies>");
 
     importProject("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m2</module>" +
+                  "</modules>");
 
-//    assertProjectLibraries("Maven: xxx:yyy:1");
+    //    assertProjectLibraries("Maven: xxx:yyy:1");
     assertModuleLibDep("m1", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m1/foo.jar!/");
     assertModuleLibDep("m2", "Maven: xxx:yyy:1", "jar://" + getRoot() + "/m2/foo.jar!/");
   }

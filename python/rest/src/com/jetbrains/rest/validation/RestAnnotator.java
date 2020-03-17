@@ -42,7 +42,4 @@ public abstract class RestAnnotator extends RestElementVisitor {
     }
   }
 
-  protected void markError(PsiElement element, String message) {
-    getHolder().createErrorAnnotation(element, message);
-  }
 }

@@ -8,7 +8,9 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -36,6 +38,7 @@ public class TagPanel extends NonOpaquePanel {
 
     for (int i = 0; i < commonSize; i++) {
       TagComponent component = (TagComponent)getComponent(i);
+      component.setToolTipText(null);
       component.setText(tags.get(i));
       component.setVisible(true);
     }
@@ -55,6 +58,10 @@ public class TagPanel extends NonOpaquePanel {
     }
 
     setVisible(true);
+  }
+
+  public void setFirstTagTooltip(@Nullable String text) {
+    ((JComponent)getComponent(0)).setToolTipText(text);
   }
 
   @Override

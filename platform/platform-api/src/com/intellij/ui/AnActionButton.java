@@ -169,23 +169,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public static class CheckedAnActionButton extends AnActionButtonWrapper implements CheckedActionGroup {
-    private final AnAction myDelegate;
-
-    public CheckedAnActionButton(Presentation presentation, AnAction action) {
+    public CheckedAnActionButton(Presentation presentation, @NotNull AnAction action) {
       super(presentation, action);
-      myDelegate = action;
-    }
-
-    public AnAction getDelegate() {
-      return myDelegate;
     }
   }
 
-  public static class AnActionButtonWrapper extends AnActionButton {
-
+  public static class AnActionButtonWrapper extends AnActionButton implements ActionWithDelegate<AnAction> {
     private final AnAction myAction;
 
-    public AnActionButtonWrapper(Presentation presentation, AnAction action) {
+    public AnActionButtonWrapper(Presentation presentation, @NotNull AnAction action) {
       super(presentation.getText(), presentation.getDescription(), presentation.getIcon());
       myAction = action;
     }
@@ -208,6 +200,12 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     @Override
     public boolean isDumbAware() {
       return myAction.isDumbAware();
+    }
+
+    @NotNull
+    @Override
+    public AnAction getDelegate() {
+      return myAction;
     }
   }
 

@@ -19,7 +19,7 @@ public class ReadThread implements Runnable {
 
   public final static Collection<ReadThread> READ_THREADS = Collections.synchronizedCollection(new ArrayList<>());
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.javacvsImpl.io.ReadThread");
+  private static final Logger LOG = Logger.getInstance(ReadThread.class);
 
   private static final int INITIAL_BUFFER_SIZE = 128 * 1024;
   private static final int TIMEOUT = 3000;

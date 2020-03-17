@@ -64,12 +64,6 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("pointless.boolean.expression.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -587,7 +581,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     private boolean referenceFound;
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (referenceFound) {
         return;
       }

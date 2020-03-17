@@ -548,7 +548,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @Nullable
-  public CommittedChangeList loadRevisions(final VirtualFile vf, final VcsRevisionNumber number) {
+  public CommittedChangeList loadRevisions(VirtualFile vf, @NotNull VcsRevisionNumber number) {
     return VcsSynchronousProgressWrapper.compute(() -> {
       final Pair<CommittedChangeList, FilePath> pair = getCommittedChangesProvider().getOneList(vf, number);
       return pair != null ? pair.getFirst() : null;

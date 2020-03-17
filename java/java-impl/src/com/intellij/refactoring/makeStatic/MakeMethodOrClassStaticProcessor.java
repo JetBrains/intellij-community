@@ -46,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParameterListOwner> extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
+  private static final Logger LOG = Logger.getInstance(MakeMethodStaticProcessor.class);
 
   protected T myMember;
   protected Settings mySettings;

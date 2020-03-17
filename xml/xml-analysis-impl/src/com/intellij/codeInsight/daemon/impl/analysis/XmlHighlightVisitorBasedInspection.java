@@ -65,7 +65,7 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
       public void run() {
         file.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             highlightVisitor.visit(element);
             super.visitElement(element);
           }
@@ -79,14 +79,7 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return InspectionProfileEntry.GENERAL_GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "XML highlighting";
+    return getGeneralGroupName();
   }
 
   @NotNull

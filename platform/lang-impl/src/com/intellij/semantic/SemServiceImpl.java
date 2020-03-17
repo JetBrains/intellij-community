@@ -38,6 +38,7 @@ public final class SemServiceImpl extends SemService {
   public SemServiceImpl(Project project) {
     myProject = project;
     myCVManager = CachedValuesManager.getManager(myProject);
+    SemContributor.EP_NAME.addExtensionPointListener(() -> myProducers = null, project);
   }
 
   private MultiMap<SemKey<?>, NullableFunction<PsiElement, Collection<? extends SemElement>>> collectProducers() {

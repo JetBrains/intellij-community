@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.merge.*
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -66,6 +67,10 @@ object MergeConflictResolveUtil {
 
         val request = DiffRequestFactory.getInstance().createMergeRequest(project, resolver.virtualFile, byteContents,
                                                                           resolver.windowTitle, resolver.contentTitles)
+        resolver.titleCustomizerList.run {
+          request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER,
+                              listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+        }
         MergeUtil.putRevisionInfos(request, mergeData)
         MergeCallback.register(request, MyMergeCallback(resolver))
         return request

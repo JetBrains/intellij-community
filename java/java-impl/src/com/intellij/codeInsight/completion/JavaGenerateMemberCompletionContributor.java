@@ -131,7 +131,9 @@ public class JavaGenerateMemberCompletionContributor {
       }
       catch (GenerateCodeException ignore) { }
       for (final PsiMethod prototype : prototypes) {
-        if (parent.findMethodBySignature(prototype, false) == null && addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
+        PsiMethod existingMethod = parent.findMethodBySignature(prototype, false);
+        if ((existingMethod == null || existingMethod instanceof SyntheticElement) && 
+            addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
           Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
           result.addElement(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, icon, "", new InsertHandler<LookupElement>() {
             @Override

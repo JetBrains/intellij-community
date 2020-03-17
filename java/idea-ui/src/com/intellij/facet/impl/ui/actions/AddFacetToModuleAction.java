@@ -26,7 +26,7 @@ import java.util.TreeMap;
  * @author nik
 */
 public class AddFacetToModuleAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.actions.AddFacetToModuleAction");
+  private static final Logger LOG = Logger.getInstance(AddFacetToModuleAction.class);
   private final FacetEditorFacade myEditor;
   private final Project myProject;
   private final FacetType myType;

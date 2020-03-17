@@ -40,13 +40,6 @@ import java.util.function.Predicate;
  */
 public class PyPropertyDefinitionInspection extends PyInspection {
 
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.property.definition");
-  }
-
   private static final ImmutableList<String> SUFFIXES = ImmutableList.of(PyNames.SETTER, PyNames.DELETER);
 
   @NotNull

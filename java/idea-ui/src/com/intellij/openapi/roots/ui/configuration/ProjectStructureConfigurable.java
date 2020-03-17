@@ -6,9 +6,7 @@ import com.intellij.facet.Facet;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -56,8 +54,6 @@ import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfig
 
 public class ProjectStructureConfigurable implements SearchableConfigurable, Place.Navigator,
                                                                               Configurable.NoMargin, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable");
-
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
   protected final UIState myUiState = new UIState();
@@ -298,8 +294,6 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   @Override
   public void apply() throws ConfigurationException {
-    LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Project Structure should be shown in a transaction, see AnAction#startInTransaction");
-
     for (Configurable each : myName2Config) {
       if (each instanceof BaseStructureConfigurable && each.isModified()) {
         ((BaseStructureConfigurable)each).checkCanApply();

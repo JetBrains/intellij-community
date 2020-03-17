@@ -25,7 +25,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class PsiNamedElementAutomaticRenamer<T extends PsiNamedElement> extends AutomaticUsageRenamer<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.naming.PsiNamedElementAutomaticRenamer");
+  private static final Logger LOG = Logger.getInstance(PsiNamedElementAutomaticRenamer.class);
 
   protected PsiNamedElementAutomaticRenamer(List<? extends T> elements, String oldName, String newName) {
     super(elements, oldName, newName);

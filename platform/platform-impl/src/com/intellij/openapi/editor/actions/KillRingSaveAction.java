@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.ide.KillRingTransferable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Other-Kill-Commands.html">kill-ring-save</a> command.
@@ -49,7 +51,7 @@ public class KillRingSaveAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void execute(@NotNull final Editor editor, final DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
         return;

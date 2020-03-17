@@ -90,16 +90,14 @@ public interface GitBranchUiHandler {
                                            @NotNull Map<GitRepository, List<GitCommit>> history,
                                            @NotNull Map<GitRepository, String> baseBranches,
                                            @NotNull String removedBranch);
-
   /**
-   * <p>Show confirmation about deleting of a remote branch.</p>
-   * <p>If there is a common tracking branch of this remote branch, the confirmation proposes to delete it as well.</p>
+   * <p>Show confirmation about deleting of a remote branches.</p>
+   * <p>If there is a common tracking branches, the confirmation proposes to delete it as well.</p>
    */
   @NotNull
-  DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull String branchName,
+  DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
                                                          @NotNull Collection<String> trackingBranches,
                                                          @NotNull Collection<GitRepository> repositories);
-
   enum DeleteRemoteBranchDecision {
     CANCEL,
     DELETE,

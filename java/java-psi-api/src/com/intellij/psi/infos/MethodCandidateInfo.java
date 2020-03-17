@@ -25,9 +25,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import org.intellij.lang.annotations.MagicConstant;
@@ -178,9 +177,20 @@ public class MethodCandidateInfo extends CandidateInfo{
   private <T> T computeWithKnownTargetType(final Computable<T> computable, PsiSubstitutor substitutor) {
     if (myArgumentList instanceof PsiExpressionList) {
       PsiExpressionList argumentList = (PsiExpressionList)myArgumentList;
+      PsiElement parent = argumentList.getParent();
+      boolean prohibitCaching = CachedValuesManager.getCachedValue(parent,
+                                                                   () -> new CachedValueProvider.Result<>(
+                                                                     !(parent instanceof PsiCallExpression) ||
+                                                                     JavaPsiFacade.getInstance(parent.getProject())
+                                                                       .getResolveHelper()
+                                                                       .hasOverloads((PsiCallExpression)parent),
+                                                                     PsiModificationTracker.MODIFICATION_COUNT));
+
       PsiExpression[] expressions = Arrays.stream(argumentList.getExpressions())
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-        .filter(expression -> expression != null && !(expression instanceof PsiFunctionalExpression))
+        .filter(expression -> expression != null && 
+                              !(expression instanceof PsiFunctionalExpression) && 
+                              PsiPolyExpressionUtil.isPolyExpression(expression))
         .toArray(PsiExpression[]::new);
       return ThreadLocalTypes.performWithTypes(expressionTypes -> {
         PsiMethod method = getElement();
@@ -190,7 +200,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                                     PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
         }
         return computable.compute();
-      });
+      }, prohibitCaching);
     }
     else {
       return computable.compute();

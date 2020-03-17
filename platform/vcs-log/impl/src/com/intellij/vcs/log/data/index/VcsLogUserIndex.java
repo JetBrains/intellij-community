@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -52,14 +53,14 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommit
   @Nullable
   @Override
   protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, Void>> createdForwardIndex() throws IOException {
-    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx")),
+    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), false ),
                        new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
   @NotNull
   private static PersistentEnumeratorBase<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
                                                                          @NotNull VcsUserRegistry userRegistry) throws IOException {
-    File storageFile = storageId.getStorageFile(USERS_IDS);
+    Path storageFile = storageId.getStorageFile(USERS_IDS);
     return new PersistentBTreeEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, null,
                                            storageId.getVersion());
   }

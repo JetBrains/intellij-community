@@ -99,8 +99,14 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks" displayName="Tasks" nonDefaultProject="true">
-      <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable" displayName="Servers" id="tasks.servers"/>
+    <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks"
+                         bundle="messages.TaskBundle"
+                         key="configurable.TaskConfigurable.display.name"
+                         nonDefaultProject="true">
+      <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable"
+                    bundle="messages.TaskBundle"
+                    key="configurable.TaskRepositoriesConfigurable.display.name"
+                    id="tasks.servers"/>
     </projectConfigurable>
     <tasks.dialogPanelProvider implementation="com.intellij.tasks.actions.vcs.VcsTaskDialogPanelProvider"/>
 

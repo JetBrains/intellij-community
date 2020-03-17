@@ -55,13 +55,6 @@ public class TestMethodIsPublicVoidNoArgInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "test.method.is.public.void.no.arg.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "TestMethodWithIncorrectSignature";
   }

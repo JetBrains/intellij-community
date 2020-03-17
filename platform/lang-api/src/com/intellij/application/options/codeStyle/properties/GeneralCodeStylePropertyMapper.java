@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private static final Logger LOG = Logger.getInstance(AbstractCodeStylePropertyMapper.class);
@@ -116,7 +119,7 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
   @Nullable
   public String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
-    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
+    return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message("codestyle.property.description." + externalName) : null;
   }
 
   @Override

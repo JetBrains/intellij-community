@@ -33,7 +33,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
     area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-    area.registerExtensionPoints(descriptor, Collections.singletonList(JDOMUtil.load(myExtensionPointXML)), ApplicationManager.getApplication ())
+    area.registerExtensionPoints(descriptor, Collections.singletonList(JDOMUtil.load(myExtensionPointXML)))
     Disposer.register(testRootDisposable, Disposable {
       area.unregisterExtensionPoint(myExtensionPointName)
     })
@@ -60,7 +60,6 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
 
     extension.addExplicitExtension(language, "hello")
     assertSize(2, extension.allForLanguage(language))
-    assertEquals("hello", extension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
     assertEquals("hello", extension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
 
     assertSize(2, extension.allForLanguage(plainTextDialect))

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -50,6 +51,7 @@ import java.awt.*;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class HighlightMethodUtil {
@@ -64,17 +66,17 @@ public class HighlightMethodUtil {
       PsiClass class1 = method1.getContainingClass();
       PsiClass class2 = method2.getContainingClass();
       if (class1 != null && class2 != null) {
-        return JavaErrorMessages.message("clash.methods.message.show.classes",
-                                         JavaHighlightUtil.formatMethod(method1),
-                                         JavaHighlightUtil.formatMethod(method2),
-                                         HighlightUtil.formatClass(class1),
-                                         HighlightUtil.formatClass(class2));
+        return JavaErrorBundle.message("clash.methods.message.show.classes",
+                                       JavaHighlightUtil.formatMethod(method1),
+                                       JavaHighlightUtil.formatMethod(method2),
+                                       HighlightUtil.formatClass(class1),
+                                       HighlightUtil.formatClass(class2));
       }
     }
 
-    return JavaErrorMessages.message("clash.methods.message",
-                                     JavaHighlightUtil.formatMethod(method1),
-                                     JavaHighlightUtil.formatMethod(method2));
+    return JavaErrorBundle.message("clash.methods.message",
+                                   JavaHighlightUtil.formatMethod(method1),
+                                   JavaHighlightUtil.formatMethod(method2));
   }
 
   static HighlightInfo checkMethodWeakerPrivileges(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
@@ -105,10 +107,10 @@ public class HighlightMethodUtil {
                                         boolean includeRealPositionInfo) {
     int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
     if (accessLevel < superAccessLevel) {
-      String description = JavaErrorMessages.message("weaker.privileges",
-                                                     createClashMethodMessage(method, superMethod, true),
-                                                     VisibilityUtil.toPresentableText(accessModifier),
-                                                     PsiUtil.getAccessModifier(superAccessLevel));
+      String description = JavaErrorBundle.message("weaker.privileges",
+                                                   createClashMethodMessage(method, superMethod, true),
+                                                   VisibilityUtil.toPresentableText(accessModifier),
+                                                   PsiUtil.getAccessModifier(superAccessLevel));
       TextRange textRange = TextRange.EMPTY_RANGE;
       if (includeRealPositionInfo) {
         PsiElement keyword = PsiUtil.findModifierInList(modifierList, accessModifier);
@@ -165,7 +167,7 @@ public class HighlightMethodUtil {
       }
       HighlightInfo info = checkSuperMethodSignature(
         superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType,
-        JavaErrorMessages.message("incompatible.return.type"), textRange, PsiUtil.getLanguageLevel(aClass));
+        JavaErrorBundle.message("incompatible.return.type"), textRange, PsiUtil.getLanguageLevel(aClass));
       if (info != null) return info;
     }
 
@@ -251,9 +253,9 @@ public class HighlightMethodUtil {
     // strange things happen when super method is from Object and method from interface
     if (superMethod.hasModifierProperty(PsiModifier.FINAL)) {
       PsiClass superClass = superMethod.getContainingClass();
-      String description = JavaErrorMessages.message("final.method.override",
-                                                     JavaHighlightUtil.formatMethod(method),
-                                                     JavaHighlightUtil.formatMethod(superMethod),
+      String description = JavaErrorBundle.message("final.method.override",
+                                                   JavaHighlightUtil.formatMethod(method),
+                                                   JavaHighlightUtil.formatMethod(superMethod),
                                                      superClass != null ? HighlightUtil.formatClass(superClass) : "<unknown>");
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
@@ -306,9 +308,9 @@ public class HighlightMethodUtil {
           if (superContainingClass != null && !aClass.isInheritor(superContainingClass, true)) continue;
         }
         PsiClassType exception = checkedExceptions.get(index);
-        String description = JavaErrorMessages.message("overridden.method.does.not.throw",
-                                                   createClashMethodMessage(method, superMethod, true),
-                                                   JavaHighlightUtil.formatType(exception));
+        String description = JavaErrorBundle.message("overridden.method.does.not.throw",
+                                                     createClashMethodMessage(method, superMethod, true),
+                                                     JavaHighlightUtil.formatType(exception));
         TextRange textRange;
         if (includeRealPositionInfo) {
           PsiElement exceptionContext = exceptionContexts.get(index);
@@ -438,7 +440,7 @@ public class HighlightMethodUtil {
         }
       }
       else {
-        String description = JavaErrorMessages.message("method.call.expected");
+        String description = JavaErrorBundle.message("method.call.expected");
         highlightInfo =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(description).create();
         if (resolved instanceof PsiClass) {
@@ -478,13 +480,13 @@ public class HighlightMethodUtil {
     PsiElement parent = resolvedMethod.getParent();
     String containerName = parent == null ? "" : HighlightMessageUtil.getSymbolName(parent, substitutor);
     String argTypes = buildArgTypesList(list);
-    String description = JavaErrorMessages.message("wrong.method.arguments", methodName, containerName, argTypes);
+    String description = JavaErrorBundle.message("wrong.method.arguments", methodName, containerName, argTypes);
     String toolTip = null;
     List<PsiExpression> mismatchedExpressions;
     if (parent instanceof PsiClass) {
       final PsiExpression[] expressions = list.getExpressions();
       final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
-      mismatchedExpressions = mismatchedArgs(expressions, substitutor, parameters);
+      mismatchedExpressions = mismatchedArgs(expressions, substitutor, parameters, candidateInfo.isVarargs());
       if (mismatchedExpressions.size() == 1) {
         toolTip = createOneArgMismatchTooltip(candidateInfo, mismatchedExpressions, expressions, parameters);
       }
@@ -534,7 +536,8 @@ public class HighlightMethodUtil {
                                            : "";
       return HighlightUtil.createIncompatibleTypesTooltip(paramType, argType,
                                                           (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
-                                                               JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, reason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
+                                                               JavaErrorBundle
+                                                                 .message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, reason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
     }
     return null;
   }
@@ -626,7 +629,6 @@ public class HighlightMethodUtil {
   }
 
   /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
-  @Nullable
   private static String checkStaticInterfaceMethodCallQualifier(@NotNull PsiReferenceExpression ref,
                                                                 @Nullable PsiElement scope,
                                                                 @NotNull PsiClass containingClass) {
@@ -656,7 +658,7 @@ public class HighlightMethodUtil {
       }
     }
 
-    return JavaErrorMessages.message("static.interface.method.call.qualifier");
+    return JavaErrorBundle.message("static.interface.method.call.qualifier");
   }
 
   private static void registerMethodReturnFixAction(@NotNull HighlightInfo highlightInfo,
@@ -681,14 +683,17 @@ public class HighlightMethodUtil {
     }
   }
 
-  private static List<PsiExpression> mismatchedArgs(PsiExpression[] expressions, PsiSubstitutor substitutor, PsiParameter[] parameters) {
+  private static List<PsiExpression> mismatchedArgs(PsiExpression[] expressions,
+                                                    PsiSubstitutor substitutor,
+                                                    PsiParameter[] parameters,
+                                                    boolean varargs) {
     if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) && parameters.length != expressions.length) {
       return Collections.emptyList();
     }
 
     List<PsiExpression> result = new ArrayList<>();
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
-      if (!assignmentCompatible(i, parameters, expressions, substitutor)) {
+      if (!assignmentCompatible(i, parameters, expressions, substitutor, varargs)) {
         result.add(i < expressions.length ? expressions[i] : null);
       }
     }
@@ -714,7 +719,6 @@ public class HighlightMethodUtil {
     return isDummy;
   }
 
-  @Nullable
   static HighlightInfo checkAmbiguousMethodCallIdentifier(@NotNull PsiReferenceExpression referenceToMethod,
                                                           @NotNull JavaResolveResult[] resolveResults,
                                                           @NotNull PsiExpressionList list,
@@ -751,8 +755,10 @@ public class HighlightMethodUtil {
       PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
       String qualifier = qualifierClass != null ? qualifierClass.getName() : null;
 
-      description = qualifier != null ? JavaErrorMessages.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
-                                      : JavaErrorMessages.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list));
+      description = qualifier != null ? JavaErrorBundle
+        .message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
+                                      : JavaErrorBundle
+                      .message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list));
       highlightInfoType = HighlightInfoType.WRONG_REF;
     }
     else {
@@ -772,7 +778,7 @@ public class HighlightMethodUtil {
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(candidates, methodCall, info, fixRange);
     PermuteArgumentsFix.registerFix(info, methodCall, candidates, fixRange);
-    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), info);
+    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), info, fixRange);
     registerChangeParameterClassFix(methodCall, list, info);
     if (candidates.length == 0) {
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(methodCall.getMethodExpression(), new QuickFixActionRegistrarImpl(info));
@@ -780,7 +786,6 @@ public class HighlightMethodUtil {
     return info;
   }
 
-  @Nullable
   static HighlightInfo checkAmbiguousMethodCallArguments(@NotNull PsiReferenceExpression referenceToMethod,
                                                          @NotNull JavaResolveResult[] resolveResults,
                                                          @NotNull PsiExpressionList list,
@@ -816,7 +821,7 @@ public class HighlightMethodUtil {
         if (virtualFile1 != null) m1 += " (In " + virtualFile1.getPresentableUrl() + ")";
         if (virtualFile2 != null) m2 += " (In " + virtualFile2.getPresentableUrl() + ")";
       }
-      description = JavaErrorMessages.message("ambiguous.method.call", m1, m2);
+      description = JavaErrorBundle.message("ambiguous.method.call", m1, m2);
       toolTip = createAmbiguousMethodHtmlTooltip(new MethodCandidateInfo[]{methodCandidate1, methodCandidate2});
     }
     else {
@@ -827,7 +832,7 @@ public class HighlightMethodUtil {
         return null;
       }
       String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
-      description = JavaErrorMessages.message("cannot.resolve.method", methodName);
+      description = JavaErrorBundle.message("cannot.resolve.method", methodName);
       if (candidates.length == 0) {
         return null;
       }
@@ -850,7 +855,7 @@ public class HighlightMethodUtil {
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(candidates, methodCall, info, fixRange);
     PermuteArgumentsFix.registerFix(info, methodCall, candidates, fixRange);
-    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), info);
+    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), info, fixRange);
     registerChangeParameterClassFix(methodCall, list, info);
     return info;
   }
@@ -918,7 +923,7 @@ public class HighlightMethodUtil {
     }
     RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
     ConvertDoubleToFloatFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
-    WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo);
+    WrapExpressionFix.registerWrapAction(methodCandidates, list.getExpressions(), highlightInfo, fixRange);
     registerChangeParameterClassFix(methodCall, list, highlightInfo);
     if (methodCandidates.length == 0) {
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createStaticImportMethodFix(methodCall));
@@ -938,7 +943,7 @@ public class HighlightMethodUtil {
       if (methodCallType != null &&
           TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) &&
           !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
+        QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
       }
     }
 
@@ -960,12 +965,12 @@ public class HighlightMethodUtil {
 
   @NotNull
   private static String createAmbiguousMethodHtmlTooltip(@NotNull MethodCandidateInfo[] methodCandidates) {
-    return JavaErrorMessages.message("ambiguous.method.html.tooltip",
+    return JavaErrorBundle.message("ambiguous.method.html.tooltip",
                                      methodCandidates[0].getElement().getParameterList().getParametersCount() + 2,
-                                     createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
-                                     getContainingClassName(methodCandidates[0]),
-                                     createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[1]),
-                                     getContainingClassName(methodCandidates[1]));
+                                   createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[0]),
+                                   getContainingClassName(methodCandidates[0]),
+                                   createAmbiguousMethodHtmlTooltipMethodRow(methodCandidates[1]),
+                                   getContainingClassName(methodCandidates[1]));
   }
 
   @NotNull
@@ -1033,12 +1038,21 @@ public class HighlightMethodUtil {
       parameterNameStyle += "background-color: " + ColorUtil.toHtmlColor(paramBgColor) + ";";
     }
 
+    boolean varargAdded = false;
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
-      PsiParameter parameter = i < parameters.length ? parameters[i] : null;
-      PsiExpression expression = i < expressions.length ? expressions[i] : null;
-      if (assignmentCompatible(i, parameters, expressions, substitutor)) continue;
-      boolean varargs = info != null && info.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+      boolean varargs = info != null && info.isVarargs();
+      if (assignmentCompatible(i, parameters, expressions, substitutor, varargs)) continue;
+      PsiParameter parameter = null;
+      if (i < parameters.length) {
+        parameter = parameters[i];
+        varargAdded = parameter.isVarArgs();
+      }
+      else if (!varargAdded) {
+        parameter = parameters[parameters.length - 1];
+        varargAdded = true;
+      }
       PsiType parameterType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
+      PsiExpression expression = i < expressions.length ? expressions[i] : null;
       boolean showShortType = HighlightUtil.showShortType(parameterType,
                                                           expression != null ? expression.getType() : null);
       s.append("<tr>");
@@ -1098,12 +1112,11 @@ public class HighlightMethodUtil {
   private static boolean assignmentCompatible(int i,
                                               @NotNull PsiParameter[] parameters,
                                               @NotNull PsiExpression[] expressions,
-                                              @NotNull PsiSubstitutor substitutor) {
+                                              @NotNull PsiSubstitutor substitutor, 
+                                              boolean varargs) {
     PsiExpression expression = i < expressions.length ? expressions[i] : null;
     if (expression == null) return true;
-    PsiType paramType = i < parameters.length && parameters[i] != null
-                        ? substitutor.substitute(parameters[i].getType())
-                        : null;
+    PsiType paramType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
     return paramType != null && TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression);
   }
 
@@ -1119,7 +1132,7 @@ public class HighlightMethodUtil {
       int start = method.getModifierList().getTextRange().getStartOffset();
       int end = method.getTextRange().getEndOffset();
 
-      String description = JavaErrorMessages.message("missing.method.body");
+      String description = JavaErrorBundle.message("missing.method.body");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description).create();
       if (HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null && !(aClass instanceof PsiAnonymousClass)) {
         QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, true)));
@@ -1138,7 +1151,7 @@ public class HighlightMethodUtil {
         && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)
         && !aClass.isEnum()
         && !PsiUtilCore.hasErrorElementChild(method)) {
-      String description = JavaErrorMessages.message("abstract.method.in.non.abstract.class");
+      String description = JavaErrorBundle.message("abstract.method.in.non.abstract.class");
       errorResult =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description).create();
       if (method.getBody() != null) {
@@ -1157,7 +1170,7 @@ public class HighlightMethodUtil {
       String className = aClass instanceof PsiAnonymousClass ? null : aClass.getName();
       if (className == null || !Comparing.strEqual(method.getName(), className)) {
         PsiElement element = ObjectUtils.notNull(method.getNameIdentifier(), method);
-        String description = JavaErrorMessages.message("missing.return.type");
+        String description = JavaErrorBundle.message("missing.return.type");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
         if (className != null) {
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameElementFix(method, className));
@@ -1169,7 +1182,6 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkDuplicateMethod(@NotNull PsiClass aClass,
                                             @NotNull PsiMethod method,
                                             @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
@@ -1186,9 +1198,9 @@ public class HighlightMethodUtil {
       methodCount++;
     }
     if (methodCount > 1) {
-      String description = JavaErrorMessages.message("duplicate.method",
-                                                 JavaHighlightUtil.formatMethod(method),
-                                                 HighlightUtil.formatClass(aClass));
+      String description = JavaErrorBundle.message("duplicate.method",
+                                                   JavaHighlightUtil.formatMethod(method),
+                                                   HighlightUtil.formatClass(aClass));
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
         range(method, textRange.getStartOffset(), textRange.getEndOffset()).
@@ -1197,7 +1209,6 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkMethodCanHaveBody(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
     PsiClass aClass = method.getContainingClass();
     boolean hasNoBody = method.getBody() == null;
@@ -1210,7 +1221,7 @@ public class HighlightMethodUtil {
     String description = null;
     if (hasNoBody) {
       if (isExtension) {
-        description = JavaErrorMessages.message("extension.method.should.have.a.body");
+        description = JavaErrorBundle.message("extension.method.should.have.a.body");
       }
       else if (isInterface) {
         if (isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
@@ -1226,7 +1237,7 @@ public class HighlightMethodUtil {
     }
     else if (isInterface) {
       if (!isExtension && !isStatic && !isPrivate) {
-        description = JavaErrorMessages.message("interface.methods.cannot.have.body");
+        description = JavaErrorBundle.message("interface.methods.cannot.have.body");
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           if (Stream.of(method.findDeepestSuperMethods()).map(PsiMethod::getContainingClass)
                     .filter(Objects::nonNull).map(PsiClass::getQualifiedName).noneMatch(CommonClassNames.JAVA_LANG_OBJECT::equals)) {
@@ -1237,14 +1248,14 @@ public class HighlightMethodUtil {
       }
     }
     else if (isExtension) {
-      description = JavaErrorMessages.message("extension.method.in.class");
+      description = JavaErrorBundle.message("extension.method.in.class");
       additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, false, false));
     }
     else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      description = JavaErrorMessages.message("abstract.methods.cannot.have.a.body");
+      description = JavaErrorBundle.message("abstract.methods.cannot.have.a.body");
     }
     else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
-      description = JavaErrorMessages.message("native.methods.cannot.have.a.body");
+      description = JavaErrorBundle.message("native.methods.cannot.have.a.body");
     }
     if (description == null) return null;
 
@@ -1265,22 +1276,27 @@ public class HighlightMethodUtil {
     return info;
   }
 
-  @Nullable
-  static HighlightInfo checkConstructorCallMustBeFirstStatement(@NotNull PsiMethodCallExpression methodCall) {
+  static HighlightInfo checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
-    if (codeBlock instanceof PsiCodeBlock
-        && codeBlock.getParent() instanceof PsiMethod
-        && ((PsiMethod)codeBlock.getParent()).isConstructor()) {
-      PsiElement prevSibling = methodCall.getParent().getPrevSibling();
-      while (true) {
-        if (prevSibling == null) return null;
-        if (prevSibling instanceof PsiStatement) break;
-        prevSibling = prevSibling.getPrevSibling();
+    if (codeBlock instanceof PsiCodeBlock) {
+      PsiMethod ctor = ObjectUtils.tryCast(codeBlock.getParent(), PsiMethod.class);
+      if (ctor != null && ctor.isConstructor()) {
+        if (JavaPsiRecordUtil.isCompactConstructor(ctor) ||
+            JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) {
+          String message = JavaErrorBundle.message("record.constructor.call.in.canonical");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message).create();
+        }
+        PsiElement prevSibling = methodCall.getParent().getPrevSibling();
+        while (true) {
+          if (prevSibling == null) return null;
+          if (prevSibling instanceof PsiStatement) break;
+          prevSibling = prevSibling.getPrevSibling();
+        }
       }
     }
     PsiReferenceExpression expression = methodCall.getMethodExpression();
-    String message = JavaErrorMessages.message("constructor.call.must.be.first.statement", expression.getText() + "()");
+    String message = JavaErrorBundle.message("constructor.call.must.be.first.statement", expression.getText() + "()");
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message).create();
   }
 
@@ -1290,7 +1306,7 @@ public class HighlightMethodUtil {
     if (!(expression.getQualifierExpression() instanceof PsiSuperExpression)) return null;
     PsiMethod method = methodCallExpression.resolveMethod();
     if (method != null && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      String message = JavaErrorMessages.message("direct.abstract.method.access", JavaHighlightUtil.formatMethod(method));
+      String message = JavaErrorBundle.message("direct.abstract.method.access", JavaHighlightUtil.formatMethod(method));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCallExpression).descriptionAndTooltip(message).create();
     }
     return null;
@@ -1376,11 +1392,11 @@ public class HighlightMethodUtil {
                                 ? "static.method.cannot.override.instance.method"
                                 : "instance.method.cannot.override.static.method";
 
-      String description = JavaErrorMessages.message(messageKey,
-                                                 JavaHighlightUtil.formatMethod(method),
-                                                 HighlightUtil.formatClass(aClass),
-                                                 JavaHighlightUtil.formatMethod(superMethod),
-                                                 HighlightUtil.formatClass(superClass));
+      String description = JavaErrorBundle.message(messageKey,
+                                                   JavaHighlightUtil.formatMethod(method),
+                                                   HighlightUtil.formatClass(aClass),
+                                                   JavaHighlightUtil.formatMethod(superMethod),
+                                                   HighlightUtil.formatClass(superClass));
 
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
       if (!isSuperMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
@@ -1442,7 +1458,7 @@ public class HighlightMethodUtil {
             if (otherSuperMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(otherReturnType, curType)) return null;
           }
           return createIncompatibleReturnTypeMessage(otherSuperMethod, currentMethod, curType, otherReturnType,
-                                                     JavaErrorMessages.message("unrelated.overriding.methods.return.types"), TextRange.EMPTY_RANGE);
+                                                     JavaErrorBundle.message("unrelated.overriding.methods.return.types"), TextRange.EMPTY_RANGE);
         });
       if (info != null) return info;
     }
@@ -1484,10 +1500,10 @@ public class HighlightMethodUtil {
           PsiMethod superMethod = superSignature.getMethod();
           if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
             PsiClass superClass = superMethod.getContainingClass();
-            description = JavaErrorMessages.message("static.method.cannot.override.instance.method",
-                                                    JavaHighlightUtil.formatMethod(method),
-                                                    HighlightUtil.formatClass(containingClass),
-                                                    JavaHighlightUtil.formatMethod(superMethod),
+            description = JavaErrorBundle.message("static.method.cannot.override.instance.method",
+                                                  JavaHighlightUtil.formatMethod(method),
+                                                  HighlightUtil.formatClass(containingClass),
+                                                  JavaHighlightUtil.formatMethod(superMethod),
                                                     superClass != null ? HighlightUtil.formatClass(superClass) : "<unknown>");
             appendImplementMethodFix = false;
             break Ultimate;
@@ -1548,7 +1564,7 @@ public class HighlightMethodUtil {
   static HighlightInfo checkRecursiveConstructorInvocation(@NotNull PsiMethod method) {
     if (HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-      String description = JavaErrorMessages.message("recursive.constructor.invocation");
+      String description = JavaErrorBundle.message("recursive.constructor.invocation");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     }
     return null;
@@ -1620,7 +1636,7 @@ public class HighlightMethodUtil {
       if (!list.isEmpty()) {
         String constructorName = aClass.getName();
         String argTypes = buildArgTypesList(list);
-        String description = JavaErrorMessages.message("wrong.constructor.arguments", constructorName+"()", argTypes);
+        String description = JavaErrorBundle.message("wrong.constructor.arguments", constructorName + "()", argTypes);
         String tooltip = createMismatchedArgumentsHtmlTooltip(list, null, PsiParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).description(description).escapedToolTip(tooltip).navigationShift(+1).create();
         QuickFixAction.registerQuickFixActions(
@@ -1681,10 +1697,10 @@ public class HighlightMethodUtil {
       if (constructor == null) {
         String name = aClass.getName();
         name += buildArgTypesList(list);
-        String description = JavaErrorMessages.message("cannot.resolve.constructor", name);
+        String description = JavaErrorBundle.message("cannot.resolve.constructor", name);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).navigationShift(+1).create();
         if (info != null) {
-          WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info);
+          WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info, getFixRange(list));
           registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, infoElement, info);
           holder.add(info);
         }
@@ -1864,7 +1880,6 @@ public class HighlightMethodUtil {
     }
   }
 
-  @Nullable
   static PsiType determineReturnType(@NotNull PsiMethod method) {
     PsiManager manager = method.getManager();
     PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
@@ -1904,6 +1919,119 @@ public class HighlightMethodUtil {
     }
 
     return Objects.requireNonNull(GenericsUtil.getLeastUpperBound(currentType, valueType, manager));
+  }
+
+  public static HighlightInfo checkRecordAccessorDeclaration(PsiMethod method) {
+    PsiRecordComponent component = JavaPsiRecordUtil.getRecordComponentForAccessor(method);
+    if (component == null) return null;
+    PsiIdentifier identifier = method.getNameIdentifier();
+    if (identifier == null) return null;
+    PsiType componentType = component.getType();
+    PsiType methodType = method.getReturnType();
+    if (methodType == null) return null; // Either constructor or incorrect method, will be reported in another way
+    if (!componentType.equals(methodType)) {
+      String message =
+        JavaErrorBundle.message("record.accessor.wrong.return.type", componentType.getPresentableText(), methodType.getPresentableText());
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
+        Objects.requireNonNull(method.getReturnTypeElement())).descriptionAndTooltip(message).create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, componentType, false));
+      return info;
+    }
+    return checkRecordSpecialMethodDeclaration(method, JavaErrorBundle.message("record.accessor"));
+  }
+
+  @NotNull
+  public static List<HighlightInfo> checkRecordConstructorDeclaration(PsiMethod method) {
+    if (!method.isConstructor()) return Collections.emptyList();
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return Collections.emptyList();
+    PsiIdentifier identifier = method.getNameIdentifier();
+    if (identifier == null) return Collections.emptyList();
+    if (!aClass.isRecord()) {
+      if (JavaPsiRecordUtil.isCompactConstructor(method)) {
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
+          identifier).descriptionAndTooltip(JavaErrorBundle.message("compact.constructor.in.regular.class")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddParameterListFix(method));
+        return Collections.singletonList(info);
+      }
+      return Collections.emptyList();
+    }
+    if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiRecordComponent[] components = aClass.getRecordComponents();
+      List<HighlightInfo> problems = new ArrayList<>();
+      assert parameters.length == components.length;
+      for (int i = 0; i < parameters.length; i++) {
+        PsiType componentType = components[i].getType();
+        PsiType parameterType = parameters[i].getType();
+        String componentName = components[i].getName();
+        String parameterName = parameters[i].getName();
+        if (!parameterType.equals(componentType)) {
+          String message =
+            JavaErrorBundle.message("record.canonical.constructor.wrong.parameter.type", componentName,
+                                    componentType.getPresentableText(), parameterType.getPresentableText());
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
+            Objects.requireNonNull(parameters[i].getTypeElement())).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodParameterTypeFix(method, i, componentType, false));
+          problems.add(info);
+        }
+        if (componentName != null && !parameterName.equals(componentName)) {
+          String message = JavaErrorBundle.message("record.canonical.constructor.wrong.parameter.name", componentName, parameterName);
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
+            Objects.requireNonNull(parameters[i].getNameIdentifier())).descriptionAndTooltip(message).create();
+          if (Arrays.stream(parameters).map(PsiParameter::getName).noneMatch(Predicate.isEqual(componentName))) {
+            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameElementFix(parameters[i], componentName));
+          }
+          problems.add(info);
+        }
+      }
+      ContainerUtil
+        .addIfNotNull(problems, checkRecordSpecialMethodDeclaration(method, JavaErrorBundle.message("record.canonical.constructor")));
+      return problems;
+    } else if (JavaPsiRecordUtil.isCompactConstructor(method)) {
+      return Collections
+        .singletonList(checkRecordSpecialMethodDeclaration(method, JavaErrorBundle.message("record.compact.constructor")));
+    }
+    else {
+      // Non-canonical constructor
+      PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (call == null || JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
+        String message = JavaErrorBundle.message("record.no.constructor.call.in.non.canonical");
+        return Collections.singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+                                           .descriptionAndTooltip(message).create());
+      }
+      return Collections.emptyList();
+    }
+  }
+
+  @Nullable
+  private static HighlightInfo checkRecordSpecialMethodDeclaration(PsiMethod method, String methodTitle) {
+    PsiIdentifier identifier = method.getNameIdentifier();
+    if (identifier == null) return null;
+    PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+    if (typeParameterList != null && typeParameterList.getTypeParameters().length > 0) {
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeParameterList)
+        .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.type.parameters", methodTitle))
+        .create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(typeParameterList));
+      return info;
+    }
+    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+        .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.non.public", methodTitle))
+        .create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.PUBLIC, true, false));
+      return info;
+    }
+    PsiReferenceList throwsList = method.getThrowsList();
+    if (throwsList.getReferenceElements().length > 0) {
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(throwsList)
+        .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.throws", methodTitle))
+        .create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(throwsList));
+      return info;
+    }
+    return null;
   }
 
   private static class ReturnModel {

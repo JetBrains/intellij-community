@@ -51,12 +51,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("while.can.be.foreach.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("while.can.be.foreach.problem.descriptor");
   }

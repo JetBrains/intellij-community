@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -80,7 +82,7 @@ public class WrapExpressionFix implements IntentionAction {
       for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC)
             && method.getParameterList().getParametersCount() == 1
-            && method.getParameterList().getParameters()[0].getType().isAssignableFrom(type)
+            && Objects.requireNonNull(method.getParameterList().getParameter(0)).getType().isAssignableFrom(type)
             && method.getReturnType() != null
             && expectedReturnType.equals(method.getReturnType())) {
           final String methodName = method.getName();
@@ -135,7 +137,10 @@ public class WrapExpressionFix implements IntentionAction {
     return true;
   }
 
-  public static void registerWrapAction(JavaResolveResult[] candidates, PsiExpression[] expressions, HighlightInfo highlightInfo) {
+  public static void registerWrapAction(JavaResolveResult[] candidates,
+                                        PsiExpression[] expressions,
+                                        HighlightInfo highlightInfo,
+                                        TextRange fixRange) {
     PsiType expectedType = null;
     PsiExpression expr = null;
 
@@ -173,7 +178,7 @@ public class WrapExpressionFix implements IntentionAction {
     }
 
     if (expectedType != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, expr.getTextRange(), new WrapExpressionFix(expectedType, expr));
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new WrapExpressionFix(expectedType, expr));
     }
   }
 }

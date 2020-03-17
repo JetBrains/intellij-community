@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class ReturnInstruction extends GoToInstruction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ReturnInstruction");
+  private static final Logger LOG = Logger.getInstance(ReturnInstruction.class);
 
   @NotNull private CallInstruction myCallInstruction;
   private boolean myRethrowFromFinally;

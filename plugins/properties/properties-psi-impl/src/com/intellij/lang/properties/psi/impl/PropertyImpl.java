@@ -29,7 +29,7 @@ import java.util.List;
  * @author max
  */
 public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implements Property, PsiLanguageInjectionHost {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.psi.impl.PropertyImpl");
+  private static final Logger LOG = Logger.getInstance(PropertyImpl.class);
 
   public PropertyImpl(@NotNull ASTNode node) {
     super(node);

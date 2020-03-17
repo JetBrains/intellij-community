@@ -46,7 +46,7 @@ public class Notification {
    */
   public enum CollapseActionsDirection { KEEP_LEFTMOST, KEEP_RIGHTMOST }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.Notification");
+  private static final Logger LOG = Logger.getInstance(Notification.class);
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final String id;

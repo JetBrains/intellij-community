@@ -74,12 +74,6 @@ public class MavenDuplicatePluginInspection extends DomElementsInspection<MavenD
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return MavenDomBundle.message("inspection.duplicate.plugin.declaration");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "MavenDuplicatePluginInspection";
   }

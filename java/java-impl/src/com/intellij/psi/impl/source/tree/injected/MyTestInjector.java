@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -13,7 +12,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,12 +75,7 @@ public class MyTestInjector {
       .addPlace(null, null, (PsiLanguageInjectionHost)operand, textRange)
       .doneInjecting();
     };
-    final ConcatenationInjectorManager injectorManager = ConcatenationInjectorManager.getInstance(project);
-    injectorManager.registerConcatenationInjector(injector);
-    Disposer.register(parent, () -> {
-      boolean b = injectorManager.unregisterConcatenationInjector(injector);
-      assert b;
-    });
+    ConcatenationInjectorManager.EP_NAME.getPoint(project).registerExtension(injector, parent);
   }
 
   private static void registerForStringVarInitializer(@NotNull Disposable parent,
@@ -121,17 +114,12 @@ public class MyTestInjector {
         injectionPlacesRegistrar.doneInjecting();
       }
     };
-    final ConcatenationInjectorManager injectorManager = ConcatenationInjectorManager.getInstance(project);
-    injectorManager.registerConcatenationInjector(injector);
-    Disposer.register(parent, () -> {
-      boolean b = injectorManager.unregisterConcatenationInjector(injector);
-      assert b;
-    });
+    ConcatenationInjectorManager.EP_NAME.getPoint(project).registerExtension(injector, parent);
   }
 
   private static void injectVariousStuffEverywhere(@NotNull Disposable parent, final PsiManager psiManager) {
     final Language ql = Language.findLanguageByID("JPAQL");
-    final Language js = Language.findLanguageByID("JavaScript 1.6");
+    final Language js = Language.findLanguageByID("JavaScript 1.8");
     final Language html = Language.findLanguageByID("HTML");
     if (ql == null || js == null) return;
     final Language ecma4 = Language.findLanguageByID("ECMA Script Level 4");

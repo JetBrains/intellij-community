@@ -21,12 +21,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class ArrayObjectsEqualsInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("array.objects.equals.display.name");
-  }
 
   @NotNull
   @Override

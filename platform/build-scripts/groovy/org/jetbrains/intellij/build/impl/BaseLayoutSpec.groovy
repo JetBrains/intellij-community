@@ -100,4 +100,11 @@ class BaseLayoutSpec {
   void withArtifact(String artifactName, String relativeOutputPath) {
     layout.includedArtifacts.put(artifactName, relativeOutputPath)
   }
+
+  /**
+   * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
+   */
+  void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
+    layout.projectLibrariesToUnpack.put(jarName, libraryName)
+  }
 }

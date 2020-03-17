@@ -23,14 +23,19 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.List;
 
 public abstract class NewBranchAction<T extends Repository> extends DumbAwareAction {
+  public static final String text = "New Branch";
+  public static final String description = "Create and checkout new branch";
+  public static final Icon icon = AllIcons.General.Add;
+
   protected final List<T> myRepositories;
   protected final Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    super("New Branch", "Create and checkout new branch", AllIcons.General.Add);
+    super(text, description, icon);
     myRepositories = repositories;
     myProject = project;
   }
@@ -38,7 +43,11 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
+    checkIfAnyRepositoryIsFresh(e, myRepositories);
+  }
+
+  public static <T extends Repository> void checkIfAnyRepositoryIsFresh(@NotNull AnActionEvent e, @NotNull List<T> repositories) {
+    if (DvcsUtil.anyRepositoryIsFresh(repositories)) {
       e.getPresentation().setEnabled(false);
       e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit");
     }

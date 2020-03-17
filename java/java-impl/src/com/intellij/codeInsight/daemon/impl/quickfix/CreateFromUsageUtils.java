@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -84,8 +84,7 @@ import java.util.*;
  * @author mike
  */
 public class CreateFromUsageUtils {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils");
+  private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
   private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;
 
@@ -172,38 +171,36 @@ public class CreateFromUsageUtils {
       throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
     }
 
-    if (methodText != null) {
-      PsiMethod m;
-      try {
-        m = factory.createMethodFromText(methodText, aClass);
-      }
-      catch (IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
-                                   QuickFixBundle.message("new.method.body.template.error.title")));
-        return;
-      }
-
-      PsiElement newBody = m.getBody();
-      LOG.assertTrue(newBody != null);
-
-      PsiElement oldBody = method.getBody();
-      if (oldBody == null) {
-        PsiElement last = method.getLastChild();
-        if (last instanceof PsiErrorElement &&
-            JavaErrorMessages.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
-          oldBody = last;
-        }
-      }
-      if (oldBody != null) {
-        oldBody.replace(newBody);
-      }
-      else {
-        method.add(newBody);
-      }
-
-      csManager.reformat(method);
+    PsiMethod m;
+    try {
+      m = factory.createMethodFromText(methodText, aClass);
     }
+    catch (IncorrectOperationException e) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                 QuickFixBundle.message("new.method.body.template.error.title")));
+      return;
+    }
+
+    PsiElement newBody = m.getBody();
+    LOG.assertTrue(newBody != null);
+
+    PsiElement oldBody = method.getBody();
+    if (oldBody == null) {
+      PsiElement last = method.getLastChild();
+      if (last instanceof PsiErrorElement &&
+          JavaErrorBundle.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
+        oldBody = last;
+      }
+    }
+    if (oldBody != null) {
+      oldBody.replace(newBody);
+    }
+    else {
+      method.add(newBody);
+    }
+
+    csManager.reformat(method);
   }
 
   public static void setupEditor(@NotNull PsiMethod method, @NotNull Editor newEditor) {
@@ -287,22 +284,14 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
-        argType = PsiType.getJavaLangObject(psiManager, resolveScope);
-      } else if (argType instanceof PsiDisjunctionType) {
-        argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
-      } else if (argType instanceof PsiWildcardType) {
-        argType = ((PsiWildcardType)argType).isBounded() ? ((PsiWildcardType)argType).getBound() : PsiType.getJavaLangObject(psiManager, resolveScope);
-      }
-      PsiParameter parameter;
-      if (parameterList.getParametersCount() <= i) {
+      argType = getParameterTypeByArgumentType(argType, psiManager, resolveScope);
+      PsiParameter parameter = parameterList.getParameter(i);
+      if (parameter == null) {
         PsiParameter param = factory.createParameter(names[0], argType);
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }
         parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
-      } else {
-        parameter = parameterList.getParameters()[i];
       }
 
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
@@ -313,6 +302,30 @@ public class CreateFromUsageUtils {
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);
     }
+  }
+
+  /**
+   * Get a type suitable for parameter declaration based on given argument type
+   * 
+   * @param argType argument type
+   * @param psiManager psiManager to use
+   * @param resolveScope type resolve scope
+   * @return a type suitable for parameter declaration; java.lang.Object if supplied argument type is null
+   */
+  @NotNull
+  public static PsiType getParameterTypeByArgumentType(@Nullable PsiType argType,
+                                                       @NotNull PsiManager psiManager, 
+                                                       @NotNull GlobalSearchScope resolveScope) {
+    if (argType instanceof PsiDisjunctionType) {
+      argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
+    }
+    else if (argType instanceof PsiWildcardType) {
+      argType = ((PsiWildcardType)argType).getBound();
+    }
+    if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
+      argType = PsiType.getJavaLangObject(psiManager, resolveScope);
+    }
+    return argType;
   }
 
   @Nullable
@@ -365,6 +378,9 @@ public class CreateFromUsageUtils {
       if (targetDirectory == null) return null;
     }
     else {
+      if (!FileModificationService.getInstance().prepareFileForWrite(sourceFile)) {
+        return null;
+      }
       targetDirectory = null;
     }
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
@@ -399,6 +415,7 @@ public class CreateFromUsageUtils {
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
                       classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
+                      classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
                       elementFactory.createEnum(name);
     CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
     result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
@@ -420,22 +437,7 @@ public class CreateFromUsageUtils {
           PsiClass targetClass;
           if (directory != null) {
             try {
-              if (classKind == CreateClassKind.INTERFACE) {
-                targetClass = JavaDirectoryService.getInstance().createInterface(directory, name);
-              }
-              else if (classKind == CreateClassKind.CLASS) {
-                targetClass = JavaDirectoryService.getInstance().createClass(directory, name);
-              }
-              else if (classKind == CreateClassKind.ENUM) {
-                targetClass = JavaDirectoryService.getInstance().createEnum(directory, name);
-              }
-              else if (classKind == CreateClassKind.ANNOTATION) {
-                targetClass = JavaDirectoryService.getInstance().createAnnotationType(directory, name);
-              }
-              else {
-                LOG.error("Unknown kind of a class to create");
-                return null;
-              }
+              targetClass = classKind.createInDirectory(directory, name);
             }
             catch (final IncorrectOperationException e) {
               scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
@@ -446,27 +448,13 @@ public class CreateFromUsageUtils {
             }
           }
           else { //tests
-            PsiClass aClass;
-            if (classKind == CreateClassKind.INTERFACE) {
-              aClass = factory.createInterface(name);
-            }
-            else if (classKind == CreateClassKind.CLASS) {
-              aClass = factory.createClass(name);
-            }
-            else if (classKind == CreateClassKind.ENUM) {
-              aClass = factory.createEnum(name);
-            }
-            else if (classKind == CreateClassKind.ANNOTATION) {
-              aClass = factory.createAnnotationType(name);
-            }
-            else {
-              LOG.error("Unknown kind of a class to create");
-              return null;
-            }
+            PsiClass aClass = classKind.create(factory, name);
             targetClass = (PsiClass)sourceFile.add(aClass);
           }
 
-          if (superClassName != null && (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM))) {
+          if (superClassName != null && 
+              (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
+              (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
             setupSuperClassReference(targetClass, superClassName);
           }
           if (contextElement instanceof PsiJavaCodeReferenceElement) {
@@ -711,7 +699,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
+        ContainerUtil.addAll(union, aTypesList);
       }
       expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
@@ -763,7 +751,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
+        ContainerUtil.addAll(union, aTypesList);
       }
       expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
@@ -883,8 +871,8 @@ public class CreateFromUsageUtils {
     return Comparing.compare(name1, name2);
   }
 
-  public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurences) {
-    for (PsiExpression expression : expressionOccurences) {
+  public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurrences) {
+    for (PsiExpression expression : expressionOccurrences) {
       if(expression.isValid() && PsiUtil.isAccessedForWriting(expression)) return true;
     }
 
@@ -995,6 +983,9 @@ public class CreateFromUsageUtils {
                                  member.hasModifierProperty(PsiModifier.STATIC) == staticAccess).booleanValue();
   }
 
+  /**
+   * Could be used for record component name as well
+   */
   public static class ParameterNameExpression extends Expression {
     private final String[] myNames;
 
@@ -1024,25 +1015,8 @@ public class CreateFromUsageUtils {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
       assert file != null;
       PsiElement elementAt = file.findElementAt(offset);
-      PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
-      if (parameterList == null) {
-        if (elementAt == null) return LookupElement.EMPTY_ARRAY;
-        final PsiElement parent = elementAt.getParent();
-        if (parent instanceof PsiMethod) {
-          parameterList = ((PsiMethod)parent).getParameterList();
-        }
-        else {
-          return LookupElement.EMPTY_ARRAY;
-        }
-      }
-
-      PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
-
-      Set<String> parameterNames = new HashSet<>();
-      for (PsiParameter psiParameter : parameterList.getParameters()) {
-        if (psiParameter == parameter) continue;
-        parameterNames.add(psiParameter.getName());
-      }
+      Set<String> parameterNames = getPeerNames(elementAt);
+      if (parameterNames == null) return LookupElement.EMPTY_ARRAY;
 
       Set<LookupElement> set = new LinkedHashSet<>();
 
@@ -1070,6 +1044,34 @@ public class CreateFromUsageUtils {
       }
 
       return set.toArray(LookupElement.EMPTY_ARRAY);
+    }
+
+    @Nullable
+    protected Set<String> getPeerNames(PsiElement elementAt) {
+      PsiElement parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class, PsiRecordHeader.class);
+      if (parameterList == null) {
+        if (elementAt == null) return null;
+        final PsiElement parent = elementAt.getParent();
+        if (!(parent instanceof PsiMethod)) return null;
+        parameterList = ((PsiMethod)parent).getParameterList();
+      }
+      PsiVariable[] allVariables;
+      if (parameterList instanceof PsiParameterList) {
+        allVariables = ((PsiParameterList)parameterList).getParameters();
+      }
+      else if (parameterList instanceof PsiRecordHeader) {
+        allVariables = ((PsiRecordHeader)parameterList).getRecordComponents();
+      } else {
+        return null;
+      }
+
+      PsiVariable parameter = PsiTreeUtil.getParentOfType(elementAt, PsiVariable.class);
+      Set<String> parameterNames = new HashSet<>();
+      for (PsiVariable psiParameter : allVariables) {
+        if (psiParameter == parameter) continue;
+        parameterNames.add(psiParameter.getName());
+      }
+      return parameterNames;
     }
 
     @NotNull

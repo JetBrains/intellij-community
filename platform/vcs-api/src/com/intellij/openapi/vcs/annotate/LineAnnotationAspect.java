@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 /**
  * Represents one part of a line annotation which is shown in the editor when the "Annotate"
@@ -62,4 +66,28 @@ public interface LineAnnotationAspect {
    * @return {@code true} if this aspect will be shown on Annotate action
    */
   boolean isShowByDefault();
+
+  /**
+   * Used to override default text style
+   */
+  @Nullable
+  default EditorFontType getStyle(int line) {
+    return null;
+  }
+
+  /**
+   * Used to override default text color
+   */
+  @Nullable
+  default ColorKey getColor(int line) {
+    return null;
+  }
+
+  /**
+   * Used to override default background color
+   */
+  @Nullable
+  default Color getBgColor(int line) {
+    return null;
+  }
 }

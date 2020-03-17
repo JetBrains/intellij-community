@@ -96,7 +96,7 @@ public class TextDiffProviderBase implements TextDiffProvider {
     }
   }
 
-  private static class MyListener implements TextDiffSettings.Listener {
+  private static class MyListener extends TextDiffSettings.Listener.Adapter {
     @NotNull private final Runnable myRediff;
 
     MyListener(@NotNull Runnable rediff) {

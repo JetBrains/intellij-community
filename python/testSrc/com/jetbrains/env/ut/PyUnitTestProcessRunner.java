@@ -38,7 +38,7 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
   public static final String TEST_PATTERN_PREFIX = "pattern:";
 
   public PyUnitTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(PyUnitTestFactory.INSTANCE,
+    super(new PyUnitTestFactory(),
           PyUnitTestConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 

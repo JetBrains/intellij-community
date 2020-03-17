@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler;
@@ -68,7 +69,7 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
   @Nullable
   @Override
   public String getActionName(@NotNull PsiElement[] elements) {
-    return "Move Instance Method...";
+    return RefactoringBundle.message("move.instance.method.delegate.title");
   }
 
   @Override

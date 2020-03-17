@@ -33,7 +33,7 @@ import org.jetbrains.annotations.TestOnly;
  * @author dsl
  */
 public abstract class IntroduceHandlerBase implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.IntroduceHandlerBase");
+  private static final Logger LOG = Logger.getInstance(IntroduceHandlerBase.class);
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {

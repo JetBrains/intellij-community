@@ -17,8 +17,15 @@ import org.jetbrains.annotations.Nullable;
  * @author pegov
  */
 final class ToggleFullScreenAction extends DumbAwareAction {
-  private static final String TEXT_ENTER_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.enter");
-  private static final String TEXT_EXIT_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.exit");
+  private static class Holder {
+    private static String getTextEnterFullScreen() {
+      return ActionsBundle.message("action.ToggleFullScreen.text.enter");
+    }
+
+    private static String getTextExitFullScreen() {
+      return ActionsBundle.message("action.ToggleFullScreen.text.exit");
+    }
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -45,7 +52,7 @@ final class ToggleFullScreenAction extends DumbAwareAction {
     p.setEnabled(isApplicable);
 
     if (isApplicable) {
-      p.setText(frame.isInFullScreen() ? TEXT_EXIT_FULL_SCREEN : TEXT_ENTER_FULL_SCREEN);
+      p.setText(frame.isInFullScreen() ? Holder.getTextExitFullScreen() : Holder.getTextEnterFullScreen());
     }
   }
 

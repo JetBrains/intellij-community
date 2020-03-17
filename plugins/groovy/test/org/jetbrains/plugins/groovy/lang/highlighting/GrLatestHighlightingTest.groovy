@@ -391,7 +391,7 @@ class GoodCodeRed {
   }
 
   void 'test recursive generics'() {
-    RecursionManager.disableAssertOnRecursionPrevention()
+    RecursionManager.disableAssertOnRecursionPrevention(myFixture.testRootDisposable)
     testHighlighting '''
 import groovy.transform.CompileStatic
 
@@ -524,7 +524,7 @@ class A {
 }
 
 new A(foo: {
-    prop
+    <warning descr="Cannot resolve symbol 'prop'">prop</warning>
 }) 
 '''
   }

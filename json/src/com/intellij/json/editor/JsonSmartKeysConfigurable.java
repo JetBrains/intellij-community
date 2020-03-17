@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.editor;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.options.BeanConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
@@ -40,7 +41,7 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
   @Nls(capitalization = Nls.Capitalization.Title)
   @Override
   public String getDisplayName() {
-    return "JSON";
+    return JsonBundle.message("configurable.JsonSmartKeysConfigurable.display.name");
   }
 
   @NotNull

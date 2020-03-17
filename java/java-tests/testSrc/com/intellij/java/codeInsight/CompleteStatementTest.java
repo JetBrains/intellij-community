@@ -157,6 +157,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEADEV40479() { doTest(); }
   public void testMultilineReturn() { doTest(); }
   public void testMultilineCall() { doTest(); }
+  public void testVarargCall() { doTest(); }
+  public void testOverloadedCall() { doTest(); }
   public void testIDEADEV13019() { doTestBracesNextLineStyle(); }
   public void testIDEA25139() { doTestBracesNextLineStyle(); }
   public void testClassBracesNextLine() { doTestBracesNextLineStyle(); }
@@ -187,6 +189,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testModuleInfo() { doTest(); }
   public void testDoubleFieldDeclaration() { doTest(); }
   public void testAddTernaryColon() { doTest(); }
+  public void testRecord() { doTest(); }
+  public void testRecordWithComponent() { doTest(); }
+  public void testRecordWithComponentNoBody() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

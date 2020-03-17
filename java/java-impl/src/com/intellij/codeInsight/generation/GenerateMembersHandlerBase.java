@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Objects;
 
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
+  private static final Logger LOG = Logger.getInstance(GenerateMembersHandlerBase.class);
 
   private final String myChooserTitle;
   protected boolean myToCopyJavaDoc;
@@ -221,13 +221,11 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       ClassMember preselection = null;
       for (ClassMember member : members) {
         if (member instanceof PsiElementClassMember) {
-          final PsiDocCommentOwner owner = ((PsiElementClassMember)member).getElement();
-          if (owner != null) {
-            final TextRange textRange = owner.getTextRange();
-            if (textRange != null && textRange.contains(offset)) {
-              preselection = member;
-              break;
-            }
+          final PsiDocCommentOwner owner = ((PsiElementClassMember<?>)member).getElement();
+          final TextRange textRange = owner.getTextRange();
+          if (textRange != null && textRange.contains(offset)) {
+            preselection = member;
+            break;
           }
         }
       }

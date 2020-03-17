@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public abstract class IntroduceFieldCentralPanel {
-   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
+  protected static final Logger LOG = Logger.getInstance(IntroduceFieldDialog.class);
 
   private static final String INTRODUCE_FIELD_FINAL_CHECKBOX = "introduce.final.checkbox";
   public static boolean ourLastCbFinalState = PropertiesComponent.getInstance().getBoolean(INTRODUCE_FIELD_FINAL_CHECKBOX, true);

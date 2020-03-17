@@ -12,11 +12,14 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -25,11 +28,8 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
-import static com.intellij.dvcs.DvcsUtil.findVirtualFilesWithRefresh;
-import static com.intellij.dvcs.DvcsUtil.sortVirtualFilesByPresentation;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 /**
@@ -263,7 +263,7 @@ public class GitConflictResolver {
       return Collections.emptyList();
     }
 
-    List<File> files = GitChangeUtils.getUnmergedFiles(repository);
-    return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
+    List<FilePath> files = GitChangeUtils.getUnmergedFiles(repository);
+    return ContainerUtil.mapNotNull(files, it -> LocalFileSystem.getInstance().refreshAndFindFileByPath(it.getPath()));
   }
 }

@@ -120,6 +120,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(STATIC);
         }
       }
+      if (((PsiClass)parent).isRecord()) {
+        if (!(grandParent instanceof PsiFile)) {
+          implicitModifiers.add(STATIC);
+        }
+        implicitModifiers.add(FINAL);
+      }
       if (((PsiClass)parent).isEnum()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
@@ -154,6 +160,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       else if (aClass != null && aClass.isEnum() && ((PsiMethod)parent).isConstructor()) {
         implicitModifiers.add(PRIVATE);
       }
+    }
+    else if (parent instanceof PsiRecordComponent) {
+      implicitModifiers.add(FINAL);
     }
     else if (parent instanceof PsiField) {
       if (parent instanceof PsiEnumConstant) {

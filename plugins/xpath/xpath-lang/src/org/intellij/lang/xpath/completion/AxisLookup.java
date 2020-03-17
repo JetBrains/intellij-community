@@ -15,23 +15,19 @@
  */
 package org.intellij.lang.xpath.completion;
 
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.Iconable;
 
-import javax.swing.*;
-
-public class AxisLookup extends AbstractLookup implements Iconable {
-    public AxisLookup(String name) {
+class AxisLookup extends AbstractLookup {
+    AxisLookup(String name) {
         super(name + "::", name);
     }
 
     @Override
-    public boolean isKeyword() {
-        return true;
+    public void renderElement(LookupElementPresentation presentation) {
+        super.renderElement(presentation);
+        presentation.setIcon(AllIcons.Nodes.J2eeParameter);
+        presentation.setItemTextBold(true);
     }
 
-    @Override
-    public Icon getIcon(int flags) {
-        return AllIcons.Nodes.J2eeParameter;
-    }
 }

@@ -51,15 +51,16 @@ import java.util.*;
  * @author Jeka,dsl
  */
 public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesProcessor.class);
 
   private final PsiElement[] myElementsToMove;
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
+  @NotNull
   private final PackageWrapper myTargetPackage;
   private final MoveCallback myMoveCallback;
-  protected @NotNull final MoveDestination myMoveDestination;
+  @NotNull
+  protected final MoveDestination myMoveDestination;
   protected NonCodeUsageInfo[] myNonCodeUsages;
   private boolean myOpenInEditor;
   private MultiMap<PsiElement, String> myConflicts;
@@ -85,7 +86,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         else {
           toMove.add(element);
         }
-      } else {
+      }
+      else {
         toMove.add(element);
       }
     }
@@ -130,13 +132,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
     return true;
-  }
-
-  private boolean hasClasses() {
-    for (PsiElement element : getElements()) {
-      if (element instanceof PsiClass) return true;
-    }
-    return false;
   }
 
   public boolean isSearchInComments() {
@@ -253,10 +248,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private void detectPackageLocalsMoved(final UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) {
-//    final HashSet reportedPackageLocalUsed = new HashSet();
-    final HashSet<PsiClass> movedClasses = new HashSet<>();
-    final HashMap<PsiClass,HashSet<PsiElement>> reportedClassToContainers = new HashMap<>();
-    final PackageWrapper aPackage = myTargetPackage;
+    Set<PsiClass> movedClasses = new HashSet<>();
+    Map<PsiClass,Set<PsiElement>> reportedClassToContainers = new HashMap<>();
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
       if (element == null) continue;
@@ -267,11 +260,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) continue;
           PsiElement container = ConflictsUtil.getContainer(element);
-          HashSet<PsiElement> reported = reportedClassToContainers.get(aClass);
-          if (reported == null) {
-            reported = new HashSet<>();
-            reportedClassToContainers.put(aClass, reported);
-          }
+          Set<PsiElement> reported = reportedClassToContainers.computeIfAbsent(aClass, __ -> new HashSet<>());
 
           if (!reported.contains(container)) {
             reported.add(container);
@@ -280,8 +269,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
               PsiDirectory directory = containingFile.getContainingDirectory();
               if (directory != null) {
                 PsiPackage usagePackage = JavaDirectoryService.getInstance().getPackage(directory);
-                if (aPackage != null && usagePackage != null && !aPackage.equalToPackage(usagePackage)) {
-
+                if (usagePackage != null && !myTargetPackage.equalToPackage(usagePackage)) {
                   final String message = RefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
                                                                    CommonRefactoringUtil.htmlEmphasize(aClass.getName()),
                                                                    RefactoringUIUtil.getDescription(
@@ -493,7 +481,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
         if (element instanceof PsiPackage) {
           final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
-          final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myRefactoringScope, myMoveDestination);
+          final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
           LOG.assertTrue(newElement != null, element);
           oldToNewElementsMapping.put(element, newElement);
           int i = 0;
@@ -587,8 +575,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   private class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
     private final MultiMap<PsiElement, String> myConflicts;
-    private final HashMap<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new HashMap<>();
-    private final HashMap<PsiClass, RefactoringUtil.IsDescendantOf> myIsDescendantOfCache = new HashMap<>();
+    private final Map<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new HashMap<>();
+    private final Map<PsiClass, RefactoringUtil.IsDescendantOf> myIsDescendantOfCache = new HashMap<>();
 
     MyClassInstanceReferenceVisitor(MultiMap<PsiElement, String> conflicts) {
       myConflicts = conflicts;
@@ -638,11 +626,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
     private void visitPackageLocalMemberReference(PsiJavaCodeReferenceElement qualified, PsiModifierListOwner member) {
       PsiElement container = ConflictsUtil.getContainer(qualified);
-      HashSet<PsiElement> reportedContainers = myReportedElementToContainer.get(member);
-      if (reportedContainers == null) {
-        reportedContainers = new HashSet<>();
-        myReportedElementToContainer.put(member, reportedContainers);
-      }
+      Set<PsiElement> reportedContainers = myReportedElementToContainer.computeIfAbsent(member, __ -> new HashSet<>());
 
       if (!reportedContainers.contains(container)) {
         reportedContainers.add(container);

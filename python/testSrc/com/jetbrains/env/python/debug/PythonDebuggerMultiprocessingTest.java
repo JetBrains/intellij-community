@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 
+@Staging
 public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
   private static class PyDebuggerMultiprocessTask extends PyDebuggerTask {
@@ -191,6 +193,25 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("python3.8");
+      }
+    });
+  }
+
+  @Test
+  public void testSubprocessModule() {
+    runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_subprocess_module.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
+        setWaitForTermination(false);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("42");
+        resume();
+        waitForOutput("Module returned code 0");
       }
     });
   }

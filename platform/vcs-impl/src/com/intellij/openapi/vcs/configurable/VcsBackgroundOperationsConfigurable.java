@@ -5,7 +5,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,9 +34,8 @@ public class VcsBackgroundOperationsConfigurable implements SearchableConfigurab
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Background";
+    return VcsBundle.message("configurable.VcsBackgroundOperationsConfigurable.display.name");
   }
 
   @Override
@@ -60,5 +59,4 @@ public class VcsBackgroundOperationsConfigurable implements SearchableConfigurab
   public void disposeUIResources() {
     myPanel = null;
   }
-
 }

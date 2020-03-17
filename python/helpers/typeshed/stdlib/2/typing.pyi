@@ -11,7 +11,6 @@ overload = object()
 Any = object()
 TypeVar = object()
 _promote = object()
-no_type_check = object()
 
 class _SpecialForm(object):
     def __getitem__(self, typeargs: Any) -> object: ...
@@ -36,6 +35,22 @@ class GenericMeta(type): ...
 # distinguish the None type from the None value.
 NoReturn = Union[None]
 
+# These type variables are used by the container types.
+_T = TypeVar('_T')
+_S = TypeVar('_S')
+_KT = TypeVar('_KT')  # Key type.
+_VT = TypeVar('_VT')  # Value type.
+_T_co = TypeVar('_T_co', covariant=True)  # Any type covariant containers.
+_V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
+_KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
+_VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
+_T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
+_TC = TypeVar('_TC', bound=Type[object])
+_C = TypeVar("_C", bound=Callable[..., Any])
+
+no_type_check = object()
+def no_type_check_decorator(decorator: _C) -> _C: ...
+
 # Type aliases and type constructors
 
 class TypeAlias:
@@ -57,19 +72,6 @@ Deque = TypeAlias(object)
 AnyStr = TypeVar('AnyStr', str, unicode)
 
 # Abstract base classes.
-
-# These type variables are used by the container types.
-_T = TypeVar('_T')
-_S = TypeVar('_S')
-_KT = TypeVar('_KT')  # Key type.
-_VT = TypeVar('_VT')  # Value type.
-_T_co = TypeVar('_T_co', covariant=True)  # Any type covariant containers.
-_V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
-_KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
-_VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
-_T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
-_TC = TypeVar('_TC', bound=Type[object])
-_C = TypeVar("_C", bound=Callable[..., Any])
 
 def runtime_checkable(cls: _TC) -> _TC: ...
 
@@ -229,14 +231,17 @@ class MappingView(object):
     def __len__(self) -> int: ...
 
 class ItemsView(MappingView, AbstractSet[Tuple[_KT_co, _VT_co]], Generic[_KT_co, _VT_co]):
+    def __init__(self, mapping: Mapping[_KT_co, _VT_co]) -> None: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[Tuple[_KT_co, _VT_co]]: ...
 
 class KeysView(MappingView, AbstractSet[_KT_co], Generic[_KT_co]):
+    def __init__(self, mapping: Mapping[_KT_co, _VT_co]) -> None: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_KT_co]: ...
 
 class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
+    def __init__(self, mapping: Mapping[_KT_co, _VT_co]) -> None: ...
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 

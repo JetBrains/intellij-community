@@ -15,18 +15,18 @@
  */
 package org.jetbrains.idea.devkit;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class DevKitBundle extends AbstractBundle {
+public class DevKitBundle extends DynamicBundle {
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
   }
 
-  @NonNls private static final String BUNDLE = "org.jetbrains.idea.devkit.DevKitBundle";
+  @NonNls public static final String BUNDLE = "messages.DevKitBundle";
   private static final DevKitBundle ourInstance = new DevKitBundle();
 
   private DevKitBundle() {

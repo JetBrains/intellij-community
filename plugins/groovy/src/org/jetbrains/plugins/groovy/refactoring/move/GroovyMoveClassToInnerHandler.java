@@ -158,7 +158,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
 
       newClass.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(final PsiElement element) {
+        public void visitElement(@NotNull final PsiElement element) {
           super.visitElement(element);
           List<NonCodeUsageInfo> list = element.getCopyableUserData(MoveClassToInnerProcessor.ourNonCodeUsageKey);
           if (list != null) {

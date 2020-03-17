@@ -51,7 +51,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
     final PyFunction function = PsiTreeUtil.getParentOfType(psi, PyFunction.class);
     if (function != null) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(ctx);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(ctx);
 
       StreamEx
         .of(PyCodeFragmentUtil.findUsages(function, false))

@@ -44,7 +44,7 @@ class PyTypingInspectionExtension : PyInspectionExtension() {
         // here is the check that current element is like `typing.List[int]`
         // but be careful: builtin collections inherit `typing.Generic` in typeshed
         if (operand is PyReferenceExpression) {
-          val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
+          val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
           val resolveResults = operand.getReference(resolveContext).multiResolve(false)
 
           if (resolveResults

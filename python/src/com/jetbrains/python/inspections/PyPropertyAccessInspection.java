@@ -34,13 +34,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyPropertyAccessInspection extends PyInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.property.access");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {

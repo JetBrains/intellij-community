@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Library;
@@ -21,7 +22,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class DateFormatUtil {
+public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
   public static final long SECOND = 1000;
@@ -150,8 +151,15 @@ public class DateFormatUtil {
     return doFormatPretty(time, true);
   }
 
-  @NotNull
+  public static boolean isPrettyFormattingPossible(long time) {
+    return _doFormatPretty(time, true).second;
+  }
+
   private static String doFormatPretty(long time, boolean formatTime) {
+    return _doFormatPretty(time, formatTime).first;
+  }
+  @NotNull
+  private static Pair<String, Boolean> _doFormatPretty(long time, boolean formatTime) {
     long currentTime = Clock.getTime();
     Calendar c = Calendar.getInstance();
 
@@ -170,14 +178,14 @@ public class DateFormatUtil {
     if (formatTime) {
       long delta = currentTime - time;
       if (delta >= 0 && delta <= HOUR + MINUTE) {
-        return CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
+        return Pair.create(CommonBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE)), Boolean.TRUE);
       }
     }
 
     boolean isToday = currentYear == year && currentDayOfYear == dayOfYear;
     if (isToday) {
       String result = CommonBundle.message("date.format.today");
-      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
+      return Pair.create(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
     }
 
     boolean isYesterdayOnPreviousYear =
@@ -185,10 +193,10 @@ public class DateFormatUtil {
     boolean isYesterday = isYesterdayOnPreviousYear || (currentYear == year && currentDayOfYear == dayOfYear + 1);
     if (isYesterday) {
       String result = CommonBundle.message("date.format.yesterday");
-      return formatTime ? result + " " + TIME_FORMAT.format(time) : result;
+      return Pair.create(formatTime ? result + " " + TIME_FORMAT.format(time) : result, Boolean.TRUE);
     }
 
-    return formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time);
+    return Pair.create(formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time), Boolean.FALSE);
   }
 
   @NotNull

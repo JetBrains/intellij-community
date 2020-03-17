@@ -42,12 +42,10 @@ public class CachesHolder {
   @NotNull private final Project myProject;
   @NotNull private final Map<String, ChangesCacheFile> myCacheFiles = ContainerUtil.newConcurrentMap();
   @NotNull private final RepositoryLocationCache myLocationCache;
-  @NotNull private final ProjectLevelVcsManager myPlManager;
 
   public CachesHolder(@NotNull Project project, @NotNull RepositoryLocationCache locationCache) {
     myProject = project;
     myLocationCache = locationCache;
-    myPlManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
   /**
@@ -59,7 +57,7 @@ public class CachesHolder {
   }
 
   public void iterateAllCaches(@NotNull Processor<? super ChangesCacheFile> processor) {
-    for (AbstractVcs vcs : myPlManager.getAllActiveVcss()) {
+    for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       if (vcs.getCommittedChangesProvider() instanceof CachingCommittedChangesProvider) {
         for (Map.Entry<VirtualFile, RepositoryLocation> entry : getAllRootsUnderVcs(vcs).entrySet()) {
           ChangesCacheFile cacheFile = getCacheFile(vcs, entry.getKey(), entry.getValue());

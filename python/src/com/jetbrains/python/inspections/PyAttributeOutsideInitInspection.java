@@ -40,12 +40,6 @@ import java.util.*;
  * Inspection to detect situations, where instance attribute is defined outside __init__ function.
  */
 public class PyAttributeOutsideInitInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.attribute.outside.init");
-  }
 
   @NotNull
   @Override

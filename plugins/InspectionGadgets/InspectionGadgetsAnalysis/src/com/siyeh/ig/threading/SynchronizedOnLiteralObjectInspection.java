@@ -44,12 +44,6 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("synchronized.on.literal.object.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final String typeText = ((PsiType)infos[0]).getPresentableText();
     final int message = ((Integer)infos[1]).intValue();

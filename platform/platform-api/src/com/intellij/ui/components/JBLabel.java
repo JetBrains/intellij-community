@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
@@ -305,7 +306,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
         myEditorPane.addHyperlinkListener(createHyperlinkListener());
-        UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
+        ComponentUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
         updateStyle(myEditorPane);

@@ -15,9 +15,14 @@
  */
 package com.intellij.notification;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
+ * @deprecated unused
  * @author spleaner
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 public class NotificationException extends Exception {
   public NotificationException(final String message) {
     super(message);

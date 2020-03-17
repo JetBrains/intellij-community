@@ -35,12 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * on methods outside of a class
  */
 public class PyDecoratorInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.decorator.outside.class");
-  }
 
   @NotNull
   @Override

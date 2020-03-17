@@ -1,12 +1,22 @@
 <html>
 <body>
-Reports <b>for</b> loops
-which contain neither initialization or update components, and can thus be replaced by
-simpler <b>while</b> statements.
+Reports <b>for</b> loops which contain neither initialization or update components, and can thus be replaced by
+simpler <b>while</b> statements. Example:
+<pre><code>
+  for(; exitCondition(); ) {
+    process();
+  }
+</code></pre>
+  This loop can be replaced with
+<pre><code>
+  while(exitCondition()) {
+    process();
+  }
+</code></pre>
+A fix action is also available for other <code>for</code> loops, so you can replace any <code>for</code> loop with <code>while</code>.
 <!-- tooltip end -->
 <p>
 Use the checkbox below if you wish this inspection to ignore <b>for</b> loops with trivial or non-existent conditions.
 <p>
-
 </body>
 </html>

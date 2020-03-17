@@ -191,7 +191,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Python Integrated Tools";
+    return PyBundle.message("configurable.PyIntegratedToolsConfigurable.display.name");
   }
 
   @Override

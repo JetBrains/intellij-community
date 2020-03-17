@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -34,7 +34,7 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
         if (!COMPARE_METHODS.test(call)) return;
         PsiBinaryExpression binOp = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiBinaryExpression.class);
         if (binOp == null) return;
-        DfaRelationValue.RelationType type = DfaRelationValue.RelationType.fromElementType(binOp.getOperationTokenType());
+        RelationType type = RelationType.fromElementType(binOp.getOperationTokenType());
         if (type == null) return;
         if (ExpressionUtils.isZero(binOp.getLOperand())) {
           type = type.getFlipped();
@@ -50,9 +50,9 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class InlineCompareCallFix implements LocalQuickFix {
-    private @NotNull final DfaRelationValue.RelationType myRelationType;
+    private @NotNull final RelationType myRelationType;
 
-    InlineCompareCallFix(@NotNull DfaRelationValue.RelationType relationType) {
+    InlineCompareCallFix(@NotNull RelationType relationType) {
       myRelationType = relationType;
     }
 

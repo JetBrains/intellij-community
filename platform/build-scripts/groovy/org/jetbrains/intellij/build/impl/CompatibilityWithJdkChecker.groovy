@@ -73,7 +73,9 @@ class CompatibilityWithJdkChecker {
 
       injar(path: moduleOutput)
       classpath.findAll { includeInModule.contains(it.name) }.each { injar(path: it.path) }
-      classpath.findAll { !includeInModule.contains(it.name) }.each {libraryjar(path: it.path)}
+      classpath.findAll { !includeInModule.contains(it.name) }.each {
+        libraryjar(path: it.path, filter: "!module-info.class")
+      }
       libraryjar(path: "$jdkHome/jre/lib/rt.jar")
     }
   }

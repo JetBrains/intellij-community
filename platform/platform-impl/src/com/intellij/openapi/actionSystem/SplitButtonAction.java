@@ -19,8 +19,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,16 +29,34 @@ import java.awt.geom.Area;
 
 import static com.intellij.openapi.actionSystem.ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
 
-public class SplitButtonAction extends AnAction implements CustomComponentAction {
+public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
 
-  @ApiStatus.Experimental
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
+    setPopup(true);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {}
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    myActionGroup.update(e);
+    Presentation presentation = e.getPresentation();
+    if (presentation.isVisible()) {
+      JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+      if (component instanceof SplitButton) {
+        ((SplitButton)component).update(e);
+      }
+    }
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return myActionGroup.getChildren(e);
+  }
 
   @Override
   public boolean isDumbAware() {
@@ -51,7 +69,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     return new SplitButton(this, presentation, place, myActionGroup);
   }
 
-  private static class SplitButton extends ActionButton implements AnActionListener {
+  private static final class SplitButton extends ActionButton {
     private enum MousePressType {
       Action, Popup, None
     }
@@ -64,7 +82,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     private MousePressType mousePressType = MousePressType.None;
     private Disposable myDisposable;
 
-    private SplitButton(AnAction action, Presentation presentation, String place, ActionGroup actionGroup) {
+    private SplitButton(@NotNull AnAction action, @NotNull Presentation presentation, String place, ActionGroup actionGroup) {
       super(action, presentation, place, DEFAULT_MINIMUM_BUTTON_SIZE);
       myActionGroup = actionGroup;
 
@@ -79,6 +97,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       myPresentation.copyFrom(presentation);
       actionEnabled = presentation.isEnabled();
       myPresentation.setEnabled(true);
+      myPresentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, this);
     }
 
     @Override
@@ -125,7 +144,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
 
       int x = baseRect.x + baseRect.width - JBUIScale.scale(3) - ARROW_DOWN.getIconWidth();
       int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUIScale.scale(1);
-      look.paintIconAt(g, ARROW_DOWN, x, y);
+      look.paintIcon(g, this, ARROW_DOWN, x, y);
 
       x -= JBUIScale.scale(4);
       if (getPopState() == POPPED || getPopState() == PUSHED) {
@@ -144,7 +163,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
 
       x = baseRect.x + (x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
-      look.paintIconAt(g, actionIcon, x, y);
+      look.paintIcon(g, this, actionIcon, x, y);
     }
 
     private boolean isToggleActionPushed() {
@@ -172,7 +191,8 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
 
       if (mousePressType == MousePressType.Popup) {
         showPopupMenu(event, myActionGroup);
-      } else if (selectedActionEnabled()) {
+      }
+      else if (selectedActionEnabled()) {
         AnActionEvent newEvent = AnActionEvent.createFromInputEvent(event.getInputEvent(), myPlace, event.getPresentation(), getDataContext());
         ActionUtil.performActionDumbAware(selectedAction, newEvent);
       }
@@ -209,7 +229,17 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     public void addNotify() {
       super.addNotify();
       myDisposable = Disposer.newDisposable();
-      ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(AnActionListener.TOPIC, this);
+      Disposer.register(ApplicationManager.getApplication(), myDisposable);
+      ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+        @Override
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+          if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
+            selectedAction = action;
+            update(event);
+            repaint();
+          }
+        }
+      });
     }
 
     @Override
@@ -221,24 +251,11 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
       }
     }
 
-    @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      if (selectedAction != action && myAction != action) {
-        selectedAction = action;
-        copyPresentation(selectedAction.getTemplatePresentation());
-
-        if(selectedAction instanceof Toggleable) {
-          myPresentation.putClientProperty(Toggleable.SELECTED_PROPERTY, event.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
-        }
-      }
-      else if (myPresentation != event.getPresentation()) {
+    private void update(@NotNull AnActionEvent event) {
+      if (selectedAction != null) {
+        selectedAction.update(event);
         copyPresentation(event.getPresentation());
       }
-      else if (!myPresentation.isEnabled()) {
-        actionEnabled = false;
-        myPresentation.setEnabled(true);
-      }
-      repaint();
     }
   }
 }

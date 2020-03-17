@@ -32,13 +32,6 @@ public class AntDuplicateTargetsInspection extends AntInspection {
   @NonNls private static final String SHORT_NAME = "AntDuplicateTargetsInspection";
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return AntBundle.message("ant.duplicate.targets.inspection");
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

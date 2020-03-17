@@ -37,7 +37,7 @@ public class PyPushDownViewSwingImpl extends MembersBasedViewSwingImpl<PyPushDow
     super(project, presenter, RefactoringBundle.message("push.members.from.0.down.label", classUnderRefactoring.getName()), false);
 
     myCenterPanel.add(myPyMemberSelectionPanel, BorderLayout.CENTER);
-    setTitle(PyPushDownHandler.REFACTORING_NAME);
+    setTitle(PyPushDownHandler.getRefactoringName());
   }
 
   @Nullable

@@ -34,13 +34,6 @@ import java.util.Set;
 
 public class PackageInMultipleModulesInspection extends BaseGlobalInspection {
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "package.in.multiple.modules.display.name");
-  }
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(

@@ -32,13 +32,6 @@ public class AbstractClassWithoutAbstractMethodsInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "abstract.class.without.abstract.methods.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.class.without.abstract.methods.problem.descriptor");

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
@@ -86,7 +86,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.util.ArrayUtil;
@@ -107,10 +106,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 
-/**
- * @author Denis Zhdanov
- */
-public class ExternalSystemUtil {
+public final class ExternalSystemUtil {
   private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
   @NotNull private static final Map<String, String> RUNNER_IDS = new HashMap<>();
@@ -185,16 +181,7 @@ public class ExternalSystemUtil {
 
   @Nullable
   public static ToolWindow ensureToolWindowContentInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    if (toolWindowManager == null) return null;
-
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
-    if (toolWindow == null) return null;
-
-    if (toolWindow instanceof ToolWindowImpl) {
-      ((ToolWindowImpl)toolWindow).ensureContentInitialized();
-    }
-    return toolWindow;
+    return ToolWindowManager.getInstance(project).getToolWindow(externalSystemId.getReadableName());
   }
 
   /**
@@ -269,8 +256,6 @@ public class ExternalSystemUtil {
 
     Set<String> toRefresh = new HashSet<>();
     for (ExternalProjectSettings setting : projectsSettings) {
-      // don't refresh project when auto-import is disabled if such behavior needed (e.g. on project opening when auto-import is disabled)
-      if (!setting.isUseAutoImport() && spec.whenAutoImportEnabled()) continue;
       toRefresh.add(setting.getExternalProjectPath());
     }
 
@@ -279,14 +264,14 @@ public class ExternalSystemUtil {
         .clearNotifications(null, NotificationSource.PROJECT_SYNC, spec.getExternalSystemId());
 
       for (String path : toRefresh) {
-        refreshProject(path, new ImportSpecBuilder(spec).callback(callback).build());
+        refreshProject(path, new ImportSpecBuilder(spec).callback(callback));
       }
     }
   }
 
-  @Nullable
+  @NotNull
   private static String extractDetails(@NotNull Throwable e) {
-    final Throwable unwrapped = RemoteUtil.unwrap(e);
+    Throwable unwrapped = RemoteUtil.unwrap(e);
     if (unwrapped instanceof ExternalSystemException) {
       return ((ExternalSystemException)unwrapped).getOriginalReason();
     }
@@ -298,28 +283,19 @@ public class ExternalSystemUtil {
                                     @NotNull final String externalProjectPath,
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
-    refreshProject(project, externalSystemId, externalProjectPath, new ExternalProjectRefreshCallback() {
-      @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-        if (externalProject == null) {
-          return;
-        }
-        final boolean synchronous = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC;
-        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, synchronous);
-      }
-    }, isPreviewMode, progressExecutionMode, true);
+    ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).use(progressExecutionMode);
+    if (isPreviewMode) builder.usePreviewMode();
+    refreshProject(externalProjectPath, builder);
   }
 
   /**
-   * TODO[Vlad]: refactor the method to use {@link ImportSpecBuilder}
    * <p>
-   * Queries slave gradle process to refresh target gradle project.
+   * Import external project.
    *
    * @param project             target intellij project to use
-   * @param externalProjectPath path of the target gradle project's file
+   * @param externalProjectPath path of the target external project's file
    * @param callback            callback to be notified on refresh result
-   * @param isPreviewMode       flag that identifies whether gradle libraries should be resolved during the refresh
-   * @return the most up-to-date gradle project (if any)
+   * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
    */
   public static void refreshProject(@NotNull final Project project,
                                     @NotNull final ProjectSystemId externalSystemId,
@@ -327,12 +303,14 @@ public class ExternalSystemUtil {
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
-    refreshProject(project, externalSystemId, externalProjectPath, callback, isPreviewMode, progressExecutionMode, true);
+    ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
+    if (isPreviewMode) builder.usePreviewMode();
+    refreshProject(externalProjectPath, builder);
   }
 
   /**
    * <p>
-   * Refresh target gradle project.
+   * Import external project.
    *
    * @param project             target intellij project to use
    * @param externalProjectPath path of the target external project
@@ -350,7 +328,11 @@ public class ExternalSystemUtil {
     ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
     if (isPreviewMode) builder.usePreviewMode();
     if (!reportRefreshError) builder.dontReportRefreshErrors();
-    refreshProject(externalProjectPath, builder.build());
+    refreshProject(externalProjectPath, builder);
+  }
+
+  public static void refreshProject(@NotNull String externalProjectPath, @NotNull ImportSpecBuilder importSpecBuilder) {
+    refreshProject(externalProjectPath, importSpecBuilder.build());
   }
 
   public static void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
@@ -360,8 +342,6 @@ public class ExternalSystemUtil {
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
     boolean reportRefreshError = importSpec.isReportRefreshError();
-    String arguments = importSpec.getArguments();
-    String vmOptions = importSpec.getVmOptions();
 
     File projectFile = new File(externalProjectPath);
     final String projectName;
@@ -372,14 +352,13 @@ public class ExternalSystemUtil {
       projectName = projectFile.getName();
     }
 
-    AbstractExternalSystemLocalSettings localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
+    AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
     AbstractExternalSystemLocalSettings.SyncType syncType =
       isPreviewMode ? PREVIEW :
       localSettings.getProjectSyncType().get(externalProjectPath) == PREVIEW ? IMPORT : RE_IMPORT;
     localSettings.getProjectSyncType().put(externalProjectPath, syncType);
 
-    final ExternalSystemResolveProjectTask resolveProjectTask =
-      new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
+    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
@@ -1047,7 +1026,10 @@ public class ExternalSystemUtil {
         }
       }
     };
-    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, isPreviewMode, progressExecutionMode);
+
+    ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
+    if (isPreviewMode) importSpecBuilder.usePreviewMode();
+    refreshProject(projectSettings.getExternalProjectPath(), importSpecBuilder);
   }
 
   @Nullable

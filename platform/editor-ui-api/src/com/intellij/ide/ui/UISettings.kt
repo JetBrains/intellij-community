@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -11,7 +11,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ComponentTreeEventDispatcher
@@ -123,8 +122,20 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.useSmallLabelsOnTabs = value
     }
 
-  val smoothScrolling: Boolean
+  var smoothScrolling: Boolean
     get() = state.smoothScrolling
+    set(value) {
+      state.smoothScrolling = value
+    }
+
+  val animatedScrolling: Boolean
+    get() = state.animatedScrolling
+
+  val animatedScrollingDuration: Int
+    get() = state.animatedScrollingDuration
+
+  val animatedScrollingCurvePoints: Int
+    get() = state.animatedScrollingCurvePoints
 
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
@@ -186,6 +197,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.showTreeIndentGuides = value
     }
 
+  var compactTreeIndents: Boolean
+    get() = state.compactTreeIndents
+    set(value) {
+      state.compactTreeIndents = value
+    }
+
   var moveMouseOnDefaultButton: Boolean
     get() = state.moveMouseOnDefaultButton
     set(value) {
@@ -210,13 +227,13 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.sortLookupElementsLexicographically = value
     }
 
-  @Deprecated("The property name is grammatically incorrect", replaceWith = ReplaceWith("this.hideTabsIfNeeded"))
-  val hideTabsIfNeed: Boolean
-    get() = hideTabsIfNeeded
-
   val hideTabsIfNeeded: Boolean
     get() = state.hideTabsIfNeeded
-
+  var showFileIconInTabs: Boolean
+    get() = state.showFileIconInTabs
+    set(value) {
+      state.showFileIconInTabs = value
+    }
   var hideKnownExtensionInTabs: Boolean
     get() = state.hideKnownExtensionInTabs
     set(value) {
@@ -256,8 +273,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.presentationMode = value
     }
 
-  val presentationModeFontSize: Int
+  var presentationModeFontSize: Int
     get() = state.presentationModeFontSize
+    set(value) {
+      state.presentationModeFontSize = value
+    }
 
   var editorTabPlacement: Int
     get() = state.editorTabPlacement
@@ -368,12 +388,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.sortTabsAlphabetically = value
     }
 
-  var openTabsAtTheEnd: Boolean
-    get() = state.openTabsAtTheEnd
-    set(value) {
-      state.openTabsAtTheEnd = value
-    }
-
   var showInplaceComments: Boolean
     get() = state.showInplaceComments
     set(value) {
@@ -383,13 +397,16 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
 
+  var enableAlphaMode: Boolean
+    get() = state.enableAlphaMode
+    set(value) {
+      state.enableAlphaMode = value
+    }
+
   init {
     // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical", false)) {
+    if (SystemProperties.`is`("tabs.alphabetical")) {
       sortTabsAlphabetically = true
-    }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end", false)) {
-      openTabsAtTheEnd = true
     }
   }
 

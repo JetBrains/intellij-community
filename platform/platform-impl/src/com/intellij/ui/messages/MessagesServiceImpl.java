@@ -33,7 +33,7 @@ import static com.intellij.credentialStore.CredentialPromptDialog.getTrimmedChar
 import static com.intellij.openapi.ui.Messages.*;
 
 public class MessagesServiceImpl implements MessagesService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.MessagesServiceImpl");
+  private static final Logger LOG = Logger.getInstance(MessagesServiceImpl.class);
 
   @Override
   public int showMessageDialog(@Nullable Project project,
@@ -159,7 +159,7 @@ public class MessagesServiceImpl implements MessagesService {
     }
 
     InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
-                                         new String[]{OK_BUTTON, CANCEL_BUTTON},
+                                         new String[]{getOkButton(), getCancelButton()},
                                          0, comment);
 
     final JTextComponent field = dialog.getTextField();
@@ -185,7 +185,7 @@ public class MessagesServiceImpl implements MessagesService {
     }
 
     Messages.InputDialog dialog = new Messages.MultilineInputDialog(project, message, title, icon, initialValue, validator,
-                                                           new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
+                                                                    new String[]{getOkButton(), getCancelButton()}, 0);
     dialog.show();
     return dialog.getInputString();
   }

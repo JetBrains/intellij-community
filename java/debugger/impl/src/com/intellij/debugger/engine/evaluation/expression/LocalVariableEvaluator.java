@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 class LocalVariableEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator");
+  private static final Logger LOG = Logger.getInstance(LocalVariableEvaluator.class);
 
   private final String myLocalVariableName;
   private EvaluationContextImpl myContext;
@@ -160,7 +160,7 @@ class LocalVariableEvaluator implements Evaluator {
               frameProxy.setValue(myEvaluatedVariable, value);
             }
             else { // no debug info
-              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable.getSlot(), value);
+              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable, value);
             }
           }
           catch (EvaluateException e) {

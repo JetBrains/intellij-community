@@ -38,7 +38,7 @@ import java.util.Set;
  * @author ven
  */
 public abstract class ArgumentFixerActionFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ArgumentFixerActionFactory");
+  private static final Logger LOG = Logger.getInstance(ArgumentFixerActionFactory.class);
 
   @Nullable
   protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;

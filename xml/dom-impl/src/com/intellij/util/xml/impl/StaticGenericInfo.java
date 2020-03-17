@@ -163,12 +163,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   private static Function<Object[], Type> getTypeGetter(final JavaMethod method) {
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    if (parameterTypes.length >= 1 && parameterTypes[0].equals(Class.class)) {
+    if (method.getParameterCount() >= 1 && method.getParameterTypes()[0].equals(Class.class)) {
       return s -> (Type)s[0];
     }
 
-    if (parameterTypes.length == 2 && parameterTypes[1].equals(Class.class)) {
+    if (method.getParameterCount() == 2 && method.getParameterTypes()[1].equals(Class.class)) {
       return s -> (Type)s[1];
     }
 
@@ -177,12 +176,11 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
 
   private static Function<Object[], Integer> getIndexGetter(final JavaMethod method) {
-    final Class<?>[] parameterTypes = method.getParameterTypes();
-    if (parameterTypes.length >= 1 && parameterTypes[0].equals(int.class)) {
+    if (method.getParameterCount() >= 1 && method.getParameterTypes()[0].equals(int.class)) {
       return s -> (Integer)s[0];
     }
 
-    if (parameterTypes.length == 2 && parameterTypes[1].equals(int.class)) {
+    if (method.getParameterCount() == 2 && method.getParameterTypes()[1].equals(int.class)) {
       return s -> (Integer)s[1];
     }
 

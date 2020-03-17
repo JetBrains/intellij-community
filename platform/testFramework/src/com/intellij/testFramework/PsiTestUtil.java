@@ -366,7 +366,7 @@ public class PsiTestUtil {
    */
   public static void addProjectLibrary(@NotNull ModifiableRootModel model, String libName, @NotNull List<String> classesRootPaths) {
     List<VirtualFile> roots = getLibraryRoots(classesRootPaths);
-    addProjectLibrary(model, libName, roots, Collections.emptyList(), Collections.emptyList());
+    addProjectLibrary(model, libName, roots, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
   /**
@@ -385,7 +385,7 @@ public class PsiTestUtil {
   public static Library addProjectLibrary(@NotNull Module module, String libName, @NotNull List<? extends VirtualFile> classesRoots, @NotNull List<? extends VirtualFile> sourceRoots) {
     Ref<Library> result = Ref.create();
     ModuleRootModificationUtil.updateModel(
-      module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, Collections.emptyList())));
+      module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, Collections.emptyList(), Collections.emptyList())));
     return result.get();
   }
 
@@ -394,7 +394,8 @@ public class PsiTestUtil {
                                            String libName,
                                            @NotNull List<? extends VirtualFile> classesRoots,
                                            @NotNull List<? extends VirtualFile> sourceRoots,
-                                           @NotNull List<? extends VirtualFile> javaDocs) {
+                                           @NotNull List<? extends VirtualFile> javaDocs,
+                                           @NotNull List<? extends VirtualFile> externalAnnotationsRoots) {
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
     return WriteAction.computeAndWait(() -> {
       Library library = libraryTable.createLibrary(libName);
@@ -408,6 +409,9 @@ public class PsiTestUtil {
         }
         for (VirtualFile root : javaDocs) {
           libraryModel.addRoot(root, JavadocOrderRootType.getInstance());
+        }
+        for (VirtualFile root : externalAnnotationsRoots) {
+          libraryModel.addRoot(root, AnnotationOrderRootType.getInstance());
         }
         libraryModel.commit();
       }
@@ -456,7 +460,19 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    return addProjectLibrary(model, libName, classesRoots, Collections.emptyList(), Collections.emptyList());
+
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
+    if (libraryTable.getLibraryByName(libName) != null) {
+      for (int index = 0; index < 100000; index++) {
+        String candidate = libName + "-" + index;
+        if (libraryTable.getLibraryByName(candidate) == null) {
+          libName = candidate;
+          break;
+        }
+      }
+    }
+
+    return addProjectLibrary(model, libName, classesRoots, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
   /**
@@ -552,6 +568,7 @@ public class PsiTestUtil {
                                   @NotNull VirtualFile... roots) {
     return modifyJdkRoots(sdk, sdkModificator -> {
       for (VirtualFile root : roots) {
+        sdkModificator.setName(sdkModificator.getName() + "+" + root.getPath());
         sdkModificator.addRoot(root, rootType);
       }
     });
@@ -602,7 +619,8 @@ public class PsiTestUtil {
     private final List<VirtualFile> myClassesRoots = new ArrayList<>();
     private final List<VirtualFile> mySourceRoots = new ArrayList<>();
     private final List<VirtualFile> myJavaDocRoots = new ArrayList<>();
-    
+    private final List<VirtualFile> myExternalAnnotationsRoots = new ArrayList<>();
+
     private LibraryBuilder(String name) {
       myName = name;
     }
@@ -674,6 +692,17 @@ public class PsiTestUtil {
     }
 
     /**
+     * Add an external annotations root for the future library.
+     * @param rootPath root to add
+     * @return this builder
+     */
+    @NotNull
+    public LibraryBuilder externalAnnotationsRoot(@NotNull String rootPath) {
+      myExternalAnnotationsRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
+      return this;
+    }
+
+    /**
      * Creates the actual library and registers it within given {@link ModifiableRootModel}. Presumably this method
      * is called inside {@link ModuleRootModificationUtil#updateModel(Module, com.intellij.util.Consumer)}.
      * 
@@ -682,7 +711,7 @@ public class PsiTestUtil {
      */
     @NotNull
     public Library addTo(@NotNull ModifiableRootModel model) {
-      return addProjectLibrary(model, myName, myClassesRoots, mySourceRoots, myJavaDocRoots);
+      return addProjectLibrary(model, myName, myClassesRoots, mySourceRoots, myJavaDocRoots, myExternalAnnotationsRoots);
     }
 
     /**

@@ -133,22 +133,16 @@ public class ControlFlowUtils {
   }
 
   @Contract(value = "null -> false", pure = true)
-  public static boolean isEndlessLoop(@Nullable PsiLoopStatement loopStatement) {
-    if(loopStatement == null) return false;
-    if (loopStatement instanceof PsiWhileStatement) {
-      return BoolUtils.isTrue(((PsiWhileStatement)loopStatement).getCondition());
-    }
-    if (loopStatement instanceof PsiDoWhileStatement) {
-      return BoolUtils.isTrue(((PsiDoWhileStatement)loopStatement).getCondition());
-    }
+  public static boolean isEndlessLoop(@Nullable PsiConditionalLoopStatement loopStatement) {
+    if (loopStatement == null) return false;
     if (loopStatement instanceof PsiForStatement) {
       PsiForStatement forStatement = (PsiForStatement)loopStatement;
       PsiExpression condition = forStatement.getCondition();
-      if(condition != null && !BoolUtils.isTrue(condition)) return false;
+      if (condition != null && !BoolUtils.isTrue(condition)) return false;
       return (forStatement.getInitialization() == null || forStatement.getInitialization() instanceof PsiEmptyStatement)
              && (forStatement.getUpdate() == null || forStatement.getUpdate() instanceof PsiEmptyStatement);
     }
-    return false;
+    return BoolUtils.isTrue(loopStatement.getCondition());
   }
 
   private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement) {
@@ -929,6 +923,7 @@ public class ControlFlowUtils {
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
         PsiElement ternaryParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
         return ternaryParent instanceof PsiReturnStatement ||
+               ternaryParent instanceof PsiLambdaExpression ||
                (ternaryParent instanceof PsiLocalVariable && 
                 (!((PsiLocalVariable)ternaryParent).getTypeElement().isInferredType() || 
                  PsiTypesUtil.isDenotableType(((PsiLocalVariable)ternaryParent).getType(), ternaryParent))) ||
@@ -962,6 +957,10 @@ public class ControlFlowUtils {
           return true;
         }
       }
+    }
+    if (parent instanceof PsiResourceVariable) {
+      PsiResourceList list = ObjectUtils.tryCast(parent.getParent(), PsiResourceList.class);
+      return list != null && list.getParent() instanceof PsiTryStatement;
     }
     if (parent instanceof PsiField) {
       PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent);
@@ -1107,7 +1106,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (m_found) {
         return;
       }
@@ -1332,7 +1331,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (containsCallToMethod) {
         return;
       }
@@ -1367,7 +1366,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (found) {
         return;
       }

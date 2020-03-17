@@ -50,13 +50,6 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "public.method.without.logging.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("public.method.without.logging.problem.descriptor");
   }

@@ -127,7 +127,7 @@ public abstract class RemoteServersServiceViewContributor
     RemoteServersManager remoteServersManager = RemoteServersManager.getInstance();
     RemoteServer<C> server = remoteServersManager.createServer(serverType, name);
     SingleRemoteServerConfigurable configurable = new SingleRemoteServerConfigurable(server, null, true);
-    configurable.setDisplayName(CloudBundle.getText("new.cloud.connection.configurable.title", serverType.getPresentableName()));
+    configurable.setDisplayName(CloudBundle.message("new.cloud.connection.configurable.title", serverType.getPresentableName()));
     Runnable advancedInitialization = () -> {
       configurable.setDisplayName(name);
       configurable.updateName();

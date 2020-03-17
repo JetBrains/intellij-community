@@ -638,6 +638,6 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
       }
     }
 
-    assertTrue("Maven filter reference was not added", false);
+    fail("Maven filter reference was not added");
   }
 }

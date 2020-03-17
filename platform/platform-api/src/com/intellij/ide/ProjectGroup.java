@@ -17,7 +17,8 @@ public final class ProjectGroup {
   private @NotNull String myName = "";
   private String myProjectPaths = "";
   private boolean myExpanded = false;
-  private boolean myTutorials = false; //used in different places, i.e. closing tutorials group should hide all nested items too
+  //used in different places, i.e. closing tutorials group should hide all nested items too
+  private boolean myTutorials = false;
 
   public ProjectGroup(@NotNull String name) {
     myName = name;
@@ -69,10 +70,11 @@ public final class ProjectGroup {
     return true;
   }
 
-  private void save(List<String> projects) {
+  private void save(@NotNull List<String> projects) {
     myProjectPaths = StringUtil.join(projects, File.pathSeparator);
   }
 
+  @NotNull
   public List<String> getProjects() {
     return new ArrayList<>(new HashSet<>(StringUtil.split(myProjectPaths, File.pathSeparator)));
   }

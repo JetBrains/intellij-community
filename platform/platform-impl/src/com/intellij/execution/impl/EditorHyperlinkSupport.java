@@ -141,8 +141,10 @@ public class EditorHyperlinkSupport {
       return null;
     }
 
-    final RangeHighlighter range = findLinkRangeAt(myEditor.logicalPositionToOffset(logical));
+    final int positionOffset = myEditor.logicalPositionToOffset(logical);
+    final RangeHighlighter range = findLinkRangeAt(positionOffset);
     if (range != null) {
+      if (range.getEndOffset() == positionOffset) return null;
       final HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
       if (hyperlinkInfo != null) {
         return () -> {

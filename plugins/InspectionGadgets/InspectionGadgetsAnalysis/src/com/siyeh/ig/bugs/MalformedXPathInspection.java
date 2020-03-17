@@ -45,12 +45,6 @@ public class MalformedXPathInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("malformed.xpath.expression.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("malformed.xpath.expression.problem.description");
   }

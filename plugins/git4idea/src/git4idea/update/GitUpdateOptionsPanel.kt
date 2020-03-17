@@ -24,7 +24,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.config.UpdateMethod
 import git4idea.config.UpdateMethod.BRANCH_DEFAULT
 
-class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
+internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
   val panel = createPanel()
 
   private fun createPanel(): DialogPanel = panel {
@@ -32,7 +32,7 @@ class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
       buttonGroup {
         getUpdateMethods().forEach { method ->
           row {
-            radioButton(method.getPresentation()).withSelectedBinding(PropertyBinding(
+            radioButton(method.presentation).withSelectedBinding(PropertyBinding(
               get = { settings.updateMethod == method },
               set = { selected -> if (selected) settings.updateMethod = method }
             ))
@@ -48,6 +48,7 @@ class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
 
   fun updateFrom() = panel.reset()
 
-  private fun getUpdateMethods(): List<UpdateMethod> =
-    UpdateMethod.values().filter { it != BRANCH_DEFAULT || Registry.`is`("git.update.project.dialog.branch.default") }
 }
+
+internal fun getUpdateMethods(): List<UpdateMethod> =
+  UpdateMethod.values().filter { it != BRANCH_DEFAULT || Registry.`is`("git.update.project.dialog.branch.default") }

@@ -4,6 +4,8 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,6 +21,6 @@ public interface IdeaProjectTestFixture extends IdeaTestFixture {
 
   @NotNull
   default Disposable getTestRootDisposable() {
-    return getProject();
+    return ((ProjectEx)getProject()).getEarlyDisposable();
   }
 }

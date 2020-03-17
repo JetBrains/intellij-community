@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
+import org.jetbrains.annotations.CalledInAwt
 import javax.swing.JComponent
 
 /**
@@ -25,4 +27,7 @@ interface VcsCloneComponent : Disposable {
   fun getOkButtonText(): String = "Clone"
 
   fun getPreferredFocusedComponent(): JComponent?
+
+  @CalledInAwt
+  fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {}
 }

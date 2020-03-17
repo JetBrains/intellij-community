@@ -29,7 +29,7 @@ import java.util.*;
  *
  */
 public class DefaultActionGroup extends ActionGroup {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
+  private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
   private static final String CANT_ADD_ITSELF = "Cannot add a group to itself: ";
   private static final String CANT_ADD_ACTION_TWICE = "Cannot add an action twice: ";
   /**
@@ -153,6 +153,7 @@ public class DefaultActionGroup extends ActionGroup {
 
     // check that action isn't already registered
     if (!(action instanceof Separator) && containsAction(action)) {
+      LOG.error(CANT_ADD_ACTION_TWICE + action);
       remove(action, actionManager.getId(action));
     }
 

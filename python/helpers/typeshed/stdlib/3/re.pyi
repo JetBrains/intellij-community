@@ -8,10 +8,15 @@
 import sys
 from typing import (
     List, Iterator, overload, Callable, Tuple,
-    AnyStr, Match, Pattern, Any, Optional, Union
+    AnyStr, Any, Optional, Union
 )
 
 # ----- re variables and constants -----
+if sys.version_info >= (3, 7):
+    from typing import Pattern as Pattern, Match as Match
+else:
+    from typing import Pattern, Match
+
 if sys.version_info >= (3, 6):
     import enum
     class RegexFlag(enum.IntFlag):

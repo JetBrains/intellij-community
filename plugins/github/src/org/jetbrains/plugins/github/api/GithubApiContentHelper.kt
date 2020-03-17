@@ -14,6 +14,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
 import java.text.SimpleDateFormat
+import java.util.*
 import javax.imageio.ImageIO
 
 object GithubApiContentHelper {
@@ -29,7 +30,8 @@ object GithubApiContentHelper {
     .setPropertyNamingStrategy(PropertyNamingStrategy.LOWER_CAMEL_CASE)
 
   private fun ObjectMapper.genericConfig(): ObjectMapper =
-    this.setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"))
+    this.setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"))
+      .setTimeZone(TimeZone.getDefault())
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       .setSerializationInclusion(JsonInclude.Include.NON_NULL)

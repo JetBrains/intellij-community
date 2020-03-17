@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -18,7 +19,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,16 +57,18 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     InspectionManager im = InspectionManager.getInstance(getProject());
     AnalysisScope scope = new AnalysisScope(getProject());
     List<Path> resultFiles = new ArrayList<>();
-    File outputPath = FileUtil.createTempDirectory("inspection", "results");
+    Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
-    InspectionProfileImpl profile = new InspectionProfileImpl("test", new InspectionToolsSupplier.Simple(getTools().collect(Collectors.toList())), (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(getTools().collect(Collectors.toList()));
+    Disposer.register(getTestRootDisposable(), toolSupplier);
+    InspectionProfileImpl profile = new InspectionProfileImpl("test", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     getTools().forEach(t -> profile.enableTool(t.getShortName(), getProject()));
 
     context.setExternalProfile(profile);
 
-    ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath.getAbsolutePath(), false, resultFiles), new ProgressIndicatorBase());
+    ProgressManager.getInstance().runProcess(() -> context.launchInspectionsOffline(scope, outputPath, false, resultFiles), new ProgressIndicatorBase());
     assertSize(2, resultFiles);
 
     Element dfaResults = resultFiles.stream().filter(f -> f.getFileName().toString().equals("ConstantConditions.xml")).findAny().map(InspectionResultExportTest::loadFile).orElseThrow(AssertionError::new);

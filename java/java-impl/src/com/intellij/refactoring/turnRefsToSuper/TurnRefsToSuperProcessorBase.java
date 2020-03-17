@@ -38,7 +38,7 @@ import java.util.*;
  * @author dsl
  */
 public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase");
+  private static final Logger LOG = Logger.getInstance(TurnRefsToSuperProcessorBase.class);
   protected PsiClass myClass;
   protected final boolean myReplaceInstanceOf;
   protected PsiManager myManager;

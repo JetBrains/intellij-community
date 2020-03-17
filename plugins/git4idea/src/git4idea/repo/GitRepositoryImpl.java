@@ -7,7 +7,6 @@ import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -119,7 +117,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       repository.getUntrackedFilesHolder().setupVfsListener(project);
       repository.getIgnoredFilesHolder().setupListeners();
       repository.setupUpdater();
-      notifyListenersAsync(repository);
+      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
     }
     return repository;
   }
@@ -271,7 +269,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
       config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
-    sw.report();
+    sw.report(LOG);
     return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
                            new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
                            new LinkedHashSet<>(trackInfos),
@@ -283,17 +281,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return new File(VfsUtilCore.virtualToIoFile(getRoot()), ".gitmodules");
   }
 
-  private static void notifyIfRepoChanged(@NotNull final GitRepository repository,
+  private static void notifyIfRepoChanged(@NotNull GitRepository repository,
                                           @NotNull GitRepoInfo previousInfo,
                                           @NotNull GitRepoInfo info) {
-    if (!repository.getProject().isDisposed() && !info.equals(previousInfo)) {
-      notifyListenersAsync(repository);
+    Project project = repository.getProject();
+    if (!project.isDisposed() && !info.equals(previousInfo)) {
+      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
     }
-  }
-
-  private static void notifyListenersAsync(@NotNull GitRepository repository) {
-    Runnable task = () -> syncPublisher(repository.getProject(), GIT_REPO_CHANGE).repositoryChanged(repository);
-    BackgroundTaskUtil.executeOnPooledThread(repository, task);
   }
 
   @NotNull

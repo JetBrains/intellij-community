@@ -38,7 +38,7 @@ import java.util.List;
  * @author yole
  */
 public class PyProjectStructureDetector extends ProjectStructureDetector {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.module.PyProjectStructureDetector"); 
+  private static final Logger LOG = Logger.getInstance(PyProjectStructureDetector.class);
   
   
   @NotNull

@@ -3,6 +3,7 @@ package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
 import com.intellij.util.xmlb.Converter;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -18,13 +19,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface OptionTag {
-  String value() default "";
+  @NonNls String value() default "";
 
-  String tag() default Constants.OPTION;
+  @NonNls String tag() default Constants.OPTION;
 
-  String nameAttribute() default Constants.NAME;
+  @NonNls String nameAttribute() default Constants.NAME;
 
-  String valueAttribute() default Constants.VALUE;
+  @NonNls String valueAttribute() default Constants.VALUE;
 
   Class<? extends Converter> converter() default Converter.class;
 }

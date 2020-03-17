@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -23,8 +24,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.Reference;
 import java.util.List;
 
-public final class SmartPointerManagerImpl extends SmartPointerManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
+public final class SmartPointerManagerImpl extends SmartPointerManager implements Disposable {
+  private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
   private final Project myProject;
   private final Key<SmartPointerTracker> POINTERS_KEY;
   private final PsiDocumentManagerBase myPsiDocManager;
@@ -33,6 +34,11 @@ public final class SmartPointerManagerImpl extends SmartPointerManager {
     myProject = project;
     myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     POINTERS_KEY = Key.create("SMART_POINTERS " + (project.isDefault() ? "default" : project.hashCode()));
+  }
+
+  @Override
+  public void dispose() {
+    SmartPointerTracker.processQueue();
   }
 
   @NotNull
@@ -148,7 +154,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @Override
-  public void removePointer(@NotNull SmartPsiElementPointer pointer) {
+  public void removePointer(@NotNull SmartPsiElementPointer<?> pointer) {
     if (!(pointer instanceof SmartPsiElementPointerImpl) || myProject.isDisposed()) {
       return;
     }
@@ -197,7 +203,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @Override
-  public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
+  public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer<?> pointer1, @NotNull SmartPsiElementPointer<?> pointer2) {
     return SmartPsiElementPointerImpl.pointsToTheSameElementAs(pointer1, pointer2);
   }
 

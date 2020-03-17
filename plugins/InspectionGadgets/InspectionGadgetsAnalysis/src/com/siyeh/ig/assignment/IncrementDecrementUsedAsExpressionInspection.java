@@ -44,13 +44,6 @@ public class IncrementDecrementUsedAsExpressionInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "increment.decrement.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiPostfixExpression) {

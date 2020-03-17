@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import org.intellij.lang.regexp.RegExpFile;
@@ -69,7 +70,7 @@ public class ValueRegExpAnnotator implements Annotator {
         });
 
         if (count[0] != 1) {
-          holder.createWarningAnnotation(branch, "The pattern should contain exactly one capturing group");
+          holder.newAnnotation(HighlightSeverity.WARNING, "The pattern should contain exactly one capturing group").range(branch).create();
         }
       }
     }

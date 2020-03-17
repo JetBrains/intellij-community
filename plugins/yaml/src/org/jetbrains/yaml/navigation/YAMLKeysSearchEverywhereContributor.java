@@ -75,9 +75,10 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
     Runnable task = () -> findKeys(consumer, pattern, progressIndicator);
     Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+    if (application.isUnitTestMode()) {
       application.runReadAction(task);
     } else {
+      if (application.isDispatchThread()) throw new IllegalStateException("This method must not be called from EDT");
       ProgressIndicatorUtils.yieldToPendingWriteActions();
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, progressIndicator);
     }
@@ -175,8 +176,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
       .stream()
       .sorted()
       .map(idx -> priority.get(idx))
-      .map(found -> found.stream().sorted())
-      .flatMap(s -> s)
+      .flatMap(found -> found.stream().sorted())
       .collect(Collectors.toList());
   }
 

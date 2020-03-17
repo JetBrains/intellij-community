@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -23,15 +23,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 /**
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private final GroovyCallReference myConstructorReference = new GrNewExpressionReference(this);
+  private final GroovyConstructorReference myConstructorReference = new GrNewExpressionReference(this);
 
   public GrNewExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -151,7 +151,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
 
   @Nullable
   @Override
-  public GroovyCallReference getConstructorReference() {
+  public GroovyConstructorReference getConstructorReference() {
     return getArrayCount() > 0 || getReferenceElement() == null ? null : myConstructorReference;
   }
 }

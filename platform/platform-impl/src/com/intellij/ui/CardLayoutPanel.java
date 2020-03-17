@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -187,6 +189,25 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     }
   }
 
+  @Nullable
+  protected final V resetValue(@NotNull K key) {
+    V content = myContent.remove(key);
+    if (content != null) {
+      for (Component component : getComponents()) {
+        if (component == content) {
+          remove(component);
+        }
+      }
+      if (myKey == key) {
+        //select again
+        myKey = null;
+        select(key, true);
+      }
+    }
+    
+    return content;
+  }
+  
   @Override
   public void removeAll() {
     super.removeAll();
@@ -210,5 +231,9 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;
     }
+  }
+
+  protected final boolean isDisposed() {
+    return myDisposed;
   }
 }

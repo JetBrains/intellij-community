@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-
 <idea-plugin>
-
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.groovy.GroovyLanguageInjectionSupport"/>
     <injectionConfig config="resources/groovyInjections.xml"/>
@@ -14,5 +11,4 @@
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.groovy.GrConcatenationInjector"/>
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.groovy.GrConcatenationAwareInjector"/>
   </extensions>
-
 </idea-plugin>

@@ -10,7 +10,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
-    <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
@@ -42,10 +41,6 @@
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
     <orderEntry type="library" name="imageio-tiff" level="project" />
-    <orderEntry type="module" module-name="analytics-tracker" />
-    <orderEntry type="module" module-name="analytics-shared" />
-    <orderEntry type="module" module-name="analytics-publisher" />
-    <orderEntry type="module" module-name="android.sdktools.common" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="StreamEx" level="project" />
@@ -69,6 +64,9 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
+    <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
   </component>
 </module>

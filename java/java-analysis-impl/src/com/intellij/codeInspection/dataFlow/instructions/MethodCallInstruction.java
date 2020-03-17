@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 
-public class MethodCallInstruction extends Instruction implements ExpressionPushingInstruction {
+public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpression> {
   private static final Nullability[] EMPTY_NULLABILITY_ARRAY = new Nullability[0];
 
   @Nullable private final PsiType myType;
@@ -42,6 +43,7 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   private final Nullability myReturnNullability;
 
   public MethodCallInstruction(@NotNull PsiMethodReferenceExpression reference, @NotNull List<? extends MethodContract> contracts) {
+    super(reference);
     myContext = reference;
     JavaResolveResult resolveResult = reference.advancedResolve(false);
     myTargetMethod = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
@@ -73,6 +75,7 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
   }
 
   public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<? extends MethodContract> contracts) {
+    super(ObjectUtils.tryCast(call, PsiExpression.class));
     myContext = call;
     myContracts = Collections.unmodifiableList(contracts);
     final PsiExpressionList argList = call.getArgumentList();
@@ -94,14 +97,8 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
     }
 
     myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0 || isPureCall());
-    myPrecalculatedReturnValue = precalculatedReturnValue;
+    myPrecalculatedReturnValue = DfaTypeValue.isUnknown(precalculatedReturnValue) ? null : precalculatedReturnValue;
     myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
-  }
-
-  @Nullable
-  @Override
-  public PsiExpression getExpression() {
-    return ObjectUtils.tryCast(myContext, PsiExpression.class);
   }
 
   /**
@@ -162,9 +159,7 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
 
     if (paramCount > 0 && argCount == paramCount) {
       PsiType lastArgType = args[argCount - 1].getType();
-      if (lastArgType != null && !substitutor.substitute(parameters[paramCount - 1].getType()).isAssignableFrom(lastArgType)) {
-        return true;
-      }
+      return lastArgType != null && !substitutor.substitute(parameters[paramCount - 1].getType()).isAssignableFrom(lastArgType);
     }
     return false;
   }

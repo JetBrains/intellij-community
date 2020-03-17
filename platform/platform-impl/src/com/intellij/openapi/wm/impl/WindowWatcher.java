@@ -32,7 +32,7 @@ import java.util.Set;
  * @author Vladimir Kondratyev
  */
 public final class WindowWatcher implements PropertyChangeListener{
-  private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.WindowWatcher");
+  private static final Logger LOG = Logger.getInstance(WindowWatcher.class);
   private final Object myLock = new Object();
   private final Map<Window, WindowInfo> myWindow2Info = ContainerUtil.createWeakMap();
   /**

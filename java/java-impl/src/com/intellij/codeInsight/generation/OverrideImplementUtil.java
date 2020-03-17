@@ -19,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +54,7 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 
 public class OverrideImplementUtil extends OverrideImplementExploreUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+  private static final Logger LOG = Logger.getInstance(OverrideImplementUtil.class);
   public static final String IMPLEMENT_COMMAND_MARKER = "implement";
 
   private OverrideImplementUtil() { }
@@ -495,10 +494,10 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
               chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
 
               // invoke later in order to close previous modal dialog
-              TransactionGuard.getInstance().submitTransactionLater(project, () -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
                 handler.invoke(project, editor, aClass.getContainingFile());
-              });
+              }, project.getDisposed());
             }
           }
       );

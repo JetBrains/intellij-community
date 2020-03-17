@@ -133,7 +133,7 @@ def can_run(exe: str, *, args: List[str]) -> bool:
 
 
 def _is_version(path: str, version: str) -> bool:
-    return any("{}/{}".format(d, version) in path for d in TYPESHED_SUBDIRS)
+    return any("{}{}{}".format(d, os.path.sep, version) in path for d in TYPESHED_SUBDIRS)
 
 
 def check_subdirs_discoverable(subdir_paths: List[str]) -> None:

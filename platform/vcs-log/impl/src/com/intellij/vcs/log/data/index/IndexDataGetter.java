@@ -120,14 +120,6 @@ public class IndexDataGetter {
     });
   }
 
-  @Deprecated
-  @NotNull
-  public Set<FilePath> getChangedPaths(int commit) {
-    List<Hash> parents = getParents(commit);
-    if (parents == null || parents.size() > 1) return Collections.emptySet();
-    return executeAndCatch(() -> myIndexStorage.paths.getPathsChangedInCommit(commit), Collections.emptySet());
-  }
-
   //
   // Filters
   //
@@ -272,12 +264,6 @@ public class IndexDataGetter {
   //
   // File history
   //
-
-  @SuppressWarnings("unused")
-  @NotNull
-  public Set<FilePath> getKnownNames(@NotNull FilePath path) {
-    return executeAndCatch(() -> createFileHistoryData(path).build().getFiles(), Collections.emptySet());
-  }
 
   @NotNull
   public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {

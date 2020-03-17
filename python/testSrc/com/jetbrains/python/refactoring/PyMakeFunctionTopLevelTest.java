@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -72,14 +71,12 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     assertNotNull(destination);
     final String finalDestination = destination;
     try {
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-        if (function.getContainingClass() != null) {
-          new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
-        }
-        else {
-          new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
-        }
-      });
+      if (function.getContainingClass() != null) {
+        new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
+      }
+      else {
+        new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
+      }
     }
     catch (IncorrectOperationException e) {
       if (errorMessage == null) {

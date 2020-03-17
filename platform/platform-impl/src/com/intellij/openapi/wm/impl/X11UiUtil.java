@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ArrayUtil.newLongArray;
 
 public class X11UiUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.X11UiUtil");
+  private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
 
   private static final int True = 1;
   private static final int False = 0;
@@ -381,7 +381,7 @@ public class X11UiUtil {
 
   private static Method method(Class<?> aClass, String name, int parameters) throws Exception {
     for (Method method : aClass.getDeclaredMethods()) {
-      if (name.equals(method.getName()) && method.getParameterTypes().length == parameters) {
+      if (method.getParameterCount() == parameters && name.equals(method.getName())) {
         method.setAccessible(true);
         return method;
       }

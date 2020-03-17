@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -62,10 +62,9 @@ public abstract class FileEditorManager {
   public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
-   * Same as {@link #openTextEditor(OpenFileDescriptor, boolean)}
-   * but potentially can be faster thanks to not checking for injected editor at the specified offset.
-   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @deprecated use {@link #openTextEditor(OpenFileDescriptor, boolean)}
    */
+  @Deprecated
   public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     openTextEditor(descriptor, focusEditor);
   }
@@ -88,6 +87,10 @@ public abstract class FileEditorManager {
    */
   @NotNull
   public abstract VirtualFile[] getOpenFiles();
+
+  public boolean hasOpenFiles() {
+    return getOpenFiles().length > 0;
+  }
 
   /**
    * @return files currently selected. The method returns empty array if there are no selected files.

@@ -3,6 +3,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -47,7 +48,8 @@ public class JavaSwitchExpressionSanityTest extends LightJavaCodeInsightFixtureT
   }
 
   public void testIntentionsAroundSwitch() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable(), "BoundedWildcard");  // IDEA-194460
+    MadTestingUtil.enableAllInspections(getProject(), "BoundedWildcard");  // IDEA-194460
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable()); // IDEA-228814
 
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> {

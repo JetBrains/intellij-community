@@ -15,7 +15,7 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.Commenter;
@@ -48,7 +48,7 @@ public class XmlDeclareIdInCommentAction implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorMessages.message("declare.id.in.comment.quickfix");
+    return XmlErrorBundle.message("declare.id.in.comment.quickfix");
   }
 
   @Nullable

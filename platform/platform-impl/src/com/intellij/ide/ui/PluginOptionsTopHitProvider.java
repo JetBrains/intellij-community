@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -17,18 +18,20 @@ final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.Applica
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions() {
-    ArrayList<OptionDescription> options = new ArrayList<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
+    List<OptionDescription> options = new ArrayList<>(plugins.length);
+    boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
 
-    IdeaPluginDescriptor[] descriptors = PluginManagerCore.getPlugins();
-
-    for (IdeaPluginDescriptor pluginDescriptor : descriptors) {
-      if (applicationInfo.isEssentialPlugin(pluginDescriptor.getPluginId().getIdString())) {
+    for (IdeaPluginDescriptor descriptor : plugins) {
+      if (applicationInfo.isEssentialPlugin(descriptor.getPluginId())) {
+        continue;
+      }
+      if (hideImplDetails && descriptor.isImplementationDetail()) {
         continue;
       }
 
-      options.add(new PluginBooleanOptionDescriptor(pluginDescriptor.getPluginId()));
-
+      options.add(new PluginBooleanOptionDescriptor(descriptor));
     }
     return options;
   }

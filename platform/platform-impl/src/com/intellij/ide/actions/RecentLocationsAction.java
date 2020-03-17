@@ -60,13 +60,13 @@ public class RecentLocationsAction extends DumbAwareAction {
   private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
   private static final int MINIMUM_WIDTH = JBUIScale.scale(600);
   private static final int MINIMUM_HEIGHT = JBUIScale.scale(450);
-  private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
-  public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
-                                                                SHORTCUT_FOREGROUND_COLOR.getRed(),
-                                                                SHORTCUT_FOREGROUND_COLOR.getGreen(),
-                                                                SHORTCUT_FOREGROUND_COLOR.getBlue());
-
-  static final String EMPTY_FILE_TEXT = IdeBundle.message("recent.locations.popup.empty.file.text");
+  static class Holder {
+    private static final Color SHORTCUT_FOREGROUND_COLOR = UIUtil.getContextHelpForeground();
+    public static final String SHORTCUT_HEX_COLOR = String.format("#%02x%02x%02x",
+                                                                  SHORTCUT_FOREGROUND_COLOR.getRed(),
+                                                                  SHORTCUT_FOREGROUND_COLOR.getGreen(),
+                                                                  SHORTCUT_FOREGROUND_COLOR.getBlue());
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -214,7 +214,7 @@ public class RecentLocationsAction extends DumbAwareAction {
   public static JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet, boolean showChanged) {
     String text = "<html>"
                   + IdeBundle.message("recent.locations.title.text")
-                  + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+                  + " <font color=\"" + Holder.SHORTCUT_HEX_COLOR + "\">"
                   + KeymapUtil.getShortcutsText(checkboxShortcutSet.getShortcuts()) + "</font>"
                   + "</html>";
     JBCheckBox checkBox = new JBCheckBox(text);
@@ -370,5 +370,9 @@ public class RecentLocationsAction extends DumbAwareAction {
 
     navigationRef.set(true);
     popup.closeOk(null);
+  }
+
+  static String getEmptyFileText() {
+    return IdeBundle.message("recent.locations.popup.empty.file.text");
   }
 }

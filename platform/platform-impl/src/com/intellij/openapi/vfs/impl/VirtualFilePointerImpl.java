@@ -27,7 +27,7 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
+  private static final Logger LOG = Logger.getInstance(VirtualFilePointerImpl.class);
 
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
 
@@ -109,13 +109,16 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   }
 
   public void dispose() {
-    FilePointerPartNode node = checkDisposed(myNode);
-    if (node.incrementUsageCount(-1) == 0) {
+    VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
+    boolean shouldKill;
+    if (pointerManager instanceof VirtualFilePointerManagerImpl) {
+      shouldKill = ((VirtualFilePointerManagerImpl)pointerManager).decrementUsageCount(this);
+    } else {
+      shouldKill = incrementUsageCount(-1) == 0;
+    }
+
+    if (shouldKill) {
       kill("URL when die: " + this);
-      VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
-      if (pointerManager instanceof VirtualFilePointerManagerImpl) {
-        ((VirtualFilePointerManagerImpl)pointerManager).removeNodeFrom(this);
-      }
     }
   }
 

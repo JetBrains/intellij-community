@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class GrDocMethodParamsImpl extends GroovyDocPsiElementImpl implements GrDocMethodParams {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocMethodParamsImpl");
+  private static final Logger LOG = Logger.getInstance(GrDocMethodParamsImpl.class);
 
   public GrDocMethodParamsImpl(@NotNull ASTNode node) {
     super(node);

@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -274,8 +274,8 @@ public class JavaClassReferenceSet {
   @NotNull
   public String getUnresolvedMessagePattern(int index){
     if (canReferencePackage(index)) {
-      return JavaErrorMessages.message("error.cannot.resolve.class.or.package");
+      return JavaErrorBundle.message("error.cannot.resolve.class.or.package");
     }
-    return JavaErrorMessages.message("error.cannot.resolve.class");
+    return JavaErrorBundle.message("error.cannot.resolve.class");
   }
 }

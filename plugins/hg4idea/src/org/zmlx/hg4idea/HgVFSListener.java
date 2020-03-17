@@ -57,19 +57,19 @@ public class HgVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected String getAddTitle() {
-    return HgVcsMessages.message("hg4idea.add.title");
+    return HgBundle.message("hg4idea.add.title");
   }
 
   @NotNull
   @Override
   protected String getSingleFileAddTitle() {
-    return HgVcsMessages.message("hg4idea.add.single.title");
+    return HgBundle.message("hg4idea.add.single.title");
   }
 
   @NotNull
   @Override
   protected String getSingleFileAddPromptTemplate() {
-    return HgVcsMessages.message("hg4idea.add.body");
+    return HgBundle.message("hg4idea.add.body");
   }
 
   @Override
@@ -104,7 +104,7 @@ public class HgVFSListener extends VcsVFSListener {
     // exclude files which are ignored in .hgignore in background and execute adding after that
     final Map<VirtualFile, Collection<VirtualFile>> sortedFiles = HgUtil.sortByHgRoots(myProject, addedFiles);
     final HashSet<VirtualFile> untrackedFiles = new HashSet<>();
-    new Task.Backgroundable(myProject, HgVcsMessages.message("hg4idea.progress.checking.ignored"), false) {
+    new Task.Backgroundable(myProject, HgBundle.message("hg4idea.progress.checking.ignored"), false) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
         for (Map.Entry<VirtualFile, Collection<VirtualFile>> e : sortedFiles.entrySet()) {
@@ -143,7 +143,7 @@ public class HgVFSListener extends VcsVFSListener {
   protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFilesFrom) {
     Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(copiedFilesFrom);
     (new Task.ConditionalModal(myProject,
-                               HgVcsMessages.message("hg4idea.add.progress"),
+                               HgBundle.message("hg4idea.add.progress"),
                                false,
                                VcsConfiguration.getInstance(myProject).getAddRemoveOption() ) {
       @Override public void run(@NotNull ProgressIndicator aProgressIndicator) {
@@ -201,17 +201,17 @@ public class HgVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected String getDeleteTitle() {
-    return HgVcsMessages.message("hg4idea.remove.multiple.title");
+    return HgBundle.message("hg4idea.remove.multiple.title");
   }
 
   @Override
   protected String getSingleFileDeleteTitle() {
-    return HgVcsMessages.message("hg4idea.remove.single.title");
+    return HgBundle.message("hg4idea.remove.single.title");
   }
 
   @Override
   protected String getSingleFileDeletePromptTemplate() {
-    return HgVcsMessages.message("hg4idea.remove.single.body");
+    return HgBundle.message("hg4idea.remove.single.body");
   }
 
   @NotNull
@@ -247,7 +247,7 @@ public class HgVFSListener extends VcsVFSListener {
     }
 
     new Task.ConditionalModal(myProject,
-                              HgVcsMessages.message("hg4idea.remove.progress"),
+                              HgBundle.message("hg4idea.remove.progress"),
                               false,
                               VcsConfiguration.getInstance(myProject).getAddRemoveOption()) {
       @Override public void run( @NotNull ProgressIndicator indicator ) {
@@ -318,7 +318,7 @@ public class HgVFSListener extends VcsVFSListener {
   protected void performMoveRename(@NotNull List<MovedFileInfo> movedFiles) {
     final List<MovedFileInfo> failedToMove = new ArrayList<>();
     (new VcsBackgroundTask<MovedFileInfo>(myProject,
-                                          HgVcsMessages.message("hg4idea.move.progress"),
+                                          HgBundle.message("hg4idea.move.progress"),
                                           VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
                                           movedFiles) {
       @Override

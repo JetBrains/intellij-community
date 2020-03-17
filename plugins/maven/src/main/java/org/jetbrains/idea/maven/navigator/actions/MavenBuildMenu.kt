@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator.actions
 
 import com.intellij.execution.Executor
-import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.actions.RunContextAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
@@ -18,7 +17,7 @@ class MavenBuildMenu : DefaultActionGroup(), DumbAware {
       .filter { it is MyDelegatingAction || it is RunBuildAction }
       .forEach { remove(it) }
 
-    ExecutorRegistry.getInstance().registeredExecutors
+    Executor.EXECUTOR_EXTENSION_NAME.extensionList
       .filter { it.isApplicable(project) }
       .reversed()
       .forEach { add(wrap(RunContextAction(it), it), Constraints.FIRST) }

@@ -66,6 +66,20 @@ public class PySpellCheckerTest extends PyTestCase {
     doTest();
   }
 
+  public void testTyposInInjectedPythonStringsReportedOnce() {
+    doTest();
+  }
+
+  // PY-36912
+  public void testTyposInDoctestsReportedOnce() {
+    doTest();
+  }
+
+  // PY-7711
+  public void testTyposInRegexIgnored() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.enableInspections(SpellCheckingInspection.class);
     myFixture.configureByFile("inspections/spelling/" + getTestName(true) + ".py");

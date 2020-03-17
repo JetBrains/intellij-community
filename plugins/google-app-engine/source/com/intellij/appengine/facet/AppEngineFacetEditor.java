@@ -19,6 +19,7 @@ import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.*;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -104,7 +105,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   @Override
   @Nls
   public String getDisplayName() {
-    return "Google App Engine";
+    return IdeBundle.message("configurable.AppEngineFacetEditor.display.name");
   }
 
   @Override

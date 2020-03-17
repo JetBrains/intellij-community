@@ -81,7 +81,7 @@ import static java.util.Objects.requireNonNull;
 
 @State(name = "ShelveChangesManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ShelveChangesManager implements PersistentStateComponent<Element>, ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
+  private static final Logger LOG = Logger.getInstance(ShelveChangesManager.class);
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
@@ -388,7 +388,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                          boolean honorExcludedFromCommit) throws IOException, VcsException {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
-      progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
+      progressIndicator.setText(VcsBundle.message("shelve.changes.progress.text"));
     }
     ShelvedChangeList shelveList;
     try {

@@ -51,7 +51,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public abstract class AbstractFileViewProvider extends UserDataHolderBase implements FileViewProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.AbstractFileViewProvider");
+  private static final Logger LOG = Logger.getInstance(AbstractFileViewProvider.class);
   public static final Key<Object> FREE_THREADED = Key.create("FREE_THREADED");
   private static final Key<Set<AbstractFileViewProvider>> KNOWN_COPIES = Key.create("KNOWN_COPIES");
   @NotNull

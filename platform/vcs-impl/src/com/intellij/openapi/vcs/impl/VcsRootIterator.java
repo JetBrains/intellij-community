@@ -157,7 +157,7 @@ public class VcsRootIterator {
     }
 
     public void iterate() {
-      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
         @Override
         public void afterChildrenVisited(@NotNull VirtualFile file) {
           if (myDirectoryFilter != null) {

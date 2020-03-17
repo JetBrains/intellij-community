@@ -30,7 +30,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,13 +57,6 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
     return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose class");
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("shared.thread.local.random.display.name");
   }
 
   @NotNull

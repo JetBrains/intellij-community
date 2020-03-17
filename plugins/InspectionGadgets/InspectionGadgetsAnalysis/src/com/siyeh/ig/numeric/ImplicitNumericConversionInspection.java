@@ -49,12 +49,6 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   public boolean ignoreConstantConversions = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("implicit.numeric.conversion.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.widening.conversion.option"),

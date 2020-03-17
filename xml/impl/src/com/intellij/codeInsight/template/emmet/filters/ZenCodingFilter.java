@@ -16,7 +16,7 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public abstract class ZenCodingFilter {
-  public static final ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<>("com.intellij.xml.zenCodingFilter");
+  private static final ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<>("com.intellij.xml.zenCodingFilter");
 
   private static final ZenCodingFilter[] OUR_STANDARD_FILTERS = new ZenCodingFilter[]{
     new XslZenCodingFilter(),

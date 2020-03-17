@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.browsers.chrome;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -122,11 +123,11 @@ public class ChromeSettingsConfigurable implements Configurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Chrome Settings";
+    return IdeBundle.message("configurable.ChromeSettingsConfigurable.display.name");
   }
 
   @Override
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.ide.settings.web.browsers.edit";
   }
 }

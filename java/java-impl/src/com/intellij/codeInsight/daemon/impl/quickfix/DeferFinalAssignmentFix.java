@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DeferFinalAssignmentFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeferFinalAssignmentFix");
+  private static final Logger LOG = Logger.getInstance(DeferFinalAssignmentFix.class);
 
   private final PsiVariable variable;
   private final PsiReferenceExpression expression;

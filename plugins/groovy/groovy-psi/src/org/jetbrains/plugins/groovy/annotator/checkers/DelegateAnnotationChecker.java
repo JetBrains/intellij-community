@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class DelegateAnnotationChecker extends CustomAnnotationChecker {
       return false;
     }
     if (((GrMethod)owner).getParameterList().getParametersCount() > 0) {
-      holder.createErrorAnnotation(annotation, GroovyBundle.message("delegate.annotation.is.only.for.methods.without.arguments"));
+      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("delegate.annotation.is.only.for.methods.without.arguments")).range(annotation).create();
       return true;
     }
 

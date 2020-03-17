@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.util.Date;
 
 public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation");
+  private static final Logger LOG = Logger.getInstance(ComparableVcsRevisionOnOperation.class);
 
   private final GetFileContentOperation myOperation;
   private final Project myProject;

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ShowContentAction extends AnAction implements DumbAware {
+public final class ShowContentAction extends AnAction implements DumbAware {
   public static final String ACTION_ID = "ShowContent";
 
   private ToolWindow myWindow;
@@ -28,7 +28,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
   public ShowContentAction() {
   }
 
-  public ShowContentAction(ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
+  public ShowContentAction(@NotNull ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
     myWindow = window;
     AnAction original = ActionManager.getInstance().getAction(ACTION_ID);
     new ShadowAction(this, original, c, parentDisposable);
@@ -46,23 +46,34 @@ public class ShowContentAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    getWindow(e).showContentPopup(e.getInputEvent());
+    ToolWindow toolWindow = getWindow(e);
+    if (toolWindow != null) {
+      toolWindow.showContentPopup(e.getInputEvent());
+    }
   }
 
   @Nullable
-  private ToolWindow getWindow(AnActionEvent event) {
-    if (myWindow != null) return myWindow;
+  private ToolWindow getWindow(@NotNull AnActionEvent event) {
+    if (myWindow != null) {
+      return myWindow;
+    }
 
     Project project = event.getProject();
-    if (project == null) return null;
+    if (project == null) {
+      return null;
+    }
+
+    Component context = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    if (context == null) {
+      return null;
+    }
 
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
-
-    final ToolWindow window = manager.getToolWindow(manager.getActiveToolWindowId());
-    if (window == null) return null;
-
-    final Component context = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if (context == null) return null;
+    String toolWindowId = manager.getActiveToolWindowId();
+    ToolWindow window = toolWindowId == null ? null : manager.getToolWindow(toolWindowId);
+    if (window == null) {
+      return null;
+    }
 
     return SwingUtilities.isDescendingFrom(window.getComponent(), context) ? window : null;
   }

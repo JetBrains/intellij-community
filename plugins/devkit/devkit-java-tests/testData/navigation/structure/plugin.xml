@@ -19,6 +19,8 @@
   <depends optional="true">com.intellij.javaee</depends>
   <idea-version until-build="130.0" since-build="125.5"/>
 
+  <module value="myModule"/>
+
   <extensions defaultExtensionNs="plugin.id">
     <toolWindow id="someToolWindow" factoryClass="com.jetbrains.test.SomeToolWindowFactory"/>
     <projectConfigurable id="someConfigurable" instance="com.jetbrains.test.SomeConfigurable"/>

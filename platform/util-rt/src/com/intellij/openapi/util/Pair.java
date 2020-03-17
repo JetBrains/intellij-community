@@ -13,8 +13,8 @@ public class Pair<A, B> {
   public final B second;
 
   @NotNull
+  @SuppressWarnings("DontUsePairConstructor")
   public static <A, B> Pair<A, B> create(A first, B second) {
-    //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
   }
 
@@ -24,8 +24,8 @@ public class Pair<A, B> {
   }
 
   @NotNull
+  @SuppressWarnings("DontUsePairConstructor")
   public static <A, B> Pair<A, B> pair(A first, B second) {
-    //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
   }
 
@@ -46,6 +46,7 @@ public class Pair<A, B> {
     return pair != null ? pair.second : null;
   }
 
+  @SuppressWarnings("rawtypes")
   private static final Pair EMPTY = create(null, null);
 
   @SuppressWarnings("unchecked")
@@ -71,7 +72,7 @@ public class Pair<A, B> {
 
   @Override
   public final boolean equals(Object o) {
-    return o instanceof Pair && Comparing.equal(first, ((Pair)o).first) && Comparing.equal(second, ((Pair)o).second);
+    return o instanceof Pair && Comparing.equal(first, ((Pair<?, ?>)o).first) && Comparing.equal(second, ((Pair<?, ?>)o).second);
   }
 
   @Override

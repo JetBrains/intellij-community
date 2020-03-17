@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -24,7 +24,6 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -54,7 +53,7 @@ import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
   public static final TreePath[] EMPTY_TREE_PATH = new TreePath[0];
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
+  private static final Logger LOG = Logger.getInstance(TreeUtil.class);
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
 
@@ -431,11 +430,26 @@ public final class TreeUtil {
     return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
 
+  /**
+   * Makes visible specified tree paths and select them.
+   * It does not clear selection if there are no paths to select.
+   *
+   * @param tree  a tree to select in
+   * @param paths a collection of paths to select
+   * @see JTree#clearSelection
+   */
+  @ApiStatus.Internal
   public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
     if (paths.isEmpty()) return;
-    selectPaths(tree, paths.toArray(EMPTY_TREE_PATH));
+    paths.forEach(tree::makeVisible);
+    internalSelect(tree, paths);
   }
 
+  /**
+   * @deprecated use {{@link #selectPaths(JTree, Collection)}} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static void selectPaths(@NotNull JTree tree, @NotNull TreePath... paths) {
     if (paths.length == 0) return;
     for (TreePath path : paths) {
@@ -453,6 +467,14 @@ public final class TreeUtil {
   @NotNull
   public static ActionCallback selectPath(@NotNull final JTree tree, final TreePath path, boolean center) {
     tree.makeVisible(path);
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds == null) return ActionCallback.REJECTED;
+    if (center) {
+      Rectangle visible = tree.getVisibleRect();
+      if (visible.y < bounds.y + bounds.height && bounds.y < visible.y + visible.height) {
+        center = false; // disable centering if the given path is already visible
+      }
+    }
     if (center) {
       return showRowCentred(tree, tree.getRowForPath(path));
     } else {
@@ -744,15 +766,6 @@ public final class TreeUtil {
       lastRow = tree.getClosestRowForLocation(visible.x, visible.y + visible.height);
     }
     return lastRow - firstRow + 1;
-  }
-
-  /**
-   * @deprecated use {@link #getVisibleRowCount(JTree)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static int getVisibleRowCountForFixedRowHeight(@NotNull final JTree tree) {
-    return getVisibleRowCount(tree);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -1473,7 +1486,7 @@ public final class TreeUtil {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseMakeVisibleOne(tree, visitor, path -> {
-      internalSelectPath(tree, path);
+      internalSelect(tree, path);
       consumer.accept(path);
     });
   }
@@ -1490,13 +1503,7 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
-    return promiseMakeVisibleOne(tree, visitor, path -> internalSelectPath(tree, path));
-  }
-
-  private static void internalSelectPath(@NotNull JTree tree, @NotNull TreePath path) {
-    assert EventQueue.isDispatchThread();
-    tree.setSelectionPath(path);
-    scrollToVisible(tree, path, true);
+    return promiseMakeVisibleOne(tree, visitor, path -> internalSelect(tree, path));
   }
 
   /**
@@ -1511,13 +1518,19 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
-    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelectPaths(tree, paths));
+    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelect(tree, paths));
   }
 
-  private static void internalSelectPaths(@NotNull JTree tree, @NotNull List<? extends TreePath> paths) {
+  private static void internalSelect(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
     assert EventQueue.isDispatchThread();
     if (paths.isEmpty()) return;
-    tree.setSelectionPaths(paths.toArray(EMPTY_TREE_PATH));
+    internalSelect(tree, paths.toArray(EMPTY_TREE_PATH));
+  }
+
+  private static void internalSelect(@NotNull JTree tree, @NotNull TreePath... paths) {
+    assert EventQueue.isDispatchThread();
+    if (paths.length == 0) return;
+    tree.setSelectionPaths(paths);
     for (TreePath path : paths) {
       if (scrollToVisible(tree, path, true)) {
         break;
@@ -1531,7 +1544,6 @@ public final class TreeUtil {
    * @param centered {@code true} to show the specified path
    * @return {@code false} if a path is hidden (under a collapsed parent)
    */
-  @Contract("_, null, _ -> false")
   public static boolean scrollToVisible(@NotNull JTree tree, @NotNull TreePath path, boolean centered) {
     assert EventQueue.isDispatchThread();
     Rectangle bounds = tree.getPathBounds(path);
@@ -1541,6 +1553,12 @@ public final class TreeUtil {
     }
     Container parent = tree.getParent();
     if (parent instanceof JViewport) {
+      if (centered) {
+        Rectangle visible = tree.getVisibleRect();
+        if (visible.y < bounds.y + bounds.height && bounds.y < visible.y + visible.height) {
+          centered = false; // disable centering if the given path is already visible
+        }
+      }
       int width = parent.getWidth();
       if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
         bounds.x = -tree.getX();
@@ -1618,7 +1636,7 @@ public final class TreeUtil {
     promiseMakeVisible(tree, path -> {
       TreePath parent = reference.getAndSet(path);
       if (getPathCount(parent) == getPathCount(path.getParentPath())) return TreeVisitor.Action.CONTINUE;
-      internalSelectPath(tree, parent);
+      internalSelect(tree, parent);
       promise.setResult(parent);
       return TreeVisitor.Action.INTERRUPT;
     }, promise)
@@ -1630,7 +1648,7 @@ public final class TreeUtil {
             promise.cancel();
           }
           else {
-            internalSelectPath(tree, tail);
+            internalSelect(tree, tail);
             promise.setResult(tail);
           }
         }

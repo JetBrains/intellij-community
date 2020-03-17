@@ -1,6 +1,6 @@
 <html>
 <body>
-This inspection is intended for J2ME and other highly resource constrained environments.
+This inspection is intended for Java ME and other highly resource constrained environments.
 Applying the results of this inspection without consideration might have negative effects on code clarity and design.
 <p>
 Reports method calls in the condition part of a
@@ -8,7 +8,8 @@ loop statement. In highly resource constrained environments, such calls may
 have adverse performance implications.
   <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore method calls to common java iteration methods like <b>Iterator.hasNext()</b>.
+Use the checkbox below to ignore calls to common Java iteration methods like <b>Iterator.hasNext()</b>
+  and known methods with side-effects like <b>Atomic*.compareAndSet</b>.
 <p>
 
 </body>

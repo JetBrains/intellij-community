@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.search.SearchUtil;
@@ -32,7 +32,7 @@ import java.util.function.Predicate;
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
+  private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
@@ -153,7 +153,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       group = null;
     }
 
-    Configurable configurableToSelect = idToSelect == null ? null : new ConfigurableVisitor.ByID(idToSelect).find(group);
+    Configurable configurableToSelect = idToSelect == null ? null : ConfigurableVisitor.findById(idToSelect, Collections.singletonList(group));
     SettingsDialogFactory.getInstance().create(getProject(project), Collections.singletonList(group), configurableToSelect, filter).show();
   }
 
@@ -241,7 +241,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
-      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {
+      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable() {
         @Override
         public void showNotify() {
           advancedInitialization.run();

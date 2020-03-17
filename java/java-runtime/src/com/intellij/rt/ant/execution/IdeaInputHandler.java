@@ -57,10 +57,9 @@ public class IdeaInputHandler implements InputHandler {
     }
     packet.sendThrough(err);
     try {
-      final byte[] replayLength = readBytes(4);
-      final int length = ((int)replayLength[0] << 24) | ((int)replayLength[1] << 16) | ((int)replayLength[2] << 8) | replayLength[3];
-      final byte[] replay = readBytes(length);
-      final String input = new String(replay);
+      final byte[] lengthValue = readBytes(4);
+      final int length = (toUnsignedInt(lengthValue[0]) << 24) | ((toUnsignedInt(lengthValue[1])) << 16) | ((toUnsignedInt(lengthValue[2])) << 8) | toUnsignedInt(lengthValue[3]);
+      final String input = new String(readBytes(length));
       request.setInput(input);
       if (!request.isInputValid()) {
         throw new BuildException("Invalid input: " + input);
@@ -71,10 +70,16 @@ public class IdeaInputHandler implements InputHandler {
     }
   }
 
-  private byte[] readBytes(int count) throws IOException {
-    byte[] replayLength = new byte[count];
-    int read = System.in.read(replayLength);
-    if (read != count) throw new IOException("End of input stream");
-    return replayLength;
+  private static int toUnsignedInt(final byte b) {
+    return (int)b & 0xFF;
+  }
+
+  private static byte[] readBytes(int count) throws IOException {
+    byte[] data = new byte[count];
+    int read = System.in.read(data);
+    if (read != count) {
+      throw new IOException("End of input stream");
+    }
+    return data;
   }
 }

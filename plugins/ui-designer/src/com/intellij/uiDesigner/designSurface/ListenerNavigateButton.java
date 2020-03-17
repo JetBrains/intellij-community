@@ -39,7 +39,7 @@ import java.beans.Introspector;
  * @author yole
  */
 public class ListenerNavigateButton extends JButton implements ActionListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.ListenerNavigateButton");
+  private static final Logger LOG = Logger.getInstance(ListenerNavigateButton.class);
 
   private final RadComponent myComponent;
 

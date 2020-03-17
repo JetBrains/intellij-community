@@ -5,17 +5,15 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class Utils {
+public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
   private static final String TB_SERVER_PROCESS = SystemInfo.isMacOSHighSierra ? "TouchBarServer" : "TouchBarAgent";
 
@@ -48,8 +46,9 @@ public class Utils {
   }
 
   public static String getAppId() {
-    final @NotNull Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) return null;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
 
     String appId;
     try (@SuppressWarnings("unused") NSAutoreleaseLock lock = new NSAutoreleaseLock()) {

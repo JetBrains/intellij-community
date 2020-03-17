@@ -16,7 +16,7 @@ interface GHListLoader : Disposable {
   fun canLoadMore(): Boolean
 
   @CalledInAwt
-  fun loadMore()
+  fun loadMore(update: Boolean = false)
 
   @CalledInAwt
   fun reset()

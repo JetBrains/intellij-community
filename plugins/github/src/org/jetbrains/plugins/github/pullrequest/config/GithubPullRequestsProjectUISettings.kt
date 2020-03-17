@@ -13,7 +13,7 @@ class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModifica
 
   class SettingsState : BaseState() {
     var hiddenUrls by stringSet()
-    var zipChanges by property(false)
+    var zipChanges by property(true)
   }
 
   private val changesEventDispatcher = EventDispatcher.create(ChangesEventDispatcher::class.java)

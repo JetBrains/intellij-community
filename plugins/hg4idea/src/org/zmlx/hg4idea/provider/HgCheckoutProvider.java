@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -12,8 +13,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgCloneCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -53,7 +54,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
     final String targetDir = destinationParent.getPath() + File.separator + directoryName;
 
     final AtomicReference<HgCommandResult> cloneResult = new AtomicReference<>();
-    new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
+    new Task.Backgroundable(project, HgBundle.message("hg4idea.clone.progress", sourceRepositoryURL), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         HgCloneCommand clone = new HgCloneCommand(project);
@@ -86,7 +87,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
     return new HgCloneDialogComponent(project);
   }
 }

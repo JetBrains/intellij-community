@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns="http://www.mynamespace.it/my" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="5.000" id="MYTEST">
-    <xs:attributeGroup name="MyGroup">
-        <xs:attribute name="Version" use="required" />
-    </xs:attributeGroup>
-</xs:schema>

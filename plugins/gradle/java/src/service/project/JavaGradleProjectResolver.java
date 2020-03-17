@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -46,20 +46,25 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
     // import java project data
-
     final String projectDirPath = resolverCtx.getProjectPath();
-    final IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
 
     // Gradle API doesn't expose gradleProject compile output path yet.
     JavaProjectData javaProjectData = new JavaProjectData(GradleConstants.SYSTEM_ID, projectDirPath + "/build/classes");
-    javaProjectData.setJdkVersion(ideaProject.getJdkName());
+
+    IdeaProject ideaProject = resolverCtx.getModels().getModel(IdeaProject.class);
+    if (ideaProject != null) {
+      javaProjectData.setJdkVersion(ideaProject.getJdkName());
+    }
     LanguageLevel resolvedLanguageLevel = null;
     // org.gradle.tooling.model.idea.IdeaLanguageLevel.getLevel() returns something like JDK_1_6
-    final String languageLevel = ideaProject.getLanguageLevel().getLevel();
-    for (LanguageLevel level : LanguageLevel.values()) {
-      if (level.name().equals(languageLevel)) {
-        resolvedLanguageLevel = level;
-        break;
+    String languageLevel = null;
+    if (ideaProject != null) {
+      languageLevel = ideaProject.getLanguageLevel().getLevel();
+      for (LanguageLevel level : LanguageLevel.values()) {
+        if (level.name().equals(languageLevel)) {
+          resolvedLanguageLevel = level;
+          break;
+        }
       }
     }
     if (resolvedLanguageLevel != null) {
@@ -203,23 +208,23 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
                                     @Nullable String jvmParametersSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
     if (!StringUtil.isEmpty(jvmParametersSetup)) {
-      LOG.assertTrue(!jvmParametersSetup.contains(ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX),
-                     "Please use org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend to setup debugger");
-
-      final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
-      final String jvmArgs = Arrays.stream(ParametersListUtil.parseToArray(jvmParametersSetup))
-        .map(s -> '\'' + s.trim().replace("\\", "\\\\") + '\'').collect(Collectors.joining(" << "));
-      final String[] lines = {
-        "gradle.taskGraph.beforeTask { Task task ->",
-        "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
-        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
-        "        jvmArgs << " + jvmArgs,
-        "        task.jvmArgs = jvmArgs",
-        "    }" +
-        "}",
-      };
-      final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
-      initScriptConsumer.consume(script);
+      ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmParametersSetup);
+      if (forkedDebuggerSetup == null) {
+        final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
+        final String jvmArgs = Arrays.stream(ParametersListUtil.parseToArray(jvmParametersSetup))
+          .map(s -> '\'' + s.trim().replace("\\", "\\\\") + '\'').collect(Collectors.joining(" << "));
+        final String[] lines = {
+          "gradle.taskGraph.beforeTask { Task task ->",
+          "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
+          "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
+          "        jvmArgs << " + jvmArgs,
+          "        task.jvmArgs = jvmArgs",
+          "    }" +
+          "}",
+        };
+        final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
+        initScriptConsumer.consume(script);
+      }
     }
 
     final String testEventListenerDefinition = loadTestEventListenerDefinition();
@@ -228,7 +233,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
 
   @NotNull
   @Override
-  public Set<Class> getExtraProjectModelClasses() {
+  public Set<Class<?>> getExtraProjectModelClasses() {
     return Collections.singleton(AnnotationProcessingModel.class);
   }
 }

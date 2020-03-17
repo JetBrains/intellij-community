@@ -64,7 +64,16 @@ public class RefsModel implements VcsLogRefs {
     return myRefs;
   }
 
+  @NotNull
   public List<VcsRef> refsToCommit(int index) {
+    if (myRefs.size() <= 10) {
+      for (CompressedRefs refs : myRefs.values()) {
+        if (refs.contains(index)) {
+          return refs.refsToCommit(index);
+        }
+      }
+      return Collections.emptyList();
+    }
     CommitId id = myStorage.getCommitId(index);
     if (id == null) return Collections.emptyList();
     VirtualFile root = id.getRoot();

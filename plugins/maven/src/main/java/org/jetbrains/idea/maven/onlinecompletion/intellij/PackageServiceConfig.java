@@ -98,7 +98,7 @@ public class PackageServiceConfig {
 
   private void updateIfNessesary() {
     synchronized (MUTEX) {
-      long updatedTimestamp = PropertiesComponent.getInstance().getOrInitLong(CONFIG_UPDATED_TIMESTAMP_KEY, 0);
+      long updatedTimestamp = PropertiesComponent.getInstance().getLong(CONFIG_UPDATED_TIMESTAMP_KEY, 0);
       if (System.currentTimeMillis() - updatedTimestamp > INFO_TTL) {
         reloadConfig().onSuccess(eu -> {
           PropertiesComponent.getInstance().setValue(CONFIG_UPDATED_TIMESTAMP_KEY, String.valueOf(System.currentTimeMillis()));

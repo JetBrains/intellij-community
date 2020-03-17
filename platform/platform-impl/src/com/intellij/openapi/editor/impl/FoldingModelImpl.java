@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
@@ -35,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
+  private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
 
@@ -53,7 +52,6 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   private boolean myDoNotCollapseCaret;
   private boolean myFoldRegionsProcessed;
 
-  private boolean myDisableScrollingPositionAdjustment;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
   private boolean myDocumentChangeProcessed = true;
   private final AtomicLong myExpansionCounter = new AtomicLong();
@@ -173,24 +171,26 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void runBatchFoldingOperation(@NotNull Runnable operation) {
-    runBatchFoldingOperation(operation, false, true);
+  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition) {
+    runBatchFoldingOperation(operation, !allowMovingCaret, true, keepRelativeCaretPosition);
   }
 
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaret) {
-    runBatchFoldingOperation(operation, false, moveCaret);
+    runBatchFoldingOperation(operation, false, moveCaret, true);
   }
 
-  private void runBatchFoldingOperation(@NotNull Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
+  void runBatchFoldingOperation(@NotNull Runnable operation,
+                                boolean dontCollapseCaret,
+                                boolean moveCaret,
+                                boolean adjustScrollingPosition) {
     assertIsDispatchThreadForEditor();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
-    if (!oldBatchFlag) {
+    if (!oldBatchFlag && adjustScrollingPosition) {
       ((ScrollingModelImpl)myEditor.getScrollingModel()).finishAnimation();
       myScrollingPositionKeeper.savePosition();
-      myDisableScrollingPositionAdjustment = false;
     }
 
     myIsBatchFoldingProcessing = true;
@@ -201,25 +201,12 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       if (!oldBatchFlag) {
         myIsBatchFoldingProcessing = false;
         if (myFoldRegionsProcessed) {
-          notifyBatchFoldingProcessingDone(moveCaret);
+          notifyBatchFoldingProcessingDone(moveCaret, adjustScrollingPosition);
           myFoldRegionsProcessed = false;
         }
       }
       myDoNotCollapseCaret = oldDontCollapseCaret;
     }
-  }
-
-  @Override
-  public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull final Runnable operation) {
-    runBatchFoldingOperation(operation, true, true);
-  }
-
-  /**
-   * Disables scrolling position adjustment after batch folding operation is finished.
-   * Should be called from inside batch operation runnable.
-   */
-  void disableScrollingPositionAdjustment() {
-    myDisableScrollingPositionAdjustment = true;
   }
 
   @Override
@@ -370,7 +357,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (notify) notifyListenersOnFoldRegionStateChange(region);
   }
 
-  private void notifyBatchFoldingProcessingDone(final boolean moveCaretFromCollapsedRegion) {
+  private void notifyBatchFoldingProcessingDone(boolean moveCaretFromCollapsedRegion, boolean adjustScrollingPosition) {
     clearCachedValues();
 
     for (FoldingListener listener : myListeners) {
@@ -426,7 +413,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
       }
     });
-    if (!myDisableScrollingPositionAdjustment) myScrollingPositionKeeper.restorePosition(true);
+    if (adjustScrollingPosition) myScrollingPositionKeeper.restorePosition(true);
   }
 
   @Override
@@ -526,7 +513,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     try {
-      if (!((DocumentEx)event.getDocument()).isInBulkUpdate()) {
+      if (!event.getDocument().isInBulkUpdate()) {
         updateCachedOffsets();
       }
     }
@@ -548,9 +535,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay) {
-    Inlay.Placement placement = inlay.getPlacement();
-    if (placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) myFoldTree.clearCachedInlayValues();
+  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+    if ((inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE) &&
+        (changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0) {
+      myFoldTree.clearCachedInlayValues();
+    }
   }
 
   @Nullable
@@ -565,14 +554,25 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return null;
     }
-    if (!isFoldingEnabled() || startOffset >= endOffset ||
-        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), startOffset) ||
-        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), endOffset) ||
-        !myFoldTree.checkIfValidToCreate(startOffset, endOffset)) return null;
+    if (!isFoldingEnabled() ||
+        startOffset >= endOffset ||
+        neverExpands && group != null ||
+        DocumentUtil.isInsideCharacterPair(myEditor.getDocument(), startOffset) ||
+        DocumentUtil.isInsideCharacterPair(myEditor.getDocument(), endOffset) ||
+        !myFoldTree.checkIfValidToCreate(startOffset, endOffset)) {
+      return null;
+    }
 
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
     myRegionTree.addInterval(region, startOffset, endOffset, false, false, false, 0);
     LOG.assertTrue(region.isValid());
+    if (neverExpands) {
+      collapseFoldRegion(region, false);
+      if (region.isExpanded()) {
+        myRegionTree.removeInterval(region);
+        return null;
+      }
+    }
     myFoldRegionsProcessed = true;
     if (group != null) {
       myGroups.putValue(group, region);
@@ -618,15 +618,16 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @TestOnly
   void validateState() {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
+    Document document = myEditor.getDocument();
+    if (document.isInBulkUpdate()) return;
 
     FoldRegion[] allFoldRegions = getAllFoldRegions();
     boolean[] invisibleRegions = new boolean[allFoldRegions.length];
     for (int i = 0; i < allFoldRegions.length; i++) {
       FoldRegion r1 = allFoldRegions[i];
       LOG.assertTrue(r1.isValid() &&
-                     !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), r1.getStartOffset()) &&
-                     !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), r1.getEndOffset()),
+                     !DocumentUtil.isInsideCharacterPair(document, r1.getStartOffset()) &&
+                     !DocumentUtil.isInsideCharacterPair(document, r1.getEndOffset()),
                      "Invalid region");
       for (int j = i + 1; j < allFoldRegions.length; j++) {
         FoldRegion r2 = allFoldRegions[j];
@@ -730,7 +731,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
           }
           else {
             otherNode.setValid(false);
-            ((RMNode)otherNode).onRemoved();
+            ((RMNode<FoldRegionImpl>)otherNode).onRemoved();
           }
         }
       };

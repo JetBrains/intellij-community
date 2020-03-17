@@ -52,7 +52,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
         Optional
           .ofNullable(builtinCache.getObjectType())
           .map(type -> type.resolveMember(referencedName, element, AccessDirection.of(element),
-                                          PyResolveContext.noImplicits().withTypeEvalContext(context)))
+                                          PyResolveContext.defaultContext().withTypeEvalContext(context)))
           .orElse(Collections.emptyList())
       );
     }

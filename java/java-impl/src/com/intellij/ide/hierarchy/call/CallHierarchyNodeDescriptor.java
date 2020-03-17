@@ -3,7 +3,7 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -170,7 +170,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       FileEditorManager.getInstance(myProject).openFile(psiFile.getVirtualFile(), requestFocus);
     }
 
-    Editor editor = PsiUtilBase.findEditor(callElement);
+    Editor editor = PsiEditorUtil.findEditor(callElement);
 
     if (editor != null) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);

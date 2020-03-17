@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * An immutable unordered hash-based map which optimizes incremental growth and may have custom equals/hashCode strategy.
@@ -28,6 +29,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   private final @Nullable K k1, k2, k3;
   private final @Nullable V v1, v2, v3;
   private final int size;
+  private Set<K> keySet;
+  private Collection<V> values; 
 
   /**
    * Returns an empty {@code UnmodifiableHashMap} with canonical equals/hashCode strategy.
@@ -270,7 +273,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
       if (k2 != null) {
         if (strategy.equals(k2, typedKey)) return true;
         if (k3 != null) {
-          if (strategy.equals(k3, typedKey)) return true;
+          return strategy.equals(k3, typedKey);
         }
       }
     }
@@ -511,65 +514,111 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   @NotNull
   @Override
   public Set<K> keySet() {
-    return new AbstractSet<K>() {
-      @Override
-      public Iterator<K> iterator() {
-        return new MyIterator<K>() {
-          @Override
-          K fieldElement(int offset) {
-            return offset == 0 ? k1 : offset == 1 ? k2 : k3;
+    if (keySet == null) {
+      keySet = new AbstractSet<K>() {
+        @Override
+        public Iterator<K> iterator() {
+          return new MyIterator<K>() {
+            @Override
+            K fieldElement(int offset) {
+              return offset == 0 ? k1 : offset == 1 ? k2 : k3;
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            K tableElement(int offset) {
+              return (K)data[offset];
+            }
+          };
+        }
+
+        @Override
+        public void forEach(Consumer<? super K> action) {
+          if (k1 != null) {
+            if (k2 != null) {
+              if (k3 != null) {
+                action.accept(k3);
+              }
+              action.accept(k2);
+            }
+            action.accept(k1);
           }
-
-          @SuppressWarnings("unchecked")
-          @Override
-          K tableElement(int offset) {
-            return (K)data[offset];
+          for (int i = 0; i < data.length; i += 2) {
+            Object key = data[i];
+            if (key != null) {
+              @SuppressWarnings("unchecked") K k = (K)data[i];
+              action.accept(k);
+            }
           }
-        };
-      }
+        }
 
-      @Override
-      public boolean contains(Object o) {
-        return containsKey(o);
-      }
+        @Override
+        public boolean contains(Object o) {
+          return containsKey(o);
+        }
 
-      @Override
-      public int size() {
-        return UnmodifiableHashMap.this.size();
-      }
-    };
+        @Override
+        public int size() {
+          return UnmodifiableHashMap.this.size();
+        }
+      };
+    }
+    return keySet;
   }
 
   @NotNull
   @Override
   public Collection<V> values() {
-    return new AbstractSet<V>() {
-      @Override
-      public Iterator<V> iterator() {
-        return new MyIterator<V>() {
-          @Override
-          V fieldElement(int offset) {
-            return offset == 0 ? v1 : offset == 1 ? v2 : v3;
+    if (values == null) {
+      values = new AbstractCollection<V>() {
+        @Override
+        public Iterator<V> iterator() {
+          return new MyIterator<V>() {
+            @Override
+            V fieldElement(int offset) {
+              return offset == 0 ? v1 : offset == 1 ? v2 : v3;
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            V tableElement(int offset) {
+              return (V)data[offset + 1];
+            }
+          };
+        }
+
+        @Override
+        public void forEach(Consumer<? super V> action) {
+          if (k1 != null) {
+            if (k2 != null) {
+              if (k3 != null) {
+                action.accept(v3);
+              }
+              action.accept(v2);
+            }
+            action.accept(v1);
           }
-
-          @SuppressWarnings("unchecked")
-          @Override
-          V tableElement(int offset) {
-            return (V)data[offset + 1];
+          for (int i = 0; i < data.length; i += 2) {
+            Object key = data[i];
+            if (key != null) {
+              @SuppressWarnings("unchecked") V v = (V)data[i + 1];
+              action.accept(v);
+            }
           }
-        };
-      }
+        }
 
-      @Override
-      public boolean contains(Object o) {
-        return containsValue(o);
-      }
+        @Override
+        public boolean contains(Object o) {
+          return containsValue(o);
+        }
 
-      @Override
-      public int size() {
-        return UnmodifiableHashMap.this.size();
-      }
-    };
+        @Override
+        public int size() {
+          return UnmodifiableHashMap.this.size();
+        }
+      };
+    }
+    return values;
   }
 
   @NotNull

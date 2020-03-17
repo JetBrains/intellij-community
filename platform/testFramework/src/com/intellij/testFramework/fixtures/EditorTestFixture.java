@@ -60,13 +60,14 @@ import static org.junit.Assert.*;
  * @author yole
  */
 public class EditorTestFixture {
+  @NotNull
   private final Project myProject;
   private final Editor myEditor;
   private final VirtualFile myFile;
 
   private boolean myEmptyLookup;
 
-  public EditorTestFixture(Project project, Editor editor, VirtualFile file) {
+  public EditorTestFixture(@NotNull Project project, Editor editor, VirtualFile file) {
     myProject = project;
     myEditor = editor;
     myFile = file;
@@ -148,10 +149,12 @@ public class EditorTestFixture {
     return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile)) : null;
   }
 
+  @NotNull
   public List<HighlightInfo> doHighlighting() {
     return doHighlighting(false);
   }
 
+  @NotNull
   public List<HighlightInfo> doHighlighting(boolean myAllowDirt) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
@@ -302,6 +305,7 @@ public class EditorTestFixture {
     return PsiTreeUtil.getParentOfType(getFile().findElementAt(pos), elementClass);
   }
 
+  @NotNull
   public List<IntentionAction> getAllQuickFixes() {
     List<HighlightInfo> infos = doHighlighting();
     List<IntentionAction> actions = new ArrayList<>();
@@ -315,6 +319,7 @@ public class EditorTestFixture {
     return actions;
   }
 
+  @NotNull
   public List<Crumb> getBreadcrumbsAtCaret() {
     FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
     return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));

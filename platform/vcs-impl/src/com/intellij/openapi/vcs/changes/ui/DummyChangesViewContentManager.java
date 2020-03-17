@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,29 +17,29 @@ public class DummyChangesViewContentManager implements ChangesViewContentI {
   }
 
   @Override
-  public void addContent(final Content content) {
+  public void addContent(@NotNull Content content) {
   }
 
   @Override
-  public void removeContent(final Content content) {
+  public void removeContent(@NotNull Content content) {
   }
 
   @Override
-  public void setSelectedContent(final Content content) {
+  public void setSelectedContent(@NotNull Content content) {
   }
 
   @Override
   public void setSelectedContent(@NotNull Content content, boolean requestFocus) {
-
   }
 
+  @Nullable
   @Override
-  public <T> T getActiveComponent(final Class<T> aClass) {
+  public <T> T getActiveComponent(@NotNull Class<T> aClass) {
     return null;
   }
 
   @Override
-  public void selectContent(final String tabName) {
+  public void selectContent(@NotNull String tabName) {
   }
 
   @NotNull

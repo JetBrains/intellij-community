@@ -228,6 +228,7 @@ def patch_args(args):
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
         from _pydevd_bundle.pydevd_command_line_handling import setup_to_argv
+        SetupHolder.setup['module'] = False  # clean module param from parent process
         original = setup_to_argv(SetupHolder.setup) + ['--file']
         while i < len(args):
             if args[i] == '-m':

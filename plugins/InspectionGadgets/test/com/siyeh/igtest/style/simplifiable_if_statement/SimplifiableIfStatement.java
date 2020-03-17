@@ -1,4 +1,4 @@
-package com.siyeh.igtest.j2me.simplifiable_if_statement;
+package com.siyeh.igtest.style.simplifiable_if_statement;
 
 public class SimplifiableIfStatement {
     public void foo() {

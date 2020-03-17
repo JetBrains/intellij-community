@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyTestTestProcessRunner extends PyScriptTestProcessRunner<PyTestConfiguration> {
   public PyTestTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(PyTestFactory.INSTANCE,
+    super(new PyTestFactory(),
           PyTestConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 }

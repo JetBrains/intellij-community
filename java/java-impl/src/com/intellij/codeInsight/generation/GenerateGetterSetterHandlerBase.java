@@ -49,7 +49,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateGetterSetterHandlerBase");
+  private static final Logger LOG = Logger.getInstance(GenerateGetterSetterHandlerBase.class);
 
   static {
     GenerateAccessorProviderRegistrar.registerProvider(s -> {

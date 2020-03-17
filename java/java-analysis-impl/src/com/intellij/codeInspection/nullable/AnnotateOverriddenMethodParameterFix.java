@@ -18,12 +18,12 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -32,11 +32,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author cdr
  */
-class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
+public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   private final String myAnnotation;
   private final String[] myAnnosToRemove;
 
@@ -58,27 +59,15 @@ class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement psiElement = descriptor.getPsiElement();
-
-    PsiParameter parameter = PsiTreeUtil.getParentOfType(psiElement, PsiParameter.class, false);
-    if (parameter == null) return;
-    PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
-    if (method == null) return;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    int index = ArrayUtilRt.find(parameters, parameter);
-
     List<PsiParameter> toAnnotate = new ArrayList<>();
 
-    PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
-    for (PsiMethod psiMethod : methods) {
-      if (NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) continue;
-      
-      PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
-      if (index >= psiParameters.length) continue;
-      
-      if (AddAnnotationPsiFix.isAvailable(psiParameters[index], myAnnotation)) {
-        toAnnotate.add(psiParameters[index]);
+    PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiParameter.class, false);
+    if (parameter == null || !processParameterInheritorsUnderProgress(parameter, param -> {
+      if (AddAnnotationPsiFix.isAvailable(param, myAnnotation)) {
+        toAnnotate.add(param);
       }
+    })) {
+      return;
     }
 
     FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
@@ -101,6 +90,20 @@ class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
         throw exception;
       }
     }
+  }
+
+  public static boolean processParameterInheritorsUnderProgress(@NotNull PsiParameter parameter, @NotNull Consumer<? super PsiParameter> consumer) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
+    if (method == null) return false;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    int index = ArrayUtilRt.find(parameters, parameter);
+
+    return AnnotateMethodFix.processModifiableInheritorsUnderProgress(method, psiMethod -> {
+      PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
+      if (index < psiParameters.length) {
+        consumer.accept(psiParameters[index]);
+      }
+    });
   }
 
   @Override

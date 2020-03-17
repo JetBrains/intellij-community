@@ -264,7 +264,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyBranchWillChange() {
-    String currentBranch = myCurrentHeads.values().iterator().next();
+    String currentBranch = ContainerUtil.getFirstItem(myCurrentHeads.values());
     if (currentBranch != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myProject.isDisposed()) return;

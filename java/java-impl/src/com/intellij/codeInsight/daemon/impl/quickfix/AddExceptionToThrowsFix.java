@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -41,7 +40,6 @@ import java.util.*;
  * @author mike
  */
 public class AddExceptionToThrowsFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToThrowsFix");
   private final PsiElement myWrongElement;
 
   public AddExceptionToThrowsFix(@NotNull PsiElement wrongElement) {
@@ -199,6 +197,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     }
 
     if (targetElement == null || targetMethod == null || !targetMethod.getThrowsList().isPhysical()) return null;
+    if (!ExceptionUtil.canDeclareThrownExceptions(targetMethod)) return null;
     List<PsiClassType> exceptions = getUnhandledExceptions(myWrongElement, targetElement, targetMethod);
     if (exceptions == null || exceptions.isEmpty()) return null;
     unhandled.addAll(exceptions);

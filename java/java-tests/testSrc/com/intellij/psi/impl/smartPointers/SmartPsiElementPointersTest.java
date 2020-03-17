@@ -1122,7 +1122,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       fail();
     }
     catch (AssertionError e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("shouldn't be created"));
+      assertTrue(e.getMessage(), e.getMessage().contains("must not be created"));
     }
   }
 

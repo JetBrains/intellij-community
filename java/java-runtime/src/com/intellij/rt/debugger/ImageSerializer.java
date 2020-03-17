@@ -26,7 +26,7 @@ import java.io.IOException;
  * @author egor
  */
 public class ImageSerializer {
-  public static byte[] imageToBytes(Image image) throws IOException {
+  public static String imageToBytes(Image image) throws IOException {
     //noinspection UndesirableClassUsage
     BufferedImage bi = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = bi.createGraphics();
@@ -34,10 +34,10 @@ public class ImageSerializer {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ImageIO.write(bi, "png", baos);
     g.dispose();
-    return baos.toByteArray();
+    return new String(baos.toByteArray(), "ISO-8859-1");
   }
 
-  public static byte[] iconToBytesPreview(Icon icon, int maxSize) throws IOException {
+  public static String iconToBytesPreview(Icon icon, int maxSize) throws IOException {
     if (icon.getIconHeight() <= maxSize && icon.getIconWidth() <= maxSize) {
       return imageToBytes(toImage(icon));
     }
@@ -45,17 +45,17 @@ public class ImageSerializer {
   }
 
   /** @noinspection unused*/
-  public static byte[] iconToBytesPreviewNormal(Icon icon) throws IOException {
+  public static String iconToBytesPreviewNormal(Icon icon) throws IOException {
     return iconToBytesPreview(icon, 16);
   }
 
   /** @noinspection unused*/
-  public static byte[] iconToBytesPreviewRetina(Icon icon) throws IOException {
+  public static String iconToBytesPreviewRetina(Icon icon) throws IOException {
     return iconToBytesPreview(icon, 32);
   }
 
   /** @noinspection unused*/
-  public static byte[] iconToBytes(Icon icon) throws IOException {
+  public static String iconToBytes(Icon icon) throws IOException {
     return imageToBytes(toImage(icon));
   }
 

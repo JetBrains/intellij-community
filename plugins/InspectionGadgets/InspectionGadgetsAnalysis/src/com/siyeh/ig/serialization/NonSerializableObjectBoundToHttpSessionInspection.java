@@ -28,13 +28,6 @@ public class NonSerializableObjectBoundToHttpSessionInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.object.bound.to.http.session.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.serializable.object.bound.to.http.session.problem.descriptor");

@@ -43,7 +43,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
         public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
           ContainerUtil.addIfNotNull(myExternalBuildPlugins, pluginDescriptor);
         }
-      });
+      }, true, null);
     }
   }
 

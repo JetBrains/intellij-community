@@ -393,7 +393,7 @@ public class MavenProjectReader {
                                         final MavenProjectReaderProjectLocator locator,
                                         Collection<MavenProjectProblem> problems) {
     if (recursionGuard.contains(file)) {
-      problems.add(MavenProjectProblem.createProblem(file.getPath(), ProjectBundle.message("maven.project.problem.recursiveInheritance"),
+      problems.add(MavenProjectProblem.createProblem(file.getPath(), MavenProjectBundle.message("maven.project.problem.recursiveInheritance"),
                                                      MavenProjectProblem.ProblemType.PARENT));
       return model;
     }
@@ -404,7 +404,7 @@ public class MavenProjectReader {
       MavenParent parent = model.getParent();
       if (parent != null) {
         if (model.getMavenId().equals(parent.getMavenId())) {
-          problems.add(MavenProjectProblem.createProblem(file.getPath(), ProjectBundle.message("maven.project.problem.selfInheritance"),
+          problems.add(MavenProjectProblem.createProblem(file.getPath(), MavenProjectBundle.message("maven.project.problem.selfInheritance"),
                                                          MavenProjectProblem.ProblemType.PARENT));
           return model;
         }
@@ -446,8 +446,8 @@ public class MavenProjectReader {
       MavenModel parentModel = parentModelWithProblems.second.model;
       if (!parentModelWithProblems.second.problems.isEmpty()) {
         problems.add(MavenProjectProblem.createProblem(parentModelWithProblems.first.getPath(),
-                                                       ProjectBundle.message("maven.project.problem.parentHasProblems",
-                                                                             parentModel.getMavenId()),
+                                                       MavenProjectBundle.message("maven.project.problem.parentHasProblems",
+                                                                                  parentModel.getMavenId()),
                                                        MavenProjectProblem.ProblemType.PARENT));
       }
 

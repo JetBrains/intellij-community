@@ -54,12 +54,6 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("cached.number.constructor.call.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) { return InspectionGadgetsBundle.message(
       "cached.number.constructor.call.problem.descriptor");
   }

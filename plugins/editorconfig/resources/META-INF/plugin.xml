@@ -5,10 +5,15 @@
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-      Supports storing code formatting settings inside EditorConfig files, as well as editing EditorConfig files.
-      <p></p>
-      <p>Originally developed by Kirill Glazyrin and Kevin Bell.</p>
-      ]]></description>
+Adds support for <a href="https://editorconfig.org/">EditorConfig</a> files.
+
+<ul><li>Define code style settings using EditorConfig files</li>
+<li>Use coding assistance in EditorConfig files</li></ul>
+
+To create an EditorConfig file in a directory, right-click this directory and select <b>New | EditorConfig File</b>.
+<p></p>
+<p>Originally developed by Kirill Glazyrin and Kevin Bell.</p>
+]]></description>
 
   <depends>com.intellij.modules.lang</depends>
 

@@ -15,122 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.AnnotationSession;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-class AliasedAnnotationHolder implements AnnotationHolder {
-  private final AnnotationHolder myHolder;
-  private final GrAnnotation myAlias;
-  private final GrCodeReferenceElement myReference;
-
-  AliasedAnnotationHolder(@NotNull AnnotationHolder holder, @NotNull GrAnnotation alias) {
-    myHolder = holder;
-    myAlias = alias;
-    myReference = myAlias.getClassReference();
-  }
+class AliasedAnnotationHolder {
 
   @NotNull
-  private PsiElement findCodeElement(@NotNull PsiElement elt) {
-    if (PsiTreeUtil.isAncestor(myAlias, elt, true)) {
+  static PsiElement findCodeElement(@NotNull PsiElement elt, @NotNull GrAnnotation alias, @NotNull GrCodeReferenceElement aliasReference) {
+    if (PsiTreeUtil.isAncestor(alias, elt, true)) {
       return elt;
     }
     else {
-      return myReference;
+      return aliasReference;
     }
   }
 
-  @Override
-  public Annotation createErrorAnnotation(@NotNull PsiElement elt, @Nullable String message) {
-    PsiElement codeElement = findCodeElement(elt);
-    return myHolder.createErrorAnnotation(codeElement, message);
-  }
-
-  @Override
-  public Annotation createErrorAnnotation(@NotNull ASTNode node, @Nullable String message) {
-    return createErrorAnnotation(node.getPsi(), message);
-  }
-
-  @Override
-  public Annotation createErrorAnnotation(@NotNull TextRange range, @Nullable String message) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Override
-  public Annotation createWarningAnnotation(@NotNull PsiElement elt, @Nullable String message) {
-    return myHolder.createWarningAnnotation(findCodeElement(elt), message);
-  }
-
-  @Override
-  public Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable String message) {
-    return myHolder.createWarningAnnotation(node.getPsi(), message);
-  }
-
-  @Override
-  public Annotation createWarningAnnotation(@NotNull TextRange range, @Nullable String message) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Override
-  public Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message) {
-    return myHolder.createWeakWarningAnnotation(findCodeElement(elt), message);
-  }
-
-  @Override
-  public Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @Nullable String message) {
-    return myHolder.createWarningAnnotation(node.getPsi(), message);
-  }
-
-  @Override
-  public Annotation createWeakWarningAnnotation(@NotNull TextRange range, @Nullable String message) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Override
-  public Annotation createInfoAnnotation(@NotNull PsiElement elt, @Nullable String message) {
-    return myHolder.createInfoAnnotation(findCodeElement(elt), message);
-  }
-
-  @Override
-  public Annotation createInfoAnnotation(@NotNull ASTNode node, @Nullable String message) {
-    return myHolder.createInfoAnnotation(node.getPsi(), message);
-  }
-
-  @Override
-  public Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable String message) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Override
-  public Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @Override
-  public Annotation createAnnotation(@NotNull HighlightSeverity severity,
-                                     @NotNull TextRange range,
-                                     @Nullable String message,
-                                     @Nullable String htmlTooltip) {
-    throw new UnsupportedOperationException("unsupported");
-  }
-
-  @NotNull
-  @Override
-  public AnnotationSession getCurrentAnnotationSession() {
-    return myHolder.getCurrentAnnotationSession();
-  }
-
-  @Override
-  public boolean isBatchMode() {
-    return myHolder.isBatchMode();
-  }
 }

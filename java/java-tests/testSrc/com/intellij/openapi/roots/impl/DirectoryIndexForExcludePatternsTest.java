@@ -199,7 +199,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
               @Override
               public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
                 return myProject == project ? Collections.singletonList(
-                  SyntheticLibrary.newImmutableLibrary(Collections.singleton(root), Collections.emptySet(), Collections.emptySet(), excludePattern)
+                  SyntheticLibrary.newImmutableLibrary(Collections.singletonList(root), Collections.emptyList(), Collections.emptySet(), excludePattern)
                 ) : Collections.emptyList();
               }
             }, getTestRootDisposable()), false, true));

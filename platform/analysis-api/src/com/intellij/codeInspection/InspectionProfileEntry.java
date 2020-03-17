@@ -4,8 +4,10 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -38,8 +40,6 @@ import java.util.*;
 
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
-  public static final String GENERAL_GROUP_NAME = InspectionsBundle.message("inspection.general.tools.group.name");
-
   private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
   private static Set<String> ourBlackList;
@@ -191,6 +191,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public void cleanup(@NotNull Project project) {
   }
 
+  public void initialize(@NotNull GlobalInspectionContext context) {
+  }
+
   interface DefaultNameProvider {
 
     @NonNls
@@ -229,7 +232,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return name;
       }
     }
-    LOG.error(getClass() + ": group display name should be overridden or configured via XML " + getClass());
+    PluginException.logPluginError(LOG, getClass() + ": group display name should be overridden or configured via XML ", null, getClass());
     return "";
   }
 
@@ -253,7 +256,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
     if (groupDisplayName.isEmpty()) {
-      groupDisplayName = GENERAL_GROUP_NAME;
+      groupDisplayName = getGeneralGroupName();
     }
     return new String[]{groupDisplayName};
   }
@@ -272,7 +275,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return name;
       }
     }
-    LOG.error(getClass() + ": display name should be overridden or configured via XML " + getClass());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      PluginException.logPluginError(LOG, getClass() + ": display name should be overridden or configured via XML ", null, getClass());
+    }
     return "";
   }
 
@@ -484,5 +489,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
 
     return null;
+  }
+
+  public static String getGeneralGroupName() {
+    return InspectionsBundle.message("inspection.general.tools.group.name");
   }
 }

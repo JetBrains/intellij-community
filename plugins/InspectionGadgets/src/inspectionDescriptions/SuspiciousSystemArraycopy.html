@@ -5,7 +5,9 @@ Warnings reported by this inspection are:
 <ul>
 <li>source or destination which are not of an array type.
 <li>source and destination have a different type.
-<li>source offset, destination offset or length are negative.
+<li>copied chunk length is always bigger than src.length - srcPos.
+<li>copied chunk length is always bigger than dest.length - destPos.
+<li>ranges always intersect in case, when source and destination is the same array.
 </ul>
 <!-- tooltip end -->
 <p>

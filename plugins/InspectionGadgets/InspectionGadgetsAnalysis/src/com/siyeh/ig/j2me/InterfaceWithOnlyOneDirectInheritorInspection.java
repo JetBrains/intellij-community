@@ -26,12 +26,6 @@ public class InterfaceWithOnlyOneDirectInheritorInspection extends BaseInspectio
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("interface.one.inheritor.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("interface.one.inheritor.problem.descriptor");
   }

@@ -38,7 +38,6 @@ import java.util.List;
  * @author max
  */
 public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
-  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
   private static final ExtensionPointName<Condition<RefMethod>> CAN_BE_EMPTY_EP = new ExtensionPointName<>("com.intellij.canBeEmpty");
@@ -46,8 +45,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   @SuppressWarnings("PublicField")
   public boolean commentsAreContent = false;
-  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
+  private static final Logger LOG = Logger.getInstance(EmptyMethodInspection.class);
 
   @Override
   @Nullable
@@ -232,13 +230,6 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
   @Override
   @NotNull
   public String getGroupDisplayName() {
@@ -298,7 +289,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return QUICK_FIX_NAME;
+      return getQuickFixName();
     }
 
     @Override
@@ -335,7 +326,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return QUICK_FIX_NAME;
+      return getQuickFixName();
     }
 
     @Override
@@ -377,5 +368,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       }
       ApplicationManager.getApplication().invokeLater(() -> SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews), project.getDisposed());
     }
+  }
+
+  private static String getQuickFixName() {
+    return InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   }
 }

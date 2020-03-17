@@ -18,6 +18,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +31,7 @@ import java.awt.event.*;
 import java.util.Collections;
 
 public abstract class WizardPopup extends AbstractPopup implements ActionListener, ElementFilter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.WizardPopup");
+  private static final Logger LOG = Logger.getInstance(WizardPopup.class);
 
   private static final Dimension MAX_SIZE = new Dimension(Integer.MAX_VALUE, 600);
 
@@ -78,7 +79,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
     scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
 
-    scrollPane.setBorder(null);
+    scrollPane.setBorder(JBUI.Borders.empty());
 
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
          isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,

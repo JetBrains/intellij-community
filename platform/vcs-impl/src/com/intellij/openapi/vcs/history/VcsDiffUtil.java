@@ -3,17 +3,27 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +32,7 @@ import java.util.*;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE;
 import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE;
+import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
 public class VcsDiffUtil {
 
@@ -84,5 +95,57 @@ public class VcsDiffUtil {
   public static List<Change> createChangesWithCurrentContentForFile(@NotNull FilePath filePath,
                                                                     @Nullable ContentRevision beforeContentRevision) {
     return Collections.singletonList(new Change(beforeContentRevision, CurrentContentRevision.create(filePath)));
+  }
+
+  public static void showChangesWithWorkingDirLater(@NotNull final Project project,
+                                                    @NotNull final VirtualFile file,
+                                                    @NotNull final VcsRevisionNumber targetRevNumber,
+                                                    @NotNull DiffProvider provider) {
+
+    BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMPARE_WITH, file);
+
+    final Task.Backgroundable task = new Task.Backgroundable(project, "Collecting Changes...", true) {
+      private Collection<Change> changes;
+      private VcsRevisionNumber currentRevNumber;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          changes = provider.compareWithWorkingDir(file, targetRevNumber);
+          currentRevNumber = provider.getCurrentRevision(file);
+        }
+        catch (VcsException e) {
+          String title = String.format("Compare with %s failed", getShortRevisionString(targetRevNumber));
+          String message = String.format("Couldn't compare %s with revision [%s];\n %s",
+                                         file, getShortRevisionString(targetRevNumber), e.getMessage());
+          VcsNotifier.getInstance(project).notifyError(title, message);
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        //if changes null -> then exception occurred before
+        if (changes != null) {
+          String currentRevTitle = currentRevNumber != null
+                                   ? getRevisionTitle(getShortRevisionString(currentRevNumber), true)
+                                   : VcsBundle.message("diff.title.local");
+          showDiffFor(
+            project,
+            changes,
+            getRevisionTitle(getShortRevisionString(targetRevNumber), false),
+            currentRevTitle,
+            VcsUtil.getFilePath(file)
+          );
+        }
+      }
+
+      @Override
+      public void onFinished() {
+        lock.unlock();
+      }
+    };
+
+    lock.lock();
+    ProgressManager.getInstance().run(task);
   }
 }

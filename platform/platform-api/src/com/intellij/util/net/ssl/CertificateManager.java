@@ -76,7 +76,7 @@ public final class CertificateManager implements PersistentStateComponent<Certif
   static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
 
   public static CertificateManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(CertificateManager.class);
+    return ApplicationManager.getApplication().getService(CertificateManager.class);
   }
 
   private final Config myConfig = new Config();

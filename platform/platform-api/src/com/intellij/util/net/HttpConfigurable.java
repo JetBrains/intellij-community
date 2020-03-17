@@ -55,7 +55,7 @@ import static com.intellij.openapi.util.Pair.pair;
 
 @State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
+  private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
 
   public boolean PROXY_TYPE_IS_SOCKS;
@@ -299,8 +299,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     // do not try to show any dialogs if application is exiting
-    if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposeInProgress() ||
-        ApplicationManager.getApplication().isDisposed()) return null;
+    if (ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isDisposed()) {
+      return null;
+    }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myTestGenericAuthRunnable.get();

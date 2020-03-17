@@ -36,7 +36,7 @@ echo "Updating $WORK_IDEA_HOME from compiled classes in $DEV_IDEA_HOME"
 
 ANT_HOME="$DEV_IDEA_HOME/lib/ant"
 "$JAVA_BIN" -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
- -f "$DEV_IDEA_HOME/build/update.xml" -Dwork.idea.home="$WORK_IDEA_HOME"
+ -f "$DEV_IDEA_HOME/build/update.xml" -Dwork.idea.home="$WORK_IDEA_HOME" -Dintellij.build.local.plugins.repository=$BUILD_LOCAL_PLUGINS_REPOSITORY
 
 if [ "$?" != "0" ]; then
   echo "Update failed; work IDEA build not modified"
@@ -49,7 +49,7 @@ rm -rf "$WORK_IDEA_HOME/plugins" &
 
 wait
 
-cp -R "$DEV_IDEA_HOME/out/deploy/"* "$WORK_IDEA_HOME" &
+cp -R "$DEV_IDEA_HOME/out/deploy/dist/"* "$WORK_IDEA_HOME" &
 
 OS_TYPE=`uname -s`
 if [ "$OS_TYPE" = "Linux" ]; then

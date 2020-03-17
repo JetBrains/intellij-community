@@ -257,7 +257,7 @@ fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
   val typeName = typedObject.type
   return when (typeName) {
     BOOLEAN_TYPE -> visitor.visitBoolean()
-    STRING_TYPE -> if (typedObject.enum == null) visitor.visitString() else visitor.visitEnum(typedObject.enum!!)
+    STRING_TYPE, BINARY_TYPE -> if (typedObject.enum == null) visitor.visitString() else visitor.visitEnum(typedObject.enum!!)
     INTEGER_TYPE, "int" -> visitor.visitInteger()
     NUMBER_TYPE -> visitor.visitNumber()
     ARRAY_TYPE -> visitor.visitArray(typedObject.items!!)

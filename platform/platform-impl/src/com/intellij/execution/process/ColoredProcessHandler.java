@@ -6,8 +6,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * <p>This process handler supports ANSI coloring.</p>
@@ -34,7 +37,14 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
   public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
-    super(process, commandLine, charset);
+    this(process, commandLine, charset, null);
+  }
+
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
+    super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(false);
   }
 
@@ -59,7 +69,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    */
   @SuppressWarnings("rawtypes")
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   protected void notifyColoredListeners(String text, Key attributes) {
   }
 
@@ -68,7 +78,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
      *             listen for {@link ProcessListener#onTextAvailable(ProcessEvent, Key)} events
      */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public void addColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
     addProcessListener(new ProcessAdapter() {
       @Override

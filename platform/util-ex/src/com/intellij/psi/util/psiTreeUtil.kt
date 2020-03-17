@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil.lastChild
+import com.intellij.util.containers.stopAfter
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
@@ -28,6 +29,13 @@ fun PsiElement.parents(): Sequence<PsiElement> = generateSequence(this) { it.par
 fun PsiElement.strictParents(): Sequence<PsiElement> = parents().drop(1)
 
 private typealias ElementAndOffset = Pair<PsiElement, Int>
+
+@ApiStatus.Experimental
+fun PsiElement.elementsAtOffsetUpTo(offset: Int, scope: PsiElement): Iterator<ElementAndOffset> {
+  return elementsAtOffsetUp(offset).stopAfter {
+    it.first === scope
+  }
+}
 
 @ApiStatus.Experimental
 fun PsiElement.elementsAtOffsetUp(offset: Int): Iterator<ElementAndOffset> = iterator {

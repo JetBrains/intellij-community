@@ -230,7 +230,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
     if (chain != null) {
       Object qualifier = chain.getQualifier().getObject();
-      if (qualifier instanceof PsiLocalVariable || qualifier instanceof PsiParameter) {
+      if (qualifier instanceof PsiVariable && PsiUtil.isJvmLocalVariable((PsiVariable)qualifier)) {
         return MyResult.variable;
       }
       if (qualifier instanceof PsiField) {
@@ -299,7 +299,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   private ThreeState isProbableKeyword(String keyword) {
     PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
     if (PsiKeyword.RETURN.equals(keyword)) {
-      if (isLastStatement(parentStatement) && !isOnTopLevelInVoidMethod(parentStatement)) {
+      if (isLastStatement(parentStatement) &&
+          !isOnTopLevelInVoidMethod(parentStatement) &&
+          !(parentStatement.getParent() instanceof PsiLoopStatement)) {
         return ThreeState.YES;
       }
     }

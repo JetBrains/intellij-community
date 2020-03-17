@@ -26,7 +26,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitBinaryHandler;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -87,7 +90,7 @@ public class GitFileUtils {
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
-      addPaths(project, root, paths, false);
+      addPathsImpl(project, root, paths, false, true);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
@@ -95,7 +98,7 @@ public class GitFileUtils {
   public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
-      addPaths(project, root, paths, true);
+      addPathsImpl(project, root, paths, true, false);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
@@ -135,14 +138,19 @@ public class GitFileUtils {
   }
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                              @NotNull Collection<? extends FilePath> files) throws VcsException {
-    addPaths(project, root, files, false);
+                              @NotNull Collection<? extends FilePath> paths) throws VcsException {
+    addPaths(project, root, paths, false);
   }
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<? extends FilePath> files, boolean force) throws VcsException {
+    addPaths(project, root, files, force, !force);
+  }
+
+  public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
+                              @NotNull Collection<? extends FilePath> files, boolean force, boolean filterOutIgnored) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      addPaths(project, root, paths, force);
+      addPathsImpl(project, root, paths, force, filterOutIgnored);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
     if (force) {
@@ -153,7 +161,7 @@ public class GitFileUtils {
   public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
                                    @NotNull Collection<? extends FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      addPaths(project, root, paths, true);
+      addPathsImpl(project, root, paths, true, false);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
     updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
@@ -171,9 +179,9 @@ public class GitFileUtils {
     return files;
   }
 
-  private static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                               @NotNull List<String> paths, boolean force) throws VcsException {
-    if (!force) {
+  private static void addPathsImpl(@NotNull Project project, @NotNull VirtualFile root,
+                                   @NotNull List<String> paths, boolean force, boolean filterOutIgnored) throws VcsException {
+    if (filterOutIgnored) {
       paths = excludeIgnoredFiles(project, root, paths);
       if (paths.isEmpty()) return;
     }
@@ -197,7 +205,7 @@ public class GitFileUtils {
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
     List<String> nonIgnoredFiles = new ArrayList<>(paths.size());
-    Set<String> ignoredPaths = ContainerUtil.set(StringUtil.splitByLines(output));
+    Set<String> ignoredPaths = new HashSet<>(Arrays.asList(StringUtil.splitByLines(output)));
     for (String pathToCheck : paths) {
       if (!ignoredPaths.contains(pathToCheck)) {
         nonIgnoredFiles.add(pathToCheck);

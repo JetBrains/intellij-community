@@ -53,13 +53,6 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return true;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

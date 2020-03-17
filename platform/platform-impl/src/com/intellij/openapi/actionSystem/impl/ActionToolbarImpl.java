@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -51,7 +52,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
+  private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
 
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
@@ -162,7 +163,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater = new ToolbarUpdater(KeymapManagerEx.getInstanceEx(), this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
-        if (!ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
+        if (!ApplicationManager.getApplication().isDisposed()) {
           ActionToolbarImpl.this.updateActionsImpl(transparentOnly, forced);
         }
       }
@@ -358,7 +359,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (customComponent == null) {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation, myPlace);
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
-      UIUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
+      ComponentUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
     tweakActionComponentUI(customComponent);
 
@@ -1150,7 +1151,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private static void updateWhenFirstShown(@NotNull JComponent targetComponent, @NotNull ToolbarReference ref) {
-    Activatable activatable = new Activatable.Adapter() {
+    Activatable activatable = new Activatable() {
       @Override
       public void showNotify() {
         ActionToolbarImpl toolbar = ref.get();

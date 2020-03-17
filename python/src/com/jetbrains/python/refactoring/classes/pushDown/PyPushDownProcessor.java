@@ -19,8 +19,6 @@ import java.util.Collection;
  */
 public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
 
-  private static final String HEADER = RefactoringBundle.message("push.down.members.elements.header", "");
-
   public PyPushDownProcessor(
     @NotNull final Project project,
     @NotNull final Collection<PyMemberInfo<PyElement>> membersToMove,
@@ -46,7 +44,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
 
   @Override
   public String getProcessedElementsHeader() {
-    return HEADER;
+    return getHeader();
   }
 
   @NotNull
@@ -64,12 +62,16 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
   @NotNull
   @Override
   protected String getCommandName() {
-    return PyPushDownHandler.REFACTORING_NAME;
+    return PyPushDownHandler.getRefactoringName();
   }
 
   @Nullable
   @Override
   protected String getRefactoringId() {
     return "refactoring.python.push.down";
+  }
+
+  private static String getHeader() {
+    return RefactoringBundle.message("push.down.members.elements.header", "");
   }
 }

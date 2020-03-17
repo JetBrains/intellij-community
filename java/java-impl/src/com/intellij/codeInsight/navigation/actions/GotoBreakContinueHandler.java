@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class GotoBreakContinueHandler extends GotoDeclarationHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler");
+  private static final Logger LOG = Logger.getInstance(GotoBreakContinueHandler.class);
 
   @Override
   @Nullable

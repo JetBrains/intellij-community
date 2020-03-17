@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Util {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.Util");
+  private static final Logger LOG = Logger.getInstance(Util.class);
 
   public static PsiType createArrayType(PsiType theType, int level) {
     while (level-- > 0) {

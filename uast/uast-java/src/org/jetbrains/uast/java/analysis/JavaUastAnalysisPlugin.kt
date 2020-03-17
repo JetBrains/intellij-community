@@ -2,7 +2,6 @@
 package org.jetbrains.uast.java.analysis
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow
-import com.intellij.codeInspection.dataFlow.DfaFactType
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiExpression
@@ -16,8 +15,8 @@ class JavaUastAnalysisPlugin : UastAnalysisPlugin {
     when (fact) {
       is UExpressionFact.UNullabilityFact -> {
         val psiExpression = sourcePsi as? PsiExpression ?: return null
-        val nullability = CommonDataflow.getExpressionFact(psiExpression, DfaFactType.NULLABILITY)?.toUNullability()
-                          ?: UNullability.UNKNOWN
+        val dfType = CommonDataflow.getDfType(psiExpression)
+        val nullability = DfaNullability.fromDfType(dfType).toUNullability()
 
         @Suppress("UNCHECKED_CAST")
         return nullability as T

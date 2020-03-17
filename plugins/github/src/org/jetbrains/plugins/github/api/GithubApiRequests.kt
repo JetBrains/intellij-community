@@ -143,6 +143,30 @@ object GithubApiRequests {
       fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
     }
 
+    object Commits : Entity("/commits") {
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, ref: String) =
+        object : Get<String>(getUrl(repository, urlSuffix, "/$ref"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              StreamUtil.readText(it, Charsets.UTF_8)
+            })
+          }
+        }.withOperationName("get diff for ref")
+
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, refA: String, refB: String) =
+        object : Get<String>(getUrl(repository, "/compare/$refA...$refB"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              StreamUtil.readText(it, Charsets.UTF_8)
+            })
+          }
+        }.withOperationName("get diff between refs")
+    }
+
     object Forks : Entity("/forks") {
 
       @JvmStatic
@@ -256,9 +280,15 @@ object GithubApiRequests {
 
       object Comments : Entity("/comments") {
         @JvmStatic
+        fun create(repository: GHRepositoryCoordinates, issueId: Long, body: String) =
+          create(repository.serverPath, repository.repositoryPath.owner, repository.repositoryPath.repository, issueId.toString(), body)
+
+        @JvmStatic
         fun create(server: GithubServerPath, username: String, repoName: String, issueId: String, body: String) =
-          Post.json<GithubIssueComment>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
-                                        GithubCreateIssueCommentRequest(body))
+          Post.json<GithubIssueCommentWithHtml>(
+            getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
+            GithubCreateIssueCommentRequest(body),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
 
         @JvmStatic
         fun pages(server: GithubServerPath, username: String, repoName: String, issueId: String) =
@@ -289,8 +319,8 @@ object GithubApiRequests {
     object PullRequests : Entity("/pulls") {
 
       @JvmStatic
-      fun getDiff(serverPath: GithubServerPath, username: String, repoName: String, number: Long) =
-        object : Get<String>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
+      fun getDiff(repository: GHRepositoryCoordinates, number: Long) =
+        object : Get<String>(getUrl(repository, urlSuffix, "/$number"),
                              GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
           override fun extractResult(response: GithubApiResponse): String {
             return response.handleBody(ThrowableConvertor {
@@ -331,21 +361,21 @@ object GithubApiRequests {
       @JvmStatic
       fun merge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                 commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
           .withOperationName("merge pull request ${number}")
 
       @JvmStatic
       fun squashMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
           .withOperationName("squash and merge pull request ${number}")
 
       @JvmStatic
       fun rebaseMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRebaseRequest(headSha))
           .withOperationName("rebase and merge pull request ${number}")
 
@@ -358,28 +388,30 @@ object GithubApiRequests {
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
-        fun add(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun add(server: GithubServerPath, username: String, repoName: String, number: Long,
+                reviewers: Collection<String>, teamReviewers: List<String>) =
           Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                          GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                          GithubReviewersCollectionRequest(reviewers, teamReviewers))
 
         @JvmStatic
-        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long,
+                   reviewers: Collection<String>, teamReviewers: List<String>) =
           Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                            GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                            GithubReviewersCollectionRequest(reviewers, teamReviewers))
       }
 
       object Commits : Entity("/commits") {
         @JvmStatic
-        fun pages(server: GithubServerPath, username: String, repoName: String, number: Long) =
-          GithubApiPagesLoader.Request(get(server, username, repoName, number), ::get)
+        fun pages(repository: GHRepositoryCoordinates, number: Long) =
+          GithubApiPagesLoader.Request(get(repository, number), ::get)
 
         @JvmStatic
         fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
 
         @JvmStatic
-        fun get(server: GithubServerPath, username: String, repoName: String, number: Long,
+        fun get(repository: GHRepositoryCoordinates, number: Long,
                 pagination: GithubRequestPagination? = null) =
-          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
+          get(getUrl(repository, PullRequests.urlSuffix, "/$number", urlSuffix,
                      GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
 
         @JvmStatic
@@ -404,6 +436,25 @@ object GithubApiRequests {
         @JvmStatic
         fun get(url: String) = Get.jsonPage<GithubPullRequestCommentWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
           .withOperationName("get comments for pull request")
+
+        @JvmStatic
+        fun createReply(repository: GHRepositoryCoordinates, pullRequest: Long, commentId: Long, body: String) =
+          Post.json<GithubPullRequestCommentWithHtml>(
+            getUrl(repository, PullRequests.urlSuffix, "/$pullRequest", "/comments/$commentId/replies"),
+            mapOf("body" to body),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE).withOperationName("reply to pull request review comment")
+
+        @JvmStatic
+        fun create(repository: GHRepositoryCoordinates, pullRequest: Long,
+                   commitSha: String, filePath: String, diffLine: Int,
+                   body: String) =
+          Post.json<GithubPullRequestCommentWithHtml>(
+            getUrl(repository, PullRequests.urlSuffix, "/$pullRequest", "/comments"),
+            mapOf("body" to body,
+                  "commit_id" to commitSha,
+                  "path" to filePath,
+                  "position" to diffLine),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE).withOperationName("create pull request review comment")
       }
     }
   }
@@ -483,6 +534,9 @@ object GithubApiRequests {
   abstract class Entity(val urlSuffix: String)
 
   private fun getUrl(server: GithubServerPath, suffix: String) = server.toApiUrl() + suffix
+
+  private fun getUrl(repository: GHRepositoryCoordinates, vararg suffixes: String) =
+    getUrl(repository.serverPath, Repos.urlSuffix, "/", repository.repositoryPath.toString(), *suffixes)
 
   fun getUrl(server: GithubServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
 

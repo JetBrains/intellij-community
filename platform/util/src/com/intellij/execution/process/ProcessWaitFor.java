@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.*;
 
 public class ProcessWaitFor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessWaitFor");
+  private static final Logger LOG = Logger.getInstance(ProcessWaitFor.class);
 
   private final Future<?> myWaitForThreadFuture;
   private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<>(1);

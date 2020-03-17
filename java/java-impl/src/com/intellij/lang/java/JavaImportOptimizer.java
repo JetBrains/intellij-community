@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaImportOptimizer implements ImportOptimizer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaImportOptimizer");
+  private static final Logger LOG = Logger.getInstance(JavaImportOptimizer.class);
 
   @Override
   @NotNull

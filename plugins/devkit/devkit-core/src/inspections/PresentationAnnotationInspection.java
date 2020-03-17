@@ -27,9 +27,8 @@ import org.jetbrains.uast.*;
 
 public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final UAnnotation annotation = aClass.findAnnotation(Presentation.class.getCanonicalName());
     if (annotation == null) {
       return null;

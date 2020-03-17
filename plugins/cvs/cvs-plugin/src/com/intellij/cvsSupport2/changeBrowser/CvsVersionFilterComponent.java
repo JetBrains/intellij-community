@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +18,7 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
   private JPanel myPanel;
   private JPanel myStandardPanel;
 
-  public CvsVersionFilterComponent(final boolean showDateFilter) {
+  public CvsVersionFilterComponent(boolean showDateFilter) {
     myStandardPanel.setLayout(new BorderLayout());
     if (showDateFilter) {
       myStandardPanel.add(super.getDatePanel(), BorderLayout.CENTER);
@@ -43,27 +31,27 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
   }
 
   @Override
-  protected void installCheckBoxListener(final ActionListener filterListener) {
+  protected void installCheckBoxListener(@NotNull ActionListener filterListener) {
     super.installCheckBoxListener(filterListener);
     myUseUserFilter.addActionListener(filterListener);
   }
 
   @Override
-  protected void initValues(ChangeBrowserSettings settings) {
+  protected void initValues(@NotNull ChangeBrowserSettings settings) {
     super.initValues(settings);
     myUseUserFilter.setSelected(settings.USE_USER_FILTER);
     myUserField.setText(settings.USER);
   }
 
   @Override
-  public void saveValues(ChangeBrowserSettings settings) {
+  public void saveValues(@NotNull ChangeBrowserSettings settings) {
     super.saveValues(settings);
     settings.USE_USER_FILTER = myUseUserFilter.isSelected();
     settings.USER = myUserField.getText();
   }
 
   @Override
-  protected void updateAllEnabled(ActionEvent e) {
+  protected void updateAllEnabled(@Nullable ActionEvent e) {
     super.updateAllEnabled(e);
     updatePair(myUseUserFilter, myUserField, e);
   }
@@ -72,6 +60,7 @@ public class CvsVersionFilterComponent extends StandardVersionFilterComponent<Ch
     return myUseUserFilter.isSelected() ? myUserField.getText() : null;
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return getPanel();

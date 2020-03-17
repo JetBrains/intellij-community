@@ -11,6 +11,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.BaseInspection;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class MethodMatcher {
     myOptionName = optionName;
   }
 
-  public MethodMatcher add(@NotNull String className, @NotNull String methodNamePattern) {
+  public MethodMatcher add(@NonNls @NotNull String className, @NonNls @NotNull String methodNamePattern) {
     myClassNames.add(className);
     myMethodNamePatterns.add(methodNamePattern);
     return this;

@@ -30,7 +30,6 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -157,13 +156,6 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
         }
       }
     };
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "@RunWith(Parameterized.class) without data provider";
   }
 
   private static class MethodCandidate {

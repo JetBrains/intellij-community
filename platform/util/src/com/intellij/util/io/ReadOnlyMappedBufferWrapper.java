@@ -15,26 +15,24 @@
  */
 package com.intellij.util.io;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author max
  */
 public class ReadOnlyMappedBufferWrapper extends MappedBufferWrapper {
-  protected ReadOnlyMappedBufferWrapper(final File file, final int pos) {
-    super(file, pos, file.length() - pos);
+  protected ReadOnlyMappedBufferWrapper(Path file, final int pos) throws IOException {
+    super(file, pos, Files.size(file) - pos);
   }
 
   @Override
   protected MappedByteBuffer map() throws IOException {
-    try (FileInputStream stream = new FileInputStream(myFile)) {
-      try (FileChannel channel = stream.getChannel()) {
-        return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
-      }
+    try (FileChannel channel = FileChannel.open(myFile)) {
+      return channel.map(FileChannel.MapMode.READ_ONLY, myPosition, myLength);
     }
   }
 }

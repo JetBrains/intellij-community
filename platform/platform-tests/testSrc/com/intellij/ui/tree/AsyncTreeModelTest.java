@@ -442,13 +442,9 @@ public final class AsyncTreeModelTest {
       try {
         promise.blockingGet(seconds, SECONDS);
       }
-      catch (Exception exception) {
-        //noinspection InstanceofCatchParameter because of Kotlin
-        if (exception instanceof TimeoutException) {
-          System.err.println(dumpThreadsToString());
-          fail(seconds + " seconds is not enough for " + toString());
-        }
-        throw exception;
+      catch (TimeoutException exception) {
+        System.err.println(dumpThreadsToString());
+        fail(seconds + " seconds is not enough for " + toString());
       }
       finally {
         Disposer.dispose(disposable);
@@ -516,7 +512,7 @@ public final class AsyncTreeModelTest {
     private void runOnModelThread(@NotNull Runnable task) {
       if (model instanceof InvokerSupplier) {
         InvokerSupplier supplier = (InvokerSupplier)model;
-        supplier.getInvoker().runOrInvokeLater(wrap(task));
+        supplier.getInvoker().invoke(wrap(task));
       }
       else {
         runOnSwingThread(task);
@@ -810,7 +806,7 @@ public final class AsyncTreeModelTest {
     private volatile Object myGroup;
 
     public void setGroup(Object group, @NotNull Runnable task) {
-      getInvoker().runOrInvokeLater(() -> {
+      getInvoker().invoke(() -> {
         myGroup = group;
         treeStructureChanged(null, null, null);
         task.run();

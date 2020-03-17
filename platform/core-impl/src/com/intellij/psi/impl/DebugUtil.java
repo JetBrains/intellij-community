@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
@@ -35,11 +36,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
 public class DebugUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DebugUtil");
+  private static final Logger LOG = Logger.getInstance(DebugUtil.class);
 
-  public static /*final*/ boolean CHECK = false;
+  public static /*final*/ boolean CHECK;
   public static final boolean DO_EXPENSIVE_CHECKS;
   static {
     Application application = ApplicationManager.getApplication();
@@ -85,14 +86,14 @@ public class DebugUtil {
     treeToBuffer(buffer, root, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, null);
   }
 
-  public static void treeToBuffer(@NotNull final Appendable buffer,
-                                  @NotNull final ASTNode root,
-                                  final int indent,
-                                  final boolean skipWhiteSpaces,
-                                  final boolean showRanges,
-                                  final boolean showChildrenRanges,
-                                  final boolean usePsi,
-                                  @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+  private static void treeToBuffer(@NotNull final Appendable buffer,
+                                   @NotNull final ASTNode root,
+                                   final int indent,
+                                   final boolean skipWhiteSpaces,
+                                   final boolean showRanges,
+                                   final boolean showChildrenRanges,
+                                   final boolean usePsi,
+                                   @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     ((TreeElement) root).acceptTree(
       new TreeToBuffer(buffer, indent, skipWhiteSpaces, showRanges, showChildrenRanges, usePsi, extra));
   }
@@ -187,11 +188,11 @@ public class DebugUtil {
     return buffer.toString();
   }
 
-  public static void lightTreeToBuffer(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
-                                       @NotNull final LighterASTNode node,
-                                       @NotNull final Appendable buffer,
-                                       final int indent,
-                                       final boolean skipWhiteSpaces) {
+  private static void lightTreeToBuffer(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
+                                        @NotNull final LighterASTNode node,
+                                        @NotNull final Appendable buffer,
+                                        final int indent,
+                                        final boolean skipWhiteSpaces) {
     final IElementType tokenType = node.getTokenType();
     if (skipWhiteSpaces && tokenType == TokenType.WHITE_SPACE) return;
 
@@ -325,7 +326,7 @@ public class DebugUtil {
     }
   }
 
-  public static void doCheckTreeStructure(@Nullable ASTNode anyElement) {
+  private static void doCheckTreeStructure(@Nullable ASTNode anyElement) {
     if (anyElement == null) return;
     ASTNode root = anyElement;
     while (root.getTreeParent() != null) {
@@ -448,13 +449,13 @@ public class DebugUtil {
     psiToBuffer(buffer, root, indent, skipWhiteSpaces, showRanges, showChildrenRanges, null);
   }
 
-  public static void psiToBuffer(@NotNull final Appendable buffer,
-                                 @NotNull final PsiElement root,
-                                 final int indent,
-                                 final boolean skipWhiteSpaces,
-                                 boolean showRanges,
-                                 final boolean showChildrenRanges,
-                                 @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
+  private static void psiToBuffer(@NotNull final Appendable buffer,
+                                  @NotNull final PsiElement root,
+                                  final int indent,
+                                  final boolean skipWhiteSpaces,
+                                  boolean showRanges,
+                                  final boolean showChildrenRanges,
+                                  @Nullable PairConsumer<? super PsiElement, Consumer<PsiElement>> extra) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -484,7 +485,7 @@ public class DebugUtil {
   }
 
   @NotNull
-  public static String fixWhiteSpaces(@NotNull String text) {
+  private static String fixWhiteSpaces(@NotNull String text) {
     text = StringUtil.replace(text, "\n", "\\n");
     text = StringUtil.replace(text, "\r", "\\r");
     text = StringUtil.replace(text, "\t", "\\t");
@@ -499,7 +500,7 @@ public class DebugUtil {
   public static class IncorrectTreeStructureException extends RuntimeException {
     private final ASTNode myElement;
 
-    public IncorrectTreeStructureException(ASTNode element, String message) {
+    IncorrectTreeStructureException(ASTNode element, String message) {
       super(message);
       myElement = element;
     }
@@ -528,7 +529,7 @@ public class DebugUtil {
     }
 
     if (ourPsiModificationTrace.get() == null) {
-      ourPsiModificationTrace.set(trace != null ? trace : new Throwable());
+      ourPsiModificationTrace.set(trace != null || ApplicationInfoImpl.isInStressTest() ? trace : new Throwable());
     }
     Integer depth = ourPsiModificationDepth.get();
     if (depth == null) depth = 0;

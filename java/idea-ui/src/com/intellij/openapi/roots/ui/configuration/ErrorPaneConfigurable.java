@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectConfigurationProblem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -182,7 +183,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   @Nls
   @Override
   public String getDisplayName() {
-    return "Problems";
+    return ProjectBundle.message("configurable.ErrorPaneConfigurable.display.name");
   }
 
   @Nullable

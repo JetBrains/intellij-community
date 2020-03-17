@@ -84,12 +84,6 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("test.method.without.assertion.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("test.method.without.assertion.problem.descriptor");
   }

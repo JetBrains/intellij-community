@@ -44,7 +44,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class ImplementAbstractMethodHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler");
+  private static final Logger LOG = Logger.getInstance(ImplementAbstractMethodHandler.class);
 
   private final Project myProject;
   private final Editor myEditor;
@@ -114,7 +114,8 @@ public class ImplementAbstractMethodHandler {
           if (!selectedValues.isEmpty()) {
             implementInClass(ArrayUtil.toObjectArray(selectedValues));
           }
-        });
+        })
+      .withHintUpdateSupply();
     elementListCellRenderer.installSpeedSearch(builder);
     builder.createPopup().showInBestPositionFor(myEditor);
   }

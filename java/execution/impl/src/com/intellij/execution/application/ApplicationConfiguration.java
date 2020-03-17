@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -7,6 +7,11 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
+import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.components.BaseState;
@@ -33,17 +38,17 @@ import java.util.Objects;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
-             RefactoringListenerProvider, InputRedirectAware {
+             RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile {
   /* deprecated, but 3rd-party used variables */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String PROGRAM_PARAMETERS;
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String WORKING_DIRECTORY;
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public boolean ALTERNATIVE_JRE_PATH_ENABLED;
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String ALTERNATIVE_JRE_PATH;
   /* */
 
@@ -116,7 +121,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Nullable
   public String getMainClassName() {
-    //noinspection deprecation
     return MAIN_CLASS_NAME;
   }
 
@@ -139,7 +143,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public void setMainClassName(@Nullable String qualifiedName) {
-    //noinspection deprecation
     MAIN_CLASS_NAME = qualifiedName;
     getOptions().setMainClassName(qualifiedName);
   }
@@ -168,21 +171,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public void setProgramParameters(@Nullable String value) {
-    //noinspection deprecation
     PROGRAM_PARAMETERS = value;
     getOptions().setProgramParameters(value);
   }
 
   @Override
   public String getProgramParameters() {
-    //noinspection deprecation
     return PROGRAM_PARAMETERS;
   }
 
   @Override
   public void setWorkingDirectory(@Nullable String value) {
     String normalizedValue = StringUtil.isEmptyOrSpaces(value) ? null : value.trim();
-    //noinspection deprecation
     WORKING_DIRECTORY = PathUtil.toSystemDependentName(normalizedValue);
 
     String independentValue = PathUtil.toSystemIndependentName(normalizedValue);
@@ -191,7 +191,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public String getWorkingDirectory() {
-    //noinspection deprecation
     return WORKING_DIRECTORY;
   }
 
@@ -230,11 +229,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public boolean isAlternativeJrePathEnabled() {
-    //noinspection deprecation
     return ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
     boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
@@ -246,17 +243,37 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Nullable
   @Override
   public String getAlternativeJrePath() {
-    //noinspection deprecation
     return ALTERNATIVE_JRE_PATH;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePath(@Nullable String path) {
     boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
     ALTERNATIVE_JRE_PATH = path;
     getOptions().setAlternativeJrePath(path);
     onAlternativeJreChanged(changed, getProject());
+  }
+
+  @Override
+  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
+    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return getOptions().getRemoteTarget();
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    getOptions().setRemoteTarget(targetName);
   }
 
   public static void onAlternativeJreChanged(boolean changed, Project project) {
@@ -287,7 +304,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
   }
 
-  @SuppressWarnings("deprecation")
   private void syncOldStateFields() {
     JvmMainMethodRunConfigurationOptions options = getOptions();
 

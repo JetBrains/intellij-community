@@ -32,7 +32,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   implements GrParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl");
+  private static final Logger LOG = Logger.getInstance(GrParameterListImpl.class);
 
   public GrParameterListImpl(@NotNull ASTNode node) {
     super(node);

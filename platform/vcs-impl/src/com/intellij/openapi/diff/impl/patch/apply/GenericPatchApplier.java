@@ -38,7 +38,7 @@ import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.ALREADY_APPL
 import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.SUCCESS;
 
 public class GenericPatchApplier {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier");
+  private static final Logger LOG = Logger.getInstance(GenericPatchApplier.class);
   private final static int ourMaxWalk = 1000;
   
   private final TreeMap<TextRange, MyAppliedData> myTransformations;

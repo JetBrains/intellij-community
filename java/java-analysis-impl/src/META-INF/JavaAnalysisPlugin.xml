@@ -33,12 +33,9 @@
 
     <extensionPoint qualifiedName="com.intellij.allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
 
-    <extensionPoint qualifiedName="com.intellij.canBeFinal"
-                    interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider"
-                    interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider"
-                    interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
+    <extensionPoint qualifiedName="com.intellij.canBeFinal" interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider" interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider" interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

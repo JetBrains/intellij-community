@@ -36,6 +36,13 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
     rebuildLists();
   }
 
+  public void syncModel() {
+    myOriginalList.clear();
+    myOriginalList.addAll(myStep.getValues());
+    rebuildLists();
+    fireContentsChanged(this, 0, myFilteredList.size());
+  }
+
   public void deleteItem(Object item) {
     final int i = myOriginalList.indexOf(item);
     if (i >= 0) {

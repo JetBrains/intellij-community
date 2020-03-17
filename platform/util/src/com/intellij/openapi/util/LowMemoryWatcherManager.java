@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
 public final class LowMemoryWatcherManager implements Disposable {
   @NotNull
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
+    return Logger.getInstance(LowMemoryWatcherManager.class);
   }
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;

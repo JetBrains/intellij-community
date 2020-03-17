@@ -21,7 +21,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -87,8 +87,10 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
     }
     JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(CodeInsightBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
       @Override
-      public PopupStep onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
-        deannotate(selectedValue, project, file, annotationsManager, listOwner);
+      public PopupStep<?> onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
+        if (finalChoice) {
+          doFinalStep(() -> deannotate(selectedValue, project, file, annotationsManager, listOwner));
+        }
         return PopupStep.FINAL_CHOICE;
       }
 
@@ -107,14 +109,14 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
                           final PsiFile file,
                           final ExternalAnnotationsManager annotationsManager,
                           final PsiModifierListOwner listOwner) {
-    WriteCommandAction.writeCommandAction(project).withName(getText()).run(() -> {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      String qualifiedName = annotation.getQualifiedName();
-      LOG.assertTrue(qualifiedName != null);
+    final VirtualFile virtualFile = file.getVirtualFile();
+    String qualifiedName = annotation.getQualifiedName();
+    LOG.assertTrue(qualifiedName != null);
+    CommandProcessor.getInstance().executeCommand(project, () -> {
       if (annotationsManager.deannotate(listOwner, qualifiedName) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
         UndoUtil.markPsiFileForUndo(file);
       }
-    });
+    }, getText(), null);
   }
 
   @Override

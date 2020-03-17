@@ -51,7 +51,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class ASTDelegatePsiElement extends PsiElementBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.ASTDelegatePsiElement");
+  private static final Logger LOG = Logger.getInstance(ASTDelegatePsiElement.class);
 
   private static final List EMPTY = Collections.emptyList();
 

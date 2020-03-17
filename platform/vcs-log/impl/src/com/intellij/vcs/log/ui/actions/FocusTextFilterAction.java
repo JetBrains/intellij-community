@@ -22,7 +22,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class FocusTextFilterAction extends DumbAwareAction {
@@ -34,14 +34,14 @@ public class FocusTextFilterAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(project != null && ui instanceof VcsLogUiImpl);
+    e.getPresentation().setEnabledAndVisible(project != null && ui instanceof MainVcsLogUi);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    VcsLogUiImpl logUi = (VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    MainVcsLogUi logUi = (MainVcsLogUi)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     Project project = e.getProject();
 
     if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(logUi.getToolbar()) != null) {

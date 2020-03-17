@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -70,8 +70,8 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
 
     if (ignoreImportStatements && isElementInsideImportStatement(elementToHighlight)) return;
 
-    String description = JavaErrorMessages.message(forRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
-                                                   getPresentableName(element));
+    String description = JavaErrorBundle.message(forRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
+                                                 getPresentableName(element));
 
     LocalQuickFix replacementQuickFix = getReplacementQuickFix(element, elementToHighlight);
 

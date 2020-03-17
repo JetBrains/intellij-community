@@ -17,6 +17,7 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,6 +30,7 @@ public abstract class ImportSearcher {
    * @return found import or null
    */
   @Nullable
+  @Contract(pure = true)
   public abstract PsiElement findImport(PsiElement element, boolean onlyNonStatic);
 
   @Nullable

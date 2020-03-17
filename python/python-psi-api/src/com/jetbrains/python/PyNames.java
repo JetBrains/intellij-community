@@ -74,6 +74,7 @@ public class PyNames {
   @NonNls public static final String PYTHON_MODULE_ID = "PYTHON_MODULE";
   public static final String TESTCASE_SETUP_NAME = "setUp";
   public static final String PY_DOCSTRING_ID = "PyDocstring";
+  public static final String END_WILDCARD = ".*";
 
   private PyNames() {
   }
@@ -158,6 +159,7 @@ public class PyNames {
   public static final String ABC_SET = "Set";
   public static final String ABC_MUTABLE_SET = "MutableSet";
   public static final String PATH_LIKE = "PathLike";
+  public static final String BUILTIN_PATH_LIKE = "_PathLike";
 
   public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";

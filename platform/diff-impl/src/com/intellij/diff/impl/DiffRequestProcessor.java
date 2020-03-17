@@ -60,6 +60,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.UIVcsUtilKt;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
@@ -139,6 +142,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
     JPanel topPanel = JBUI.Panels.simplePanel(myToolbarWrapper).addToRight(statusPanel);
+    UIVcsUtilKt.installVisibilityReferent(topPanel, myToolbar.getComponent());
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     bottomContentSplitter.setFirstComponent(myContentPanel);
@@ -1004,6 +1008,12 @@ public abstract class DiffRequestProcessor implements Disposable {
       JComponent component = DiffRequestProcessor.this.getPreferredFocusedComponent();
       if (component == null) return null;
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
+    }
+
+    @Nullable
+    @Override
+    protected Project getProject() {
+      return myProject;
     }
   }
 

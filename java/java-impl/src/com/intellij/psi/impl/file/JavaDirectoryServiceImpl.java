@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.JavaDirectoryServiceImpl");
+  private static final Logger LOG = Logger.getInstance(JavaDirectoryServiceImpl.class);
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
@@ -120,6 +120,17 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
     String templateName = JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isEnum()) {
+      throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, dir.getProject()));
+    }
+    return someClass;
+  }
+
+  @Override
+  @NotNull
+  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+    String templateName = JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME;
+    PsiClass someClass = createClassFromTemplate(dir, name, templateName);
+    if (!someClass.isRecord()) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, dir.getProject()));
     }
     return someClass;

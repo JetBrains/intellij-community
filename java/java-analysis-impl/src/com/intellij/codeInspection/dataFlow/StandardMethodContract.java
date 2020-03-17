@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,6 +69,16 @@ public final class StandardMethodContract extends MethodContract {
       if (condition == constraint || condition == ValueConstraint.ANY_VALUE) {
         result[i] = constraint;
       } else if (constraint == ValueConstraint.ANY_VALUE) {
+        result[i] = condition;
+      }
+      else if (condition == ValueConstraint.NOT_NULL_VALUE &&
+               (constraint == ValueConstraint.TRUE_VALUE || constraint == ValueConstraint.FALSE_VALUE)) {
+        // java.lang.Boolean
+        result[i] = constraint;
+      }
+      else if (constraint == ValueConstraint.NOT_NULL_VALUE &&
+               (condition == ValueConstraint.TRUE_VALUE || condition == ValueConstraint.FALSE_VALUE)) {
+        // java.lang.Boolean
         result[i] = condition;
       }
       else {
@@ -275,9 +285,9 @@ public final class StandardMethodContract extends MethodContract {
     }
 
     @Nullable
-    DfaConstValue getComparisonValue(DfaValueFactory factory) {
-      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.getConstFactory().getNull();
-      if (this == TRUE_VALUE || this == FALSE_VALUE) return factory.getConstFactory().getTrue();
+    DfaValue getComparisonValue(DfaValueFactory factory) {
+      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.getNull();
+      if (this == TRUE_VALUE || this == FALSE_VALUE) return factory.getBoolean(true);
       return null;
     }
 
@@ -302,7 +312,7 @@ public final class StandardMethodContract extends MethodContract {
       else {
         return ContractValue.booleanValue(true);
       }
-      return ContractValue.condition(left, DfaRelationValue.RelationType.equivalence(!shouldUseNonEqComparison()), ContractValue.argument(argumentIndex));
+      return ContractValue.condition(left, RelationType.equivalence(!shouldUseNonEqComparison()), ContractValue.argument(argumentIndex));
     }
 
     /**

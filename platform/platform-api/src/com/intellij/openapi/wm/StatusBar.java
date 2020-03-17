@@ -8,6 +8,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +37,18 @@ public interface StatusBar extends StatusBarInfo, Disposable {
 
     public static void set(@Nullable final String text, @Nullable final Project project, @Nullable final String requestor) {
       if (project != null) {
-        if (project.isDisposed()) return;
+        if (project.isDisposed()) {
+          return;
+        }
         if (!project.isInitialized()) {
-          StartupManager.getInstance(project).runWhenProjectIsInitialized(
-            () -> project.getMessageBus().syncPublisher(TOPIC).setInfo(text, requestor));
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+            project.getMessageBus().syncPublisher(TOPIC).setInfo(text, requestor);
+          });
           return;
         }
       }
 
-      final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+      MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
       bus.syncPublisher(TOPIC).setInfo(text, requestor);
     }
   }
@@ -105,7 +109,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void updateWidget(@NotNull String id);
 
   @Nullable
-  StatusBarWidget getWidget(String id);
+  StatusBarWidget getWidget(@NonNls String id);
 
   void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
 

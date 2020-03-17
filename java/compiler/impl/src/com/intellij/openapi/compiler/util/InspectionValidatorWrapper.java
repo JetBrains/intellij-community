@@ -23,7 +23,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -77,6 +76,18 @@ public class InspectionValidatorWrapper implements Validator {
     myPsiDocumentManager = psiDocumentManager;
     myPsiManager = psiManager;
     myValidator = validator;
+  }
+
+  @NotNull
+  public static InspectionValidatorWrapper create(final Project project, InspectionValidator validator) {
+    return new InspectionValidatorWrapper(
+      CompilerManager.getInstance(project),
+      InspectionManager.getInstance(project),
+      InspectionProjectProfileManager.getInstance(project),
+      PsiDocumentManager.getInstance(project),
+      PsiManager.getInstance(project),
+      validator
+    );
   }
 
   public static boolean isCompilationThread() {
@@ -326,6 +337,7 @@ public class InspectionValidatorWrapper implements Validator {
     for (ExternalAnnotator<?, ?> annotator : annotators) {
       processAnnotator(xmlFile, holder, annotator);
     }
+    holder.assertAllAnnotationsCreated();
 
     if (!holder.hasAnnotations()) return Collections.emptyMap();
 
@@ -352,7 +364,7 @@ public class InspectionValidatorWrapper implements Validator {
     if (initial != null) {
       Y result = annotator.doAnnotate(initial);
       if (result != null) {
-        annotator.apply(xmlFile, result, holder);
+        holder.applyExternalAnnotatorWithContext(xmlFile, annotator, result);
       }
     }
   }

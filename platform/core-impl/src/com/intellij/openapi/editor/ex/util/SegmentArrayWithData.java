@@ -86,10 +86,6 @@ public class SegmentArrayWithData extends SegmentArray {
     return myStorage.getData(index);
   }
 
-  public void setSegmentData(int index, int data) {
-    if(index < 0 || index >= mySegmentCount) throw new IndexOutOfBoundsException("Wrong index: " + index);
-  }
-
   @NotNull
   protected static int[] reallocateArray(@NotNull int[] array, int index) {
     if (index < array.length) return array;

@@ -46,8 +46,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     if (myTagMode && element instanceof XmlTag) {
       return getTagReferences(((XmlTag)element));
     }

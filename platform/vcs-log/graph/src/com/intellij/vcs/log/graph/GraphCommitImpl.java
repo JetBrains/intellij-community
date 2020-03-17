@@ -162,5 +162,4 @@ abstract class IntGraphCommit extends AbstractGraphCommit<Integer> {
       return myParents[index];
     }
   }
-
 }

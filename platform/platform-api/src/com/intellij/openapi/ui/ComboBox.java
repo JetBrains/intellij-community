@@ -207,6 +207,14 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     return UIUtil.getComboBoxPopup(this);
   }
 
+  /**
+   * The {@code false} parameter value enables JBPopup instead of
+   * the default ComboBox popup.
+   *
+   * @param swingPopup {@code false} to enable JBPopup
+   * @see ComboBoxPopupState
+   * @see com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
+   */
   public void setSwingPopup(boolean swingPopup) {
     putClientProperty("ComboBox.jbPopup", swingPopup ? null : true);
     super.setEditor(null);

@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstanceEP;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
@@ -329,8 +330,9 @@ public class DataManagerImpl extends DataManager {
       myRef = component == null ? null : new WeakReference<>(component);
     }
 
-    public void setEventCount(int eventCount, Object caller) {
-      assert caller instanceof IdeKeyEventDispatcher : "This method might be accessible from " + IdeKeyEventDispatcher.class.getName() + " only";
+    public void setEventCount(int eventCount) {
+      assert ReflectionUtil.getCallerClass(3) == IdeKeyEventDispatcher.class :
+        "This method might be accessible from " + IdeKeyEventDispatcher.class.getName() + " only";
       myCachedData.clear();
       myEventCount = eventCount;
     }

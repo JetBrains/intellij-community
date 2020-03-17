@@ -18,11 +18,15 @@ package com.intellij.xml.util;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
+ * @deprecated don't use it
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+@Deprecated
 public interface HtmlDoctypeProvider {
   ExtensionPointName<HtmlDoctypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.util.htmlDoctypeProvider");
 

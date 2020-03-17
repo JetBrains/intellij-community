@@ -22,14 +22,17 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, DefinitionsScopedSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
+  public static final ExtensionPointName<QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
   public static final DefinitionsScopedSearch INSTANCE = new DefinitionsScopedSearch();
+
+  private DefinitionsScopedSearch() {
+    super(EP_NAME);
+  }
 
   static {
     INSTANCE.registerExecutor((queryParameters, consumer) -> {
       //noinspection deprecation
-      for (QueryExecutor executor : DefinitionsSearch.EP_NAME.getExtensions()) {
-        //noinspection unchecked
+      for (QueryExecutor<PsiElement, PsiElement> executor : DefinitionsSearch.EP_NAME.getExtensions()) {
         if (!executor.execute(queryParameters.getElement(), consumer))
           return false;
       }
@@ -53,7 +56,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
                                          final boolean checkDeep) {
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf, searchScope, checkDeep));
   }
-  
+
   public static class SearchParameters implements QueryParameters {
     private final PsiElement myElement;
     private final SearchScope myScope;

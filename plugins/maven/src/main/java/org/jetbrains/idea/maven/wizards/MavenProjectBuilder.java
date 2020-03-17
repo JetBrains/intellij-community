@@ -5,7 +5,6 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -24,7 +23,6 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import icons.MavenIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +39,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 /**
  * Do not use this project import builder directly.
@@ -73,12 +73,12 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
   @Override
   @NotNull
   public String getName() {
-    return ProjectBundle.message("maven.name");
+    return MavenProjectBundle.message("maven.name");
   }
 
   @Override
   public Icon getIcon() {
-    return MavenIcons.MavenLogo;
+    return RepositoryLibraryLogo;
   }
 
   @Override
@@ -188,7 +188,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
-      Promise<List<Module>> promise = manager.scheduleImportAndResolve(true);
+      Promise<List<Module>> promise = manager.scheduleImportAndResolve();
       manager.waitForResolvingCompletion();
       try {
         return promise.blockingGet(0);
@@ -199,9 +199,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
     }
 
     boolean isFromUI = model != null;
-    return manager.importProjects(isFromUI
-                                  ? new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel)
-                                  : new IdeModifiableModelsProviderImpl(project));
+    if (isFromUI && !MavenUtil.newModelEnabled(project)) {
+      return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
+    }
+    return manager.importProjects();
   }
 
   private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
@@ -222,10 +223,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
     // We cannot determinate project in non-EDT thread.
     getParameters().myProjectToUpdate = projectToUpdate != null ? projectToUpdate : ProjectManager.getInstance().getDefaultProject();
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        indicator.setText(ProjectBundle.message("maven.locating.files"));
+        indicator.setText(MavenProjectBundle.message("maven.locating.files"));
 
         getParameters().myImportRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
         if (getParameters().myImportRoot == null) throw new MavenProcessCanceledException();
@@ -248,7 +249,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) {
         readMavenProjectTree(indicator);

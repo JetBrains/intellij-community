@@ -32,10 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
-import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
-import org.jetbrains.plugins.groovy.lang.resolve.impl.GdkArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
@@ -184,7 +181,7 @@ private fun trySetParameterDelegate(annotation: PsiAnnotation, combiner: Delegat
   val mapping = resolveResult.candidate?.argumentMapping ?: return
   val methodParameters = resolveResult.candidate?.method?.parameters?.takeIf { it.size > 1 }?.asList() ?: return
   val targetParameter = findTargetParameter(annotation, methodParameters)
-  val argument = mapping.arguments.find { mapping.getProperTargetParameter(it, methodParameters[0]) == targetParameter } ?: return
+  val argument = mapping.arguments.find { mapping.targetParameter(it) == targetParameter } ?: return
   val argumentExpression = (argument as? ExpressionArgument)?.expression
   if (argumentExpression != null) {
     combiner.setDelegate(argumentExpression)
@@ -193,18 +190,6 @@ private fun trySetParameterDelegate(annotation: PsiAnnotation, combiner: Delegat
     val argumentType = argument.type.resolve() ?: return
     combiner.setDelegate(argumentType)
   }
-}
-
-private fun ArgumentMapping.getProperTargetParameter(argument: Argument, firstParameter: JvmParameter) = when (this) {
-  is GdkArgumentMapping -> {
-    if (argument == arguments[0]) {
-      firstParameter
-    }
-    else {
-      targetParameter(argument)
-    }
-  }
-  else -> targetParameter(argument)
 }
 
 private fun findTargetParameter(annotation: PsiAnnotation, methodParameters: Iterable<JvmParameter>): JvmParameter? {

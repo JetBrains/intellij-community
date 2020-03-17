@@ -42,13 +42,6 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.field.in.serializable.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.serializable.field.in.serializable.class.problem.descriptor");

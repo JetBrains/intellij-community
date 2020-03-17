@@ -90,12 +90,6 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.same.return.value.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }

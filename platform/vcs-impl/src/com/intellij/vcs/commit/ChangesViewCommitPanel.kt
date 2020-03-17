@@ -6,6 +6,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
@@ -58,11 +59,10 @@ import javax.swing.border.EmptyBorder
 import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
-private val BACKGROUND_COLOR = JBColor { getTreeBackground() }
 
-private val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
-
-private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
+private fun createHorizontalPanel(): JBPanel<*> {
+  return JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
+}
 
 private fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
@@ -125,14 +125,14 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   }
   private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
     init {
-      background = BACKGROUND_COLOR
+      background = getButtonPanelBackground()
       optionTooltipText = getDefaultTooltip()
       isOkToProcessDefaultMnemonics = false
     }
 
     override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
-  private val commitAuthorComponent = CommitAuthorComponent()
+  private val commitAuthorComponent = CommitAuthorComponent(project)
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
@@ -149,8 +149,9 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   init {
     Disposer.register(this, commitMessage)
 
+    val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
     commitLegend.isCompact = isCompactCommitLegend.asBoolean()
-    isCompactCommitLegend.addListener(object : RegistryValueListener.Adapter() {
+    isCompactCommitLegend.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         commitLegend.isCompact = value.asBoolean()
       }
@@ -175,13 +176,13 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
   private fun buildLayout() {
     buttonPanel.apply {
-      background = BACKGROUND_COLOR
+      background = getButtonPanelBackground()
       border = getButtonPanelBorder()
 
       addToLeft(commitActionToolbar.component)
       addToCenter(
         createHorizontalPanel().apply {
-          background = BACKGROUND_COLOR
+          background = getButtonPanelBackground()
 
           add(NonOpaquePanel(HorizontalLayout(scale(4))).apply {
             add(commitButton)
@@ -223,6 +224,9 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
   private fun getButtonPanelBorder(): Border =
     EmptyBorder(0, scale(4), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
+
+  private fun getButtonPanelBackground() =
+    JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
 
   private fun inclusionChanged() {
     updateLegend()
@@ -268,6 +272,9 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     set(value) {
       commitAuthorComponent.commitAuthor = value
     }
+
+  override fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable) =
+    commitAuthorComponent.addCommitAuthorListener(listener, parent)
 
   override val isActive: Boolean get() = isVisible
 

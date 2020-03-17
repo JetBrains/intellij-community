@@ -4,6 +4,7 @@ package com.maddyhome.idea.copyright.util;
 
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,12 +28,15 @@ public class FileTypeUtil {
 
   public FileTypeUtil() {
     createMappings();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+    Application application = ApplicationManager.getApplication();
+    application.getMessageBus().connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
         types = null;
       }
     });
+    Objects.requireNonNull(CopyrightUpdaters.INSTANCE.getPoint()).addExtensionPointListener(
+      () -> types = null, false, application);
   }
 
   public static String buildComment(FileType type, String template, LanguageOptions options) {
@@ -284,7 +288,7 @@ public class FileTypeUtil {
       if (type.equals(StdFileTypes.XHTML)) {
         return true;
       }
-      if (type.equals(StdFileTypes.PROPERTIES)) {
+      if (type.getName().equals("Properties")) {
         return true;
       }
       if (CopyrightUpdaters.INSTANCE.forFileType(type) == null) {

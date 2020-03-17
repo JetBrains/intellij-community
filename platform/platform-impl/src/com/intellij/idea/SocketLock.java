@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -287,11 +288,7 @@ public final class SocketLock {
           String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
           @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-          String currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
-          log(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR + ": " + currentDirectory);
-          if (currentDirectory == null)
-            currentDirectory = ".";
-
+          String currentDirectory = ObjectUtils.notNull(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR), ".");
           out.writeUTF(ACTIVATE_COMMAND + token + '\0' + new File(currentDirectory).getAbsolutePath() + '\0' + StringUtil.join(args, "\0"));
           out.flush();
 

@@ -6,17 +6,18 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -29,15 +30,35 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     LafManager lafMan = LafManager.getInstance();
     UIManager.LookAndFeelInfo[] lfs = lafMan.getInstalledLookAndFeels();
-    UIManager.LookAndFeelInfo current = lafMan.getCurrentLookAndFeel();
+    UIManager.LookAndFeelInfo currentLaf = lafMan.getCurrentLookAndFeel();
+
     for (UIManager.LookAndFeelInfo lf : lfs) {
-      group.add(new DumbAwareAction(lf.getName(), "", lf == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          switchLafAndUpdateUI(lafMan, lf, false);
+      group.add(new LafChangeAction(lf, currentLaf == lf));
+    }
+  }
+
+  @Override
+  protected void showPopup(AnActionEvent e, ListPopup popup) {
+    if (Registry.is("ide.instant.theme.switch")) {
+      LafManager lafMan = LafManager.getInstance();
+      popup.addListSelectionListener(event -> {
+        JList list = (JList)event.getSource();
+        Object item = list.getSelectedValue();
+        if (item instanceof AnActionHolder) {
+          LafChangeAction action = (LafChangeAction)((AnActionHolder)item).getAction();
+          switchLafAndUpdateUI(lafMan, action.myLookAndFeelInfo, false);
         }
       });
     }
+
+    super.showPopup(e, popup);
+  }
+
+  @Override
+  @Nullable
+  protected Condition<? super AnAction> preselectAction() {
+    LafManager lafMan = LafManager.getInstance();
+    return (a) -> ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
   }
 
   public static void switchLafAndUpdateUI(@NotNull final LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
@@ -84,5 +105,26 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
   @Override
   protected boolean isEnabled() {
     return LafManager.getInstance().getInstalledLookAndFeels().length > 1;
+  }
+
+  private static class LafChangeAction extends DumbAwareAction {
+    private final UIManager.LookAndFeelInfo myLookAndFeelInfo;
+
+    private LafChangeAction(UIManager.LookAndFeelInfo lf, boolean currentLaf) {
+      super(lf.getName(), null, getIcon(currentLaf));
+      myLookAndFeelInfo = lf;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (!Registry.is("ide.instant.theme.switch")) {
+        switchLafAndUpdateUI(LafManager.getInstance(), myLookAndFeelInfo, false);
+      }
+    }
+
+    @Nullable
+    private static Icon getIcon(boolean currentLaf) {
+      return Registry.is("ide.instant.theme.switch") ? null : currentLaf ? AllIcons.Actions.Forward : ourNotCurrentAction;
+    }
   }
 }

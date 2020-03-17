@@ -25,10 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -129,8 +126,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
-    File directory = convertToIOFile(file);
-    String[] names = directory.list(DirectoryAccessChecker.getFileFilter(directory));
+    String[] names = myChildrenGetter.accessDiskWithCheckCanceled(convertToIOFile(file));
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
 
@@ -724,8 +720,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));
+    return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
   }
+
+  private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
+  private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list(DirectoryAccessChecker.getFileFilter(dir)));
 
   @Override
   public void refresh(boolean asynchronous) {

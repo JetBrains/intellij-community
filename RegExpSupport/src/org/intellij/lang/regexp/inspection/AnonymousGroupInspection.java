@@ -32,13 +32,6 @@ import java.util.Collection;
  */
 public class AnonymousGroupInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Anonymous capturing group or numeric back reference";
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

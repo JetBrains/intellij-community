@@ -56,6 +56,6 @@ public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator 
     }
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     final String moduleName = module != null && !module.isDisposed() ? module.getName() : null;
-    ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(moduleName, ClasspathEditor.NAME);
+    ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(moduleName, ClasspathEditor.getName());
   }
 }

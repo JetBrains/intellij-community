@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -49,9 +48,10 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * @author Vladislav.Soroka
  */
+@SuppressWarnings("deprecation")
 public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.task.ProjectTaskManager");
+  private static final Logger LOG = Logger.getInstance(ProjectTaskManager.class);
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
   private final List<ProjectTaskManagerListener> myListeners = new CopyOnWriteArrayList<>();
@@ -146,7 +146,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
-        groupingBy(aTask -> stream(getTaskRunners())
+        groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
           .filter(runner -> {
             try {
               return runner.canRun(myProject, aTask);
@@ -239,29 +239,17 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   @Nullable
   @ApiStatus.Experimental
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
-    while (promise.getState() == Promise.State.PENDING) {
-      ProgressManager.checkCanceled();
+    while (true) {
       try {
-        return promise.blockingGet(100, TimeUnit.MILLISECONDS);
+        return promise.blockingGet(10, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
       catch (java.util.concurrent.ExecutionException e) {
-        if (e.getCause() instanceof ControlFlowException) {
-          ExceptionUtil.rethrowUnchecked(e.getCause());
-        }
-        return null;
+        ExceptionUtil.rethrow(e);
       }
+      ProgressManager.checkCanceled();
     }
-    if (promise.getState() == Promise.State.SUCCEEDED) {
-      try {
-        return promise.blockingGet(Integer.MAX_VALUE);
-      }
-      catch (java.util.concurrent.ExecutionException | TimeoutException e) {
-        LOG.error(e);
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -303,11 +291,6 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
       visitTasks(taskDependencies, consumer);
     }
     consumer.accept(tasks);
-  }
-
-  @NotNull
-  private static ProjectTaskRunner[] getTaskRunners() {
-    return ProjectTaskRunner.EP_NAME.getExtensions();
   }
 
   private Promise<Result> doBuild(@NotNull ProjectModelBuildableElement[] buildableElements, boolean isIncrementalBuild) {
@@ -460,7 +443,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
 
     @Override
-    public boolean contains(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
+    public boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
       return myTasksState.entrySet().stream().anyMatch(entry -> predicate.test(entry.getKey(), entry.getValue()));
     }
   }
@@ -487,8 +470,162 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
 
     @Override
-    public boolean contains(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
-      return myResult.contains(predicate);
+    public boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
+      return myResult.anyTaskMatches(predicate);
     }
   }
+  //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
+
+  /**
+   * @deprecated use {@link #run(ProjectTask)}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void run(@NotNull ProjectTask projectTask, @Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(run(projectTask), callback);
+  }
+
+  /**
+   * @deprecated use {@link #run(ProjectTaskContext, ProjectTask)}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void run(@NotNull ProjectTaskContext context,
+                  @NotNull ProjectTask projectTask,
+                  @Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(run(context, projectTask), callback);
+  }
+
+  /**
+   * @deprecated use {@link #buildAllModules()}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void buildAllModules(@Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(buildAllModules(), callback);
+  }
+
+  /**
+   * @deprecated use {@link #rebuildAllModules()}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void rebuildAllModules(@Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(rebuildAllModules(), callback);
+  }
+
+  /**
+   * @deprecated use {@link #build(Module[])}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void build(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(build(modules), callback);
+  }
+
+  /**
+   * @deprecated use {@link #rebuild(Module[])}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void rebuild(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(rebuild(modules), callback);
+  }
+
+  /**
+   * @deprecated use {@link #compile(VirtualFile[])}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void compile(@NotNull VirtualFile[] files, @Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(compile(files), callback);
+  }
+
+  /**
+   * @deprecated use {@link #build(ProjectModelBuildableElement[])}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void build(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(build(buildableElements), callback);
+  }
+
+  /**
+   * @deprecated use {@link #rebuild(ProjectModelBuildableElement[])}
+   */
+  @Override
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
+  public void rebuild(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback) {
+    assertUnsupportedOperation(callback);
+    notifyIfNeeded(rebuild(buildableElements), callback);
+  }
+
+  private static void notifyIfNeeded(@NotNull Promise<Result> promise, @Nullable ProjectTaskNotification callback) {
+    if (callback != null) {
+      promise
+        .onSuccess(
+          result -> callback.finished(result.getContext(), new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))
+        .onError(throwable -> callback.finished(new ProjectTaskContext(), new ProjectTaskResult(true, 0, 0)));
+    }
+  }
+
+  private static void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
+    if (callback instanceof ProjectTaskNotificationAdapter) {
+      throw new UnsupportedOperationException("Please, provide implementation for non-deprecated methods");
+    }
+  }
+
+  private static class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
+    private final AsyncPromise<Result> myPromise;
+    private final ProjectTaskContext myContext;
+
+    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<Result> promise, @NotNull ProjectTaskContext context) {
+      myPromise = promise;
+      myContext = context;
+    }
+
+    @Override
+    public void finished(@NotNull ProjectTaskResult executionResult) {
+      myPromise.setResult(new Result() {
+        @NotNull
+        @Override
+        public ProjectTaskContext getContext() {
+          return myContext;
+        }
+
+        @Override
+        public boolean isAborted() {
+          return executionResult.isAborted();
+        }
+
+        @Override
+        public boolean hasErrors() {
+          return executionResult.getErrors() > 0;
+        }
+
+        @Override
+        public boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
+          return executionResult.anyMatch(predicate);
+        }
+      });
+    }
+  }
+  //</editor-fold>
 }

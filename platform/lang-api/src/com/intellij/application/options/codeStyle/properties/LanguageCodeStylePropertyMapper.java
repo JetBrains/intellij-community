@@ -140,6 +140,6 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   @Override
   public String getPropertyDescription(@NotNull String externalName) {
     String key = "codestyle.property.description." + externalName;
-    return OptionsBundle.getBundle().containsKey(key) ? OptionsBundle.message(key) : null;
+    return OptionsBundle.INSTANCE.containsKey(key) ? OptionsBundle.message(key) : null;
   }
 }

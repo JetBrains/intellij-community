@@ -62,9 +62,6 @@ import static com.intellij.psi.PsiJavaModule.*;
 public class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(Java9GenerateModuleDescriptorsAction.class);
 
-  private static final String TITLE = RefactoringBundle.message("generate.module.descriptors.title");
-  private static final String COMMAND_TITLE = RefactoringBundle.message("generate.module.descriptors.command.title");
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -84,7 +81,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     CompileScope scope = compilerManager.createProjectCompileScope(project);
     if (!compilerManager.isUpToDate(scope)) {
       int result = Messages.showYesNoCancelDialog(
-        project, RefactoringBundle.message("generate.module.descriptors.rebuild.message"), TITLE, null);
+        project, RefactoringBundle.message("generate.module.descriptors.rebuild.message"), getTitle(), null);
       if (result == Messages.CANCEL) {
         return;
       }
@@ -107,7 +104,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
 
   private static void generateWhenSmart(@NotNull Project project, @NotNull UniqueModuleNames uniqueModuleNames) {
     ProgressManager.getInstance().run(
-      new Task.Backgroundable(project, TITLE, true) {
+      new Task.Backgroundable(project, getTitle(), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           THashMap<Module, List<File>> classFiles = new THashMap<>();
@@ -129,7 +126,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
                                .toArray(Module.EMPTY_ARRAY);
     if (modules.length == 0) {
       CommonRefactoringUtil.showErrorHint(
-        project, null, RefactoringBundle.message("generate.module.descriptors.no.suitable.modules.message"), TITLE, null);
+        project, null, RefactoringBundle.message("generate.module.descriptors.no.suitable.modules.message"), getTitle(), null);
       return 0;
     }
 
@@ -147,7 +144,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
     if (totalFiles == 0) {
       CommonRefactoringUtil.showErrorHint(
-        project, null, RefactoringBundle.message("generate.module.descriptors.build.required.message"), TITLE, null);
+        project, null, RefactoringBundle.message("generate.module.descriptors.build.required.message"), getTitle(), null);
     }
     return totalFiles;
   }
@@ -168,6 +165,14 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     else if (file.getName().endsWith(CommonClassNames.CLASS_FILE_EXTENSION)) {
       files.add(file);
     }
+  }
+
+  private static String getTitle() {
+    return RefactoringBundle.message("generate.module.descriptors.title");
+  }
+
+  private static String getCommandTitle() {
+    return RefactoringBundle.message("generate.module.descriptors.command.title");
   }
 
   private static class ProgressTracker {
@@ -249,8 +254,8 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
         if (!myProject.isDisposed()) {
           CommandProcessor.getInstance().executeCommand(myProject, () ->
             ((ApplicationEx)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
-              COMMAND_TITLE, myProject, null,
-              indicator -> createFiles(myProject, moduleInfos, indicator)), COMMAND_TITLE, null);
+              getCommandTitle(), myProject, null,
+              indicator -> createFiles(myProject, moduleInfos, indicator)), getCommandTitle(), null);
         }
       });
     }

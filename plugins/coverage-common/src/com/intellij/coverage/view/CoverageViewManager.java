@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageDataManager;
@@ -22,10 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-@State(
-    name = "CoverageViewManager",
-    storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
+@State(name = "CoverageViewManager", storages = {
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+})
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final String TOOLWINDOW_ID = "Coverage";
@@ -34,7 +33,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   private StateBean myStateBean = new StateBean();
   private final Map<String, CoverageView> myViews = new HashMap<>();
   private boolean myReady;
-  
+
   public CoverageViewManager(Project project) {
     myProject = project;
 
@@ -108,7 +107,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   }
 
   public static String getDisplayName(CoverageSuitesBundle suitesBundle) {
-    final RunConfigurationBase configuration = suitesBundle.getRunConfiguration();
+    RunConfigurationBase configuration = suitesBundle.getRunConfiguration();
     return configuration != null ? configuration.getName() : suitesBundle.getPresentableName();
   }
 

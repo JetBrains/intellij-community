@@ -30,11 +30,11 @@ public abstract class PlaybackContext  {
   private final boolean myUseDirectActionCall;
   private final PlaybackCommand myCurrentCmd;
   private File myBaseDir;
-  private final Set<Class> myCallClasses;
+  private final Set<Class<?>> myCallClasses;
   private final PlaybackRunner myRunner;
   private final boolean myUseTypingTargets;
 
-  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class> callClasses) {
+  public PlaybackContext(PlaybackRunner runner, PlaybackRunner.StatusCallback callback, int currentLine, Robot robot, boolean useDriectActionCall, boolean useTypingTargets, PlaybackCommand currentCmd, File baseDir, Set<Class<?>> callClasses) {
     myRunner = runner;
     myCallback = callback;
     myCurrentLine = currentLine;
@@ -82,7 +82,7 @@ public abstract class PlaybackContext  {
     myBaseDir = dir;
   }
 
-  public Set<Class> getCallClasses() {
+  public Set<Class<?>> getCallClasses() {
     return myCallClasses;
   }
 

@@ -31,7 +31,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,13 +44,6 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
     final String aPackage = (String)infos[0];
     return new PackageDotHtmlMayBePackageInfoFix(aPackage);
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.display.name");
   }
 
   @NotNull
@@ -175,7 +167,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
   private static class PackageDotHtmlMayBePackageInfoVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (!(file instanceof XmlFile)) {
         return;

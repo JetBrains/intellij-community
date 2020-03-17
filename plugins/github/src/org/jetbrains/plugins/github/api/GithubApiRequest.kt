@@ -7,6 +7,8 @@ import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLQueryRequest
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLResponse
+import org.jetbrains.plugins.github.api.data.graphql.GHGQLSyntaxError
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.io.IOException
@@ -104,11 +106,13 @@ sealed class GithubApiRequest<out T>(val url: String) {
                                                        url: String,
                                                        override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
     companion object {
-      inline fun <reified T> json(url: String, body: Any): Post<T> = Json(url, body, T::class.java)
+      inline fun <reified T> json(url: String, body: Any, acceptMimeType: String? = null): Post<T> =
+        Json(url, body, T::class.java, acceptMimeType)
     }
 
-    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>)
-      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>,
+                       acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, acceptMimeType) {
 
       override val body: String
         get() = GithubApiContentHelper.toJson(bodyObject)
@@ -130,6 +134,13 @@ sealed class GithubApiRequest<out T>(val url: String) {
           return GithubApiContentHelper.toJson(request, true)
         }
 
+      protected fun throwException(errors: List<GHGQLSyntaxError>): Nothing {
+        if (errors.any { it.type.equals("INSUFFICIENT_SCOPES", true) })
+          throw GithubAuthenticationException("Access token has not been granted the required scopes.")
+
+        throw GithubConfusingException(errors.toString())
+      }
+
       class Parsed<out T>(url: String,
                           requestFilePath: String,
                           variablesObject: Any,
@@ -138,8 +149,11 @@ sealed class GithubApiRequest<out T>(val url: String) {
         override fun extractResult(response: GithubApiResponse): T {
           val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
           val data = result.data
-          if (data != null) return data!!
-          else throw GithubConfusingException(result.errors.toString())
+          if (data != null) return data
+
+          val errors = result.errors
+          if (errors == null) error("Undefined request state - both result and errors are null")
+          else throwException(errors)
         }
       }
 
@@ -175,12 +189,13 @@ sealed class GithubApiRequest<out T>(val url: String) {
         if (data != null && !data.isNull) {
           var node: JsonNode = data
           for (path in pathFromData) {
-            node = node[path] ?: return null
+            node = node[path] ?: break
           }
-          if (node.isNull) return null
-          return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
+          if (!node.isNull) return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
         }
-        else throw GithubConfusingException(result.errors.toString())
+        val errors = result.errors
+        if (errors == null) return null
+        else throwException(errors)
       }
     }
   }

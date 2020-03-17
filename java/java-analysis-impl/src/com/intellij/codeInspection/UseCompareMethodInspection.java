@@ -13,7 +13,6 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.style.SimplifiableIfStatementInspection;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -103,7 +102,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (!storeCondition(result, firstCondition, firstExpression)) return null;
     if (!storeCondition(result, secondCondition, ExpressionUtils.getAssignmentTo(secondStatement, variable))) return null;
     if (!storeCondition(result, null, ExpressionUtils.getAssignmentTo(thirdStatement, variable))) return null;
-    return fromMap(result, firstExpression, firstStatement);
+    return fromMap(result, firstExpression, assignment);
   }
 
   private static PsiStatement getElse(PsiIfStatement ifStatement) {
@@ -300,7 +299,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       myClass = aClass;
     }
 
-    private @NotNull PsiElement replace(PsiElement toReplace, CommentTracker ct) {
+    private void replace(PsiElement toReplace, CommentTracker ct) {
       String replacement;
       if (this.myLeft.getType() instanceof PsiClassType) {
         replacement = ct.text(this.myLeft, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".compareTo(" + ct.text(this.myRight) + ")";
@@ -308,10 +307,10 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
         replacement = this.myClass.getCanonicalText() + ".compare(" + ct.text(this.myLeft) + "," + ct.text(this.myRight) + ")";
       }
       if(toReplace == myTemplate) {
-        return ct.replaceAndRestoreComments(myToReplace, replacement);
+        ct.replaceAndRestoreComments(myToReplace, replacement);
       } else {
         ct.replace(myToReplace, replacement);
-        return ct.replaceAndRestoreComments(toReplace, myTemplate);
+        ct.replaceAndRestoreComments(toReplace, myTemplate);
       }
     }
 
@@ -370,9 +369,8 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
       if (info == null) return;
       CommentTracker ct = new CommentTracker();
-      PsiElement result = info.replace(toReplace, ct);
+      info.replace(toReplace, ct);
       StreamEx.of(toDelete).nonNull().filter(PsiElement::isValid).forEach(e -> new CommentTracker().deleteAndRestoreComments(e));
-      SimplifiableIfStatementInspection.tryJoinDeclaration(result);
     }
   }
 }

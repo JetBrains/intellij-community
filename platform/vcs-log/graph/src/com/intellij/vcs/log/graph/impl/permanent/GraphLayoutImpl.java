@@ -43,6 +43,6 @@ public class GraphLayoutImpl implements GraphLayout {
 
   private int getHeadOrder(int layoutIndex) {
     int i = Arrays.binarySearch(myStartLayoutIndexForHead, layoutIndex);
-    return i<0 ? Math.max(0,-i-2) : i;
+    return i < 0 ? Math.max(0, -i - 2) : i;
   }
 }

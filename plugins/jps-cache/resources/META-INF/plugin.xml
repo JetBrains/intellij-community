@@ -1,0 +1,34 @@
+<idea-plugin>
+  <id>com.jetbrains.jps.cache</id>
+  <vendor>JetBrains</vendor>
+  <name>JPS Cache</name>
+
+  <depends>Git4Idea</depends>
+  <description><![CDATA[
+  Adds support for working with JPS portable caches
+]]></description>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.jps.cache.JpsCachesProjectStateListener" topic="git4idea.repo.GitRepositoryChangeListener"/>
+  </projectListeners>
+
+  <actions>
+    <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
+    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches" internal="true">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
+  </actions>
+
+  <!-- Dirty hack for not making plugin dynamic https://youtrack.jetbrains.com/issue/IDEA-227327 -->
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.jps.cache.JpsCachesDummyProjectComponent</implementation-class>
+    </component>
+  </project-components>
+</idea-plugin>

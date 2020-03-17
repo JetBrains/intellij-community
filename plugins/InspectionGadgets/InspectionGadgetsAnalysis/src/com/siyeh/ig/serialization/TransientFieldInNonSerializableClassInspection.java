@@ -30,13 +30,6 @@ public class TransientFieldInNonSerializableClassInspection extends BaseInspecti
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "transient.field.in.non.serializable.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return InspectionGadgetsBundle.message(

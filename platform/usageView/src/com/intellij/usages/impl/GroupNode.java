@@ -68,8 +68,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   public String toString() {
     String result = getGroup() == null ? "" : getGroup().getText(null);
     synchronized (this) {
-      List<Node> children = myChildren;
-      return result + ContainerUtil.getFirstItems(children, 10);
+      return result + ContainerUtil.getFirstItems(myChildren, 10);
     }
   }
 

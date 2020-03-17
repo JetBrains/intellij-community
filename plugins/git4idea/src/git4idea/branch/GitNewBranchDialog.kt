@@ -36,8 +36,10 @@ data class GitNewBranchOptions(val name: String,
                                @get:JvmName("shouldReset") val reset: Boolean = false)
 
 
-enum class GitBranchOperationType(val text: String) {
-  CREATE("Create"), CHECKOUT("Checkout"), RENAME("Rename")
+enum class GitBranchOperationType(val text: String, val description: String = "") {
+  CREATE("Create", "Create new branches in other repositories."),
+  CHECKOUT("Checkout", "Checkout existing branches, and create new branches in other repositories."),
+  RENAME("Rename")
 }
 
 internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
@@ -94,19 +96,10 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
       overwriteCheckbox?.isEnabled = localBranchConflict != null
 
       if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
-      else if (localBranchConflict.warning && localConflictsAllowed) warning(localBranchConflict.message + getAdditionalDescription())
-      else error(localBranchConflict.message + if (showResetOption) ". Change the name or overwrite existing branch" else "")
+      else if (localBranchConflict.warning && localConflictsAllowed) warning("${localBranchConflict.message}.<br/>${operation.description}")
+      else error(localBranchConflict.message + if (showResetOption) ".<br/>Change the name or overwrite existing branch" else "")
     }
   }
-
-  private fun getAdditionalDescription() =
-    when {
-      repositories.size == 1 -> ""
-      operation == CREATE -> ". Create new branches in other repositories."
-      operation == CHECKOUT -> ". Checkout existing branches, and create new branches in other repositories."
-      else -> ""
-    }
-
 
   private fun CellBuilder<JTextField>.startTrackingValidationIfNeeded() {
     if (branchName.isEmpty()) {

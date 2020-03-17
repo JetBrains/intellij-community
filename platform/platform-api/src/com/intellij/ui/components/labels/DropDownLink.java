@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +16,7 @@ import javax.swing.*;
 import javax.swing.plaf.metal.MetalLabelUI;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Function;
 
 public class DropDownLink<T> extends LinkLabel<Object> {
   private T chosenItem;
@@ -27,12 +27,12 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     init();
   }
 
-  public DropDownLink(@NotNull T value, @NotNull Convertor<? super DropDownLink, ? extends JBPopup> popupBuilder) {
+  public DropDownLink(@NotNull T value, @NotNull Function<? super DropDownLink, ? extends JBPopup> popupBuilder) {
     super(value.toString(), AllIcons.General.LinkDropTriangle);
     chosenItem = value;
 
     setListener((linkLabel, d) -> {
-      JBPopup popup = popupBuilder.convert((DropDownLink)linkLabel);
+      JBPopup popup = popupBuilder.apply((DropDownLink)linkLabel);
       Point showPoint = new Point(0, getHeight() + JBUIScale.scale(4));
       popup.show(new RelativePoint(this, showPoint));
     }, null);

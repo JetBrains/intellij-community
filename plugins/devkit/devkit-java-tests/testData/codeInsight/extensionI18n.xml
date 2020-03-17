@@ -21,7 +21,7 @@
     <extensionPoint name="projectConfigurable"
                     beanClass="com.intellij.openapi.options.ConfigurableEP"
                     area="IDEA_PROJECT">
-      <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+      <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>
     <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>

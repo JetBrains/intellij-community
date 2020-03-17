@@ -21,7 +21,7 @@ import java.util.Set;
  * @author nik
  */
 public class FacetBasedDetectedFrameworkDescriptionInWizard<F extends Facet, C extends FacetConfiguration> extends FacetBasedDetectedFrameworkDescription<F, C> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.FacetBasedDetectedFrameworkDescriptionInWizard");
+  private static final Logger LOG = Logger.getInstance(FacetBasedDetectedFrameworkDescriptionInWizard.class);
   private final ModuleDescriptor myModuleDescriptor;
 
   public FacetBasedDetectedFrameworkDescriptionInWizard(@NotNull ModuleDescriptor moduleDescriptor,

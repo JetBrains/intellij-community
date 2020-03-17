@@ -50,7 +50,7 @@ public class RemoteDebugger implements ProcessDebugger {
    */
   private static final long CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS = 5000;
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
+  private static final Logger LOG = Logger.getInstance(RemoteDebugger.class);
 
   private static final String LOCAL_VERSION = "0.1";
   public static final String TEMP_VAR_PREFIX = "__py_debug_temp_var_";
@@ -264,6 +264,10 @@ public class RemoteDebugger implements ProcessDebugger {
   // todo: change variable in lists doesn't work - either fix in pydevd or format var name appropriately
   private void setTempVariable(final String threadId, final String frameId, final PyDebugValue var) {
     final PyDebugValue topVar = var.getTopParent();
+    if (topVar == null) {
+      LOG.error("Top parent is null");
+      return;
+    }
     if (!myDebugProcess.canSaveToTemp(topVar.getName())) {
       return;
     }

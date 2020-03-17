@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -11,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -139,9 +139,8 @@ public class ActionsCollectorImpl extends ActionsCollector {
     }
   }
 
-  /** @noinspection unused*/
-  public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable PluginId pluginId) {
-    ourWhitelist.addActionLoadedFromXml(actionId, pluginId);
+  public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {
+    ourWhitelist.addActionLoadedFromXml(actionId, plugin);
   }
 
   public static void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {

@@ -65,13 +65,6 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "parameter.name.differs.from.overridden.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "parameter.name.differs.from.overridden.parameter.problem.descriptor",

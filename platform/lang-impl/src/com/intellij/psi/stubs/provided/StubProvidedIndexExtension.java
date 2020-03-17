@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.*;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.provided.ProvidedIndexExtension;
 import com.intellij.util.io.DataExternalizer;
@@ -16,17 +14,18 @@ import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class StubProvidedIndexExtension implements ProvidedIndexExtension<Integer, SerializedStubTree> {
   @NotNull
-  private final File myIndexFile;
+  private final Path myIndexFile;
 
-  public StubProvidedIndexExtension(@NotNull File file) {myIndexFile = file;}
+  public StubProvidedIndexExtension(@NotNull Path file) {myIndexFile = file;}
 
   @NotNull
   @Override
-  public File getIndexPath() {
+  public Path getIndexPath() {
     return myIndexFile;
   }
 
@@ -45,26 +44,26 @@ public class StubProvidedIndexExtension implements ProvidedIndexExtension<Intege
   @NotNull
   @Override
   public DataExternalizer<SerializedStubTree> createValueExternalizer() {
-    File path = getIndexPath();
+    Path path = getIndexPath();
     SerializationManagerImpl manager =
-      new SerializationManagerImpl(new File(new File(path, StringUtil.toLowerCase(StubUpdatingIndex.INDEX_ID.getName())), "rep.names"),
+      new SerializationManagerImpl(path.resolve(StringUtil.toLowerCase(StubUpdatingIndex.INDEX_ID.getName())).resolve("rep.names"),
                                    true);
     Disposer.register(ApplicationManager.getApplication(), manager);
-    return new SerializedStubTreeDataExternalizer(false, manager);
+    return new SerializedStubTreeDataExternalizer(false, manager, StubForwardIndexExternalizer.FileLocalStubForwardIndexExternalizer.INSTANCE);
   }
 
   @Nullable
   public <K> ProvidedIndexExtension<K, Void> findProvidedStubIndex(@NotNull StubIndexExtension<K, ?> extension) {
     String name = extension.getKey().getName();
-    File path = getIndexPath();
+    Path path = getIndexPath();
 
-    File indexPath = new File(path, StringUtil.toLowerCase(name));
-    if (!indexPath.exists()) return null;
+    Path indexPath = path.resolve(name);
+    if (!Files.exists(indexPath)) return null;
 
     return new ProvidedIndexExtension<K, Void>() {
       @NotNull
       @Override
-      public File getIndexPath() {
+      public Path getIndexPath() {
         return myIndexFile;
       }
 

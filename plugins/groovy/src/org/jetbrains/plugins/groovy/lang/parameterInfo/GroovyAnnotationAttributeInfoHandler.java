@@ -29,8 +29,8 @@ import java.util.Set;
  */
 public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrAnnotationArgumentList, PsiAnnotationMethod, GrAnnotationNameValuePair> {
 
-  private static final Set<Class> ALLOWED_CLASSES = ContainerUtil.newHashSet(GrAnnotation.class);
-  private static final Set<Class> STOP_SEARCHING_CLASSES = Collections.singleton(GroovyFile.class);
+  private static final Set<Class<?>> ALLOWED_CLASSES = ContainerUtil.newHashSet(GrAnnotation.class);
+  private static final Set<Class<?>> STOP_SEARCHING_CLASSES = Collections.singleton(GroovyFile.class);
 
   @NotNull
   @Override
@@ -52,13 +52,13 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
 
   @NotNull
   @Override
-  public Set<Class> getArgumentListAllowedParentClasses() {
+  public Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_CLASSES;
   }
 
   @NotNull
   @Override
-  public Set<Class> getArgListStopSearchClasses() {
+  public Set<? extends Class<?>> getArgListStopSearchClasses() {
     return STOP_SEARCHING_CLASSES;
   }
 

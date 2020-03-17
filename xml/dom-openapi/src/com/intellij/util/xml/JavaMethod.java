@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.util.SmartFMap;
@@ -38,14 +24,14 @@ public final class JavaMethod implements AnnotatedElement {
   private volatile SmartFMap<Class, Object> myAnnotationsMap = SmartFMap.emptyMap();
   private volatile List<Method> myHierarchy;
 
-  private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
+  private JavaMethod(@NotNull Class<?> declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
     myMethod = signature.findMethod(declaringClass);
     assert myMethod != null : "No method " + signature + " in class " + declaringClass;
     myDeclaringClass = myMethod.getDeclaringClass();
   }
 
-  public final Class getDeclaringClass() {
+  public final Class<?> getDeclaringClass() {
     return myDeclaringClass;
   }
 
@@ -53,10 +39,12 @@ public final class JavaMethod implements AnnotatedElement {
     return mySignature;
   }
 
+  @NotNull
   public final List<Method> getHierarchy() {
     List<Method> hierarchy = myHierarchy;
     if (hierarchy == null) {
-      myHierarchy = hierarchy = Collections.unmodifiableList(mySignature.getAllMethods(myDeclaringClass));
+      hierarchy = Collections.unmodifiableList(mySignature.getAllMethods(myDeclaringClass));
+      myHierarchy = hierarchy;
     }
     return hierarchy;
   }
@@ -112,7 +100,9 @@ public final class JavaMethod implements AnnotatedElement {
   private Object findAnnotation(Class<? extends Annotation> annotationClass) {
     for (Method method : getHierarchy()) {
       Annotation annotation = method.getAnnotation(annotationClass);
-      if (annotation != null) return annotation;
+      if (annotation != null) {
+        return annotation;
+      }
     }
     return NONE;
   }
@@ -143,5 +133,9 @@ public final class JavaMethod implements AnnotatedElement {
 
   public Class<?>[] getParameterTypes() {
     return myMethod.getParameterTypes();
+  }
+
+  public int getParameterCount() {
+    return myMethod.getParameterCount();
   }
 }

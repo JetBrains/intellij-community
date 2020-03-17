@@ -26,9 +26,9 @@ import com.intellij.util.SystemProperties;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgExecutableManager;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -235,9 +235,9 @@ public class HgCommandExecutor {
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) return;
     String message =
-      HgVcsMessages.message("hg4idea.command.executable.error", HgExecutableManager.getInstance().getHgExecutable(myProject)) +
+      HgBundle.message("hg4idea.command.executable.error", HgExecutableManager.getInstance().getHgExecutable(myProject)) +
       "\nOriginal Error:\n" +
       e.getMessage();
-    VcsImplUtil.showErrorMessage(myProject, message, HgVcsMessages.message("hg4idea.error"));
+    VcsImplUtil.showErrorMessage(myProject, message, HgBundle.message("hg4idea.error"));
   }
 }

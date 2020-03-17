@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.dsm.model.classes.DependencyVisitor");
+  private static final Logger LOG = Logger.getInstance(AbstractDependencyVisitor.class);
   private static final Label LABEL = new Label();
 
   private final AnnotationDependencyVisitor myAnnotationVisitor = new AnnotationDependencyVisitor();

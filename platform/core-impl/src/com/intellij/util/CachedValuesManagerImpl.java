@@ -8,13 +8,22 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.util.*;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ven
  */
 public final class CachedValuesManagerImpl extends CachedValuesManager {
+  private static final Object NULL = new Object();
+  private ConcurrentMap<UserDataHolder, Object> myCacheHolders = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private Set<Key<?>> myKeys = ContainerUtil.newConcurrentSet();
+
   private final Project myProject;
   private final CachedValuesFactory myFactory;
 
@@ -64,8 +73,10 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
     return value.getValue();
   }
 
-  private static <T> CachedValue<T> saveInUserData(@NotNull UserDataHolder dataHolder,
-                                                   @NotNull Key<CachedValue<T>> key, CachedValue<T> value) {
+  private <T> CachedValue<T> saveInUserData(@NotNull UserDataHolder dataHolder,
+                                            @NotNull Key<CachedValue<T>> key, CachedValue<T> value) {
+    trackKeyHolder(dataHolder, key);
+
     if (dataHolder instanceof UserDataHolderEx) {
       return ((UserDataHolderEx)dataHolder).putUserDataIfAbsent(key, value);
     }
@@ -81,6 +92,13 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
     }
   }
 
+  @Override
+  protected void trackKeyHolder(@NotNull UserDataHolder dataHolder,
+                                @NotNull Key<?> key) {
+    myCacheHolders.put(dataHolder, NULL);
+    myKeys.add(key);
+  }
+
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
     CachedValueLeakChecker.checkProvider(provider, key, dh);
     CachedValue<T> value = createCachedValue(provider, trackValue);
@@ -88,4 +106,15 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
     return value;
   }
 
+  @ApiStatus.Internal
+  public void clearCachedValues() {
+    for (UserDataHolder holder : myCacheHolders.keySet()) {
+      for (Key<?> key : myKeys) {
+        holder.putUserData(key, null);
+      }
+    }
+    CachedValueStabilityChecker.cleanupFieldCache();
+    myCacheHolders = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+    myKeys = ContainerUtil.newConcurrentSet();
+  }
 }

@@ -40,7 +40,7 @@ import java.util.Properties;
  * author: lesya
  */
 public class CreateClassUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.CreateClassUtil");
+  private static final Logger LOG = Logger.getInstance(CreateClassUtil.class);
 
   @NonNls public static final String DEFAULT_CLASS_TEMPLATE = "#DEFAULT_CLASS_TEMPLATE";
   @NonNls private static final String DO_NOT_CREATE_CLASS_TEMPLATE = "#DO_NOT_CREATE_CLASS_TEMPLATE";

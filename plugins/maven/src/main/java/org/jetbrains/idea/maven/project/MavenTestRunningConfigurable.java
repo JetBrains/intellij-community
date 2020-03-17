@@ -31,7 +31,7 @@ public class MavenTestRunningConfigurable implements SearchableConfigurable, Con
   @Nls
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("maven.testRunning");
+    return MavenProjectBundle.message("maven.testRunning");
   }
 
   @Nullable

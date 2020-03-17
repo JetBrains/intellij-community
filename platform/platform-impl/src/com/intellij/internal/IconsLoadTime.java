@@ -8,6 +8,7 @@ import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.icons.ImageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.List;
  * @author tav
  */
 public final class IconsLoadTime extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.internal.IconsLoadTime");
+  private static final Logger LOG = Logger.getInstance(IconsLoadTime.class);
 
   private static final int STATS_LIMIT = 10000;
   private static final int FIXED_SCOPE = 100; // log stats for a first fixed number of icons

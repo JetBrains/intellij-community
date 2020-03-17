@@ -190,7 +190,7 @@ public class Utils{
     boolean enterNode(@NotNull ActionGroup groupNode);
     void visitLeaf(@NotNull AnAction act);
     void leaveNode();
-    Component getCustomComponent(@NotNull AnAction action);
+    @Nullable Component getCustomComponent(@NotNull AnAction action);
 
     boolean beginUpdate(@NotNull AnAction action, AnActionEvent e);
     void endUpdate(@NotNull AnAction action);

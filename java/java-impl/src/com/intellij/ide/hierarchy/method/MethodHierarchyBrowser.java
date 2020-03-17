@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
+import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -23,22 +24,22 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(MethodHierarchyBrowser.class);
 
   public MethodHierarchyBrowser(final Project project, final PsiMethod method) {
     super(project, method);
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<HierarchyScopeType, JTree> trees) {
     final JTree tree = createTree(false);
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP);
     PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
-                    
+
     final BaseOnThisMethodAction action = new BaseOnThisMethodAction();
     action.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_METHOD_HIERARCHY).getShortcutSet(), tree);
 
-    trees.put(METHOD_TYPE, tree);
+    trees.put(getMethodType(), tree);
   }
 
   @Override
@@ -62,8 +63,8 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
-    if (!METHOD_TYPE.equals(typeName)) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final HierarchyScopeType typeName, @NotNull final PsiElement psiElement) {
+    if (getMethodType() != typeName) {
       LOG.error("unexpected type: " + typeName);
       return null;
     }
@@ -71,7 +72,7 @@ public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
   }
 
   @Override
-  protected Comparator<NodeDescriptor> getComparator() {
+  protected Comparator<NodeDescriptor<?>> getComparator() {
     return JavaHierarchyUtil.getComparator(myProject);
   }
 

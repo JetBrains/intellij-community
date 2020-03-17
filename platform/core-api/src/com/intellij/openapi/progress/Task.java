@@ -18,12 +18,10 @@ package com.intellij.openapi.progress;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.Task");
+  private static final Logger LOG = Logger.getInstance(Task.class);
 
   protected final Project myProject;
   protected String myTitle;
@@ -55,7 +53,7 @@ public abstract class Task implements TaskInfo, Progressive {
   private String myCancelText = CommonBundle.getCancelButtonText();
   private String myCancelTooltipText = CommonBundle.getCancelButtonText();
 
-  public Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+  private Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
     myProject = project;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
@@ -231,15 +229,7 @@ public abstract class Task implements TaskInfo, Progressive {
       return false;
     }
 
-    /**
-     * @deprecated do not implement
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-    public DumbModeAction getDumbModeAction() {
-      return DumbModeAction.NOTHING;
-    }
-  }
+ }
 
   public abstract static class Modal extends Task {
     public Modal(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {

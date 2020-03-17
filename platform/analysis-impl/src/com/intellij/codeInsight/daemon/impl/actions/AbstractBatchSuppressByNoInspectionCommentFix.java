@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
@@ -126,12 +127,13 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     if (!isAvailable(project, element)) return;
     PsiElement container = getContainer(element);
+    PsiFile file = element.getContainingFile();
     if (container == null) return;
 
     if (replaceSuppressionComments(container)) return;
 
     createSuppression(project, element, container);
-    UndoUtil.markPsiFileForUndo(element.getContainingFile());
+    UndoUtil.markPsiFileForUndo(file);
   }
 
   protected boolean replaceSuppressionComments(PsiElement container) {

@@ -67,6 +67,14 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   PsiClass createEnum(@NotNull @NonNls String name) throws IncorrectOperationException;
 
   /**
+   * Creates a record with no components with the specified name.
+   *
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
+   */
+  @NotNull
+  PsiClass createRecord(@NotNull @NonNls String name) throws IncorrectOperationException;
+
+  /**
    * Creates an empty annotation type with the specified name.
    *
    * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.

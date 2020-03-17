@@ -48,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiReferenceExpressionImpl.class);
   private static final ThreadLocal<Map<PsiReferenceExpression, ResolveResult[]>> ourQualifierCache = ThreadLocal.withInitial(() -> new HashMap<>());
 
   private volatile String myCachedQName;
@@ -505,7 +505,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
       private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
-        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        if (PsiUtil.isJvmLocalVariable(element)) {
           myVarNames.add(element.getName());
         }
         return !(element instanceof PsiField) || !myVarNames.contains(element.getName());
@@ -767,11 +767,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     switch (role) {
       case ChildRole.REFERENCE_NAME:
         TreeElement lastChild = getLastChildNode();
-        return getChildRole(lastChild) == role ? lastChild : findChildByType(JavaTokenType.IDENTIFIER);
+        return lastChild == null || getChildRole(lastChild) == role ? lastChild : findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
         TreeElement firstChild = getFirstChildNode();
-        return getChildRole(firstChild) == ChildRole.QUALIFIER ? firstChild : null;
+        return firstChild != null && getChildRole(firstChild) == ChildRole.QUALIFIER ? firstChild : null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
         return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);

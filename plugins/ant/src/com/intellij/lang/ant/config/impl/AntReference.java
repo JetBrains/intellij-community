@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 
 public abstract class AntReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntReference");
+  private static final Logger LOG = Logger.getInstance(AntReference.class);
   @NonNls private static final String PROJECT_DEFAULT_ATTR = "projectDefault";
   @NonNls private static final String NAME_ATTR = "name";
   @NonNls private static final String BUNDLED_ANT_ATTR = "bundledAnt";
@@ -109,7 +109,7 @@ public abstract class AntReference {
 
     @Override
     public String getName() {
-      return GlobalAntConfiguration.BUNDLED_ANT_NAME;
+      return GlobalAntConfiguration.getBundledAntName();
     }
 
     @Override

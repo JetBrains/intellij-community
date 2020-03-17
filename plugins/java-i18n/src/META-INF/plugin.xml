@@ -13,7 +13,7 @@
     <extensionPoint name="resourceBundleManager"
                     interface="com.intellij.lang.properties.psi.ResourceBundleManager"
                     area="IDEA_PROJECT"/>
-    <extensionPoint name="i18nizeHandlerProvider" interface="com.intellij.codeInspection.i18n.I18nizeHandlerProvider"/>
+    <extensionPoint name="i18nizeHandlerProvider" interface="com.intellij.codeInspection.i18n.I18nizeHandlerProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.java-i18n">
@@ -30,7 +30,7 @@
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlinePropertyHandler"/>
 
-    <localInspection groupPath="Java" shortName="HardCodedStringLiteral" alternativeId="nls" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
+    <localInspection groupPath="Java" language="UAST" shortName="HardCodedStringLiteral" alternativeId="nls" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
     <localInspection groupPath="Java"  language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
@@ -76,12 +76,13 @@
     <experimentalFeature id="property.value.inplace.editing" percentOfUsers="100">
       <description>Edit property value at usage location, where it's displayed in folding placeholder</description>
     </experimentalFeature>
+    <registryKey key="i18n.for.idea.project" defaultValue="false" description="Batch i18n"/>
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
-    <action id="EditPropertyValue" class="com.intellij.codeInspection.i18n.folding.EditPropertyValueAction" text="Edit Property Value...">
+    <action id="EditPropertyValue" class="com.intellij.codeInspection.i18n.folding.EditPropertyValueAction">
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>
       <keyboard-shortcut first-keystroke="alt F6" keymap="$default"/>
     </action>

@@ -36,12 +36,14 @@ import org.jetbrains.io.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
+import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
+import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -128,16 +130,23 @@ private val STANDARD_COOKIE by lazy {
 // expire after access because we reuse tokens
 private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
+private val secureRandom by lazy { SecureRandom() }
+
 fun acquireToken(): String {
   // TODO: Use alternative token?
   //return BuiltinWebServerAccess.getUserAuthenticationToken()
 
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
-    token = DigestUtil.randomToken()
+    token = randomToken()
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
+}
+
+// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
+private fun randomToken(): String {
+  return BigInteger(130, secureRandom).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {

@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author nik
+ * Implement the interface and register the implementation as {@code hectorComponentProvider} extension to provide additional UI in
+ * "Code inspection highlighting settings" popup which is shown after clicking on "Hector" icon in the status bar.
  */
 public interface HectorComponentPanelsProvider {
   ExtensionPointName<HectorComponentPanelsProvider> EP_NAME = ExtensionPointName.create("com.intellij.hectorComponentProvider");

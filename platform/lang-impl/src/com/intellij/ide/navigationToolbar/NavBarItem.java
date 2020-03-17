@@ -6,12 +6,12 @@ import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +41,10 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   private final NavBarUI myUI;
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
+    this(panel, object, idx, parent, false);
+  }
+
+  public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent, boolean inPopup) {
     myPanel = panel;
     myUI = panel.getNavBarUI();
     myObject = object == null ? null : TreeAnchorizer.getService().createAnchor(object);
@@ -49,9 +53,8 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
 
     if (object != null) {
       NavBarPresentation presentation = myPanel.getPresentation();
-      myText = presentation.getPresentableText(object);
-      Icon icon = presentation.getIcon(object);
-      myIcon = icon != null ? icon : JBUI.scale(EmptyIcon.create(5));
+      myText = presentation.getPresentableText(object, inPopup);
+      myIcon = presentation.getIcon(object);
       myAttributes = presentation.getTextAttributes(object, false);
     }
     else {
@@ -83,8 +86,8 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
     update();
   }
 
-  public NavBarItem(NavBarPanel panel, Object object, Disposable parent) {
-    this(panel, object, -1, parent);
+  public NavBarItem(NavBarPanel panel, Object object, Disposable parent, boolean inPopup) {
+    this(panel, object, -1, parent, inPopup);
   }
 
   public Object getObject() {
@@ -127,7 +130,7 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
 
   public boolean isInactive() {
     final NavBarModel model = myPanel.getModel();
-    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1;
+    return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1 && !myPanel.isUpdating();
   }
 
   public boolean isPopupElement() {
@@ -166,7 +169,19 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
     final Dimension offsets = myUI.getOffsets(this);
-    return new Dimension(size.width + offsets.width, size.height + offsets.height);
+    int width = size.width + offsets.width;
+    if (!needPaintIcon()) {
+      width -= myIcon.getIconWidth();
+    }
+    return new Dimension(width, size.height + offsets.height);
+  }
+
+  public boolean needPaintIcon() {
+    if (Registry.is("navBar.show.icons") || isPopupElement || isLastElement()) {
+      return true;
+    }
+    Object object = getObject();
+    return object instanceof PsiElement && ((PsiElement)object).getContainingFile() != null;
   }
 
   @NotNull

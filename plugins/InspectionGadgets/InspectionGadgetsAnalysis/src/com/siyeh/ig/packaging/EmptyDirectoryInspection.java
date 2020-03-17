@@ -37,18 +37,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EmptyDirectoryInspection extends BaseGlobalInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportDirectoriesUnderSourceRoots = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.directory.display.name");
-  }
 
   @Override
   public JComponent createOptionsPanel() {
@@ -68,46 +63,45 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = context.getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    final SearchScope searchScope = scope.toSearchScope();
+    final SearchScope searchScope = ReadAction.compute(() -> scope.toSearchScope());
     if (!(searchScope instanceof GlobalSearchScope)) {
       return;
     }
     final GlobalSearchScope globalSearchScope = (GlobalSearchScope)searchScope;
     final PsiManager psiManager = PsiManager.getInstance(project);
-    index.iterateContent(fileOrDir -> {
-      if (!fileOrDir.isDirectory()) {
+    ReadAction.nonBlocking(() -> {
+      Map<RefElement, CommonProblemDescriptor> results = new HashMap<>();
+      index.iterateContent(fileOrDir -> {
+        if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(fileOrDir)) {
+          return true;
+        }
+        final VirtualFile[] children = fileOrDir.getChildren();
+        if (children.length != 0) {
+          return true;
+        }
+        final PsiDirectory directory = psiManager.findDirectory(fileOrDir);
+        final RefElement refDirectory = context.getRefManager().getReference(directory);
+        if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
+          return true;
+        }
+        final String relativePath = getPathRelativeToModule(fileOrDir, project);
+        if (relativePath == null) {
+          return true;
+        }
+        results.put(refDirectory, manager.createProblemDescriptor(
+          InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
+          new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
         return true;
-      }
-      if (!globalSearchScope.contains(fileOrDir)) {
-        return true;
-      }
-      if (onlyReportDirectoriesUnderSourceRoots && !index.isInSourceContent(fileOrDir)) {
-        return true;
-      }
-      final VirtualFile[] children = fileOrDir.getChildren();
-      if (children.length != 0) {
-        return true;
-      }
-      final PsiDirectory directory = ReadAction.compute(() -> psiManager.findDirectory(fileOrDir));
-      final RefElement refDirectory = context.getRefManager().getReference(directory);
-      if (refDirectory == null || context.shouldCheck(refDirectory, this)) {
-        return true;
-      }
-      final String relativePath = getPathRelativeToModule(fileOrDir, project);
-      if (relativePath == null) {
-        return true;
-      }
-      processor.addProblemElement(refDirectory, manager.createProblemDescriptor(
-        InspectionGadgetsBundle.message("empty.directories.problem.descriptor", relativePath),
-        new EmptyPackageFix(fileOrDir.getUrl(), fileOrDir.getName())));
-      return true;
-    });
+      }, globalSearchScope);
+      return results;
+    }).executeSynchronously()
+      .forEach((element, descriptor) -> processor.addProblemElement(element, descriptor));
   }
 
   @Nullable
   private static String getPathRelativeToModule(VirtualFile file, Project project) {
     final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-    final VirtualFile[] contentRoots = ReadAction.compute(() -> rootManager.getContentRootsFromAllModules());
+    final VirtualFile[] contentRoots = rootManager.getContentRootsFromAllModules();
     for (VirtualFile otherRoot : contentRoots) {
       if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
         return VfsUtilCore.getRelativePath(file, otherRoot, '/');

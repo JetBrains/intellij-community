@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiImportStaticReferenceElementImpl.class);
   private volatile String myCanonicalText;
 
   public PsiImportStaticReferenceElementImpl() {
@@ -138,7 +138,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     else {
       final LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       newRef.rawInsertAfterMe(dot);
-      final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
+      final CompositeElement errorElement = Factory.createErrorElement(
+        JavaErrorBundle.message("import.statement.identifier.or.asterisk.expected."));
       dot.rawInsertAfterMe(errorElement);
       final CompositeElement parentComposite = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent());
       parentComposite.addInternal(newRef, errorElement, this, Boolean.TRUE);
@@ -221,8 +222,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     PsiFile file = getContainingFile();
-    final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
-    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode,file);
+    ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
+    ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode, file);
     return results instanceof JavaResolveResult[] ? (JavaResolveResult[])results : JavaResolveResult.EMPTY_ARRAY;
   }
 

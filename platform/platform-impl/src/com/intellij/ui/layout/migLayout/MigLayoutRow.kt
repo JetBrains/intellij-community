@@ -3,7 +3,9 @@ package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.HideableTitledSeparator
@@ -17,8 +19,10 @@ import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
+import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
@@ -27,10 +31,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             override val builder: MigLayoutBuilder,
                             val labeled: Boolean = false,
                             val noGrid: Boolean = false,
-                            private val indent: Int /* level number (nested rows) */) : Row() {
+                            private val indent: Int /* level number (nested rows) */,
+                            private val incrementsIndent: Boolean = parent != null) : Row() {
   companion object {
     // as static method to ensure that members of current row are not used
-    private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, indent: Int, isParentRowLabeled: Boolean, maxLineLength: Int) {
+    private fun createCommentRow(parent: MigLayoutRow,
+                                 comment: String,
+                                 component: JComponent,
+                                 indent: Int,
+                                 isParentRowLabeled: Boolean,
+                                 maxLineLength: Int) {
       val cc = CC()
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
@@ -40,7 +50,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         cc.skip()
       }
       else {
-        cc.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(component) + indent, true)
+        cc.horizontal.gapBefore = gapToBoundSize(indent + parent.spacing.indentLevel, true)
       }
     }
 
@@ -72,7 +82,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private var isTrailingSeparator = false
   private var isComment = false
 
-  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
+    if (title != null) {
+      label(title)
+      gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
+    }
     builder.withButtonGroup(buttonGroup, body)
   }
 
@@ -146,7 +160,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
   internal val columnIndexIncludingSubRows: Int
-    get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
+    get() = max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     return createChildRow(indent, label, isSeparated, noGrid, title)
@@ -156,16 +170,19 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                              label: JLabel? = null,
                              isSeparated: Boolean = false,
                              noGrid: Boolean = false,
-                             title: String? = null): MigLayoutRow {
+                             title: String? = null,
+                             incrementsIndent: Boolean = true): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
+    val newIndent = if (!this.incrementsIndent) indent else indent + spacing.indentLevel
 
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else indent + computeChildRowIndent(isSeparated))
+                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else newIndent,
+                           incrementsIndent = incrementsIndent)
 
     if (isSeparated) {
-      val separatorRow = MigLayoutRow(this, builder, indent = indent, noGrid = true)
+      val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
       separatorRow.enabled = subRowsEnabled
       separatorRow.visible = subRowsVisible
@@ -174,10 +191,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     var insertIndex = subRows.size
     if (insertIndex > 0 && subRows[insertIndex-1].isTrailingSeparator) {
-      insertIndex--;
+      insertIndex--
     }
     if (insertIndex > 0 && subRows[insertIndex-1].isComment) {
-      insertIndex--;
+      insertIndex--
     }
     subRows.add(insertIndex, row)
 
@@ -193,18 +210,38 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   private fun <T : JComponent> addTitleComponent(titleComponent: T, isEmpty: Boolean) {
     val cc = CC().apply {
-      vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
       if (isEmpty) {
         vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
         isTrailingSeparator = true
       }
       else {
-        vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
         // TitledSeparator doesn't grow by default opposite to SeparatorComponent
         growX()
       }
     }
     addComponent(titleComponent, lazyOf(cc))
+  }
+
+  override fun titledRow(title: String, init: Row.() -> Unit): Row {
+    return createBlockRow(title, true, init)
+  }
+
+  override fun blockRow(init: Row.() -> Unit): Row {
+    return createBlockRow(null, false, init)
+  }
+
+  private fun createBlockRow(title: String?, isSeparated: Boolean, init: Row.() -> Unit): Row {
+    return createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
+      .apply(init)
+      .apply {
+        createChildRow().apply {
+          JPanel().apply {
+            maximumSize = Dimension(0, 0)
+            preferredSize = Dimension(0, 0)
+          }()
+          largeGapAfter()
+        }
+      }
   }
 
   override fun hideableRow(title: String, init: Row.() -> Unit): Row {
@@ -259,26 +296,22 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  private fun computeChildRowIndent(isSeparated: Boolean): Int {
-    if (isSeparated) {
-      return spacing.indentLevel
+  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
+                                                  gapLeft: Int,
+                                                  growPolicy: GrowPolicy?,
+                                                  comment: String?): CellBuilder<T> {
+    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, growPolicy, comment)
+    return CellBuilderImpl(builder, this@MigLayoutRow, this).apply {
+      if (gapLeft != 0) {
+        builder.updateComponentConstraints(component) {
+          horizontal.gapBefore = gapToBoundSize(gapLeft, true)
+        }
+      }
     }
-    val firstComponent = components.firstOrNull() ?: return 0
-    if (firstComponent is JRadioButton || firstComponent is JCheckBox) {
-      return getCommentLeftInset(firstComponent)
-    }
-    else {
-      return spacing.indentLevel
-    }
-  }
-
-  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?): CellBuilder<T> {
-    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, gapLeft, growPolicy, comment)
-    return CellBuilderImpl(builder, this@MigLayoutRow, this)
   }
 
   // separate method to avoid JComponent as a receiver
-  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
+  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
 
     if (!visible) {
@@ -307,7 +340,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       builder.topButtonGroup?.add(component)
     }
 
-    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, gapLeft = gapLeft, growPolicy = growPolicy)
+    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, growPolicy = growPolicy)
 
     if (!noGrid && indent > 0 && components.size == 1) {
       cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
@@ -389,7 +422,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun largeGapAfter() {
-    gapAfter = "${spacing.largeVerticalGap * 2}px!"
+    gapAfter = "${spacing.largeVerticalGap}px!"
   }
 
   override fun createRow(label: String?): Row {
@@ -421,6 +454,7 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   override val component: T
 ) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
   private var applyIfEnabled = false
+  var property: GraphProperty<*>? = null
 
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
     row.addCommentRow(component, text, maxLineLength)
@@ -433,12 +467,13 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-    builder.validateCallbacks.add { callback(ValidationInfoBuilder(component), component) }
+    builder.validateCallbacks.add { callback(ValidationInfoBuilder(component.origin), component) }
     return this
   }
 
   override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-    builder.componentValidateCallbacks[component] = { callback(ValidationInfoBuilder(component), component) }
+    builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
+    property?.let { builder.customValidationRequestors.putValue(component.origin, it::afterPropagation) }
     return this
   }
 
@@ -487,6 +522,18 @@ class CellBuilderImpl<T : JComponent> internal constructor(
       pushY(0.0f)
     }
   }
+
+  override fun sizeGroup(name: String) = apply {
+    builder.updateComponentConstraints(component) {
+      sizeGroup(name)
+    }
+  }
+
+  override fun withLargeLeftGap(): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
+    }
+  }
 }
 
 private fun getCommentLeftInset(component: JComponent): Int {
@@ -509,3 +556,11 @@ private fun getCommentLeftInset(component: JComponent): Int {
   val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
   return insets.left - componentBorderVisualLeftPadding
 }
+
+private val JComponent.origin: JComponent
+  get() {
+    return when (this) {
+      is TextFieldWithBrowseButton -> textField
+      else -> this
+    }
+  }

@@ -1,13 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.model.SymbolReference;
+import com.intellij.model.Symbol;
 import com.intellij.model.SymbolResolveResult;
-import com.intellij.model.SymbolService;
+import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,7 @@ import java.util.Collections;
  * @see PsiReferenceBase
  * @see PsiReferenceContributor
  */
-public interface PsiReference extends SymbolReference {
+public interface PsiReference extends PsiSymbolReference {
 
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
@@ -39,6 +41,7 @@ public interface PsiReference extends SymbolReference {
    *
    * @return the underlying element of the reference.
    */
+  @Override
   @NotNull
   PsiElement getElement();
 
@@ -56,6 +59,7 @@ public interface PsiReference extends SymbolReference {
    *
    * @return Relative range in element
    */
+  @Override
   @NotNull
   TextRange getRangeInElement();
 
@@ -133,10 +137,24 @@ public interface PsiReference extends SymbolReference {
    */
   boolean isSoft();
 
+  @Experimental
   @NotNull
   @Override
   default Collection<? extends SymbolResolveResult> resolveReference() {
     PsiElement resolved = resolve();
-    return resolved == null ? Collections.emptyList() : Collections.singletonList(SymbolService.resolveResult(resolved));
+    if (resolved == null) {
+      return Collections.emptyList();
+    }
+    else {
+      Symbol symbol = PsiSymbolService.getInstance().asSymbol(resolved);
+      return Collections.singletonList(() -> symbol);
+    }
+  }
+
+  @Experimental
+  @Override
+  default boolean resolvesTo(@NotNull Symbol target) {
+    PsiElement psi = PsiSymbolService.getInstance().extractElementFromSymbol(target);
+    return psi == null ? PsiSymbolReference.super.resolvesTo(target) : isReferenceTo(psi);
   }
 }

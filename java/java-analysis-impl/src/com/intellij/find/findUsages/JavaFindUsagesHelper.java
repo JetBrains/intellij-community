@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaFindUsagesHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.JavaFindUsagesHelper");
+  private static final Logger LOG = Logger.getInstance(JavaFindUsagesHelper.class);
 
   @NotNull
   public static Set<String> getElementNames(@NotNull final PsiElement element) {

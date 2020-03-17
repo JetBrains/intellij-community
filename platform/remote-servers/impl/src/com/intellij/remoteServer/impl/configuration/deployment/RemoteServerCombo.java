@@ -248,7 +248,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     @Override
     public void render(@NotNull SimpleColoredComponent ui) {
       ui.setIcon(EmptyIcon.create(myServerType.getIcon()));
-      ui.append(CloudBundle.getText("remote.server.combo.create.new.server"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      ui.append(CloudBundle.message("remote.server.combo.create.new.server"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @Override
@@ -339,7 +339,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     @Override
     public void render(@NotNull SimpleColoredComponent ui) {
       ui.setIcon(null);
-      ui.append(CloudBundle.getText("remote.server.combo.no.servers"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      ui.append(CloudBundle.message("remote.server.combo.no.servers"), SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
   }
 }

@@ -28,7 +28,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author peter
  */
 public class ReferenceExpressionCompletionContributor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor");
+  private static final Logger LOG = Logger.getInstance(ReferenceExpressionCompletionContributor.class);
 
   @NotNull
   static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {

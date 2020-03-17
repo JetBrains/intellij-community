@@ -3,13 +3,14 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveVisitor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyRecursiveElementVisitor extends PyElementVisitor implements PsiRecursiveVisitor {
   @Override
-  public void visitElement(final PsiElement element) {
+  public void visitElement(@NotNull final PsiElement element) {
     element.acceptChildren(this);
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.nio.charset.StandardCharsets

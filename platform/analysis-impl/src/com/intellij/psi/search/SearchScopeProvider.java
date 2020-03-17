@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -18,16 +19,15 @@ public interface SearchScopeProvider {
   }
 
   @NotNull
-  default List<SearchScope> getSearchScopes(@NotNull Project project) {
+  default List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
     return Collections.emptyList();
   }
 
   /**
    * General project scopes are added after 'Project', 'Everything' but before 'Production', 'Tests', etc.
    * @see PredefinedSearchScopeProvider
-   * @param project
    */
-  default List<SearchScope> getGeneralSearchScopes(@NotNull Project project) {
+  default List<SearchScope> getGeneralSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
     return Collections.emptyList();
   }
 }

@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.local;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 public class SetReadOnly implements ChangeListCommand {
@@ -27,9 +26,9 @@ public class SetReadOnly implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
+  public void doNotify(final ChangeListListener listener) {
     if (myListCopy != null && myResult) {
-      dispatcher.getMulticaster().changeListChanged(myListCopy);
+      listener.changeListChanged(myListCopy);
     }
   }
 

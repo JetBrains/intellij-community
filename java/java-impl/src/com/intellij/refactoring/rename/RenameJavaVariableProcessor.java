@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaVariableProcessor");
+  private static final Logger LOG = Logger.getInstance(RenameJavaVariableProcessor.class);
 
   @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {

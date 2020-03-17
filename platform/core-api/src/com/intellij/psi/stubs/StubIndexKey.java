@@ -19,19 +19,24 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
-  private StubIndexKey(@NonNls String name) {
-    super(name);
+  private StubIndexKey(@NonNls String name, @Nullable PluginId pluginId) {
+    super(name, pluginId);
   }
 
   @NotNull
   public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls @NotNull String name) {
-    return new StubIndexKey<>(name);
+    PluginId pluginId = getCallerPluginId();
+    ID<?, ?> existing = findByName(name, true, pluginId);
+    if (existing != null) return (StubIndexKey<K, Psi>) existing;
+    return new StubIndexKey<>(name, pluginId);
   }
 
 }

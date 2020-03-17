@@ -36,10 +36,10 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
 
   @NotNull
   public T get() {
-    final List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) {
+        final List<KeyedFactoryEPBean> epBeans = myEpName.getExtensionList();
         //noinspection unchecked
         KeyT keyArg = (KeyT) args [0];
         String key = getKey(keyArg);

@@ -39,13 +39,7 @@ public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalIns
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GENERAL_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("default.file.template.display.name");
+    return getGeneralGroupName();
   }
 
   @Override

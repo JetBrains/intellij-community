@@ -142,7 +142,7 @@ public final class MavenShortcutsManager implements Disposable {
   private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue("MavenShortcutsManager: Keymap Update",
-                                                                                 500, true, myProject);
+                                                                                 500, true, myProject).usePassThroughInUnitTestMode();
 
     @Override
     public void activated() {
@@ -190,7 +190,7 @@ public final class MavenShortcutsManager implements Disposable {
             mySheduledProjects.clear();
           }
 
-          if (!myProject.isDisposedOrDisposeInProgress()) {
+          if (!myProject.isDisposed()) {
             MavenKeymapExtension.clearActions(myProject, projectToDelete);
             MavenKeymapExtension.updateActions(myProject, projectToUpdate);
           }

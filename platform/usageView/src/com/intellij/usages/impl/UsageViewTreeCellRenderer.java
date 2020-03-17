@@ -20,6 +20,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,13 +32,13 @@ import java.awt.*;
  * @author max
  */
 class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsageViewTreeCellRenderer");
+  private static final Logger LOG = Logger.getInstance(UsageViewTreeCellRenderer.class);
   private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
   private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
   private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
   private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
   private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
-  private static final Insets STANDARD_IPAD_NOWIFI = new Insets(1, 2, 1, 2);
+  private static final Insets STANDARD_IPAD_NOWIFI = JBUI.insets(1, 2);
   private static final TextChunk[] ourLoadingText = {new TextChunk(SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes(), "loading...")};
   private boolean myRowBoundsCalled;
 

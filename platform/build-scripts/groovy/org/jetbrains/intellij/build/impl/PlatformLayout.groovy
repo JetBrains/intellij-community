@@ -13,9 +13,8 @@ import java.util.function.Consumer
  * <p>
  * By default it includes all modules specified in {@link org.jetbrains.intellij.build.ProductModulesLayout},
  * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
- * or 'Runtime') of plugin modules for plugins which are {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundled},
- * {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledOsPluginModules bundled for different OSes}
- * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish} published}) with the product (except
+ * or 'Runtime') of plugin modules for plugins which are {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules bundled}
+ * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish published}) with the product (except
  * project libraries which are explicitly included into layouts of all plugins depending on them by {@link BaseLayoutSpec#withProjectLibrary}).
  *
  * @author nik
@@ -78,24 +77,6 @@ class PlatformLayout extends BaseLayout {
           withProjectLibrary(it.name)
         }
       }
-      // Android Studio
-      layout.testModuleJars.values().each {
-        def module = context.findRequiredModule(it)
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.TEST_RUNTIME).libraries.findAll {
-          !(it.createReference().parentReference instanceof JpsModuleReference) &&
-          !layout.projectLibrariesToUnpack.values().contains(it.name) &&
-          !layout.excludedProjectLibraries.contains(it.name)
-        }.each {
-          withProjectLibrary(it.name)
-        }
-      }
-    }
-
-    /**
-     * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
-     */
-    void withProjectLibraryUnpackedIntoJar(String libraryName, String jarName) {
-      layout.projectLibrariesToUnpack.put(jarName, libraryName)
     }
   }
 }

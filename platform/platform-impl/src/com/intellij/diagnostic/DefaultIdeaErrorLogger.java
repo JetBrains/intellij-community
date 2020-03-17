@@ -39,7 +39,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     try {
       final Application app = ApplicationManager.getApplication();
-      if (app.isDisposed() || app.isDisposeInProgress()) {
+      if (app.isDisposed()) {
         return false;
       }
 

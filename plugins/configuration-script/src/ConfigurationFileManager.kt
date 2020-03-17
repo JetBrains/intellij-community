@@ -15,7 +15,7 @@ import com.intellij.util.io.inputStreamIfExists
 import org.snakeyaml.engine.v2.api.LoadSettings
 import org.snakeyaml.engine.v2.composer.Composer
 import org.snakeyaml.engine.v2.nodes.MappingNode
-import org.snakeyaml.engine.v2.nodes.ScalarNode
+import org.snakeyaml.engine.v2.nodes.NodeTuple
 import org.snakeyaml.engine.v2.parser.ParserImpl
 import org.snakeyaml.engine.v2.scanner.StreamReader
 import java.io.Reader
@@ -84,26 +84,11 @@ internal class ConfigurationFileManager(project: Project) {
 
   fun getConfigurationNode() = yamlData.value
 
-  fun findValueNode(namePath: String): MappingNode? {
-    return findValueNodeByPath(namePath, yamlData.value ?: return null)
+  // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
+  // "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.
+  fun findValueNode(namePath: String): List<NodeTuple>? {
+    return findValueNodeByPath(namePath, yamlData.value?.value ?: return null)
   }
-}
-
-internal fun findValueNodeByPath(namePath: String, rootNode: MappingNode): MappingNode? {
-  var node = rootNode
-  loop@
-  for (name in namePath.splitToSequence('.')) {
-    for (tuple in node.value) {
-      val keyNode = tuple.keyNode
-      if (keyNode is ScalarNode && keyNode.value == name) {
-        node = tuple.valueNode as? MappingNode ?: continue
-        continue@loop
-      }
-    }
-    return null
-  }
-
-  return if (node === rootNode) null else node
 }
 
 internal fun doRead(reader: Reader): MappingNode? {

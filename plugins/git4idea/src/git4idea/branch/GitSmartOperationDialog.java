@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.openapi.Disposable;
@@ -25,6 +11,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import git4idea.DialogManager;
+import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.ui.ChangesBrowserWithRollback;
 import git4idea.util.GitSimplePathsBrowser;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +53,7 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @NotNull private final JComponent myFileBrowser;
   @NotNull private final String myOperationTitle;
+  @NotNull private final GitSaveChangesPolicy mySaveMethod;
   @Nullable private final String myForceButton;
 
   /**
@@ -91,11 +80,14 @@ public class GitSmartOperationDialog extends DialogWrapper {
     myFileBrowser = fileBrowser;
     myOperationTitle = operationTitle;
     myForceButton = forceButton;
+    mySaveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
     String capitalizedOperation = capitalize(myOperationTitle);
     setTitle("Git " + capitalizedOperation + " Problem");
 
     setOKButtonText("Smart " + capitalizedOperation);
-    getOKAction().putValue(Action.SHORT_DESCRIPTION, "Stash local changes, " + operationTitle + ", unstash");
+    String description = String.format("%s local changes, %s, %s",
+                                       capitalize(mySaveMethod.getVerb()), operationTitle, mySaveMethod.getOppositeVerb());
+    getOKAction().putValue(Action.SHORT_DESCRIPTION, description);
     setCancelButtonText("Don't " + capitalizedOperation);
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
@@ -112,11 +104,11 @@ public class GitSmartOperationDialog extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
-    JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by " + myOperationTitle +
-                                      ".<br/>" + ApplicationNamesInfo.getInstance().getFullProductName() + " can stash the changes, "
-                                      + myOperationTitle + " and unstash them after that.</html>");
-    description.setBorder(JBUI.Borders.emptyBottom(10));
-    return description;
+    String labelText = String.format("<html>Your local changes to the following files would be overwritten by %s.<br/>" +
+                                     "%s can %s the changes, %s and %s them after that.</html>",
+                                     myOperationTitle, ApplicationNamesInfo.getInstance().getFullProductName(), mySaveMethod.getVerb(),
+                                     myOperationTitle, mySaveMethod.getOppositeVerb());
+    return new JBLabel(labelText).withBorder(JBUI.Borders.emptyBottom(10));
   }
 
   @Override

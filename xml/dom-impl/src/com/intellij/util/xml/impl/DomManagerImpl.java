@@ -22,8 +22,8 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
-import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.XmlChangeSet;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -90,10 +90,11 @@ public final class DomManagerImpl extends DomManager {
       public void modelChanged(@NotNull PomModelEvent event) {
         if (myChanging) return;
 
-        final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(pomModel.getModelAspect(XmlAspect.class));
+        TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(pomModel.getModelAspect(TreeAspect.class));
         if (changeSet != null) {
-          for (XmlFile file : changeSet.getChangedFiles()) {
-            DomFileElementImpl<DomElement> element = getCachedFileElement(file);
+          PsiFile file = changeSet.getRootElement().getPsi().getContainingFile();
+          if (file instanceof XmlFile) {
+            DomFileElementImpl<DomElement> element = getCachedFileElement((XmlFile)file);
             if (element != null) {
               fireEvent(new DomEvent(element, false));
             }
@@ -103,7 +104,7 @@ public final class DomManagerImpl extends DomManager {
 
       @Override
       public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
-        return aspect instanceof XmlAspect;
+        return aspect instanceof TreeAspect;
       }
     }, project);
 

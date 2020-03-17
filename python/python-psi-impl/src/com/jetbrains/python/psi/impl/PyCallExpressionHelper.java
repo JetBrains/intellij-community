@@ -81,7 +81,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain(PyResolveContext.noImplicits());
+      resolveResult = ref.followAssignmentsChain(PyResolveContext.defaultContext());
       resolved = resolveResult.getElement();
     }
     else {
@@ -195,22 +195,6 @@ public class PyCallExpressionHelper {
         final ClarifiedResolveResult result = new ClarifiedResolveResult(resolveResult, wrapperInfo.getSecond(), wrappedModifier, false);
         return Collections.singletonList(result);
       }
-      else {
-        final PyType resolvedCallType = resolveContext.getTypeEvalContext().getType(resolvedCall);
-        if (resolvedCallType instanceof PyClassLikeType) {
-          final List<? extends RatedResolveResult> dunderCall =
-            ((PyClassLikeType)resolvedCallType).resolveMember(PyNames.CALL, resolvedCall, AccessDirection.READ, resolveContext, true);
-
-          if (!ContainerUtil.isEmpty(dunderCall)) {
-            return StreamEx
-              .of(dunderCall)
-              .map(RatedResolveResult::getElement)
-              .nonNull()
-              .map(element -> new ClarifiedResolveResult(resolveResult, element, null, false))
-              .toList();
-          }
-        }
-      }
     }
     else if (resolved instanceof PyFunction) {
       final PyFunction function = (PyFunction)resolved;
@@ -222,6 +206,23 @@ public class PyCallExpressionHelper {
         return type instanceof PyFunctionType
                ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, ((PyFunctionType)type).getCallable(), null, false))
                : Collections.emptyList();
+      }
+    }
+
+    if (resolved instanceof PyTypedElement) {
+      final PyType resolvedCallType = resolveContext.getTypeEvalContext().getType((PyTypedElement)resolved);
+      if (resolvedCallType instanceof PyClassLikeType) {
+        final List<? extends RatedResolveResult> dunderCall =
+          ((PyClassLikeType)resolvedCallType).resolveMember(PyNames.CALL, call, AccessDirection.READ, resolveContext, true);
+
+        if (!ContainerUtil.isEmpty(dunderCall)) {
+          return StreamEx
+            .of(dunderCall)
+            .map(RatedResolveResult::getElement)
+            .nonNull()
+            .map(element -> new ClarifiedResolveResult(resolveResult, element, null, false))
+            .toList();
+        }
       }
     }
 
@@ -445,7 +446,7 @@ public class PyCallExpressionHelper {
           }
         }
         // normal cases
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
         final List<QualifiedRatedResolveResult> resolveResults = multiResolveCallee(callee, resolveContext);
         final Stream<QualifiedRatedResolveResult> overloadsOtherwiseImplementations =
@@ -787,7 +788,7 @@ public class PyCallExpressionHelper {
     final PyCallableType callableType = PyUtil.as(context.getType(callable), PyCallableType.class);
     if (callableType == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
-    return mapArguments(callSite, callableType, callable, PyResolveContext.noImplicits().withTypeEvalContext(context));
+    return mapArguments(callSite, callableType, callable, PyResolveContext.defaultContext().withTypeEvalContext(context));
   }
 
   @NotNull

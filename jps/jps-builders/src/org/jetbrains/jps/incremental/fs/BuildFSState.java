@@ -30,7 +30,7 @@ import java.util.*;
  */
 public class BuildFSState {
   public static final int VERSION = 3;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.BuildFSState");
+  private static final Logger LOG = Logger.getInstance(BuildFSState.class);
   private static final Key<Set<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
   private static final Key<FilesDelta> NEXT_ROUND_DELTA_KEY = Key.create("_next_round_delta_");
   private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");

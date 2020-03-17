@@ -34,7 +34,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.codeInsight.daemon.JavaErrorMessages.BUNDLE;
+import static com.intellij.codeInsight.daemon.JavaErrorBundle.BUNDLE;
 
 public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
   public static final ExtensionPointName<ErrorFixExtensionPoint> ERROR_FIX_EXTENSION_POINT =

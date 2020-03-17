@@ -19,5 +19,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ActionClassHolder {
   @NotNull
-  Class getActionClass();
+  Class<?> getActionClass();
 }

@@ -16,8 +16,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     private const val iconsRepoArg = "icons.repo"
   }
 
-  val devRepoDir: File
-  val iconsRepoDir: File
+  var devRepoDir: File
+  var iconsRepoDir: File
   val iconsRepoName: String
   val devRepoName: String
   val skipDirsPattern: String?
@@ -26,12 +26,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   val doSyncRemovedIconsInDev: Boolean
   private val failIfSyncDevIconsRequired: Boolean
   val notifySlack: Boolean
-  lateinit var iconsRepo: File
-  lateinit var devRepoRoot: File
   val byDev = Changes()
   val byCommit = mutableMapOf<String, Changes>()
   val consistent: MutableCollection<String> = mutableListOf()
-  var createdReviews: Collection<Review> = emptyList()
   var icons: Map<String, GitObject> = emptyMap()
   var devIcons: Map<String, GitObject> = emptyMap()
   var devCommitsToSync: Map<File, Collection<CommitInfo>> = emptyMap()
@@ -124,6 +121,13 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       }?.toMutableSet() ?: mutableSetOf()
   }
 
+  val iconsRepo: File by lazy {
+    findGitRepoRoot(iconsRepoDir)
+  }
+  val devRepoRoot: File by lazy {
+    findGitRepoRoot(devRepoDir)
+  }
+
   private fun cloneIconsRepoToTempDir(): File {
     log("WARNING: $iconsRepoArg not found")
     val tmp = Files.createTempDirectory("icons-sync").toFile()
@@ -144,13 +148,14 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     }
   }
 
+  var iconsFilter: (File) -> Boolean = { Icon(it).isValid }
+
   fun devChanges() = byDev.all()
   fun iconsChanges() = byDesigners.all()
 
   fun iconsSyncRequired() = devChanges().isNotEmpty()
   fun devSyncRequired() = iconsChanges().isNotEmpty()
 
-  fun devReviews(): Collection<Review> = createdReviews.filter { it.projectId == UPSOURCE_DEV_PROJECT_ID }
   fun verifyDevIcons(repos: Collection<File>) = devIconsVerifier?.accept(repos)
   fun doFail(report: String) {
     log(report)

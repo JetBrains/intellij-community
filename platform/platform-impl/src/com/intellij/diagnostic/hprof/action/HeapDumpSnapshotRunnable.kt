@@ -22,7 +22,9 @@ import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
 import com.intellij.diagnostic.hprofDatabase
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.diagnostic.report.MemoryReportReason
+import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -97,7 +99,7 @@ class HeapDumpSnapshotRunnable(
         return
       }
 
-      val nextCheckPropertyMs = PropertiesComponent.getInstance().getOrInitLong(NEXT_CHECK_TIMESTAMP_KEY, 0)
+      val nextCheckPropertyMs = PropertiesComponent.getInstance().getLong(NEXT_CHECK_TIMESTAMP_KEY, 0)
       val currentTimestampMs = System.currentTimeMillis()
 
       if (nextCheckPropertyMs > currentTimestampMs) {
@@ -211,6 +213,11 @@ class HeapDumpSnapshotRunnable(
               DiagnosticBundle.message("heap.dump.analysis.notification.title"),
               DiagnosticBundle.message("heap.dump.snapshot.created", hprofPath.toString(), productName),
               NotificationType.INFORMATION, null)
+            if (ApplicationManager.getApplication().isInternal) {
+              notification.addAction(NotificationAction.createSimpleExpiring(RevealFileAction.getActionName()) {
+                RevealFileAction.openFile(hprofPath.toFile())
+              })
+            }
             notification.notify(null)
           }
         }
@@ -222,6 +229,9 @@ class HeapDumpSnapshotRunnable(
             DiagnosticBundle.message("heap.dump.analysis.notification.title"),
             DiagnosticBundle.message("heap.dump.snapshot.created.no.analysis", hprofPath.toString()),
             NotificationType.INFORMATION, null)
+          notification.addAction(NotificationAction.createSimpleExpiring(RevealFileAction.getActionName()) {
+            RevealFileAction.openFile(hprofPath.toFile())
+          })
           notification.notify(null)
         }
       }

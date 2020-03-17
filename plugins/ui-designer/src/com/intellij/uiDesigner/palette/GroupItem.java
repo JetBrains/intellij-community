@@ -18,7 +18,7 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public final class GroupItem implements Cloneable, PaletteGroup {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.GroupItem");
+  private static final Logger LOG = Logger.getInstance(GroupItem.class);
 
   public static final DataKey<GroupItem> DATA_KEY = DataKey.create(GroupItem.class.getName());
 

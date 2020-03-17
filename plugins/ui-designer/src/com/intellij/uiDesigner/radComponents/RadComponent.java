@@ -40,7 +40,7 @@ import java.util.HashSet;
  * @author Vladimir Kondratyev
  */
 public abstract class RadComponent implements IComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadComponent");
+  private static final Logger LOG = Logger.getInstance(RadComponent.class);
 
   /**
    * Shared instance of empty array of RadComponenets

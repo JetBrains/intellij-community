@@ -9,7 +9,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -281,9 +279,9 @@ public abstract class UsefulTestCase extends TestCase {
   @SuppressWarnings("ConstantConditions")
   private static void cleanupSwingDataStructures() throws Exception {
     Object manager = ReflectionUtil.getDeclaredMethod(Class.forName("javax.swing.KeyboardManager"), "getCurrentManager").invoke(null);
-    Map componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
+    Map<?, ?> componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
     componentKeyStrokeMap.clear();
-    Map containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
+    Map<?, ?> containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
     containerMap.clear();
   }
 
@@ -317,8 +315,6 @@ public abstract class UsefulTestCase extends TestCase {
           currentCodeStyleSettings.clearCodeStyleSettings();
         }
       })
-      .append(() -> InplaceRefactoring.checkCleared())
-      .append(() -> StartMarkAction.checkCleared())
       .run();
   }
 
@@ -401,11 +397,17 @@ public abstract class UsefulTestCase extends TestCase {
         logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
       }
       catch (Throwable tearingDown) {
-        if (exception == null) exception = tearingDown;
-        else exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        if (exception == null) {
+          exception = tearingDown;
+        }
+        else {
+          exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        }
       }
     }
-    if (exception != null) throw exception;
+    if (exception != null) {
+      throw exception;
+    }
   }
 
   /**
@@ -687,7 +689,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
-    Set<Consumer<T>> checkerSet = new HashSet<>(Arrays.asList(checkers));
+    Set<Consumer<T>> checkerSet = ContainerUtil.set(checkers);
     int i = 0;
     Throwable lastError = null;
     for (final T actual : collection) {
@@ -990,12 +992,12 @@ public abstract class UsefulTestCase extends TestCase {
    * If expected error message is null it will not be checked.
    *
    * @param exceptionClass   Expected exception type
-   * @param expectedErrorMsg expected error message, of any
+   * @param expectedErrorMsgPart expected error message, of any
    * @param runnable         Block annotated with some exception type
    */
   @SuppressWarnings({"unchecked", "SameParameterValue"})
   public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
-                                                        @Nullable String expectedErrorMsg,
+                                                        @Nullable String expectedErrorMsgPart,
                                                         @NotNull ThrowableRunnable<T> runnable) {
     assertExceptionOccurred(true, new AbstractExceptionCase() {
       @Override
@@ -1007,7 +1009,7 @@ public abstract class UsefulTestCase extends TestCase {
       public void tryClosure() throws Throwable {
         runnable.run();
       }
-    }, expectedErrorMsg);
+    }, expectedErrorMsgPart);
   }
 
   /**
@@ -1032,7 +1034,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static <T extends Throwable> void assertExceptionOccurred(boolean shouldOccur,
                                                                     @NotNull AbstractExceptionCase<T> exceptionCase,
-                                                                    String expectedErrorMsg) throws T {
+                                                                    String expectedErrorMsgPart) throws T {
     boolean wasThrown = false;
     try {
       exceptionCase.tryClosure();
@@ -1047,8 +1049,8 @@ public abstract class UsefulTestCase extends TestCase {
         wasThrown = true;
         final String errorMessage = exceptionCase.getAssertionErrorMessage();
         assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
-        if (expectedErrorMsg != null) {
-          assertEquals("Compare error messages", expectedErrorMsg, cause.getMessage());
+        if (expectedErrorMsgPart != null) {
+          assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }
       }
       else if (exceptionCase.getExpectedExceptionClass().equals(cause.getClass())) {

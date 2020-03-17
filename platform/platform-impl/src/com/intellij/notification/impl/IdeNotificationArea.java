@@ -40,7 +40,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateStatus(myStatusBar != null ? myStatusBar.getProject() : null);
   }
 

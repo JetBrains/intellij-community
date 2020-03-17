@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -42,12 +42,12 @@ public class XmlInvalidIdInspection extends XmlDuplicatedIdInspection {
 
         final FileViewProvider viewProvider = tag.getContainingFile().getViewProvider();
         if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
-          holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+          holder.registerProblem(value, XmlErrorBundle.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                  new XmlDeclareIdInCommentAction(idRef));
 
         }
         else {
-          holder.registerProblem(value, XmlErrorMessages.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          holder.registerProblem(value, XmlErrorBundle.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         }
       }
     }

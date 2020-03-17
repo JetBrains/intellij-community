@@ -6,11 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupFocusDegree
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.Template
@@ -1714,7 +1710,7 @@ class Cls {
     myFixture.configureByText "a.properties", "myprop=ja<caret>"
     type 'v'
     myFixture.assertPreferredCompletionItems 0, 'java'
-    lookup.focusDegree = LookupImpl.FocusDegree.FOCUSED
+    lookup.lookupFocusDegree = LookupFocusDegree.FOCUSED
     type '.'
     myFixture.checkResult 'myprop=java.<caret>'
     assert lookup

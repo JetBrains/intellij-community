@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -17,6 +16,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   @Override
   public void show(@NotNull String contributorID, @Nullable String searchText, @NotNull AnActionEvent initEvent) {
     if (isShown()) {
-      throw new IllegalStateException("Method should cannot be called whe popup is shown");
+      throw new IllegalStateException("Method should cannot be called when popup is shown");
     }
 
     Project project = initEvent.getProject();
@@ -63,7 +63,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     List<SearchEverywhereContributor<?>> serviceContributors = Arrays.asList(
       new TopHitSEContributor(project, contextComponent, s ->
         mySearchEverywhereUI.getSearchField().setText(s)),
-      new RecentFilesSEContributor(project, GotoActionBase.getPsiContext(initEvent)),
+      new RecentFilesSEContributor(initEvent),
       new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText())
     );
     List<SearchEverywhereContributor<?>> contributors = new ArrayList<>(serviceContributors);
@@ -77,7 +77,7 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
 
     myHistoryIterator = myHistoryList.getIterator(contributorID);
     //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
-    boolean suppressHistory = "true".equals(System.getProperty("idea.searchEverywhere.noHistory", "false"));
+    boolean suppressHistory = SystemProperties.getBooleanProperty("idea.searchEverywhere.noHistory", false);
     //or could be suppressed just for All tab in registry
     suppressHistory = suppressHistory ||
                       (ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID) &&

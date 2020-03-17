@@ -85,7 +85,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
 
-    Collection<? extends AnnotationDocGenerator> nonCodeAnnotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
+    Collection<AnnotationDocGenerator> nonCodeAnnotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
     if (getAnnotationLineMarkerType(nonCodeAnnotations) != myLineMarkerType) {
       return null;
     }

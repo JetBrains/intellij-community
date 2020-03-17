@@ -58,10 +58,11 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
   AppUIExecutor inSmartMode(@NotNull Project project);
 
   /**
-   * @return an executor that invokes runnables only in transaction. Automatically expires when {@code parentDisposable} is disposed.
-   * @see TransactionGuard#submitTransaction(Disposable, Runnable)
+   * @deprecated replace with {@code later()} or just remove it if you're in a write-safe context
+   * @see TransactionGuard
    */
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   AppUIExecutor inTransaction(@NotNull Disposable parentDisposable);
 }

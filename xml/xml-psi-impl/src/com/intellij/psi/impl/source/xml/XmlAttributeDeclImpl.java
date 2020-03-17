@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl, XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeDeclImpl");
+  private static final Logger LOG = Logger.getInstance(XmlAttributeDeclImpl.class);
   @NonNls private static final String ID_ATT = "ID";
   @NonNls private static final String IDREF_ATT = "IDREF";
 

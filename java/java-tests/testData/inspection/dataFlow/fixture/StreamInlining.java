@@ -275,7 +275,9 @@ public class StreamInlining {
     if (count3 == 1) {}
     long count4 = Stream.of(arr[0]).map(String::trim).count();
     if (<warning descr="Condition 'count4 == 1' is always 'true'">count4 == 1</warning>) {}
-    long count5 = Stream.of("foo", "bar", "baz", "qux").filter(s -> s.length() > 1).count();
+    long count5 = Stream.of("foo", "bar", "baz", "qux").filter(s -> <warning descr="Condition 's.length() > 1' is always 'true'">s.length() > 1</warning>).count();
+    long count5a = Stream.of("foo", "bar", "baz", "q").filter(s -> s.length() > 1).count();
+    long count5b = Stream.of("foo", "bar", "bazzz", "qx").filter(s -> <warning descr="Condition 's.length() > 1' is always 'true'">s.length() > 1</warning>).count();
     if (count5 == 4) {}
     if (<warning descr="Condition 'count5 < 0' is always 'false'">count5 < 0</warning>) {}
     if (<warning descr="Condition 'count5 > 4' is always 'false'">count5 > 4</warning>) {}

@@ -223,7 +223,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
 
   fun testCopyResourcesFromModuleOutput() {
     val file = createFile("src/a.xml", "")
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).addResourcePattern("*.xml")
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).addResourcePattern("*.xml")
     val module = addModule("a", PathUtil.getParentPath(file))
     val artifact = addArtifact(root().module(module))
     buildArtifacts(artifact)

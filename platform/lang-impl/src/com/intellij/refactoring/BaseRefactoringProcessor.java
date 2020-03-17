@@ -10,7 +10,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -57,6 +56,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -67,7 +67,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public abstract class BaseRefactoringProcessor implements Runnable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
+  private static final Logger LOG = Logger.getInstance(BaseRefactoringProcessor.class);
   private static boolean PREVIEW_IN_TESTS = true;
 
   protected final Project myProject;
@@ -76,7 +76,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
   protected Runnable myPrepareSuccessfulSwingThreadCallback;
-  private UsageView myUsageView = null;
+  private UsageView myUsageView;
 
   protected BaseRefactoringProcessor(@NotNull Project project) {
     this(project, null);
@@ -434,11 +434,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     Runnable refactoringRunnable = () -> {
       Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
       final UsageInfo[] infos = usagesToRefactor.toArray(UsageInfo.EMPTY_ARRAY);
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        if (ensureElementsWritable(infos, viewDescriptor)) {
-          execute(infos);
-        }
-      });
+      if (ensureElementsWritable(infos, viewDescriptor)) {
+        execute(infos);
+      }
     };
 
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
@@ -686,6 +684,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return null;
   }
 
+  @NonNls
   @Nullable
   protected String getRefactoringId() {
     return null;

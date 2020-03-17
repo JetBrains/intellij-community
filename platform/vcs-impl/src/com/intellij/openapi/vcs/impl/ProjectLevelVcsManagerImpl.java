@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -68,7 +69,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
   private final ProjectLevelVcsManagerSerialization mySerialization;
@@ -111,21 +112,33 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
     else {
       myInitialization = new VcsInitialization(myProject);
-      // wait for the thread spawned in VcsInitialization to terminate
-      Disposer.register(this, myInitialization);
+    }
 
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myMappings = new NewMappings(myProject, this);
+    Disposer.register(this, myMappings);
+  }
+
+  static final class MyStartUpActivity implements StartupActivity.DumbAware {
+    MyStartUpActivity() {
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          if (project == myProject) {
-            Disposer.dispose(myInitialization);
+          ProjectLevelVcsManagerImpl manager = (ProjectLevelVcsManagerImpl)project.getServiceIfCreated(ProjectLevelVcsManager.class);
+          if (manager != null && manager.myInitialization != null) {
+            // wait for the thread spawned in VcsInitialization to terminate
+            manager.myInitialization.cancelBackgroundInitialization();
           }
         }
       });
     }
 
-    myMappings = new NewMappings(myProject, this);
-    Disposer.register(this, myMappings);
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ProjectLevelVcsManagerImpl manager = getInstanceImpl(project);
+      if (manager.myInitialization != null) {
+        manager.myInitialization.startInitialization();
+      }
+    }
   }
 
   public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
@@ -746,7 +759,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
   }
 
-  public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
+  public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     if (myInitialization != null) {
       myInitialization.add(vcsInitObject, runnable);
     }

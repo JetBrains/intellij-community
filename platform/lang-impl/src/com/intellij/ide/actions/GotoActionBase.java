@@ -47,7 +47,7 @@ import java.util.Map;
  * Author: msk
  */
 public abstract class GotoActionBase extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
+  private static final Logger LOG = Logger.getInstance(GotoActionBase.class);
 
   protected static Class myInAction;
   private static final Map<Class, Pair<String, Integer>> ourLastStrings = new HashMap<>();
@@ -56,7 +56,7 @@ public abstract class GotoActionBase extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    LOG.assertTrue(!getClass().equals(myInAction));
+    LOG.assertTrue(!getClass().equals(myInAction), "Action should be disabled if it's already in progress: " + getClass());
     try {
       myInAction = getClass();
       List<String> strings = ourHistory.get(myInAction);
@@ -326,10 +326,6 @@ public abstract class GotoActionBase extends AnAction {
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
-  }
-
-  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent event, boolean useEditorSelection) {
-    showInSearchEverywherePopup(searchProviderID, event, useEditorSelection, false);
   }
 
   protected void showInSearchEverywherePopup(@NotNull String searchProviderID,

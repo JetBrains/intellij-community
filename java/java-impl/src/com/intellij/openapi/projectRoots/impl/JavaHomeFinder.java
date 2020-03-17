@@ -6,16 +6,23 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class JavaHomeFinder {
@@ -27,7 +34,9 @@ public abstract class JavaHomeFinder {
    */
   @NotNull
   public static List<String> suggestHomePaths() {
-    List<String> paths = new ArrayList<>(new HashSet<>(getFinder().findExistingJdks()));
+    JavaHomeFinder javaFinder = getFinder();
+    Collection<String> foundPaths = javaFinder.findExistingJdks();
+    ArrayList<String> paths = new ArrayList<>(foundPaths);
     paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
     return paths;
   }
@@ -36,6 +45,16 @@ public abstract class JavaHomeFinder {
   protected abstract List<String> findExistingJdks();
 
   private static JavaHomeFinder getFinder() {
+    if (!Registry.is("java.detector.enabled", true)) {
+      return new JavaHomeFinder() {
+        @NotNull
+        @Override
+        protected List<String> findExistingJdks() {
+          return Collections.emptyList();
+        }
+      };
+    }
+
     if (SystemInfo.isWindows) {
       return new WindowsJavaFinder();
     }
@@ -51,14 +70,16 @@ public abstract class JavaHomeFinder {
     return new DefaultFinder();
   }
 
-  protected void scanFolder(File folder, List<? super String> result) {
-    if (JdkUtil.checkForJdk(folder))
+  protected void scanFolder(@NotNull File folder, boolean includeNestDirs, @NotNull List<? super String> result) {
+    if (JdkUtil.checkForJdk(folder)) {
       result.add(folder.getAbsolutePath());
-
-    for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY)) {
-      file = adjustPath(file);
-      if (JdkUtil.checkForJdk(file)) {
-        result.add(file.getAbsolutePath());
+    }
+    else if (includeNestDirs) {
+      for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtilRt.EMPTY_FILE_ARRAY)) {
+        file = adjustPath(file);
+        if (JdkUtil.checkForJdk(file)) {
+          result.add(file.getAbsolutePath());
+        }
       }
     }
   }
@@ -81,22 +102,55 @@ public abstract class JavaHomeFinder {
     private final String[] myPaths;
 
     protected DefaultFinder(String... paths) {
-      File javaHome = getJavaHome();
+      File javaHome = null;
+      if (Registry.is("java.detector.include.embedded")) javaHome = getJavaHome();
       myPaths = javaHome == null ? paths : ArrayUtil.prepend(javaHome.getAbsolutePath(), paths);
     }
 
     @NotNull
     @Override
     public List<String> findExistingJdks() {
-      List<String> result = new ArrayList<>();
+      ArrayList<String> result = new ArrayList<>();
       for (String path : myPaths) {
-        scanFolder(new File(path), result);
+        scanFolder(new File(path), true, result);
       }
+      for (File dir : guessByPathVariable()) {
+        scanFolder(dir, false, result);
+      }
+      removeDuplicates(result, SystemInfo.isFileSystemCaseSensitive);
       return result;
+    }
+
+    public Collection<File> guessByPathVariable() {
+      String pathVarString = System.getenv("PATH");
+      if (pathVarString == null || pathVarString.isEmpty()) return Collections.emptyList();
+      boolean isWindows = SystemInfo.isWindows;
+      String suffix = isWindows ? ".exe" : "";
+      ArrayList<File> dirsToCheck = new ArrayList<>(1);
+      String[] pathEntries = pathVarString.split(File.pathSeparator);
+      for (String p : pathEntries) {
+        File dir = new File(p);
+        if (StringUtilRt.equal(dir.getName(), "bin", SystemInfo.isFileSystemCaseSensitive)) {
+          File f1 = new File(p, "java" + suffix);
+          File f2 = new File(p, "javac" + suffix);
+          if (f1.isFile() && f2.isFile()) {
+            File f1c = canonize(f1);
+            File f2c = canonize(f2);
+            File d1 = granny(f1c);
+            File d2 = granny(f2c);
+            if (d1 != null && d2 != null && FileUtil.filesEqual(d1, d2)) {
+              dirsToCheck.add(d1);
+            }
+          }
+        }
+      }
+      return dirsToCheck;
     }
   }
 
   private static class MacFinder extends DefaultFinder {
+
+    public static final String JAVA_HOME_FIND_UTIL = "/usr/libexec/java_home";
 
     MacFinder() {
       super("/Library/Java/JavaVirtualMachines", "/System/Library/Java/JavaVirtualMachines");
@@ -106,14 +160,43 @@ public abstract class JavaHomeFinder {
     @Override
     public List<String> findExistingJdks() {
       List<String> list = super.findExistingJdks();
-      if (new File("/usr/libexec/java_home").canExecute()) {
-        String path = ExecUtil.execAndReadLine(new GeneralCommandLine("/usr/libexec/java_home"));
-        if (path != null && new File(path).isDirectory()) {
-          list.add(path);
-        }
+      String defaultJavaHome = getSystemDefaultJavaHome();
+      if (defaultJavaHome != null) {
+        ArrayList<String> list2 = new ArrayList<>(list.size() + 1);
+        list2.add(defaultJavaHome);
+        list2.addAll(list);
+        list = list2;
       }
       return list;
     }
+
+    @Nullable
+    private String getSystemDefaultJavaHome() {
+      String homePath = null;
+      if (SystemInfo.isMacOSLeopard) {
+        // since version 10.5
+        if (canExecute(JAVA_HOME_FIND_UTIL)) homePath = ExecUtil.execAndReadLine(new GeneralCommandLine(JAVA_HOME_FIND_UTIL));
+      }
+      else {
+        // before version 10.5
+        homePath = "/Library/Java/Home";
+      }
+
+      return isDirectory(homePath) ? homePath : null;
+    }
+
+    private static boolean canExecute(@Nullable String filePath) {
+      if (filePath == null) return false;
+      File file = new File(filePath);
+      return file.canExecute();
+    }
+
+    private static boolean isDirectory(@Nullable String path) {
+      if (path == null) return false;
+      File dir = new File(path);
+      return dir.isDirectory();
+    }
+
 
     @Override
     protected File adjustPath(File file) {
@@ -126,4 +209,35 @@ public abstract class JavaHomeFinder {
       return file;
     }
   }
+
+  @NotNull
+  private static File canonize(@NotNull File file) {
+    try {
+      return file.getCanonicalFile();
+    }
+    catch (IOException ioe) {
+      return file.getAbsoluteFile();
+    }
+  }
+
+  @Nullable
+  private static File granny(@Nullable File file) {
+    File parent = file.getParentFile();
+    return parent != null ? parent.getParentFile() : null;
+  }
+
+  private static void removeDuplicates(@NotNull ArrayList<String> strings, boolean caseSensitive) {
+    int k = strings.size() - 1;
+    while (k > 0) {
+      String s = strings.get(k);
+      for (int i = 0; i < k; i++) {
+        if (StringUtil.equal(strings.get(i), s, caseSensitive)) {
+          strings.remove(k);
+          break;
+        }
+      }
+      k--;
+    }
+  }
+
 }

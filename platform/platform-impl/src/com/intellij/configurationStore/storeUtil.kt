@@ -107,7 +107,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
                    NotificationType.ERROR)
     }
     else {
-      PluginManagerCore.disablePlugin(pluginId.idString)
+      PluginManagerCore.disablePlugin(pluginId)
       Notification("Settings Error", "Unable to save plugin settings",
                    "<p>The plugin <i>$pluginId</i> failed to save settings and has been disabled. $messagePostfix",
                    NotificationType.ERROR)
@@ -168,13 +168,8 @@ private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
   }
 }
 
-inline fun runInSaveOnFrameDeactivationDisabledMode(task: () -> Unit) {
-  val saveAndSyncManager = SaveAndSyncHandler.getInstance()
-  saveAndSyncManager.blockSaveOnFrameDeactivation()
-  try {
+inline fun runInAutoSaveDisabledMode(task: () -> Unit) {
+  SaveAndSyncHandler.getInstance().disableAutoSave().use {
     task()
-  }
-  finally {
-    saveAndSyncManager.unblockSaveOnFrameDeactivation()
   }
 }

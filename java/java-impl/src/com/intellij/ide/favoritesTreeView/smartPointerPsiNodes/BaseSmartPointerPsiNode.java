@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItem;
@@ -24,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> implements PsiElementNavigationItem {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
+  private static final Logger LOG = Logger.getInstance(BasePsiNode.class);
 
   BaseSmartPointerPsiNode(@NotNull Project project, @NotNull Type value, @NotNull ViewSettings viewSettings) {
     super(project, value, viewSettings);
@@ -32,7 +33,7 @@ abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> ext
 
   @Override
   @NotNull
-  public final Collection<AbstractTreeNode> getChildren() {
+  public final Collection<AbstractTreeNode<?>> getChildren() {
     PsiElement value = getPsiElement();
     if (value == null) return new ArrayList<>();
     LOG.assertTrue(value.isValid());
@@ -40,7 +41,7 @@ abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> ext
   }
 
   @NotNull
-  protected abstract Collection<AbstractTreeNode> getChildrenImpl();
+  protected abstract Collection<AbstractTreeNode<?>> getChildrenImpl();
 
   private boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();

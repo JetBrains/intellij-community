@@ -9,22 +9,23 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
-
 /**
- * @author Konstantin Bulenkov
+ * @deprecated For plugin writers: add dependency from com.intellij.laf.macos plugin
+ * and use similar class from the plugin.
  */
+@ApiStatus.ScheduledForRemoval (inVersion = "2020.2")
+@Deprecated
 public class MacIntelliJTextBorder extends DarculaTextBorder {
   private static final Color OUTLINE_COLOR = Gray.xBC;
   private static final Insets PADDINGS = JBUI.emptyInsets();
 
-  static final JBValue MINIMUM_HEIGHT = new JBValue.Float(21);
   static final JBValue BW = new JBValue.Float(3);
   static final JBValue ARC = new JBValue.Float(6);
 
@@ -81,7 +82,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       if (c.hasFocus()) {
         Object op = c.getClientProperty("JComponent.outline");
         if (op != null) {
-          paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.valueOf(op.toString()));
+          DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.valueOf(op.toString()));
         }
         else {
           DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);

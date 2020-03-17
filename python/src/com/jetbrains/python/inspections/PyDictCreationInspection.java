@@ -36,12 +36,6 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 public class PyDictCreationInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.dict.creation");
-  }
 
   @NotNull
   @Override

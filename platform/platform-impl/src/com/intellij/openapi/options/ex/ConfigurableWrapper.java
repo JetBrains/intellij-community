@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,7 +22,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
-  private static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
+  static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
   public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
@@ -41,6 +41,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return createConfigurable(ep, LOG.isDebugEnabled());
   }
 
+  @Nullable
   private static <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
     long time = System.currentTimeMillis();
     T configurable = ep.createConfigurable();
@@ -146,6 +147,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   @Nullable
+  public Project getProject() {
+    return myEp.getProject();
+  }
+
+  @Nullable
   @Override
   public String getHelpTopic() {
     UnnamedConfigurable configurable = getConfigurable();
@@ -178,6 +184,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     UnnamedConfigurable configurable = myConfigurable;
     if (configurable != null) {
       configurable.disposeUIResources();
+      myConfigurable = null;
     }
   }
 

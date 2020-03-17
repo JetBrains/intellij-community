@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +16,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   public static final ElementManipulators INSTANCE = new ElementManipulators();
 
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ElementManipulators");
+  private static final Logger LOG = Logger.getInstance(ElementManipulators.class);
 
   private ElementManipulators() {
     super(EP_NAME);
@@ -64,6 +64,11 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   public static <T extends PsiElement> T handleContentChange(@NotNull T element, String text) {
     final ElementManipulator<T> manipulator = getNotNullManipulator(element);
     return manipulator.handleContentChange(element, text);
+  }
+
+  public static <T extends PsiElement> T handleContentChange(@NotNull T element, @NotNull TextRange range, String text) {
+    final ElementManipulator<T> manipulator = getNotNullManipulator(element);
+    return manipulator.handleContentChange(element, range, text);
   }
 
   @NotNull

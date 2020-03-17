@@ -364,4 +364,10 @@ public abstract class CoverageEngine {
 
     return projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file);
   }
+
+  public boolean isInLibrarySource(Project project, VirtualFile file) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
+    return projectFileIndex.isInLibrarySource(file);
+  }
 }

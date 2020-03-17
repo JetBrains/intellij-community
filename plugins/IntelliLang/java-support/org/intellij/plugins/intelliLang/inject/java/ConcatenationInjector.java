@@ -38,17 +38,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static java.util.Collections.emptyList;
+
 /**
  * @author cdr
  */
 public final class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Project myProject;
 
-  private final LanguageInjectionSupport mySupport;
-
   public ConcatenationInjector(@NotNull Project project) {
     myProject = project;
-    mySupport = InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
   }
 
   @Override
@@ -78,7 +77,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
                                         @NotNull PsiElement[] operands) {
     Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
     LanguageInjectionSupport injectionSupport = tempLanguage == null
-                                                ? mySupport
+                                                ? InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID)
                                                 : TemporaryPlacesRegistry.getInstance(myProject).getLanguageInjectionSupport();
     InjectionProcessor injectionProcessor = new InjectionProcessor(Configuration.getProjectInstance(myProject), injectionSupport, operands) {
       @Override
@@ -340,13 +339,13 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
     @NotNull
     List<Pair<PsiLanguageInjectionHost, Language>> processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
       Language language = InjectorUtils.getLanguage(injection);
-      if (language == null) return Collections.emptyList();
+      if (language == null) return emptyList();
 
       boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
       Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
       List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
-      if (objects.isEmpty()) return Collections.emptyList();
+      if (objects.isEmpty()) return emptyList();
       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<>();
       int len = objects.size();
       for (int i = 0; i < len; i++) {
@@ -354,7 +353,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         Object o = objects.get(i);
         if (o instanceof String) {
           curPrefix = (String)o;
-          if (i == len - 1) return Collections.emptyList(); // IDEADEV-26751
+          if (i == len - 1) return emptyList(); // IDEADEV-26751
           o = objects.get(++i);
         }
         String curSuffix = null;
@@ -374,6 +373,10 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         else {
           if (curHost instanceof PsiLiteralExpression) {
+            if (injection.isIgnoredPlace(curHost)) {
+              return emptyList();
+            }
+
             List<TextRange> textBlockInjectedArea = getTextBlockInjectedArea(curHost);
             List<TextRange> injectedArea = (textBlockInjectedArea == null) ? injection.getInjectedArea(curHost) : textBlockInjectedArea;
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
@@ -387,7 +390,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
             }
           }
           else {
-            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
+            TextRange textRange = ElementManipulators.getValueTextRange(curHost);
             TextRange.assertProperRange(textRange, injection);
             result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
                                       textRange));
@@ -395,7 +398,7 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
       }
       if (result.isEmpty()) {
-        return Collections.emptyList();
+        return emptyList();
       }
       List<Pair<PsiLanguageInjectionHost, Language>> res = new ArrayList<>();
       if (separateFiles) {

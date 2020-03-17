@@ -18,10 +18,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.Async;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -36,7 +33,7 @@ import java.util.concurrent.*;
  * {@link #cancelAllRequests()} and {@link #cancelRequest(Runnable)} allow to cancel already scheduled requests.
  */
 public class Alarm implements Disposable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.Alarm");
+  protected static final Logger LOG = Logger.getInstance(Alarm.class);
 
   private volatile boolean myDisposed;
 
@@ -79,6 +76,7 @@ public class Alarm implements Disposable {
      * @deprecated Use {@link #POOLED_THREAD} instead
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
     SHARED_THREAD,
 
     /**
@@ -92,6 +90,7 @@ public class Alarm implements Disposable {
      * @deprecated Use {@link #POOLED_THREAD} instead
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
     OWN_THREAD
   }
 
@@ -359,9 +358,6 @@ public class Alarm implements Disposable {
         }
       }
       catch (ProcessCanceledException ignored) { }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
     }
 
     @Async.Execute

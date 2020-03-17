@@ -64,7 +64,7 @@ import java.util.*;
 public class GrIntroduceConstantDialog extends DialogWrapper
   implements GrIntroduceConstantSettings, GrIntroduceDialog<GrIntroduceConstantSettings> {
 
-  private static final Logger LOG  = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantDialog");
+  private static final Logger LOG = Logger.getInstance(GrIntroduceConstantDialog.class);
 
   private final GrIntroduceContext myContext;
   private JLabel myNameLabel;
@@ -352,7 +352,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
       if (newClass == null &&
           Messages.showOkCancelDialog(myContext.getProject(), GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
-                                      IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != Messages.OK) {
+                                      IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
         return;
       }
       myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module, myContext.getProject());

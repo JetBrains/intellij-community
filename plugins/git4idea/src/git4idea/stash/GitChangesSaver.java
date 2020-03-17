@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
 import com.intellij.notification.Notification;
@@ -24,7 +10,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
-import git4idea.config.GitVcsSettings;
+import git4idea.config.GitSaveChangesPolicy;
 import git4idea.merge.GitConflictResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +32,7 @@ public abstract class GitChangesSaver {
   @NotNull protected final Git myGit;
   @NotNull protected final ProgressIndicator myProgressIndicator;
   @NotNull protected final String myStashMessage;
+  @NotNull private final GitSaveChangesPolicy mySaveMethod;
 
   protected GitConflictResolver.Params myParams;
 
@@ -58,18 +45,22 @@ public abstract class GitChangesSaver {
                                          @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator,
                                          @NotNull String stashMessage,
-                                         @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
-    if (saveMethod == GitVcsSettings.UpdateChangesPolicy.SHELVE) {
+                                         @NotNull GitSaveChangesPolicy saveMethod) {
+    if (saveMethod == GitSaveChangesPolicy.SHELVE) {
       return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
     }
     return new GitStashChangesSaver(project, git, progressIndicator, stashMessage);
   }
 
-  protected GitChangesSaver(@NotNull Project project, @NotNull Git git,
-                            @NotNull ProgressIndicator indicator, @NotNull String stashMessage) {
+  protected GitChangesSaver(@NotNull Project project,
+                            @NotNull Git git,
+                            @NotNull ProgressIndicator indicator,
+                            @NotNull GitSaveChangesPolicy saveMethod,
+                            @NotNull String stashMessage) {
     myProject = project;
     myGit = git;
     myProgressIndicator = indicator;
+    mySaveMethod = saveMethod;
     myStashMessage = stashMessage;
   }
 
@@ -89,7 +80,7 @@ public abstract class GitChangesSaver {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were not restored",
                                                                 "Before update your uncommitted changes were saved to <a href='saver'>" +
-                                                                getSaverName() +
+                                                                getSaveMethod().getStorageName() +
                                                                 "</a>.<br/>" +
                                                                 "Update is not complete, you have unresolved merges in your working tree<br/>" +
                                                                 "Resolve conflicts, complete update and restore changes manually.",
@@ -118,16 +109,10 @@ public abstract class GitChangesSaver {
    */
   public abstract boolean wereChangesSaved();
 
-  /**
-   * @return name of the save capability provider - stash or shelf.
-   */
-  public abstract String getSaverName();
-
-  /**
-   * @return the name of the saving operation: stash or shelve.
-   */
   @NotNull
-  public abstract String getOperationName();
+  public GitSaveChangesPolicy getSaveMethod() {
+    return mySaveMethod;
+  }
 
   /**
    * Show the saved local changes in the proper viewer.

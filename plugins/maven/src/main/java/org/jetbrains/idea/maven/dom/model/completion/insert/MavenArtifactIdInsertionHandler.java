@@ -9,7 +9,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
+import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 
 public class MavenArtifactIdInsertionHandler extends MavenDependencyInsertionHandler {
@@ -19,7 +19,7 @@ public class MavenArtifactIdInsertionHandler extends MavenDependencyInsertionHan
   @Override
   protected void setDependency(@NotNull InsertionContext context,
                                MavenRepositoryArtifactInfo completionItem,
-                               XmlFile contextFile, MavenDomArtifactCoordinates domCoordinates) {
+                               XmlFile contextFile, MavenDomShortArtifactCoordinates domCoordinates) {
     if (completionItem.getArtifactId() == null) {
       return;
     }

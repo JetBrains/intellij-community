@@ -42,7 +42,7 @@ import java.util.Set;
  * @author nik
  */
 public abstract class ChangeLibraryLevelActionBase extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ChangeLibraryLevelActionBase");
+  private static final Logger LOG = Logger.getInstance(ChangeLibraryLevelActionBase.class);
   protected final Project myProject;
   protected final String myTargetTableLevel;
   protected final boolean myCopy;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.projectView;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -11,7 +9,6 @@ import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -27,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
-  private final static Logger LOG = Logger.getInstance(ResourceBundleGrouper.class);
-
   private final Project myProject;
 
   public ResourceBundleGrouper(Project project) {
@@ -37,13 +32,15 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
 
   @Override
   @NotNull
-  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull final Collection<AbstractTreeNode> children, final ViewSettings settings) {
-    if (parent instanceof ResourceBundleNode) return children;
+  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull final Collection<AbstractTreeNode<?>> children, final ViewSettings settings) {
+    if (parent instanceof ResourceBundleNode) {
+      return children;
+    }
 
     return ReadAction.compute(() -> {
-      List<AbstractTreeNode> result = new ArrayList<>();
+      List<AbstractTreeNode<?>> result = new ArrayList<>();
       List<PropertiesFile> dirPropertiesFiles = new SmartList<>();
-      for (AbstractTreeNode child : children) {
+      for (AbstractTreeNode<?> child : children) {
         Object f = child.getValue();
         if (f instanceof PsiFile && child.getClass() == PsiFileNode.class) { // process raw nodes only
           PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)f);
@@ -54,7 +51,9 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
         }
         result.add(child);
       }
-      if (dirPropertiesFiles.isEmpty()) return result;
+      if (dirPropertiesFiles.isEmpty()) {
+        return result;
+      }
       appendPropertiesFilesNodes(dirPropertiesFiles, myProject, result::add, settings);
       return result;
     });
@@ -62,7 +61,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
 
   private static void appendPropertiesFilesNodes(@NotNull List<? extends PropertiesFile> files,
                                                  @NotNull Project project,
-                                                 @NotNull Consumer<? super AbstractTreeNode> nodeConsumer,
+                                                 @NotNull Consumer<? super AbstractTreeNode<?>> nodeConsumer,
                                                  ViewSettings settings) {
     ResourceBundleManager manager = ResourceBundleManager.getInstance(project);
 
@@ -100,17 +99,18 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      for (AbstractTreeNode selectedElement : selected) {
+      for (AbstractTreeNode<?> selectedElement : selected) {
         Object element = selectedElement.getValue();
         if (element instanceof ResourceBundle) {
           return new ResourceBundleDeleteProvider();
         }
       }
-    } else if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
-      final List<ResourceBundle> selectedElements = new ArrayList<>();
-      for (AbstractTreeNode node : selected) {
+    }
+    else if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
+      List<ResourceBundle> selectedElements = new ArrayList<>();
+      for (AbstractTreeNode<?> node : selected) {
         final Object value = node.getValue();
         if (value instanceof ResourceBundle) {
           selectedElements.add((ResourceBundle)value);

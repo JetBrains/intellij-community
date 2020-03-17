@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.*;
 
 final class BindingsCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.BindingsCache");
+  private static final Logger LOG = Logger.getInstance(BindingsCache.class);
   @NonNls
   private static final String BINDINGS_FILE_NAME = "formbinding.dat";
   private StateCache<MyState> myCache;

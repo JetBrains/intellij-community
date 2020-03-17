@@ -41,7 +41,7 @@ import java.util.*;
  * @author max
  */
 public class AnalysisScope {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.AnalysisScope");
+  private static final Logger LOG = Logger.getInstance(AnalysisScope.class);
 
   public static final int PROJECT = 1;
   public static final int DIRECTORY = 2;
@@ -254,6 +254,19 @@ public class AnalysisScope {
 
 
   public void accept(@NotNull final PsiElementVisitor visitor) {
+    acceptImpl(visitor, false);
+  }
+
+  /**
+   * A drop-in replacement for {@link #accept(PsiElementVisitor)} that invokes the visitor in a non-blocking cancellable read action,
+   * so that the visitor can be interrupted and restarted several times on the same file.
+   * The visitor must support this workflow, i.e. be idempotent.
+   */
+  public void acceptIdempotentVisitor(@NotNull final PsiElementVisitor visitor) {
+    acceptImpl(visitor, true);
+  }
+
+  private void acceptImpl(@NotNull PsiElementVisitor visitor, boolean idempotent) {
     final boolean needReadAction = !ApplicationManager.getApplication().isReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     final FileIndex fileIndex = getFileIndex();
@@ -262,7 +275,7 @@ public class AnalysisScope {
       if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
       if (fileIndex.isInContent(file) && !isFilteredOut(file)
           && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-        return processFile(file, visitor, psiManager, needReadAction);
+        return processFile(file, visitor, psiManager, needReadAction, idempotent);
       }
       return true;
     });
@@ -342,9 +355,20 @@ public class AnalysisScope {
   private static boolean processFile(@NotNull final VirtualFile vFile,
                                      @NotNull final PsiElementVisitor visitor,
                                      @NotNull final PsiManager psiManager,
-                                     final boolean needReadAction) {
+                                     final boolean needReadAction,
+                                     boolean idempotent) {
     if (needReadAction && !ApplicationManager.getApplication().isDispatchThread()) {
-      commitAndRunInSmartMode(() -> doProcessFile(visitor, psiManager, vFile), psiManager.getProject());
+      Project project = psiManager.getProject();
+      if (idempotent) {
+        ReadAction
+          .nonBlocking(() -> doProcessFile(visitor, psiManager, vFile))
+          .withDocumentsCommitted(project)
+          .inSmartMode(project)
+          .executeSynchronously();
+      }
+      else {
+        commitAndRunInSmartMode(() -> doProcessFile(visitor, psiManager, vFile), project);
+      }
     }
     else {
       doProcessFile(visitor, psiManager, vFile);

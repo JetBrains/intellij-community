@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.Serializable;
 
@@ -29,26 +30,26 @@ public class MavenArtifactInfo implements Serializable {
   private final String myRepositoryId;
 
   public MavenArtifactInfo(MavenId id,
-                           String packaging,
-                           String classifier) {
+                           @NonNls String packaging,
+                           @NonNls String classifier) {
     this(id.getGroupId(), id.getArtifactId(), id.getVersion(), packaging, classifier);
   }
 
-  public MavenArtifactInfo(String groupId,
-                           String artifactId,
-                           String version,
-                           String packaging,
-                           String classifier) {
+  public MavenArtifactInfo(@NonNls String groupId,
+                           @NonNls String artifactId,
+                           @NonNls String version,
+                           @NonNls String packaging,
+                           @NonNls String classifier) {
     this(groupId, artifactId, version, packaging, classifier, null, null);
   }
 
-  public MavenArtifactInfo(String groupId,
-                           String artifactId,
-                           String version,
-                           String packaging,
-                           String classifier,
-                           String classNames,
-                           String repositoryId) {
+  public MavenArtifactInfo(@NonNls String groupId,
+                           @NonNls String artifactId,
+                           @NonNls String version,
+                           @NonNls String packaging,
+                           @NonNls String classifier,
+                           @NonNls String classNames,
+                           @NonNls String repositoryId) {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;

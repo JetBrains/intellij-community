@@ -287,6 +287,16 @@ public class EditorModificationUtil {
           buf.append(properIndent.charAt(i));
           if (afterLineEnd == 0) break;
         }
+      } else {
+        EditorSettings editorSettings = editor.getSettings();
+        boolean useTab = editorSettings.isUseTabCharacter(editor.getProject());
+        if (useTab) {
+          int tabSize = editorSettings.getTabSize(project);
+          while (afterLineEnd >= tabSize) {
+            buf.append('\t');
+            afterLineEnd -= tabSize;
+          }
+        }
       }
     }
 
@@ -430,11 +440,10 @@ public class EditorModificationUtil {
     String message = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
     if (message != null) return new ReadOnlyHint(message, null);
 
-    return ReadOnlyHint.DEFAULT;
+    return new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null);
   }
 
   private static class ReadOnlyHint {
-    private static final ReadOnlyHint DEFAULT = new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null);
 
     @NotNull public final String message;
     @Nullable public final HyperlinkListener linkListener;

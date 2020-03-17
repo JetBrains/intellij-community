@@ -47,7 +47,7 @@ public class MatchBraceTest extends LightPlatformCodeInsightTestCase implements 
     if (pos < 0) {
       return null;
     }
-    return pos < 0 ? null : fileName.substring(0, pos) + '(' + fileName.substring(pos + 8) + ')';
+    return fileName.substring(0, pos) + '(' + fileName.substring(pos + 8) + ')';
   }
 
   private String getBeforeFileName() {

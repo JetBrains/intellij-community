@@ -10,7 +10,6 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -106,7 +105,7 @@ public class ExternalDiffToolUtil {
     Boolean hasBom = content.hasBom();
     if (hasBom == null) hasBom = CharsetToolkit.getMandatoryBom(charset) != null;
 
-    String contentData = ReadAction.compute(() -> content.getDocument().getText());
+    String contentData = content.getDocument().getText();
     if (separator != LineSeparator.LF) {
       contentData = StringUtil.convertLineSeparators(contentData, separator.getSeparatorString());
     }

@@ -1,11 +1,12 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.jira;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.util.ObjectUtils;
 import icons.TasksCoreIcons;
-import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public abstract class JiraTask extends Task {
    */
   @NotNull
   protected static Icon getIconByUrl(@Nullable String iconUrl) {
-    return ObjectUtils.notNull(CachedIconLoader.getIcon(iconUrl), TasksIcons.Other);
+    return ObjectUtils.notNull(CachedIconLoader.getIcon(iconUrl), AllIcons.FileTypes.Any_type);
   }
 
   /**

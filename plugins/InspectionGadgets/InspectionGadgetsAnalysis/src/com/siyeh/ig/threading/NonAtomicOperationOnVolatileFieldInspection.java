@@ -31,12 +31,6 @@ public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("non.atomic.operation.on.volatile.field.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("non.atomic.operation.on.volatile.field.problem.descriptor");
   }

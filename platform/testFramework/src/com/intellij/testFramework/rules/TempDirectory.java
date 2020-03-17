@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -11,14 +11,13 @@ import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.assertTrue;
-
 /**
- * A clone of {@link TemporaryFolder} with no symlinks in a temporary directory path, better directory name,
+ * A clone of {@link TemporaryFolder} with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient {@linkplain #newFile(String)} / {@linkplain #newFolder(String)} methods.
  */
 public class TempDirectory extends TemporaryFolder {
@@ -33,32 +32,29 @@ public class TempDirectory extends TemporaryFolder {
   }
 
   @Override
-  protected void before() throws IOException {
-    if (myName == null) {
-      throw new IllegalStateException("apply() was not called");
-    }
-
-    @SuppressWarnings("SSBasedInspection") File dir = File.createTempFile(UsefulTestCase.TEMP_DIR_MARKER + myName + "_", "");
-    assertTrue("Cannot delete: " + dir.getPath(), dir.delete() || !dir.exists());
-    assertTrue("Cannot create: " + dir.getPath(), dir.mkdir() || dir.isDirectory());
-    myRoot = dir.getCanonicalFile();
-  }
+  protected void before() { }
 
   @Override
   protected void after() {
-    if (myRoot == null) {
-      throw new IllegalStateException("before() was not called");
+    if (myRoot != null) {
+      FileUtil.delete(myRoot);
+      myRoot = null;
+      myName = null;
     }
-
-    FileUtil.delete(myRoot);
-    myRoot = null;
-    myName = null;
   }
 
   @Override
   public File getRoot() {
     if (myRoot == null) {
-      throw new IllegalStateException("before() was not called");
+      if (myName == null) {
+        throw new IllegalStateException("apply() was not called");
+      }
+      try {
+        myRoot = Files.createTempDirectory(UsefulTestCase.TEMP_DIR_MARKER + myName + '_').toRealPath().toFile();
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
 
     return myRoot;

@@ -2,18 +2,18 @@
 package com.intellij.ide.customize
 
 import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.PluginDescriptor
 
 object CustomizeIDEWizardInteractions {
   var skippedOnPage = -1
   val interactions = mutableListOf<CustomizeIDEWizardInteraction>()
 
   @JvmOverloads
-  fun record(type: CustomizeIDEWizardInteractionType, pluginDescriptor: IdeaPluginDescriptor? = null, groupId: String? = null) {
+  fun record(type: CustomizeIDEWizardInteractionType, pluginDescriptor: PluginDescriptor? = null, groupId: String? = null) {
     interactions.add(CustomizeIDEWizardInteraction(type, System.currentTimeMillis(), pluginDescriptor, groupId))
   }
 }
@@ -32,7 +32,7 @@ enum class CustomizeIDEWizardInteractionType {
 data class CustomizeIDEWizardInteraction(
   val type: CustomizeIDEWizardInteractionType,
   val timestamp: Long,
-  val pluginDescriptor: IdeaPluginDescriptor?,
+  val pluginDescriptor: PluginDescriptor?,
   val groupId: String?
 )
 

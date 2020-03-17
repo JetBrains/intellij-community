@@ -41,12 +41,6 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.problem.descriptor");
   }

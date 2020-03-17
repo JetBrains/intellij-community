@@ -130,7 +130,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     };
 
-      project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectOpened(@NotNull Project project) {
           if (myProject == project) {
@@ -678,7 +678,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     // make sure the task is associated with default changelist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    LocalChangeList defaultList = changeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultList = changeListManager.findChangeList(LocalChangeList.getDefaultName());
     if (defaultList != null && defaultTask != null) {
       ChangeListInfo listInfo = new ChangeListInfo(defaultList);
       if (!defaultTask.getChangeLists().contains(listInfo)) {
@@ -696,7 +696,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     }
 
-    changeListManager.addChangeListListener(myChangeListListener, this);
+    changeListManager.addChangeListListener(myChangeListListener, myProject);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));

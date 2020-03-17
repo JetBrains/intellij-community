@@ -154,7 +154,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     PyPsiUtils.assertValid(element);
     element.acceptChildren(new PyElementVisitor() {
       @Override
-      public void visitElement(PsiElement e) {
+      public void visitElement(@NotNull PsiElement e) {
         if (isWorthyItem(e, element)) {
           children.add((PyElement)e);
         }

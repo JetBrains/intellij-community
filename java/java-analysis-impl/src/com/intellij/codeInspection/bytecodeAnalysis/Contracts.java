@@ -15,10 +15,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
@@ -27,7 +24,7 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 abstract class ContractAnalysis extends Analysis<Result> {
   static final ResultUtil resultUtil = new ResultUtil(new ELattice<>(Value.Bot, Value.Top));
 
-  final private State[] pending;
+  final private ExpandableArray<State> pending;
   final InOutInterpreter interpreter;
   final Value inValue;
   private final int generalizeShift;
@@ -36,7 +33,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
   private int id;
   private int pendingTop;
 
-  protected ContractAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable, State[] pending) {
+  protected ContractAnalysis(RichControlFlow richControlFlow, Direction direction, boolean[] resultOrigins, boolean stable, ExpandableArray<State> pending) {
     super(richControlFlow, direction, stable);
     this.pending = pending;
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
@@ -71,7 +68,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
       if (steps % 128 == 0) {
         ProgressManager.checkCanceled();
       }
-      State state = pending[--pendingTop];
+      State state = Objects.requireNonNull(pending.get(--pendingTop));
       int insnIndex = state.conf.insnIndex;
       Conf conf = state.conf;
       List<Conf> history = state.history;
@@ -93,7 +90,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
         List<State> thisComputed = computed[insnIndex];
         if (thisComputed != null) {
           for (State prevState : thisComputed) {
-            if (stateEquiv(state, prevState)) {
+            if (state.equiv(prevState)) {
               baseState = prevState;
               break;
             }
@@ -203,7 +200,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
 
   private void pendingPush(State st) {
     TooComplexException.check(method, pendingTop);
-    pending[pendingTop++] = st;
+    pending.set(pendingTop++, st);
   }
 
   private Frame<BasicValue> execute(Frame<BasicValue> frame, AbstractInsnNode insnNode) throws AnalyzerException {
@@ -255,7 +252,7 @@ class InOutAnalysis extends ContractAnalysis {
                           Direction direction,
                           boolean[] resultOrigins,
                           boolean stable,
-                          State[] pending) {
+                          ExpandableArray<State> pending) {
     super(richControlFlow, direction, resultOrigins, stable, pending);
   }
 
@@ -318,7 +315,7 @@ class InThrowAnalysis extends ContractAnalysis {
                             Direction direction,
                             boolean[] resultOrigins,
                             boolean stable,
-                            State[] pending) {
+                            ExpandableArray<State> pending) {
     super(richControlFlow, direction, resultOrigins, stable, pending);
   }
 
@@ -535,9 +532,7 @@ class InOutInterpreter extends BasicInterpreter {
               }
             }
             else if (isRefRetType) {
-              HashSet<EKey> keys = new HashSet<>();
-              keys.add(new EKey(method, Out, stable));
-              return new CallResultValue(retType, keys);
+              return new CallResultValue(retType, Collections.singleton(new EKey(method, Out, stable)));
             }
           }
           break;

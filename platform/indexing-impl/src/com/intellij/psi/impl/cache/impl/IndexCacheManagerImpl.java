@@ -18,6 +18,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +57,9 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-    collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    }, myProject, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
@@ -75,18 +78,13 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     try {
       return ReadAction.compute(() -> FileBasedIndex.getInstance()
-        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-          final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
-
-          @Override
-          public boolean process(@NotNull final VirtualFile file, final Integer value) {
-            ProgressIndicatorProvider.checkCanceled();
-            final int mask = value.intValue();
-            if ((mask & occurrenceMask) != 0) {
-              if (!fileProcessor.process(file)) return false;
-            }
-            return true;
+        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, (file, value) -> {
+          ProgressIndicatorProvider.checkCanceled();
+          final int mask = value.intValue();
+          if ((mask & occurrenceMask) != 0) {
+            if (!fileProcessor.process(file)) return false;
           }
+          return true;
         }, scope));
     }
     catch (IndexNotReadyException e) {

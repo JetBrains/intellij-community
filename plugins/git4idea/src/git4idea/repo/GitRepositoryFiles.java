@@ -36,7 +36,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
  * matches once of them.
  */
 public class GitRepositoryFiles {
-  private static final Logger LOG = Logger.getInstance("#git4idea.repo.GitRepositoryFiles");
+  private static final Logger LOG = Logger.getInstance(GitRepositoryFiles.class);
 
   public static final String GITIGNORE = ".gitignore";
 

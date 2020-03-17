@@ -42,11 +42,11 @@ class _float_info:
     rounds: int
 
 class _version_info(Tuple[int, int, int, str, int]):
-    major = 0
-    minor = 0
-    micro = 0
+    major: int
+    minor: int
+    micro: int
     releaselevel: str
-    serial = 0
+    serial: int
 
 _mercurial: Tuple[str, str, str]
 api_version: int

@@ -3,10 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import java.util.*
 
-interface GHLoadingModel<T> {
+interface GHLoadingModel {
   val loading: Boolean
 
-  val result: T?
+  val resultAvailable: Boolean
   val error: Throwable?
 
   fun addStateChangeListener(listener: StateChangeListener)

@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.RunAll;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
     myNewMappings = new NewMappings(project, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project));
     Disposer.register(getTestRootDisposable(), myNewMappings);
     myMockLocalFileSystem = new MyMockLocalFileSystem();
-    myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(project, myNewMappings, myMockLocalFileSystem));
+    myNewMappings.setFileWatchRequestsManager(new TestFileWatchRequestsManager(project, myNewMappings, myMockLocalFileSystem));
     myNewMappings.activateActiveVcses();
   }
 
@@ -141,33 +142,30 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
     public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
                                                  @Nullable Collection<String> recursiveRoots,
                                                  @Nullable Collection<String> flatRoots) {
+      assertNullOrEmpty(flatRoots);
+
       if (myDisposed) {
         assertNullOrEmpty(recursiveRoots);
-        assertNullOrEmpty(flatRoots);
         return Collections.emptySet();
       }
+      else {
+        Set<String> oldPaths = ContainerUtil.map2Set(watchRequests, it -> it.getRootPath());
+        Set<String> newPaths = new HashSet<>(recursiveRoots);
 
-      for (WatchRequest watchRequest : watchRequests) {
-        assertTrue(myRemove.remove(watchRequest.getRootPath()));
-      }
-
-      Set<WatchRequest> requests = new HashSet<>();
-
-      if (recursiveRoots != null) {
-        for (String rootPath : recursiveRoots) {
-          assertTrue(myAdd.remove(rootPath));
-          requests.add(new MockKey(rootPath, true));
+        Set<String> toRemove = new HashSet<>(oldPaths);
+        toRemove.removeAll(newPaths);
+        for (String rootPath : toRemove) {
+          assertTrue(myRemove.remove(rootPath));
         }
-      }
 
-      if (flatRoots != null) {
-        for (String rootPath : flatRoots) {
+        Set<String> toAdd = new HashSet<>(newPaths);
+        toAdd.removeAll(oldPaths);
+        for (String rootPath : toAdd) {
           assertTrue(myAdd.remove(rootPath));
-          requests.add(new MockKey(rootPath, false));
         }
-      }
 
-      return requests;
+        return ContainerUtil.map2Set(newPaths, rootPath -> new MockKey(rootPath, true));
+      }
     }
 
     public void add(final String path) {
@@ -204,6 +202,17 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
     @Override
     public boolean isToWatchRecursively() {
       return myRecursively;
+    }
+  }
+
+  private static class TestFileWatchRequestsManager extends FileWatchRequestsManager {
+    TestFileWatchRequestsManager(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull LocalFileSystem localFileSystem) {
+      super(project, newMappings, localFileSystem);
+    }
+
+    @Override
+    public void ping() {
+      pingImmediately();
     }
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.diagnostic.PluginException;
+import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -54,7 +54,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
+  private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
 
   @NotNull
   @Override
@@ -241,7 +241,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       else {
         final TextRange range = reference.getRangeInElement();
         final String elementText = reference.getElement().getText();
-        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements) + ";" + reference);
+        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(),
+                       Arrays.toString(elements) + ";" + reference);
         final String refText = range.substring(elementText);
         title = MessageFormat.format(titlePattern, refText);
       }
@@ -274,11 +275,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Override
-  public boolean startInTransaction() {
-    return true;
-  }
-
-  @Override
   public boolean startInWriteAction() {
     return false;
   }
@@ -307,15 +303,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    PsiElement elementAt = file.findElementAt(TargetElementUtil.adjustOffset(file, document, offset));
-    for (GotoDeclarationHandler handler : GotoDeclarationHandler.EP_NAME.getExtensionList()) {
-      PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
-      if (result != null && result.length > 0) {
-        return assertNotNullElements(result, handler.getClass()) ? result : null;
-      }
-    }
-
-    return PsiElement.EMPTY_ARRAY;
+    return GotoDeclarationUtil.findTargetElementsFromProviders(editor, offset, file);
   }
 
   @Nullable
@@ -376,18 +364,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     final PsiElement elementAtCaret = file.findElementAt(offset);
     if (elementAtCaret == null) return false;
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(elementAtCaret.getLanguage());
-    return namesValidator != null && namesValidator.isKeyword(elementAtCaret.getText(), project);
+    return namesValidator.isKeyword(elementAtCaret.getText(), project);
   }
 
-  private static boolean assertNotNullElements(@NotNull PsiElement[] result, Class<?> clazz) {
-    for (PsiElement element : result) {
-      if (element == null) {
-        PluginException.logPluginError(LOG,
-          "Null target element is returned by 'getGotoDeclarationTargets' in " + clazz.getName(), null, clazz
-        );
-        return false;
-      }
-    }
-    return true;
-  }
 }

@@ -5,14 +5,16 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 public enum Platform {
-  WINDOWS('\\', ';'), UNIX('/', ':');
+  WINDOWS('\\', ';', "\r\n"), UNIX('/', ':', "\n");
 
   public final char fileSeparator;
   public final char pathSeparator;
+  public final String lineSeparator;
 
-  Platform(char fileSeparator, char pathSeparator) {
+  Platform(char fileSeparator, char pathSeparator, String lineSeparator) {
     this.fileSeparator = fileSeparator;
     this.pathSeparator = pathSeparator;
+    this.lineSeparator = lineSeparator;
   }
 
   @NotNull

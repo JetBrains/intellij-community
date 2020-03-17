@@ -4,11 +4,11 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.externalDependencies.ProjectExternalDependency;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ExternalDependenciesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;
   private final CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
@@ -68,7 +68,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
   @Nls
   @Override
   public String getDisplayName() {
-    return "Required Plugins";
+    return IdeBundle.message("configurable.ExternalDependenciesConfigurable.display.name");
   }
 
   @Nullable

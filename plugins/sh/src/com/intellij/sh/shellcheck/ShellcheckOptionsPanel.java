@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorNotifications;
@@ -23,9 +24,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 public class ShellcheckOptionsPanel {
-  private static final String BROWSE_SHELLCHECK_TITLE = "Choose Path to the Shellcheck:";
-  private static final String LINK_TITLE = "Download Shellcheck";
-
   private JPanel myPanel;
   private JPanel myWarningPanel;
   private JLabel myWarningLabel;
@@ -43,7 +41,8 @@ public class ShellcheckOptionsPanel {
     myDisabledInspections = disabledInspections;
     myProject = ProjectUtil.guessCurrentProject(getPanel());
 
-    myShellcheckSelector.addBrowseFolderListener(BROWSE_SHELLCHECK_TITLE, "", myProject, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myShellcheckSelector.addBrowseFolderListener(ShBundle.message("sh.shellcheck.path.label"), "", myProject,
+                                                 FileChooserDescriptorFactory.createSingleFileDescriptor());
     myShellcheckSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
@@ -59,12 +58,12 @@ public class ShellcheckOptionsPanel {
     myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
     myErrorLabel.setForeground(JBColor.RED);
 
-    ShShellcheckUtil.shellCheckCodes.forEach((key, value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
+    ShShellcheckUtil.SHELLCHECK_CODES.forEach((key, value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
     myWarningLabel.setIcon(AllIcons.General.Warning);
   }
 
   private void createUIComponents() {
-    myShellcheckDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
+    myShellcheckDownloadLink = new ActionLink(ShBundle.message("sh.shellcheck.download.label.text"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         ShShellcheckUtil.download(event.getProject(),

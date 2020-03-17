@@ -261,7 +261,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
       private static final int TAB_WIDTH = 8;
 
       @Override
-      public void visitErrorElement(PsiErrorElement element) {
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
         // Very dump approach since a corresponding Document is not available.
         String text = myFile.getText();
         String[] lines = StringUtil.splitByLinesKeepSeparators(text);
@@ -429,7 +429,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   public static void ensureParsed(@NotNull PsiFile file) {
     file.accept(new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         element.acceptChildren(this);
       }
     });

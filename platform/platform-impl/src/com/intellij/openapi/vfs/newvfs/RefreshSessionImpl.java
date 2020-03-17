@@ -42,15 +42,15 @@ class RefreshSessionImpl extends RefreshSession {
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile RefreshWorker myWorker;
   private volatile boolean myCancelled;
-  private final TransactionId myTransaction;
+  private final ModalityState myModality;
   private boolean myLaunched;
 
-  RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState context) {
+  RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modality) {
     myIsAsync = async;
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
-    myTransaction = ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(context);
-    LOG.assertTrue(context == ModalityState.NON_MODAL || context != ModalityState.any(), "Refresh session should have a specific modality");
+    myModality = modality;
+    LOG.assertTrue(modality == ModalityState.NON_MODAL || modality != ModalityState.any(), "Refresh session should have a specific modality");
     myStartTrace = rememberStartTrace();
   }
 
@@ -214,18 +214,18 @@ class RefreshSessionImpl extends RefreshSession {
     mySemaphore.waitFor();
   }
 
-  @Nullable
-  TransactionId getTransaction() {
-    return myTransaction;
-  }
-
-  @Override
-  public String toString() {
-    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in queue.";
+  @NotNull
+  ModalityState getModality() {
+    return myModality;
   }
 
   @NotNull
   List<? extends VFileEvent> getEvents() {
     return new ArrayList<>(new LinkedHashSet<>(myEvents));
+  }
+
+  @Override
+  public String toString() {
+    return myWorkQueue.size() <= 1 ? "" : myWorkQueue.size() + " roots in the queue.";
   }
 }

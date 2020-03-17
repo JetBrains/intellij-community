@@ -45,7 +45,7 @@ public class TracingData {
   }
 
   private static PersistentHashMap<Integer, Integer> createOrOpenMap() throws IOException {
-    return new PersistentHashMap<>(new File(tracingDataLocation), EnumeratorIntegerDescriptor.INSTANCE,
+    return new PersistentHashMap<>(new File(tracingDataLocation).toPath(), EnumeratorIntegerDescriptor.INSTANCE,
                                    EnumeratorIntegerDescriptor.INSTANCE);
   }
 

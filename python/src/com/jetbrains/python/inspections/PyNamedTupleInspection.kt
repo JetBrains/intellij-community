@@ -19,20 +19,32 @@ class PyNamedTupleInspection : PyInspection() {
 
   companion object {
     fun inspectFieldsOrder(cls: PyClass,
-                           ancestorsFilter: (PyClass) -> Boolean,
+                           classFieldsFilter: (PyClass) -> Boolean,
                            checkInheritedOrder: Boolean,
                            context: TypeEvalContext,
                            callback: (PsiElement, String, ProblemHighlightType) -> Unit,
                            fieldsFilter: (PyTargetExpression) -> Boolean = { true },
                            hasAssignedValue: (PyTargetExpression) -> Boolean = PyTargetExpression::hasAssignedValue) {
-      val fieldsProcessor = processFields(cls, fieldsFilter, hasAssignedValue)
+      val fieldsProcessor = if (classFieldsFilter(cls)) processFields(cls, fieldsFilter, hasAssignedValue) else null
+
+      if (fieldsProcessor?.lastFieldWithoutDefaultValue == null && !checkInheritedOrder) return
 
       val ancestors = cls.getAncestorClasses(context)
       val ancestorsFields = ancestors.map {
-        when {
-          !ancestorsFilter(it) -> Ancestor.FILTERED
-          processFields(it, fieldsFilter, hasAssignedValue).fieldsWithDefaultValue.isNotEmpty() -> Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE
-          else -> Ancestor.HAS_NOT_FIELD_WITH_DEFAULT_VALUE
+        if (!classFieldsFilter(it)) {
+          Ancestor.FILTERED
+        }
+        else {
+          val processor = processFields(it, fieldsFilter, hasAssignedValue)
+          if (processor.fieldsWithDefaultValue.isNotEmpty()) {
+            Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE
+          }
+          else if (processor.lastFieldWithoutDefaultValue != null) {
+            Ancestor.HAS_NOT_FIELD_WITH_DEFAULT_VALUE
+          }
+          else {
+            Ancestor.FILTERED
+          }
         }
       }
 
@@ -53,7 +65,7 @@ class PyNamedTupleInspection : PyInspection() {
         }
       }
 
-      val lastFieldWithoutDefaultValue = fieldsProcessor.lastFieldWithoutDefaultValue
+      val lastFieldWithoutDefaultValue = fieldsProcessor?.lastFieldWithoutDefaultValue
       if (lastFieldWithoutDefaultValue != null) {
         if (ancestorsFields.contains(Ancestor.HAS_FIELD_WITH_DEFAULT_VALUE)) {
           cls.nameIdentifier?.let { name ->
@@ -103,7 +115,7 @@ class PyNamedTupleInspection : PyInspection() {
       if (node != null &&
           LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
           PyNamedTupleTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
-        inspectFieldsOrder(node, { false }, false, myTypeEvalContext, this::registerProblem)
+        inspectFieldsOrder(node, { it == node }, false, myTypeEvalContext, this::registerProblem)
       }
     }
   }

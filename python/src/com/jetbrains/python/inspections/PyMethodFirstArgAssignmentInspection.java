@@ -9,7 +9,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,12 +19,6 @@ import java.util.List;
  * @author dcheryasov
  */
 public class PyMethodFirstArgAssignmentInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.first.arg.assign");
-  }
 
   @NotNull
   @Override

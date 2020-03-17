@@ -2,8 +2,7 @@
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -50,7 +49,8 @@ public abstract class LongRangeSet {
    * @param other set to subtract
    * @return a new set
    */
-  public abstract LongRangeSet subtract(LongRangeSet other);
+  @NotNull
+  public abstract LongRangeSet subtract(@NotNull LongRangeSet other);
 
   public LongRangeSet without(long value) {
     return subtract(point(value));
@@ -69,7 +69,8 @@ public abstract class LongRangeSet {
    * @param other other set to intersect with
    * @return a new set
    */
-  public abstract LongRangeSet intersect(LongRangeSet other);
+  @NotNull
+  public abstract LongRangeSet intersect(@NotNull LongRangeSet other);
 
   /**
    * Merge current set with other
@@ -77,7 +78,8 @@ public abstract class LongRangeSet {
    * @param other other set to merge with
    * @return a new set
    */
-  public abstract LongRangeSet unite(LongRangeSet other);
+  @NotNull
+  public abstract LongRangeSet unite(@NotNull LongRangeSet other);
 
   /**
    * @return a minimal value contained in the set
@@ -94,6 +96,7 @@ public abstract class LongRangeSet {
   /**
    * @return a constant value if this set represents a constant; null otherwise
    */
+  @Nullable
   public Long getConstantValue() {
     return null;
   }
@@ -131,7 +134,7 @@ public abstract class LongRangeSet {
    * @param relation relation to be applied to current set (JavaTokenType.EQEQ/NE/GT/GE/LT/LE)
    * @return new set or null if relation is unsupported
    */
-  public LongRangeSet fromRelation(@Nullable DfaRelationValue.RelationType relation) {
+  public LongRangeSet fromRelation(@Nullable RelationType relation) {
     if (isEmpty() || relation == null) return null;
     switch (relation) {
       case EQ:
@@ -406,7 +409,12 @@ public abstract class LongRangeSet {
   @NotNull
   public LongRangeSet div(LongRangeSet divisor, boolean isLong) {
     if (divisor.isEmpty() || divisor.equals(Point.ZERO)) return empty();
-    long[] left = splitAtZero(asRanges());
+    LongRangeSet dividend = this;
+    if (!isLong) {
+      divisor = divisor.intersect(Range.INT_RANGE);
+      dividend = dividend.intersect(Range.INT_RANGE);
+    } 
+    long[] left = splitAtZero(dividend.asRanges());
     long[] right = splitAtZero(new long[]{divisor.min(), divisor.max()});
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
@@ -682,6 +690,7 @@ public abstract class LongRangeSet {
   /**
    * @return a set containing all possible long values
    */
+  @NotNull
   public static LongRangeSet all() {
     return Range.LONG_RANGE;
   }
@@ -709,20 +718,6 @@ public abstract class LongRangeSet {
     }
     else if (val instanceof Character) {
       return point(((Character)val).charValue());
-    }
-    return null;
-  }
-
-  @Nullable
-  public static LongRangeSet fromDfaValue(DfaValue value) {
-    if (value instanceof DfaFactMapValue) {
-      return ((DfaFactMapValue)value).get(DfaFactType.RANGE);
-    }
-    if (value instanceof DfaConstValue) {
-      return fromConstant(((DfaConstValue)value).getValue());
-    }
-    if (value instanceof DfaVariableValue) {
-      return fromType(value.getType());
     }
     return null;
   }
@@ -929,18 +924,21 @@ public abstract class LongRangeSet {
   static final class Empty extends LongRangeSet {
     static final LongRangeSet EMPTY = new Empty();
 
+    @NotNull
     @Override
-    public LongRangeSet subtract(LongRangeSet other) {
+    public LongRangeSet subtract(@NotNull LongRangeSet other) {
       return this;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet intersect(LongRangeSet other) {
+    public LongRangeSet intersect(@NotNull LongRangeSet other) {
       return this;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet unite(LongRangeSet other) {
+    public LongRangeSet unite(@NotNull LongRangeSet other) {
       return other;
     }
 
@@ -1062,13 +1060,15 @@ public abstract class LongRangeSet {
       return cutoff < 1;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet subtract(LongRangeSet other) {
+    public LongRangeSet subtract(@NotNull LongRangeSet other) {
       return other.contains(myValue) ? Empty.EMPTY : this;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet intersect(LongRangeSet other) {
+    public LongRangeSet intersect(@NotNull LongRangeSet other) {
       return other.contains(myValue) ? this : Empty.EMPTY;
     }
 
@@ -1087,8 +1087,9 @@ public abstract class LongRangeSet {
       return myValue;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet unite(LongRangeSet other) {
+    public LongRangeSet unite(@NotNull LongRangeSet other) {
       if (other.isEmpty() || other == this) return this;
       if (other.contains(myValue)) return other;
       if (other instanceof Point) {
@@ -1354,8 +1355,9 @@ public abstract class LongRangeSet {
       return diff < 0 || diff >= cutoff;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet subtract(LongRangeSet other) {
+    public LongRangeSet subtract(@NotNull LongRangeSet other) {
       if (other.isEmpty()) return this;
       if (other == this) return Empty.EMPTY;
       if (other instanceof Point) {
@@ -1388,8 +1390,9 @@ public abstract class LongRangeSet {
       return result;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet intersect(LongRangeSet other) {
+    public LongRangeSet intersect(@NotNull LongRangeSet other) {
       if (other == this) return this;
       if (other.isEmpty()) return other;
       if ((other instanceof ModRange && !(this instanceof ModRange)) || other instanceof Point) {
@@ -1419,8 +1422,9 @@ public abstract class LongRangeSet {
       return fromRanges(result, index);
     }
 
+    @NotNull
     @Override
-    public LongRangeSet unite(LongRangeSet other) {
+    public LongRangeSet unite(@NotNull LongRangeSet other) {
       if (other.isEmpty() || other == this) return this;
       if (other instanceof Point) {
         return other.unite(this);
@@ -1736,8 +1740,9 @@ public abstract class LongRangeSet {
       return super.contains(value) && isSet(myBits, remainder(value, myMod));
     }
 
+    @NotNull
     @Override
-    public LongRangeSet intersect(LongRangeSet other) {
+    public LongRangeSet intersect(@NotNull LongRangeSet other) {
       LongRangeSet intersection = super.intersect(other);
       if (intersection instanceof Range || intersection instanceof Point) {
         long bits = myBits;
@@ -1798,8 +1803,9 @@ public abstract class LongRangeSet {
       return false;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet unite(LongRangeSet other) {
+    public LongRangeSet unite(@NotNull LongRangeSet other) {
       if (other instanceof ModRange) {
         ModRange modRange = (ModRange)other;
         int lcm = lcm(modRange.myMod);
@@ -2019,8 +2025,9 @@ public abstract class LongRangeSet {
       return result;
     }
 
+    @NotNull
     @Override
-    public LongRangeSet subtract(LongRangeSet other) {
+    public LongRangeSet subtract(@NotNull LongRangeSet other) {
       if (other.isEmpty()) return this;
       if (other == this) return Empty.EMPTY;
       long[] result = new long[myRanges.length + other.asRanges().length];
@@ -2034,8 +2041,9 @@ public abstract class LongRangeSet {
       return fromRanges(result, index);
     }
 
+    @NotNull
     @Override
-    public LongRangeSet intersect(LongRangeSet other) {
+    public LongRangeSet intersect(@NotNull LongRangeSet other) {
       if (other == this) return this;
       if (other.isEmpty()) return other;
       if (other instanceof Point || other instanceof Range) {
@@ -2044,8 +2052,9 @@ public abstract class LongRangeSet {
       return subtract(all().subtract(other));
     }
 
+    @NotNull
     @Override
-    public LongRangeSet unite(LongRangeSet other) {
+    public LongRangeSet unite(@NotNull LongRangeSet other) {
       if (!(other instanceof RangeSet)) {
         return other.unite(this);
       }

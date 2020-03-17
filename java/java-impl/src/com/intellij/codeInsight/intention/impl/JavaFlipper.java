@@ -19,14 +19,14 @@ import com.intellij.openapi.editor.actions.FlipCommaIntention;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class JavaFlipper implements FlipCommaIntention.Flipper {
-
   @Override
-  public boolean flip(PsiElement left, PsiElement right) {
+  public boolean flip(@NotNull PsiElement left, @NotNull PsiElement right) {
     if (left instanceof PsiVariable && right instanceof PsiVariable) {
       if (left instanceof PsiParameter || right instanceof PsiParameter) return false;
       if (left instanceof PsiEnumConstant && ErrorUtil.containsDeepError(left) ||

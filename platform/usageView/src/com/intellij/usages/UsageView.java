@@ -104,15 +104,16 @@ public interface UsageView extends Disposable {
    * Reloads the whole tree model once instead of firing individual remove event for each node.
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
-  void removeUsagesBulk(@NotNull Collection<Usage> usages);
+  void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
 
   default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener){}
 
+  @FunctionalInterface
   interface ExcludeListener {
     /**
      *
      * @param usages unmodifiable set or nodes that were excluded or included
-     * @param excluded if <code>true</code> usages were excluded otherwise they were included
+     * @param excluded if {@code true} usages were excluded otherwise they were included
      */
     void fireExcluded(@NotNull Set<? extends Usage> usages, boolean excluded);
   }

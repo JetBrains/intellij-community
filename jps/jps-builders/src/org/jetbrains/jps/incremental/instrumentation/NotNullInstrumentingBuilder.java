@@ -29,7 +29,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder");
+  private static final Logger LOG = Logger.getInstance(NotNullInstrumentingBuilder.class);
 
   public NotNullInstrumentingBuilder() {
   }
@@ -48,7 +48,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
   @Override
   protected boolean isEnabled(CompileContext context, ModuleChunk chunk) {
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    return JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).isAddNotNullAssertions();
+    return JpsJavaExtensionService.getInstance().getCompilerConfiguration(pd.getProject()).isAddNotNullAssertions();
   }
 
   @Override
@@ -66,7 +66,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
                                      InstrumentationClassFinder finder) {
     try {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      final List<String> notNulls = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).getNotNullAnnotations();
+      final List<String> notNulls = JpsJavaExtensionService.getInstance().getCompilerConfiguration(pd.getProject()).getNotNullAnnotations();
       if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer, ArrayUtilRt.toStringArray(notNulls))) {
         return new BinaryContent(writer.toByteArray());
       }

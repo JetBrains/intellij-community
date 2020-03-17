@@ -456,7 +456,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitElement(final PsiElement element) {
+    public void visitElement(@NotNull final PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }

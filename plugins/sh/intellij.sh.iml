@@ -19,5 +19,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
   </component>
 </module>

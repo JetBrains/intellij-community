@@ -39,7 +39,7 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         if (!file.getLanguage().equals(file.getViewProvider().getBaseLanguage())) {
           // There is a possible case that more than a single virtual file/editor contains more than one language (e.g. php and html).
           // We want to process a virtual file once than, hence, ignore all non-base psi files.

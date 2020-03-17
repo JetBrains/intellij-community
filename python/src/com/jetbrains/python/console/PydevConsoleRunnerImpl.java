@@ -4,7 +4,6 @@ package com.jetbrains.python.console;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -20,6 +19,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
@@ -317,8 +317,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
     }
     else {
-      ExecutionManager
-        .getInstance(myProject).getContentManager().showRunContent(getExecutor(), contentDescriptor);
+      RunContentManager.getInstance(myProject).showRunContent(getExecutor(), contentDescriptor);
     }
   }
 
@@ -358,7 +357,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final PythonConsoleRunParams runParams = createConsoleRunParams(workingDir, sdk, environmentVariables);
 
     GeneralCommandLine cmd =
-      PythonCommandLineState.createPythonCommandLine(myProject, sdk.getSdkAdditionalData(), runParams, false,
+      PythonCommandLineState.createPythonCommandLine(myProject, runParams, false,
                                                      PtyCommandLine.isEnabled() && !SystemInfo.isWindows);
     cmd.withWorkDirectory(myWorkingDir);
 
@@ -723,8 +722,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           private final SplitLineAction mySplitLineAction = new SplitLineAction();
 
           @Override
-          public boolean isEnabled(Editor editor, DataContext dataContext) {
-            return mySplitLineAction.getHandler().isEnabled(editor, dataContext);
+          public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+            return mySplitLineAction.getHandler().isEnabled(editor, caret, dataContext);
           }
 
           @Override
@@ -823,7 +822,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Nullable
   private static String getConsoleDisplayName(@NotNull Project project) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
-    if (toolWindow == null) return null;
     ToolWindow window = toolWindow.getToolWindow();
     if (window == null) return null;
     final Content content = window.getContentManager().getSelectedContent();

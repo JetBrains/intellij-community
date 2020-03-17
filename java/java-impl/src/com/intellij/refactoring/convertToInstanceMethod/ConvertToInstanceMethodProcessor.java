@@ -52,7 +52,7 @@ import java.util.*;
  */
 public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG =
-    Logger.getInstance("#com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodProcessor");
+    Logger.getInstance(ConvertToInstanceMethodProcessor.class);
   private PsiMethod myMethod;
   private @Nullable PsiParameter myTargetParameter;
   private PsiClass myTargetClass;
@@ -481,7 +481,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return ConvertToInstanceMethodHandler.REFACTORING_NAME;
+    return ConvertToInstanceMethodHandler.getRefactoringName();
   }
 
   @Nullable

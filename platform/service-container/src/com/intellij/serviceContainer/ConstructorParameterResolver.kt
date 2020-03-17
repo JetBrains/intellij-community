@@ -61,7 +61,7 @@ internal class ConstructorParameterResolver {
     return when {
       adapter is BaseComponentAdapter -> {
         // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
-        adapter.getInstance(adapter.componentManager)
+        adapter.getInstance(adapter.componentManager, null)
       }
       componentManager.parent == null -> adapter.getComponentInstance(componentManager.picoContainer)
       else -> componentManager.picoContainer.getComponentInstance(adapter.componentKey)
@@ -114,9 +114,9 @@ internal class ConstructorParameterResolver {
 
     val result = container.getComponentAdaptersOfType(expectedType)
     result.removeIf { it.componentKey == requestorKey }
-    return when {
-      result.size == 0 -> container.parent?.getComponentAdapterOfType(expectedType)
-      result.size == 1 -> result[0]
+    return when (result.size) {
+      0 -> container.parent?.getComponentAdapterOfType(expectedType)
+      1 -> result[0]
       else -> throw AmbiguousComponentResolutionException(expectedType, Array(result.size) { result[it].componentImplementation })
     }
   }

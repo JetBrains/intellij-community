@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class GrConstructorInvocationReference(element: GrConstructorInvocation) : GrConstructorReference<GrConstructorInvocation>(element) {
 
-  override fun resolveClass(): GroovyResolveResult? {
+  override fun doResolveClass(): GroovyResolveResult? {
     val invocation = element
     val clazz = invocation.delegatedClass ?: return null
     val state = if (invocation.isThisCall) {

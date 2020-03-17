@@ -97,6 +97,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     }).expireWith(parentDisposable)
   }
 
+  @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
+              "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
   fun inUndoTransparentAction(): AppUIExecutorImpl {
     return withConstraint(object : ContextConstraint {
       override fun isCorrectContext(): Boolean =
@@ -110,6 +112,8 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     })
   }
 
+  @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
+              "Use runWriteAction instead.", ReplaceWith("this"))
   fun inWriteAction(): AppUIExecutorImpl {
     return withConstraint(object : ContextConstraint {
       override fun isCorrectContext(): Boolean =
@@ -128,9 +132,13 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   }
 }
 
-
+@Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
+            "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
 fun AppUIExecutor.inUndoTransparentAction(): AppUIExecutor =
   (this as AppUIExecutorImpl).inUndoTransparentAction()
+
+@Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
+            "Use runWriteAction instead.", ReplaceWith("this"))
 fun AppUIExecutor.inWriteAction():AppUIExecutor =
   (this as AppUIExecutorImpl).inWriteAction()
 

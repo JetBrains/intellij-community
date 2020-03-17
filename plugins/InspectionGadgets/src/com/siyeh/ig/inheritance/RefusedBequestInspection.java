@@ -81,12 +81,6 @@ public class RefusedBequestInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("refused.bequest.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("refused.bequest.problem.descriptor");
   }

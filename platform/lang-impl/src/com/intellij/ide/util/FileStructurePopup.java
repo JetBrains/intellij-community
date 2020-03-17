@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
@@ -92,7 +93,7 @@ import java.util.function.BiPredicate;
  * @author Konstantin Bulenkov
  */
 public class FileStructurePopup implements Disposable, TreeActionsOwner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
+  private static final Logger LOG = Logger.getInstance(FileStructurePopup.class);
   private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
   private final Project myProject;
@@ -292,7 +293,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         myTreeHasBuilt.setRejected();
       }
     });
-    myTree.getEmptyText().setText("Loading...");
+    myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
@@ -793,7 +794,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       DumbAwareAction.create(e -> checkBox.doClick())
         .registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myTree);
     }
-    checkBox.setText(StringUtil.capitalize(StringUtil.trimStart(text.trim(), "Show ")));
+    checkBox.setText(text);
     panel.add(checkBox);
 
     myCheckBoxes.put(action.getClass(), checkBox);
@@ -809,7 +810,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   @NotNull
   private Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
-    myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
+    myStructureTreeModel.getInvoker().invoke(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
         myStructureTreeModel.invalidate().onSuccess(

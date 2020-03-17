@@ -109,7 +109,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return null;
     }
     if (!isValid()) {
-      return handleInvalidDirectory();
+      return handleInvalidDirectory(null);
     }
 
     VirtualFileSystemEntry found = doFindChildInArray(name, caseSensitive);
@@ -181,11 +181,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return child;
   }
 
-  private VirtualFileSystemEntry handleInvalidDirectory() {
+  private <T> T handleInvalidDirectory(T empty) {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
       // We can be inside refreshAndFindFileByPath, which must be called outside read action, and
       // throwing an exception doesn't seem a good idea when the callers can't do anything about it
-      return null;
+      return empty;
     }
     throw new InvalidVirtualFileAccessException(this);
   }
@@ -267,7 +267,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     if (attributes.isDirectory() && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
       // when creating empty directory we need to make sure
-      // every file crested inside will fire "file created" event
+      // every file created inside will fire "file created" event
       // in order to virtual file pointer manager get those events
       // to update its pointers properly
       // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons)
@@ -348,7 +348,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @NotNull
   public VirtualFile[] getChildren() {
     if (!isValid()) {
-      throw new InvalidVirtualFileAccessException(this);
+      return handleInvalidDirectory(EMPTY_ARRAY);
     }
     if (allChildrenLoaded()) {
       return getArraySafely(true);

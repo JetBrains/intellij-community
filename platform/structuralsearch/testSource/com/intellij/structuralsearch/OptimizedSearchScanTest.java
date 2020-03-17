@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.testFramework.IdeaTestUtil;
 
@@ -10,12 +9,6 @@ import com.intellij.testFramework.IdeaTestUtil;
  * @author Maxim.Mossienko
  */
 public class OptimizedSearchScanTest extends StructuralSearchTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    options.setScope(ProjectScope.getAllScope(getProject()));
-  }
 
   @Override
   protected Sdk getProjectJDK() {

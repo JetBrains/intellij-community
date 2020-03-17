@@ -21,7 +21,7 @@ import java.util.*;
  * @author peter
  */
 public class PackageDirectoryCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PackageDirectoryCache");
+  private static final Logger LOG = Logger.getInstance(PackageDirectoryCache.class);
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -202,10 +202,6 @@ class ServiceViewDragHelper {
     }
 
     @Override
-    public void dragDropEnd() {
-    }
-
-    @Override
     public void dropActionChanged(int gestureModifiers) {
     }
 
@@ -254,14 +250,6 @@ class ServiceViewDragHelper {
 
     ServiceViewDnDTarget(@NotNull JTree tree) {
       myTree = tree;
-    }
-
-    @Override
-    public void cleanUpOnLeave() {
-    }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
 
     @Override

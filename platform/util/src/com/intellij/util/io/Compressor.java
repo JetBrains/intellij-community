@@ -1,14 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,20 +131,6 @@ public abstract class Compressor implements Closeable {
   }
 
   private BiPredicate<String, File> myFilter = null;
-
-  /** @deprecated use {@link #filter(BiPredicate)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public Compressor filter(@Nullable Condition<? super String> filter) {
-    myFilter = filter == null ? null : (entryName, file) -> {
-      int p = -1;
-      while ((p = entryName.indexOf('/', p + 1)) > 0) {
-        if (!filter.value(entryName.substring(0, p))) return false;
-      }
-      return filter.value(entryName);
-    };
-    return this;
-  }
 
   /**
    * Allows filtering entries being added to the archive.

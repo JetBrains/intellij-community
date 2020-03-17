@@ -33,7 +33,7 @@ public class ExceptionUtilRt {
     return (T)e;
   }
 
-  public static boolean causedBy(Throwable e, Class klass) {
+  public static boolean causedBy(Throwable e, Class<?> klass) {
     return findCause(e, klass) != null;
   }
 

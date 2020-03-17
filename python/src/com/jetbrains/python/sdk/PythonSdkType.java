@@ -29,8 +29,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
-import com.intellij.remote.*;
-import com.intellij.remote.ext.CredentialsCase;
+import com.intellij.remote.ExceptionFix;
+import com.intellij.remote.VagrantNotStartedException;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -53,10 +53,7 @@ import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,6 +61,7 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -79,6 +77,12 @@ public final class PythonSdkType extends SdkType {
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
   private static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
+
+  /**
+   * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
+   * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
+   */
+  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("[-a-zA-Z_0-9]{2,}:.*");
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -130,15 +134,6 @@ public final class PythonSdkType extends SdkType {
   @Override
   public boolean isValidSdkHome(@Nullable final String path) {
     return PythonSdkFlavor.getFlavor(path) != null;
-  }
-
-  public static boolean isVagrant(@Nullable Sdk sdk) {
-    if (sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
-      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-
-      return data.connectionCredentials().getRemoteConnectionType() == CredentialsType.VAGRANT;
-    }
-    return false;
   }
 
   @NotNull
@@ -277,11 +272,13 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
-    if (RemoteSdkCredentialsHolder.isRemoteSdk(currentSdk.getHomePath())) {
+    String homePath = currentSdk.getHomePath();
+    if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         return manager.loadRemoteSdkData(currentSdk, additional);
       }
+      // TODO we should have "remote" SDK data with unknown credentials anyway!
     }
     // TODO: Extract loading additional SDK data into a Python SDK provider
     final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
@@ -289,6 +286,18 @@ public final class PythonSdkType extends SdkType {
       return pipEnvData;
     }
     return PythonSdkAdditionalData.load(currentSdk, additional);
+  }
+
+  /**
+   * Returns whether provided Python interpreter path corresponds to custom
+   * Python SDK.
+   *
+   * @param homePath SDK home path
+   * @return whether provided Python interpreter path corresponds to custom Python SDK
+   */
+  @Contract(pure = true)
+  static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
+    return CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN.matcher(homePath).matches();
   }
 
   public static boolean isSkeletonsPath(String path) {
@@ -375,7 +384,7 @@ public final class PythonSdkType extends SdkType {
 
     Notifications.Bus.notify(
       new Notification(
-        SKELETONS_TOPIC, "Couldn't refresh skeletons for remote interpreter",
+        SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"),
         notificationMessage,
         NotificationType.WARNING,
         notificationListener
@@ -513,15 +522,7 @@ public final class PythonSdkType extends SdkType {
           protected void processLanguageContribution(PyCredentialsContribution languageContribution, Object credentials) {
             result.set(!languageContribution.isValid(credentials));
           }
-        }.collectCases(
-          PyCredentialsContribution.class,
-          new CredentialsCase.Vagrant() {
-            @Override
-            public void process(VagrantBasedCredentialsHolder cred) {
-              result.set(StringUtil.isEmpty(cred.getVagrantFolder()));
-            }
-          }
-        ));
+        }.collectCases(PyCredentialsContribution.class));
       return result.get();
     }
     return false;

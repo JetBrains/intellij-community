@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.GenerationEnvironment;
 import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.io.File;
@@ -54,10 +56,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -65,8 +64,8 @@ import java.util.stream.Stream;
 /**
  * @author peter
  */
-public class MadTestingUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
+public final class MadTestingUtil {
+  private static final Logger LOG = Logger.getInstance(MadTestingUtil.class);
   private static final boolean USE_ROULETTE_WHEEL = true;
 
   public static void restrictChangesToDocument(Document document, Runnable r) {
@@ -171,7 +170,7 @@ public class MadTestingUtil {
    * @param disposable when this is disposed, reverts to the previous project inspection profile
    * @param except short names of inspections to disable
    */
-  public static void enableAllInspections(Project project, Disposable disposable, String... except) {
+  public static void enableAllInspections(@NotNull Project project, String... except) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
@@ -188,7 +187,7 @@ public class MadTestingUtil {
     manager.addProfile(profile);
     InspectionProfileImpl prev = manager.getCurrentProfile();
     manager.setCurrentProfile(profile);
-    Disposer.register(disposable, () -> {
+    Disposer.register(((ProjectImpl)project).getEarlyDisposable(), () -> {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
       manager.setCurrentProfile(prev);
       manager.deleteProfile(profile);
@@ -239,15 +238,28 @@ public class MadTestingUtil {
   }
 
   /**
-   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke completion/intentions or random editing).
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions on those files (e.g. invoke completion/intentions or random editing).
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
    * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
-   * @return
    */
   @NotNull
   public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
                                                                  FileFilter fileFilter,
                                                                  Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
+    return performOnFileContents(fixture, rootPath, fileFilter, (env, vFile) ->
+      env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile))))));
+  }
+
+  /**
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and invokes {@code action} on those files.
+   * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
+   */
+  @NotNull
+  public static Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
+                                                                  String rootPath,
+                                                                  FileFilter fileFilter,
+                                                                  BiConsumer<ImperativeCommand.Environment, VirtualFile> action) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll()
       .append(() -> {
@@ -259,7 +271,7 @@ public class MadTestingUtil {
           System.err.println("Can't check " + vFile + " due to incorrect file type: " + psiFile + " of " + psiFile.getClass());
           return;
         }
-        env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile)))));
+        action.accept(env, vFile);
       })
       .append(() -> WriteAction.run(() -> {
         for (VirtualFile file : Objects.requireNonNull(fixture.getTempDirFixture().getFile("")).getChildren()) {
@@ -538,7 +550,7 @@ public class MadTestingUtil {
       Arrays.sort(children, Comparator.comparing(File::getName));
       while (true) {
         int[] weights = Arrays.stream(children).mapToInt(child -> estimateWeight(child, exhausted)).toArray();
-        int index = 0;
+        int index;
         try {
           index = spin(data, weights);
         }

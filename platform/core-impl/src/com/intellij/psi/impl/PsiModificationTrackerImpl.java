@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -8,6 +9,7 @@ import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.*;
@@ -34,17 +36,12 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   private final SimpleModificationTracker myAllLanguagesTracker = new SimpleModificationTracker();
   private final Map<Language, SimpleModificationTracker> myLanguageTrackers =
     ConcurrentFactoryMap.createWeakMap(language -> new SimpleModificationTracker());
-
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
     MessageBus bus = project.getMessageBus();
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      private void doIncCounter() {
-        ApplicationManager.getApplication().runWriteAction(() -> incCounter());
-      }
-
       @Override
       public void enteredDumbMode() {
         doIncCounter();
@@ -55,6 +52,10 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
         doIncCounter();
       }
     });
+  }
+
+  private void doIncCounter() {
+    ApplicationManager.getApplication().runWriteAction(() -> incCounter());
   }
 
   public void incCounter() {

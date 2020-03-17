@@ -114,7 +114,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.importing");
+    return MavenProjectBundle.message("maven.tab.importing");
   }
 
   @Override

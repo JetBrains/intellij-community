@@ -13,7 +13,7 @@ import java.io.IOException;
  * and to perform them through the corresponding VCS.
  *
  * @author max
- * @see com.intellij.openapi.vfs.LocalFileSystem#registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler)
+ * @see LocalFileSystem#registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler)
  */
 public interface LocalFileOperationsHandler {
   /**

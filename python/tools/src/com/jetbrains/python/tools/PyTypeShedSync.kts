@@ -26,6 +26,7 @@ sync(repo, bundled)
 
 val whiteList = setOf(
   "__builtin__",
+  "__future__",
   "_importlib_modulespec",
   "_io",
   "abc",
@@ -35,20 +36,30 @@ val whiteList = setOf(
   "builtins",
   "collections",
   "concurrent",
+  "contextvars",
+  "cPickle",
   "crypt",
   "ctypes",
   "datetime",
   "email",
   "exceptions",
   "functools",
+  "genericpath",
   "io",
   "itertools",
   "logging",
+  "macpath",
   "math",
   "mock",
   "multiprocessing",
+  "ntpath",
+  "numbers",
   "pathlib",
   "queue",
+  "os",
+  "os2emxpath",
+  "posix",
+  "posixpath",
   "re",
   "shutil",
   "signal",
@@ -66,7 +77,8 @@ val whiteList = setOf(
   "unittest",
   "urllib",
   "uuid",
-  "werkzeug"
+  "werkzeug",
+  "xml"
 )
 
 println("Cleaning")

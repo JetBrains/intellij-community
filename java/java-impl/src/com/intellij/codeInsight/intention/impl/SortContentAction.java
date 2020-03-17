@@ -30,19 +30,20 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class SortContentAction extends PsiElementBaseIntentionAction {
   public static final int MIN_ELEMENTS_COUNT = 3;
 
-  public static final SortingStrategy[] EXPRESSION_SORTING_STRATEGIES = {
-    new StringLiteralSortingStrategy(),
-    new IntLiteralSortingStrategy(),
-    new EnumConstantSortingStrategy()
-  };
+  private static class Holder {
+    public static final SortingStrategy[] EXPRESSION_SORTING_STRATEGIES = {
+      new StringLiteralSortingStrategy(),
+      new IntLiteralSortingStrategy(),
+      new EnumConstantSortingStrategy()
+    };
 
-  private static final Sortable<?>[] OUR_SORTABLES = new Sortable[]{
-    new ArrayInitializerSortable(),
-    new VarargSortable(),
-    new EnumConstantDeclarationSortable(),
-    new AnnotationArraySortable()
-  };
-
+    private static final Sortable<?>[] OUR_SORTABLES = new Sortable[]{
+      new ArrayInitializerSortable(),
+      new VarargSortable(),
+      new EnumConstantDeclarationSortable(),
+      new AnnotationArraySortable()
+    };
+  }
 
   @Nls
   @NotNull
@@ -59,7 +60,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    for (Sortable<?> sortable : OUR_SORTABLES) {
+    for (Sortable<?> sortable : Holder.OUR_SORTABLES) {
       if (sortable.isAvailable(element)) {
         sortable.replaceWithSorted(element);
       }
@@ -68,7 +69,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    for (Sortable<?> sortable : OUR_SORTABLES) {
+    for (Sortable<?> sortable : Holder.OUR_SORTABLES) {
       if (sortable.isAvailable(element)) return true;
     }
     return false;
@@ -622,7 +623,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @NotNull
     @Override
     SortingStrategy[] sortStrategies() {
-      return EXPRESSION_SORTING_STRATEGIES;
+      return Holder.EXPRESSION_SORTING_STRATEGIES;
     }
 
 
@@ -659,7 +660,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @NotNull
     @Override
     SortingStrategy[] sortStrategies() {
-      return EXPRESSION_SORTING_STRATEGIES;
+      return Holder.EXPRESSION_SORTING_STRATEGIES;
     }
 
     @Nullable
@@ -724,7 +725,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @NotNull
     @Override
     SortingStrategy[] sortStrategies() {
-      return EXPRESSION_SORTING_STRATEGIES;
+      return Holder.EXPRESSION_SORTING_STRATEGIES;
     }
 
     @Nullable

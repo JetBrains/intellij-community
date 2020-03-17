@@ -59,7 +59,7 @@ public class PsiFilter<T extends PsiElement> {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (filter.getParentClass().isAssignableFrom(element.getClass())) {
         final T e = (T)element;
         if (filter.accept(e)) {

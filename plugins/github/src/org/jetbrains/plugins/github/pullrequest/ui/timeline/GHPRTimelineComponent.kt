@@ -4,19 +4,22 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.*
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import javax.swing.JPanel
+import javax.swing.ListModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRTimelineComponent(private val model: GHPRTimelineMergingModel,
+class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
                             private val itemComponentFactory: GHPRTimelineItemComponentFactory)
-  : VerticalBox(), ComponentWithEmptyText {
+  : JPanel(VerticalLayout(20)), ComponentWithEmptyText {
 
   private val emptyText = object : StatusText(this) {
     override fun isStatusVisible() = model.size == 0

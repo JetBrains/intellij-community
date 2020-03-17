@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -26,12 +27,14 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @HardwareAgentRequired
 public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCase {
-  public void testSOEInEndlessAppendChainPerformance() {
+  public void testHugeAppendChainDoesNotCauseSOE() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
       text.append(".append(").append(i).append(")\n");
@@ -58,9 +61,10 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
 
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
     String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
+    @Language("JAVA")
     String text = "class S { " +
-                  "String[] s = {" + listBody + "};\n" +
-                  "void foo(String... s) { foo(" + listBody + "); }\n" +
+                  "  String[] s = {" + listBody + "};\n" +
+                  "  void foo(String... s) { foo(" + listBody + "); }\n" +
                   "}";
     configureByText(StdFileTypes.JAVA, text);
 
@@ -112,9 +116,15 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       final long start = System.currentTimeMillis();
       final AtomicLong typingStart = new AtomicLong();
       final AtomicReference<RuntimeException> exception = new AtomicReference<>();
-      Thread watcher = new Thread("reactivity watcher") {
-        @Override
-        public void run() {
+      Future<?> watcher = null;
+      try {
+        PsiFile file = getFile();
+        Editor editor = getEditor();
+        Project project = file.getProject();
+        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
+        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        watcher = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           while (true) {
             final long start1 = typingStart.get();
             if (start1 == -1) break;
@@ -138,16 +148,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
               throw exception.get();
             }
           }
-        }
-      };
-      try {
-        PsiFile file = getFile();
-        Editor editor = getEditor();
-        Project project = file.getProject();
-        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
-        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        watcher.start();
+        });
         Runnable interrupt = () -> {
           long now = System.currentTimeMillis();
           if (now - start < 100) {
@@ -176,7 +177,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       }
       finally {
         typingStart.set(-1); // cancel watcher
-        watcher.join();
+        watcher.get();
         if (exception.get() != null) {
           throw exception.get();
         }

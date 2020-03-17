@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.hierarchy;
 
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;

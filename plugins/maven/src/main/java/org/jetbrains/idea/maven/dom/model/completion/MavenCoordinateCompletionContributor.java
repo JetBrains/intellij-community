@@ -21,10 +21,10 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionHandler;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
+import org.jetbrains.idea.reposearch.DependencySearchService;
+import org.jetbrains.idea.reposearch.RepositoryArtifactData;
+import org.jetbrains.idea.reposearch.SearchParameters;
 
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Consumer;
@@ -51,9 +51,9 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
 
       MavenDomShortArtifactCoordinates coordinates = placeChecker.getCoordinates();
       result = amendResultSet(result);
-      ConcurrentLinkedDeque<MavenRepositoryArtifactInfo> cld = new ConcurrentLinkedDeque<>();
-      Promise<Void> promise = find(
-        MavenProjectIndicesManager.getInstance(placeChecker.getProject()).getDependencySearchService(),
+      ConcurrentLinkedDeque<RepositoryArtifactData> cld = new ConcurrentLinkedDeque<>();
+      Promise<Integer> promise = find(
+        DependencySearchService.getInstance(placeChecker.getProject()),
         coordinates, parameters,
         mdci -> cld.add(mdci)
       );
@@ -65,28 +65,24 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
 
   protected void fillResults(@NotNull CompletionResultSet result,
                              @NotNull MavenDomShortArtifactCoordinates coordinates,
-                             @NotNull  ConcurrentLinkedDeque<MavenRepositoryArtifactInfo> cld, @NotNull  Promise<Void> promise) {
+                             @NotNull ConcurrentLinkedDeque<RepositoryArtifactData> cld, @NotNull Promise<Integer> promise) {
     while (promise.getState() == PENDING || !cld.isEmpty()) {
       ProgressManager.checkCanceled();
-      MavenRepositoryArtifactInfo item = cld.poll();
-      if (item != null) {
-        fillResult(coordinates, result, item);
+      RepositoryArtifactData item = cld.poll();
+      if (item instanceof MavenRepositoryArtifactInfo) {
+        fillResult(coordinates, result, (MavenRepositoryArtifactInfo)item);
       }
     }
   }
 
   protected SearchParameters createSearchParameters(CompletionParameters parameters) {
-    if (parameters.getInvocationCount() > 1
-        || ApplicationManager.getApplication().isUnitTestMode()/*to be fixed in future*/) {
-      return SearchParameters.FULL;
-    }
-    return SearchParameters.DEFAULT;
+    return new SearchParameters(parameters.getInvocationCount() < 2, ApplicationManager.getApplication().isUnitTestMode());
   }
 
-  protected abstract Promise<Void> find(@NotNull DependencySearchService service,
-                                        @NotNull MavenDomShortArtifactCoordinates coordinates,
-                                        @NotNull CompletionParameters parameters,
-                                        @NotNull Consumer<MavenRepositoryArtifactInfo> consumer);
+  protected abstract Promise<Integer> find(@NotNull DependencySearchService service,
+                                           @NotNull MavenDomShortArtifactCoordinates coordinates,
+                                           @NotNull CompletionParameters parameters,
+                                           @NotNull Consumer<RepositoryArtifactData> consumer);
 
 
   protected boolean validate(String groupId, String artifactId) {
@@ -117,8 +113,8 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
     return StringUtil.trim(value.replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, ""));
   }
 
-  protected static Consumer<MavenRepositoryArtifactInfo> withPredicate(Consumer<MavenRepositoryArtifactInfo> consumer,
-                                                                       Predicate<MavenRepositoryArtifactInfo> predicate) {
+  protected static <T> Consumer<T> withPredicate(Consumer<T> consumer,
+                                                 Predicate<T> predicate) {
     return it -> {
       if (predicate.test(it)) {
         consumer.accept(it);

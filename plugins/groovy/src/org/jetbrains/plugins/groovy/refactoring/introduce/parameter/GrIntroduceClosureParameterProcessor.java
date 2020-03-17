@@ -12,8 +12,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
@@ -290,7 +290,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final StringPartInfo info = settings.getStringPartInfo();
     if (info != null) {
       final GrExpression expr = info.replaceLiteralWithConcatenation(settings.getName());
-      final Editor editor = PsiUtilBase.findEditor(expr);
+      final Editor editor = PsiEditorUtil.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());

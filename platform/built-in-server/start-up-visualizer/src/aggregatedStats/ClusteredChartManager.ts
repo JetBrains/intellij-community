@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {addExportMenu} from "@/charts/ChartManager"
+import {addExportMenu, StatChartManager} from "@/charts/ChartManager"
 import {GroupedMetricResponse} from "@/aggregatedStats/model"
 
 // todo https://www.amcharts.com/demos/variance-indicators/
-export class ClusteredChartManager {
+export class ClusteredChartManager implements StatChartManager {
   private readonly chart: am4charts.XYChart
+  private currentChartTitle: string | null = null
 
   constructor(container: HTMLElement) {
     this.chart = am4core.create(container, am4charts.XYChart)
@@ -15,6 +16,21 @@ export class ClusteredChartManager {
     chart.legend = new am4charts.Legend()
     addExportMenu(chart)
 
+    this.configureCategoryAxis()
+
+    const valueAxis = chart.yAxes.push(new am4charts.DurationAxis())
+    valueAxis.durationFormatter.baseUnit = "millisecond"
+    valueAxis.durationFormatter.durationFormat = "S"
+
+    const cursor = new am4charts.XYCursor()
+    cursor.behavior = "zoomXY"
+    cursor.lineX.disabled = true
+    cursor.lineY.disabled = true
+    chart.cursor = cursor
+  }
+
+  private configureCategoryAxis() {
+    const chart = this.chart
     const categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis())
     categoryAxis.dataFields.category = "metric"
     categoryAxis.renderer.grid.template.location = 0
@@ -25,21 +41,21 @@ export class ClusteredChartManager {
     label.truncate = true
     label.maxWidth = 120
     label.tooltipText = "{category}"
-
-    const valueAxis = chart.yAxes.push(new am4charts.DurationAxis())
-    valueAxis.durationFormatter.baseUnit = "millisecond"
-    valueAxis.durationFormatter.durationFormat = "S"
-
-    const cursor = new am4charts.XYCursor()
-    cursor.behavior = "zoomXY"
-    cursor.lineX.disabled = true
-    cursor.lineY.disabled = true
-    // cursor.xAxis = dateAxis
-    // cursor.snapToSeries = series
-    chart.cursor = cursor
   }
 
-  private render(data: GroupedMetricResponse): void {
+  setChartTitle(value: string) {
+    if (this.currentChartTitle === value) {
+      return
+    }
+
+    this.currentChartTitle = value
+    const chart = this.chart
+    const title = chart.titles.length === 0  ? chart.titles.create() : chart.titles.getIndex(0)!!
+    title.html = `<h3>${value}</h3>`
+    title.paddingBottom = 5
+  }
+
+  render(data: GroupedMetricResponse): void {
     const chart = this.chart
 
     const oldSeries = new Map<string, am4charts.ColumnSeries>()
@@ -60,6 +76,8 @@ export class ClusteredChartManager {
       }
     }
 
+    chart.xAxes.getIndex(0)!!.renderer.labels.template.maxWidth = data.groupNames.length > 4 ? 120 : 180
+
     oldSeries.forEach(value => {
       console.log("dispose series", value.name)
       chart.series.removeIndex(chart.series.indexOf(value))
@@ -76,26 +94,14 @@ export class ClusteredChartManager {
     series.columns.template.width = am4core.percent(95)
     // series.columns.template.tooltipText = `${groupName}: {valueY} ms`
 
-    let valueLabel = series.bullets.push(new am4charts.LabelBullet())
+    const valueLabel = series.bullets.push(new am4charts.LabelBullet())
     valueLabel.label.text = "{valueY.formatDuration('S')}"
     valueLabel.label.verticalCenter = "bottom"
-    // valueLabel.label.dx = 10
     valueLabel.label.hideOversized = false
     valueLabel.label.truncate = false
   }
 
   dispose(): void {
     this.chart.dispose()
-  }
-
-  setData(data: Promise<GroupedMetricResponse>) {
-    data
-      .then(data => {
-        if (data != null) {
-          // https://stackoverflow.com/questions/56996968/prevent-an-object-from-being-converted-to-a-reactive-object-when-assigned-to-a-c
-          data.data.map(it => Object.freeze(it))
-          this.render(data)
-        }
-      })
   }
 }

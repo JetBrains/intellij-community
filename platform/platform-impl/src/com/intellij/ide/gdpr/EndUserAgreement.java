@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
  *         Date: 09-Mar-16
  */
 public final class EndUserAgreement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.PrivacyPolicy");
+  private static final Logger LOG = Logger.getInstance(EndUserAgreement.class);
   private static final String POLICY_TEXT_PROPERTY = "jb.privacy.policy.text"; // to be used in tests to pass arbitrary policy text
 
   private static final String PRIVACY_POLICY_DOCUMENT_NAME = "privacy";

@@ -424,7 +424,7 @@ Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
     }
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
         VirtualFile vFile = file.getVirtualFile();
         if (vFile != null && vFile.isInLocalFileSystem()) {

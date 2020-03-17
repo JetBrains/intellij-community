@@ -74,7 +74,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
 
     final ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(project, file);
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
     // TODO filter out targets defined in stubs
     return StreamEx.of(resolveReferenceAugAssignmentsAware(elementAtCaret, resolveContext))
       .select(PyTargetExpression.class)
@@ -154,7 +154,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     assert target.getContainingClass() != null;
     assert target.getName() != null;
     final PyClassTypeImpl classType = new PyClassTypeImpl(target.getContainingClass(), true);
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final List<? extends RatedResolveResult> classAttrs =
       classType.resolveMember(target.getName(), target, AccessDirection.READ, resolveContext, true);
     if (classAttrs == null) {
@@ -172,7 +172,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     if (target.isQualified() && target.getContainingClass() != null && scopeOwner instanceof PyFunction) {
 
       if (context.maySwitchToAST(target)) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
         //noinspection ConstantConditions
         return StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
           .select(PyParameter.class)

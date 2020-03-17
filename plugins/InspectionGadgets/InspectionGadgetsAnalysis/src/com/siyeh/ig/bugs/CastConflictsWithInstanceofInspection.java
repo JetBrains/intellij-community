@@ -31,13 +31,6 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cast.conflicts.with.instanceof.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)infos[0];
     return InspectionGadgetsBundle.message(

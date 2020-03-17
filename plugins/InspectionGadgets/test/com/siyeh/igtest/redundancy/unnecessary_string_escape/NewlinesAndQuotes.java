@@ -8,4 +8,6 @@ class X {
 <warning descr="'\\\\"' is unnecessarily escaped">\"</warning>"
 "<warning descr="'\\\\"' is unnecessarily escaped">\"</warning>
 """;
+  String v = """
+    abc<warning descr="'\n' is unnecessarily escaped">\n</warning>def""";
 }

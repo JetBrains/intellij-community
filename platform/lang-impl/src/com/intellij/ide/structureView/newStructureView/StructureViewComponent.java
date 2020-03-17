@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.structureView.newStructureView;
 
@@ -77,7 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
+  private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static final Key<Boolean> STRUCTURE_VIEW_STATE_RESTORED_KEY = Key.create("STRUCTURE_VIEW_STATE_RESTORED_KEY");
@@ -253,8 +253,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public void rebuild() {
-    myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
-      UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
+    myStructureTreeModel.getInvoker().invoke(() -> {
+      ComponentUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
       myTreeStructure.rebuildTree();
       myStructureTreeModel.invalidate();
     });
@@ -314,7 +314,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (myFileEditor != null) {
       myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, state);
     }
-    UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
+    ComponentUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
   }
 
   @Override
@@ -326,12 +326,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public void restoreState() {
     TreeState state = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (state == null) {
-      if (!Boolean.TRUE.equals(UIUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
+      if (!Boolean.TRUE.equals(ComponentUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
         TreeUtil.expand(getTree(), getMinimumExpandDepth(myTreeModel));
       }
     }
     else {
-      UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, true);
+      ComponentUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, true);
       state.applyTo(myTree);
       if (myFileEditor != null) {
         myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
@@ -381,7 +381,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  public Promise<AbstractTreeNode> expandPathToElement(Object element) {
+  public Promise<AbstractTreeNode<?>> expandPathToElement(Object element) {
     return expandSelectFocusInner(element, false, false)
       .then(p -> TreeUtil.getLastUserObject(AbstractTreeNode.class, p));
   }
@@ -780,7 +780,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     @NotNull
-    public Collection<AbstractTreeNode> getChildren() {
+    public Collection<AbstractTreeNode<?>> getChildren() {
       if (ourSettingsModificationCount.get() != modificationCountForChildren) {
         resetChildren();
         modificationCountForChildren = ourSettingsModificationCount.get();
@@ -1017,7 +1017,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
       TreePath parentPath = e.getTreePath();
-      if (Boolean.TRUE.equals(UIUtil.getClientProperty(tree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) return;
+      if (Boolean.TRUE.equals(ComponentUtil.getClientProperty(tree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) return;
       if (parentPath == null || parentPath.getPathCount() > autoExpandDepth.asInteger() - 1) return;
       Object[] children = e.getChildren();
       if (smartExpand && children.length == 1) {

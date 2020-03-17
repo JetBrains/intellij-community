@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +46,7 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
     setSecondComponent(myDetailsOn ? myProcessor.getComponent() : null);
     JComponent secondComponent = getSecondComponent();
     if (secondComponent != null) {
+      IJSwingUtilities.updateComponentTreeUI(secondComponent);
       secondComponent.setMinimumSize(emptySize());
     }
     validate();

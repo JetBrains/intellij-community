@@ -215,7 +215,7 @@ public final class AppUIUtil {
     invokeOnEdt(runnable, null);
   }
 
-  public static void invokeOnEdt(Runnable runnable, @Nullable Condition<?> expired) {
+  public static void invokeOnEdt(@NotNull Runnable runnable, @Nullable Condition<?> expired) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       if (expired == null || !expired.value(null)) {
@@ -465,7 +465,7 @@ public final class AppUIUtil {
       protected JComponent createSouthPanel() {
         JComponent southPanel = super.createSouthPanel();
         if (southPanel != null) {
-          southPanel.setBorder(ourDefaultBorder);
+          southPanel.setBorder(createDefaultBorder());
         }
         return southPanel;
       }

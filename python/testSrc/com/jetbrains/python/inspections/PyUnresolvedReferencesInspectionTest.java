@@ -822,28 +822,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  // PY-37755 PY-2700
-  public void testGlobalResolveAttribute() {
-    doTest();
-  }
-
-  // PY-39682
-  public void testWildcardIgnorePatternReferenceForNestedBinaryModule() {
-    // TODO simplify runWithAdditionalClassEntryInSdkRoots to accept a relative path directly
-    final String testDataDir = getTestDataPath() + "/" + getTestDirectoryPath();
-    final VirtualFile sitePackagesDir = StandardFileSystems.local().findFileByPath(testDataDir + "/site-packages");
-    final VirtualFile skeletonsDir = StandardFileSystems.local().findFileByPath(testDataDir + "/python_stubs");
-    runWithAdditionalClassEntryInSdkRoots(sitePackagesDir, () -> {
-      runWithAdditionalClassEntryInSdkRoots(skeletonsDir, () -> {
-        myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
-        final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
-        inspection.ignoredIdentifiers.add("pkg.*");
-        myFixture.enableInspections(inspection);
-        myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
-        assertSdkRootsNotParsed(myFixture.getFile());
-        assertProjectFilesNotParsed(myFixture.getFile());
-      });
-    });
+  // PY-39078
+  public void testNoneAttribute() {
+    doTestByText("a = None\n" +
+                 "a.<warning descr=\"Cannot find reference 'append' in 'None'\">append</warning>(10)");
   }
 
   @NotNull

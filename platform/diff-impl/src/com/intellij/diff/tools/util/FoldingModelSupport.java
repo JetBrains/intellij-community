@@ -21,7 +21,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -848,7 +850,7 @@ public class FoldingModelSupport {
     @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>(myCount);
 
     @NotNull private final LazyDescription[] myDescriptions;
-    private final Disposable myDescriptionsDisposable = Disposer.newDisposable();
+    private final ProgressIndicator myDescriptionsIndicator = new EmptyProgressIndicator();
 
     public FoldedBlock(@NotNull FoldRegion[] regions,
                        @NotNull DescriptionComputer descriptionComputer,
@@ -885,7 +887,7 @@ public class FoldingModelSupport {
         FoldRegion region = myRegions[i];
         if (region != null) myEditors[i].getFoldingModel().removeFoldRegion(region);
       }
-      Disposer.dispose(myDescriptionsDisposable);
+      myDescriptionsIndicator.cancel();
     }
 
     public void destroyHighlighter() {
@@ -956,7 +958,7 @@ public class FoldingModelSupport {
               if (result.description != null) repaintEditor();
             })
             .withDocumentsCommitted(myProject)
-            .expireWith(myDescriptionsDisposable)
+            .cancelWith(myDescriptionsIndicator)
             .submit(NonUrgentExecutor.getInstance());
         }
         return myDescription.description;

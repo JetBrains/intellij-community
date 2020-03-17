@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -28,7 +28,7 @@ public class RegistryValue {
 
   private String myStringCachedValue;
   private Integer myIntCachedValue;
-  private Double myDoubleCachedValue;
+  private double myDoubleCachedValue = Double.NaN;
   private Boolean myBooleanCachedValue;
   private static final Logger LOG = Logger.getInstance(RegistryValue.class);
 
@@ -67,7 +67,8 @@ public class RegistryValue {
   public int asInteger() {
     Integer result = myIntCachedValue;
     if (result == null) {
-      myIntCachedValue = result = calcInt();
+      result = calcInt();
+      myIntCachedValue = result;
     }
     return result.intValue();
   }
@@ -85,22 +86,22 @@ public class RegistryValue {
   }
 
   public double asDouble() {
-    Double result = myDoubleCachedValue;
-    if (result == null) {
-      myDoubleCachedValue = result = calcDouble();
+    double result = myDoubleCachedValue;
+    if (Double.isNaN(result)) {
+      result = calcDouble();
+      myDoubleCachedValue = result;
     }
-    return result.doubleValue();
+    return result;
   }
 
-  @NotNull
-  private Double calcDouble() {
+  private double calcDouble() {
     try {
-      return Double.valueOf(get(myKey, "0.0", true));
+      return Double.parseDouble(get(myKey, "0.0", true));
     }
     catch (NumberFormatException e) {
       String bundleValue = Registry.getInstance().getBundleValue(myKey, true);
       assert bundleValue != null;
-      return Double.valueOf(bundleValue);
+      return Double.parseDouble(bundleValue);
     }
   }
 
@@ -139,15 +140,16 @@ public class RegistryValue {
   }
 
   public boolean isChangedFromDefault() {
-    return isChangedFromDefault(asString());
+    return isChangedFromDefault(asString(), Registry.getInstance());
   }
 
-  public boolean isContributedByThirdPartyPlugin() {
-    return myKeyDescriptor != null && myKeyDescriptor.isContributedByThirdPartyPlugin();
+  @Nullable
+  public String getPluginId() {
+    return myKeyDescriptor != null ? myKeyDescriptor.getPluginId() : null;
   }
 
-  boolean isChangedFromDefault(@NotNull String newValue) {
-    return !newValue.equals(Registry.getInstance().getBundleValue(myKey, false));
+  final boolean isChangedFromDefault(@NotNull String newValue, @NotNull Registry registry) {
+    return !newValue.equals(registry.getBundleValue(myKey, false));
   }
 
   protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
@@ -160,20 +162,24 @@ public class RegistryValue {
     return _get(key, defaultValue, false);
   }
 
-  private String _get(@NotNull String key, String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
-    final String userValue = myRegistry.getUserProperties().get(key);
+  @Nullable
+  private String _get(@NotNull String key, @Nullable String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
+    String userValue = myRegistry.getUserProperties().get(key);
     if (userValue != null) {
       return userValue;
     }
+
     String systemProperty = System.getProperty(key);
     if (systemProperty != null) {
       return systemProperty;
     }
-    final String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);
-    if (bundleValue != null) {
-      return bundleValue;
+
+    if (!myRegistry.isLoaded()) {
+      LOG.warn("The registry key '" + key + "' accessed, but not loaded yet");
     }
-    return defaultValue;
+
+    String bundleValue = Registry.getInstance().getBundleValue(key, mustExistInBundle);
+    return bundleValue == null ? defaultValue : bundleValue;
   }
 
   public void setValue(boolean value) {
@@ -244,7 +250,7 @@ public class RegistryValue {
   void resetCache() {
     myStringCachedValue = null;
     myIntCachedValue = null;
-    myDoubleCachedValue = null;
+    myDoubleCachedValue = Double.NaN;
     myBooleanCachedValue = null;
   }
 

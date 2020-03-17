@@ -83,13 +83,6 @@ public class CollectionsMustHaveInitialCapacityInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "collections.must.have.initial.capacity.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "collections.must.have.initial.capacity.problem.descriptor");

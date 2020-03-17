@@ -6,7 +6,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.ide.presentation.PresentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -85,9 +87,32 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     for (TypeIconEP ep : TypeIconEP.EP_NAME.getExtensionList()) {
       myIcons.put(ep.className, ep.getIcon());
     }
+    TypeIconEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<TypeIconEP>() {
+      @Override
+      public void extensionAdded(@NotNull TypeIconEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myIcons.put(extension.className, extension.getIcon());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull TypeIconEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myIcons.remove(extension.className);
+      }
+    }, ApplicationManager.getApplication());
+
     for (TypeNameEP ep : TypeNameEP.EP_NAME.getExtensionList()) {
       myNames.put(ep.className, ep.getTypeName());
     }
+    TypeNameEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<TypeNameEP>() {
+      @Override
+      public void extensionAdded(@NotNull TypeNameEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myNames.put(extension.className, extension.getTypeName());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull TypeNameEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myNames.remove(extension.className);
+      }
+    }, ApplicationManager.getApplication());
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override

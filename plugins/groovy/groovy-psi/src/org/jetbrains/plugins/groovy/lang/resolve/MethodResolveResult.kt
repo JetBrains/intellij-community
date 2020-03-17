@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLe
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 import kotlin.reflect.jvm.isAccessible
 
-class MethodResolveResult(
+open class MethodResolveResult(
   method: PsiMethod,
   place: PsiElement,
   state: ResolveState,

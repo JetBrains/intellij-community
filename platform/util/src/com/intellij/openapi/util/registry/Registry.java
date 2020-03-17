@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,16 +31,23 @@ public final class Registry  {
   private final THashMap<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
 
   private static final Registry ourInstance = new Registry();
+  private volatile boolean myLoaded = false;
 
   @NotNull
   public static RegistryValue get(@NotNull String key) {
-    final Registry registry = getInstance();
+    return getInstance().doGet(key);
+  }
 
-    RegistryValue value = registry.myValues.get(key);
-    if (value == null) {
-      value = ConcurrencyUtil.cacheOrGet(registry.myValues, key, new RegistryValue(registry, key, registry.myContributedKeys.get(key)));
+  @NotNull
+  private RegistryValue doGet(@NotNull String key) {
+    RegistryValue value = myValues.get(key);
+    if (value != null) {
+      return value;
     }
-    return value;
+
+    value = new RegistryValue(this, key, myContributedKeys.get(key));
+    RegistryValue prev = myValues.putIfAbsent(key, value);
+    return prev == null ? value : prev;
   }
 
   public static boolean is(@NotNull String key) throws MissingResourceException {
@@ -56,7 +63,7 @@ public final class Registry  {
     try {
       return get(key).asBoolean();
     }
-    catch (MissingResourceException ex) {
+    catch (MissingResourceException ignore) {
       return defaultValue;
     }
   }
@@ -74,7 +81,7 @@ public final class Registry  {
     try {
       return get(key).asInteger();
     }
-    catch (MissingResourceException ex) {
+    catch (MissingResourceException ignore) {
       return defaultValue;
     }
   }
@@ -138,23 +145,35 @@ public final class Registry  {
     return state;
   }
 
+  @ApiStatus.Internal
   public void loadState(@NotNull Element state) {
     myUserProperties.clear();
     for (Element eachEntry : state.getChildren("entry")) {
       String key = eachEntry.getAttributeValue("key");
       String value = eachEntry.getAttributeValue("value");
       if (key != null && value != null) {
-        RegistryValue registryValue = get(key);
-        if (registryValue.isChangedFromDefault(value)) {
+        RegistryValue registryValue = doGet(key);
+        if (registryValue.isChangedFromDefault(value, this)) {
           myUserProperties.put(key, value);
           registryValue.resetCache();
         }
       }
     }
+    markAsLoaded();
+  }
+
+  @ApiStatus.Internal
+  public void markAsLoaded() {
+    myLoaded = true;
+  }
+
+  public boolean isLoaded() {
+    return myLoaded;
   }
 
   @NotNull
-  Map<String, String> getUserProperties() {
+  @ApiStatus.Internal
+  public Map<String, String> getUserProperties() {
     return myUserProperties;
   }
 
@@ -196,7 +215,7 @@ public final class Registry  {
     return myUserProperties.isEmpty();
   }
 
-  boolean isRestartNeeded() {
+  public boolean isRestartNeeded() {
     return isRestartNeeded(myUserProperties);
   }
 
@@ -207,14 +226,6 @@ public final class Registry  {
     }
 
     return false;
-  }
-
-  /**
-   * @deprecated Use extension point `com.intellij.registryKey`.
-   */
-  @Deprecated
-  public static synchronized void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
-    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, false));
   }
 
   public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {
@@ -235,15 +246,7 @@ public final class Registry  {
    * @deprecated Use extension point `com.intellij.registryKey`.
    */
   @Deprecated
-  public static void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
-    addKey(key, description, Integer.toString(defaultValue), restartRequired);
-  }
-
-  /**
-   * @deprecated Use extension point `com.intellij.registryKey`.
-   */
-  @Deprecated
-  public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {
-    addKey(key, description, Boolean.toString(defaultValue), restartRequired);
+  public static synchronized void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
+    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, Integer.toString(defaultValue), restartRequired, null));
   }
 }

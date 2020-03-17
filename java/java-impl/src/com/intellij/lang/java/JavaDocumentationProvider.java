@@ -60,7 +60,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 /**
  * @author Maxim.Mossienko
  */
-public class JavaDocumentationProvider extends DocumentationProviderEx implements CodeDocumentationProvider, ExternalDocumentationProvider {
+public class JavaDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final Logger LOG = Logger.getInstance(JavaDocumentationProvider.class);
 
   private static final String LINE_SEPARATOR = "\n";
@@ -837,7 +837,8 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement) {
+  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(contextElement, PsiDocComment.class, false);
     if (docComment != null && JavaDocUtil.isInsidePackageInfo(docComment)) {
       PsiDirectory directory = file.getContainingDirectory();

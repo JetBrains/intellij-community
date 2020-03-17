@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ChangeListsIndexes {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
+  private static final Logger LOG = Logger.getInstance(ChangeListsIndexes.class);
   private final Map<FilePath, Data> myMap;
   private final TreeSet<FilePath> myAffectedPaths;
   private final Set<Change> myChanges;

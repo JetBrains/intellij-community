@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -23,11 +23,20 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
                                @Nullable Callback callback,
                                @NotNull RunProfileState state) throws ExecutionException {
     prepare(environment, state)
-      .onSuccess(result -> UIUtil.invokeLaterIfNeeded(() -> {
-        if (!environment.getProject().isDisposed()) {
-          startRunProfile(environment, state, callback, result);
-        }
-      }));
+      .onSuccess(result -> {
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (!environment.getProject().isDisposed()) {
+            startRunProfile(environment, callback, () -> {
+              try {
+                return result.executeAsync(environment);
+              }
+              catch (ExecutionException e) {
+                throw new RuntimeException(e);
+              }
+            });
+          }
+        });
+      });
   }
 
   /**

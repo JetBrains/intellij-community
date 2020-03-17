@@ -39,4 +39,8 @@ public abstract class CodeStylePropertyAccessor<V> {
   }
 
   public abstract String getPropertyName();
+
+  public boolean isIgnorable() {
+    return false;
+  }
 }

@@ -30,9 +30,12 @@ public abstract class ActionButtonLook {
   public static final ActionButtonLook SYSTEM_LOOK = new ActionButtonLook() {
     private ActionButtonLook delegate;
 
-    { updateUI(); }
+    {
+      updateUI();
+    }
 
-    @Override public void updateUI() {
+    @Override
+    public void updateUI() {
       delegate = UIUtil.isUnderWin10LookAndFeel() ? new Win10ActionButtonLook() : new IdeaActionButtonLook();
     }
 
@@ -68,8 +71,11 @@ public abstract class ActionButtonLook {
   };
 
   public static final ActionButtonLook INPLACE_LOOK = new ActionButtonLook() {
-    @Override public void paintBackground(Graphics g, JComponent component, int state) {}
-    @Override public void paintBorder(Graphics g, JComponent component, int state) {}
+    @Override
+    public void paintBackground(Graphics g, JComponent component, int state) {}
+
+    @Override
+    public void paintBorder(Graphics g, JComponent component, int state) {}
 
     @Override
     public void paintBackground(Graphics g, JComponent component, Color color) {}
@@ -134,10 +140,10 @@ public abstract class ActionButtonLook {
     int height = icon.getIconHeight();
     int x = (actionButton.getWidth() - width) / 2;
     int y = (actionButton.getHeight() - height) / 2;
-    paintIconAt(g, icon, x, y);
+    paintIcon(g, actionButton, icon, x, y);
   }
 
-  public void paintIconAt(Graphics g, Icon icon, int x, int y) {
-    icon.paintIcon(null, g, x, y);
+  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
+    icon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, x, y);
   }
 }

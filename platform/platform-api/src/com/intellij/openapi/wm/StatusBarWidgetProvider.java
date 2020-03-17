@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -32,5 +32,14 @@ public interface StatusBarWidgetProvider {
   @NotNull
   default String getAnchor() {
     return StatusBar.Anchors.DEFAULT_ANCHOR;
+  }
+
+  /**
+   * Checks if the provider is compatible with a given frame.
+   * @param frame The frame to check the compatibility with.
+   * @return True if the provider can be used to create a widget for the given frame's status bar.
+   */
+  default boolean isCompatibleWith(@NotNull IdeFrame frame) {
+    return !(frame instanceof LightEditFrame);
   }
 }

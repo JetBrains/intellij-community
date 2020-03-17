@@ -14,6 +14,7 @@ import java.awt.*;
 
 public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
+  @NonNls String DEFAULT_SCHEME_ALIAS = "Classic Light";
 
   void setName(String name);
 
@@ -59,16 +60,18 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setEditorFontSize(int fontSize);
 
   /**
-   * @deprecated stored in application level property
+   * @deprecated Quick documentation component's font size is stored in application level property, and can be obtained
+   * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#getQuickDocFontSize()}.
    */
   @Deprecated
-  FontSize getQuickDocFontSize();
+  default FontSize getQuickDocFontSize() { return FontSize.SMALL; }
 
   /**
-   * @deprecated stored in application level property
+   * @deprecated Quick documentation component's font size is stored in application level property, and can be set
+   * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#setQuickDocFontSize(FontSize)}.
    */
   @Deprecated
-  void setQuickDocFontSize(@NotNull FontSize fontSize);
+  default void setQuickDocFontSize(@NotNull FontSize fontSize) {}
 
   @NotNull
   Font getFont(EditorFontType key);

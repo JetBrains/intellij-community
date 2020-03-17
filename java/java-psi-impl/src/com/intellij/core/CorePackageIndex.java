@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CorePackageIndex extends PackageIndex {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.core.CorePackageIndex");
+  private static final Logger LOG = Logger.getInstance(CorePackageIndex.class);
 
   private final List<VirtualFile> myClasspath = new ArrayList<>();
 

@@ -9,6 +9,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -139,6 +140,133 @@ class DecompressorTest {
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
     val dir = tempDir.newFolder("unpacked")
     testNoTraversal(Decompressor.Tar(tar).withSymlinks(), dir, File(dir, "rogue"))
+  }
+
+  @Test fun prefixPathsFilesInZip() {
+    val zip = tempDir.newFile("test.zip")
+    ZipOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "a/b/c.txt")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Zip(zip).removePrefixPath("a/b").extract(dir)
+
+    assertThat(File(dir, "c.txt")).isFile()
+    assertThat(File(dir, "a")).doesNotExist()
+    assertThat(File(dir, "a/b")).doesNotExist()
+    assertThat(File(dir, "b")).doesNotExist()
+  }
+
+  @Test fun prefixPathFilesInZipWitFilter() {
+    val zip = tempDir.newFile("test.zip")
+    ZipOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "a/b/c.txt")
+      writeEntry(it, "skip.txt")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    val filterLog = mutableListOf<String>()
+    Decompressor.Zip(zip).removePrefixPath("a/b").filter { filterLog.add(it) }.extract(dir)
+
+    assertThat(File(dir, "c.txt")).isFile()
+    assertThat(File(dir, "a")).doesNotExist()
+    assertThat(File(dir, "a/b")).doesNotExist()
+    assertThat(File(dir, "b")).doesNotExist()
+
+    //it must call filter before cut-dirs
+    Assert.assertEquals(setOf("a/b/c.txt", "skip.txt"), filterLog.toSet())
+  }
+
+  @Test fun prefixPathsFilesInTarWithSymlinks() {
+    assumeSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "a/f")
+      writeEntry(it, "a/links/ok", link = "../f")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).removePrefixPath("a").extract(dir)
+
+    assertThat(File(dir, "f")).isFile()
+    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
+  }
+
+  @Test fun prefixPathFillMatch() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "./a/f")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).removePrefixPath("/a/f").extract(dir)
+
+    assertThat(File(dir, "f")).doesNotExist()
+  }
+
+  @Test fun prefixPathWithSlashTar() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "./a/f")
+      writeEntry(it, "/a/g")
+      writeEntry(it, "././././././//a/h")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).removePrefixPath("/a/").extract(dir)
+
+    assertThat(File(dir, "f")).isFile()
+    assertThat(File(dir, "g")).isFile()
+    assertThat(File(dir, "h")).isFile()
+  }
+
+  @Test fun prefixPathWithDotTar() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "./a/b/f")
+      writeEntry(it, "/a/b/g")
+      writeEntry(it, "././././././//a/b/h")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).removePrefixPath("./a/b").extract(dir)
+
+    assertThat(File(dir, "f")).isFile()
+    assertThat(File(dir, "g")).isFile()
+    assertThat(File(dir, "h")).isFile()
+  }
+
+  @Test fun prefixPathTarSymlink() {
+    assumeSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "./a/b/f")
+      writeEntry(it, "a/b/links/ok", link = "../f")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).removePrefixPath("a/b").extract(dir)
+
+    assertThat(File(dir, "f")).isFile()
+    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
+  }
+
+  @Test fun prefixPathRogueSymlinks() {
+    assumeSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "a/b/c/rogue", link = "../f")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    testNoTraversal(Decompressor.Tar(tar).removePrefixPath("a/b/c"), dir, File(dir, "rogue"))
+  }
+
+  @Test fun prefixPathSkipsTooShortPaths() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "missed")
+      writeEntry(it, "a/b/c/file.txt")
+    }
+    val dir = tempDir.newFolder("unpacked")
+    Decompressor.Tar(tar).removePrefixPath("a/b").extract(dir)
+    assertThat(File(dir, "c/file.txt")).isFile()
+    assertThat(File(dir, "missed")).doesNotExist()
   }
 
   private fun writeEntry(zip: ZipOutputStream, name: String) {

@@ -19,8 +19,7 @@ package com.intellij.openapi.options;
  * Thrown to indicate that a configurable component cannot {@link UnnamedConfigurable#apply() apply} entered values.
  */
 public class ConfigurationException extends Exception {
-  public static final String DEFAULT_TITLE = OptionsBundle.message("cannot.save.settings.default.dialog.title");
-  private String myTitle = DEFAULT_TITLE;
+  private String myTitle = getDefaultTitle();
   private Runnable myQuickFix;
   private Configurable myOriginator;
 
@@ -80,5 +79,9 @@ public class ConfigurationException extends Exception {
    */
   public boolean shouldShowInDumbMode() {
     return true;
+  }
+
+  public static String getDefaultTitle() {
+    return OptionsBundle.message("cannot.save.settings.default.dialog.title");
   }
 }

@@ -33,6 +33,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -102,17 +103,23 @@ public final class PluginsAdvertiser {
         JsonElement bundledExt = jsonObject.get("bundled");
         boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
         IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
-        if (fromServerPluginDescription == null && !isBundled) continue;
+        if (fromServerPluginDescription == null && !isBundled) {
+          continue;
+        }
 
         IdeaPluginDescriptor loadedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-        if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
+        if (loadedPlugin != null && loadedPlugin.isEnabled()) {
+          continue;
+        }
 
         if (loadedPlugin != null && fromServerPluginDescription != null &&
             StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
           continue;
         }
 
-        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
+        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) {
+          continue;
+        }
 
         JsonElement ext = jsonObject.get("implementationName");
         String extension = StringUtil.unquoteString(ext.toString());
@@ -184,8 +191,9 @@ public final class PluginsAdvertiser {
   @Nullable
   static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     for (Plugin plugin : plugins) {
-      if (PluginManagerCore.isDisabled(plugin.myPluginId)) {
-        return PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId));
+      PluginId pluginId = PluginId.getId(plugin.myPluginId);
+      if (PluginManagerCore.isDisabled(pluginId)) {
+        return PluginManagerCore.getPlugin(pluginId);
       }
     }
     return null;
@@ -205,8 +213,20 @@ public final class PluginsAdvertiser {
     return bundled.isEmpty() ? null : bundled;
   }
 
-  public static void installAndEnablePlugins(final @NotNull Set<String> pluginIds, final @NotNull Runnable onSuccess) {
-    ProgressManager.getInstance().run(new Task.Modal(null, "Search for Plugins in Repository", true) {
+  /**
+   * @deprecated Use {@link #installAndEnable(Set, Runnable)}
+   */
+  @Deprecated
+  public static void installAndEnablePlugins(@NotNull Set<String> pluginIds, @NotNull Runnable onSuccess) {
+    installAndEnable(new LinkedHashSet<>(ContainerUtil.map(pluginIds, it -> PluginId.getId(it))), onSuccess);
+  }
+
+  public static void installAndEnable(@NotNull Set<PluginId> pluginIds, @NotNull Runnable onSuccess) {
+    installAndEnable(null, pluginIds, true, onSuccess);
+  }
+
+  public static void installAndEnable(@Nullable Project project, @NotNull Set<PluginId> pluginIds, boolean showDialog, @NotNull Runnable onSuccess) {
+    ProgressManager.getInstance().run(new Task.Modal(project, "Search for Plugins in Repository", true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
 
@@ -215,12 +235,12 @@ public final class PluginsAdvertiser {
         try {
           myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId().getIdString())) {
+            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(descriptor));
             }
           }
           for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-            if (pluginIds.contains(loadedPlugin.getPluginId().getIdString())) {
+            if (pluginIds.contains(loadedPlugin.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
           }
@@ -237,8 +257,14 @@ public final class PluginsAdvertiser {
             new PluginsAdvertiserDialog(null,
                                         myPlugins.toArray(new PluginDownloader[0]),
                                         myAllPlugins);
-          if (advertiserDialog.showAndGet()) {
-            onSuccess.run();
+          if (showDialog) {
+            if (advertiserDialog.showAndGet()) {
+              onSuccess.run();
+            }
+          } else {
+            if (advertiserDialog.doInstallPlugins()) {
+              onSuccess.run();
+            }
           }
         }
       }

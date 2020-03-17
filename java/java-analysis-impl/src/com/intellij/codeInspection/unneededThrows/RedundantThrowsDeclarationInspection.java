@@ -33,18 +33,11 @@ import java.util.List;
  * @author max
  */
 public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
+  private static final Logger LOG = Logger.getInstance(RedundantThrowsDeclarationInspection.class);
 
   public boolean IGNORE_ENTRY_POINTS = false;
 
   private final RedundantThrowsDeclarationLocalInspection myLocalInspection = new RedundantThrowsDeclarationLocalInspection(this);
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.throws.display.name");
-  }
 
   @Nullable
   @Override

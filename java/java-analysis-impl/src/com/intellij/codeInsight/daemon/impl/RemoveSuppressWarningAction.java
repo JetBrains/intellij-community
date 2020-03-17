@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 public class RemoveSuppressWarningAction implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction");
+  private static final Logger LOG = Logger.getInstance(RemoveSuppressWarningAction.class);
 
   @NotNull
   private final String myID;
@@ -82,7 +82,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
               final Set<PsiComment> comments = new HashSet<>();
               commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitComment(final PsiComment comment) {
+                public void visitComment(@NotNull final PsiComment comment) {
                   super.visitComment(comment);
                   if (comment.getText().contains(myID)) {
                     comments.add(comment);

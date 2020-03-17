@@ -4,11 +4,9 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItemWithClass;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.server.MavenServerIndexer;
 
 import java.util.*;
@@ -18,10 +16,8 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
 
   @Override
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
-    OfflineSearchService service = MavenProjectIndicesManager.getInstance(project).getOfflineSearchService();
-    List<MavenDependencyCompletionItemWithClass> items =
-      service.findClassesByString(preparePattern(pattern), new SearchParameters(1000, 10000, true, 300));
-    return processResults(items, maxResult);
+    //todo
+    throw new UnsupportedOperationException();
   }
 
   protected String preparePattern(String pattern) {

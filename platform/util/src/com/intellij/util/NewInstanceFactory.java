@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 
 public class NewInstanceFactory<T> implements Factory<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.NewInstanceFactory");
+  private static final Logger LOG = Logger.getInstance(NewInstanceFactory.class);
 
   private final Constructor<? extends T> myConstructor;
   private final Object[] myArgs;

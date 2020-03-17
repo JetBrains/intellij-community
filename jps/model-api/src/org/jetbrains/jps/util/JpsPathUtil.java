@@ -9,7 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author nik
@@ -83,5 +87,21 @@ public class JpsPathUtil {
 
   public static boolean isJrtUrl(@NotNull String url) {
     return url.startsWith("jrt://");
+  }
+
+  public static @Nullable String readProjectName(@NotNull Path projectDir) {
+    try (Stream<String> stream = Files.lines(projectDir.resolve(".name"))) {
+      return stream.findFirst().map(String::trim).orElse(null);
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
+  public static final String UNNAMED_PROJECT = "<unnamed>";
+
+  public static @NotNull String getDefaultProjectName(@NotNull Path projectDir) {
+    Path parent = projectDir.getParent();
+    return parent != null ? parent.getFileName().toString() : UNNAMED_PROJECT;
   }
 }

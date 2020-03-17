@@ -192,7 +192,7 @@ public class CloudGitRemoteDetector implements GitRepositoryChangeListener, Proj
       myRepositoryRoot = repository.getRoot();
       myCloudName = deploymentDetector.getCloudType().getPresentableName();
       String path = FileUtil.toSystemDependentName(myRepositoryRoot.getPath());
-      myNotification = myNotifier.showMessage(CloudBundle.getText("git.cloud.app.detected", myCloudName, path),
+      myNotification = myNotifier.showMessage(CloudBundle.message("git.cloud.app.detected", myCloudName, path),
                                               MessageType.INFO,
                                               new NotificationListener() {
 
@@ -231,7 +231,7 @@ public class CloudGitRemoteDetector implements GitRepositoryChangeListener, Proj
       }
       else {
         final Ref<CloudGitChooseAccountStepBase> chooseAccountStepRef = new Ref<>();
-        if (!new AbstractProjectWizard(CloudBundle.getText("choose.account.wizzard.title", myCloudName), myProject, (String)null) {
+        if (!new AbstractProjectWizard(CloudBundle.message("choose.account.wizzard.title", myCloudName), myProject, (String)null) {
 
           final StepSequence myStepSequence;
 

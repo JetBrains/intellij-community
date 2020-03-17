@@ -755,7 +755,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> {
-        final Map<String, PsiElement> marks = loadMultiFileTest(5);
+        final Map<String, PsiElement> marks = loadMultiFileTest(4);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
@@ -764,8 +764,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg4>").getTextOffset()).check(Arrays.asList("self: object", "cls: object"),
                                                               Arrays.asList(ArrayUtilRt.EMPTY_STRING_ARRAY, ArrayUtilRt.EMPTY_STRING_ARRAY),
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
-
-        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int=15, y: int=0, z: int=10", new String[]{"x: int=15, "});
       }
     );
   }
@@ -790,12 +788,25 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-28506, PY-31762, PY-35548
+  public void testInitializingDataclassOverridingField() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(2);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int=15, y: int=0, z: int=10", new String[]{"x: int=15, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int", new String[]{"a: int"});
+      }
+    );
+  }
+
   // PY-26354
   public void testInitializingAttrsUsingPep526() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        final Map<String, PsiElement> marks = loadTest(8);
+        final Map<String, PsiElement> marks = loadTest(9);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
@@ -811,6 +822,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x: int, y: str=\"0\"", new String[]{"x: int, "});
         feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int", new String[]{"x: int"});
         feignCtrlP(marks.get("<arg8>").getTextOffset()).check("baz: str", new String[]{"baz: str"});
+        feignCtrlP(marks.get("<arg9>").getTextOffset()).check("bar: str", new String[]{"bar: str"});
       }
     );
   }
@@ -835,12 +847,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-31762
   public void testInitializingAttrsHierarchy() {
-    // same as for std dataclasses except overridding
+    // same as for std dataclasses + overriding
 
     runWithLanguageLevel(
-      LanguageLevel.PYTHON37,
+      LanguageLevel.getLatest(),
       () -> {
-        final Map<String, PsiElement> marks = loadTest(5);
+        final Map<String, PsiElement> marks = loadTest(6);
 
         feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
         feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: str", new String[]{"a: int, "});
@@ -851,6 +863,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                                               Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"}));
 
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("y: int=0, z: int=10, x: int=15", new String[]{"y: int=0, "});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("type: int=..., locations: str=...", new String[]{"type: int=..., "});
       }
     );
   }
@@ -875,6 +888,46 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x: int, z: str", new String[]{"x: int, "});
       }
     );
+  }
+
+  // PY-34374
+  public void testInitializingAttrsKwOnlyOnClass() {
+    final Map<String, PsiElement> marks = loadTest(5);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int, b: int=...", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int=..., b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("*, a: int=..., b: int=...", new String[]{"*, a: int"});
+  }
+
+  // PY-34374
+  public void testInitializingAttrsKwOnlyOnBaseClass() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("b: int, *, a: int", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("b: int=..., *, a: int", new String[]{"b: int=..., "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("b: int, *, a: int=...", new String[]{"b: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("b: int=..., *, a: int=...", new String[]{"b: int=..., "});
+  }
+
+  // PY-34374
+  public void testInitializingAttrsKwOnlyOnDerivedClass() {
+    final Map<String, PsiElement> marks = loadTest(4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, a: int, b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int, b: int=...", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int=..., b: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int=..., b: int=...", new String[]{"*, a: int"});
+  }
+
+  // PY-34374
+  public void testInitializingAttrsKwOnlyOnClassOverridingHierarchy() {
+    final Map<String, PsiElement> marks = loadTest(3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int", new String[]{"a: int"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
   }
 
   // PY-28957

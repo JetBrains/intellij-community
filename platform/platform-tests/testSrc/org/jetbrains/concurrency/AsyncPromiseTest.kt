@@ -2,10 +2,19 @@
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertConcurrentPromises
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import org.apache.log4j.Level
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.ClassRule
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -15,7 +24,15 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+
+@Suppress("UsePropertyAccessSyntax")
 class AsyncPromiseTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val appRule = ApplicationRule()
+  }
+
   @Test
   fun done() {
     doHandlerTest(false)
@@ -189,6 +206,125 @@ class AsyncPromiseTest {
     assertThat(promise.state).isEqualTo(Promise.State.REJECTED)
   }
 
+  @Test
+  fun `do not swallow exceptions - error in handler`() {
+    val promise = AsyncPromise<String>()
+    val promise2 = promise
+      .onSuccess {
+        throw java.lang.AssertionError("boo")
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+  }
+
+  @Test
+  fun `do not swallow exceptions - error2 in handler`() {
+    val oldFactory = Logger.getFactory()
+    try {
+      Logger.setFactory {
+        object : Logger() {
+          override fun warn(message: String?, t: Throwable?) {
+          }
+
+          override fun setLevel(level: Level?) {
+          }
+
+          override fun info(message: String?) {
+          }
+
+          override fun info(message: String?, t: Throwable?) {
+          }
+
+          override fun error(message: String?, t: Throwable?, vararg details: String?) {
+          }
+
+          override fun isDebugEnabled(): Boolean {
+            return false
+          }
+
+          override fun debug(message: String?) {
+          }
+
+          override fun debug(t: Throwable?) {
+          }
+
+          override fun debug(message: String?, t: Throwable?) {
+          }
+        }
+      }
+      val promise = AsyncPromise<String>()
+      val promise2 = promise
+        .onSuccess {
+          throw java.lang.AssertionError("boo")
+        }
+      promise.setResult("foo")
+      assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+      assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+    }
+    finally {
+      Logger.setFactory(oldFactory)
+    }
+  }
+
+  @Test
+  fun `do not swallow exceptions - error3 in handler`() {
+    val promise = AsyncPromise<String>()
+    val promise2 = promise
+      .onSuccess {
+        throw ProcessCanceledException()
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+  }
+
+  @Test
+  fun `do not swallow exceptions -  cancelled`() {
+    val promise = AsyncPromise<String>()
+    val promise2 = promise
+      .onSuccess {
+        throw ProcessCanceledException()
+      }
+    promise.cancel()
+    assertThat(promise.state).isEqualTo(Promise.State.REJECTED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+  }
+
+  @Test
+  fun `do not swallow exceptions - error in success handler and no error in error handler`() {
+    val promise = AsyncPromise<String>()
+    var errorHandled = false
+    val promise2 = promise
+      .onSuccess {
+        throw ProcessCanceledException()
+      }
+      .onError {
+        errorHandled = true
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+    assertThat(errorHandled).isTrue()
+  }
+
+  @Test
+  fun `do not swallow exceptions - error in success handler and no error in error handler that added before success handler`() {
+    val promise = AsyncPromise<String>()
+    var errorHandled = false
+    val promise2 = promise
+      .onError {
+        errorHandled = true
+      }
+      .onSuccess {
+        throw ProcessCanceledException()
+      }
+    promise.setResult("foo")
+    assertThat(promise.state).isEqualTo(Promise.State.SUCCEEDED)
+    assertThat(promise2.state).isEqualTo(Promise.State.REJECTED)
+    assertThat(errorHandled).isFalse()
+  }
+
   // this case quite tested by other tests, but better to have special test
   @Test
   fun `do not swallow exceptions - error handler added`() {
@@ -222,4 +358,38 @@ class AsyncPromiseTest {
     }
     promise.cancel()
     assertTrue(called.get())
-  }}
+  }
+
+  @Test
+  fun testExceptionInsideComputationIsLogged() {
+    val loggedError = AtomicBoolean()
+    LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+      override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: org.apache.log4j.Logger) {
+        loggedError.set(true)
+      }
+    })
+
+    try {
+      val promise = ReadAction.nonBlocking {
+        throw UnsupportedOperationException()
+      }
+        .submit(AppExecutorUtil.getAppExecutorService())
+
+      promise.onProcessed { }
+
+      var cause: Throwable? = null
+      try {
+        promise.get(10, TimeUnit.SECONDS)
+      }
+      catch (e: Throwable) {
+        cause = ExceptionUtil.getRootCause(e)
+      }
+
+      assertThat(cause).isInstanceOf(UnsupportedOperationException::class.java)
+      assertThat(loggedError.get()).isTrue()
+    }
+    finally {
+      LoggedErrorProcessor.restoreDefaultProcessor()
+    }
+  }
+}

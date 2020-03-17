@@ -910,19 +910,9 @@ public class GrStringUtil {
     }
   }
 
-  public static boolean isPlainStringLiteral(ASTNode node) {
-    String text = node.getText();
-    return text.length() < 3 && text.equals("''") || text.length() >= 3 && !text.startsWith("'''");
-  }
-
   public static boolean isMultilineStringLiteral(GrLiteral literal) {
     String quote = getStartQuote(literal.getText());
     return TRIPLE_QUOTES.equals(quote) || TRIPLE_DOUBLE_QUOTES.equals(quote) || SLASH.equals(quote) || DOLLAR_SLASH.equals(quote);
-  }
-
-  public static boolean isSinglelineStringLiteral(GrLiteral literal) {
-    String quote = getStartQuote(literal.getText());
-    return QUOTE.equals(quote) || DOUBLE_QUOTES.equals(quote);
   }
 
   public static StringBuilder getLiteralTextByValue(String value) {
@@ -938,14 +928,6 @@ public class GrStringUtil {
       buffer.append("'");
     }
     return buffer;
-  }
-
-  public static PsiElement findContainingLiteral(PsiElement token) {
-
-    PsiElement parent = token.getParent();
-    if (parent instanceof GrStringContent) parent = parent.getParent();
-
-    return parent;
   }
 
   /**

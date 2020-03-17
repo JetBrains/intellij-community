@@ -18,11 +18,10 @@ package com.intellij.vcs.log.ui.highlighters;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsUserUtil;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
@@ -63,8 +62,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   private static boolean isFilteredByCurrentUser(@NotNull VcsLogFilterCollection filters) {
     VcsLogUserFilter userFilter = filters.get(VcsLogFilterCollection.USER_FILTER);
     if (userFilter == null) return false;
-    Collection<String> filterByName = ((VcsLogUserFilterImpl)userFilter).getUserNamesForPresentation();
-    if (Collections.singleton(VcsLogUserFilterImpl.ME).containsAll(filterByName)) return true;
+    if (Collections.singleton(VcsLogFilterObject.ME).containsAll(userFilter.getValuesAsText())) return true;
     return false;
   }
 

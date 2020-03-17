@@ -55,7 +55,7 @@ import java.util.*;
  * @author cdr
  */
 public class QuickFixFactoryImpl extends QuickFixFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
 
   @NotNull
   @Override
@@ -201,12 +201,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCreateFieldOrPropertyFix(@NotNull final PsiClass aClass, @NotNull final String name, @NotNull final PsiType type, @NotNull final PropertyMemberType targetMember, @NotNull final PsiAnnotation... annotations) {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
-  }
-
-  @NotNull
-  @Override
-  public IntentionAction createSetupJDKFix() {
-    return SetupJDKFix.getInstance();
   }
 
   @NotNull
@@ -912,5 +906,17 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule) {
     return new WrapSwitchRuleStatementsIntoBlockFix(rule);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddParameterListFix(PsiMethod method) {
+    return new AddParameterListFix(method);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddEmptyRecordHeaderFix(PsiClass psiClass) {
+    return new AddEmptyRecordHeaderFix(psiClass);
   }
 }

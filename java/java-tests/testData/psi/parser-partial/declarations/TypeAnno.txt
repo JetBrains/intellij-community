@@ -122,7 +122,7 @@ PsiJavaFile:TypeAnno.java
             PsiWhiteSpace(' ')
             PsiJavaToken:EQ('=')
             PsiWhiteSpace(' ')
-            PsiInstanceofExpression:this instanceof @F C
+            PsiInstanceofExpression
               PsiThisExpression:this
                 PsiReferenceParameterList
                   <empty list>
@@ -130,20 +130,21 @@ PsiJavaFile:TypeAnno.java
               PsiWhiteSpace(' ')
               PsiKeyword:instanceof('instanceof')
               PsiWhiteSpace(' ')
-              PsiTypeElement:@F C
-                PsiAnnotation
-                  PsiJavaToken:AT('@')
-                  PsiJavaCodeReferenceElement:F
-                    PsiIdentifier:F('F')
+              PsiTypeTestPattern
+                PsiTypeElement:@F C
+                  PsiAnnotation
+                    PsiJavaToken:AT('@')
+                    PsiJavaCodeReferenceElement:F
+                      PsiIdentifier:F('F')
+                      PsiReferenceParameterList
+                        <empty list>
+                    PsiAnnotationParameterList
+                      <empty list>
+                  PsiWhiteSpace(' ')
+                  PsiJavaCodeReferenceElement:C
+                    PsiIdentifier:C('C')
                     PsiReferenceParameterList
                       <empty list>
-                  PsiAnnotationParameterList
-                    <empty list>
-                PsiWhiteSpace(' ')
-                PsiJavaCodeReferenceElement:C
-                  PsiIdentifier:C('C')
-                  PsiReferenceParameterList
-                    <empty list>
           PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n    ')
         PsiDeclarationStatement

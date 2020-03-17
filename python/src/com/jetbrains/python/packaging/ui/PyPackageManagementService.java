@@ -383,7 +383,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
-    myExecutorService.submit(() -> {
+    myExecutorService.execute(() -> {
       try {
         PyPIPackageUtil.INSTANCE.loadPackages();
         final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());
@@ -398,5 +398,11 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public int compareVersions(@NotNull String version1, @NotNull String version2) {
     return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
+  }
+
+  @Nullable
+  @Override
+  public String getID() {
+    return "Python";
   }
 }

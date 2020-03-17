@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectReloadState;
 import com.intellij.openapi.startup.StartupManager;
@@ -24,7 +23,7 @@ public class RestoreUpdateTree implements PersistentStateComponent<Element> {
   private UpdateInfo myUpdateInfo;
 
   public RestoreUpdateTree(@NotNull Project project, @NotNull StartupManager startupManager) {
-    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> {
+    startupManager.registerPostStartupDumbAwareActivity(() -> {
       if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(project).isAfterAutomaticReload()) {
         ActionInfo actionInfo = myUpdateInfo.getActionInfo();
         if (actionInfo != null) {

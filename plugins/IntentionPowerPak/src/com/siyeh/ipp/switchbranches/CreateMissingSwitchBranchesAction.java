@@ -4,14 +4,15 @@ package com.siyeh.ipp.switchbranches;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -59,7 +60,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class, false, PsiCodeBlock.class, PsiStatement.class);
     if (block == null) return false;
-    PsiExpression expression = block.getExpression();
+    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(block.getExpression());
     if (expression == null) return false;
     PsiType type = expression.getType();
     if (type == null) return false;
@@ -83,8 +84,8 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
     PsiType type = expression.getType();
     if (dfr != null) {
-      LongRangeSet range = dfr.getExpressionFact(expression, DfaFactType.RANGE);
-      if (range != null && type != null && PsiType.INT.isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
+      LongRangeSet range = DfIntType.extractRange(dfr.getDfType(expression));
+      if (type != null && PsiType.INT.isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
         return range.stream().mapToObj(c -> Value.fromConstant(TypeConversionUtil.computeCastTo(c, type))).collect(Collectors.toList());
       }
       Set<Object> values = dfr.getExpressionValues(expression);

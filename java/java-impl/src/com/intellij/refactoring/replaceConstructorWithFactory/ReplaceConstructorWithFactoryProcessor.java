@@ -46,8 +46,7 @@ import java.util.List;
  * @author dsl
  */
 public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor");
+  private static final Logger LOG = Logger.getInstance(ReplaceConstructorWithFactoryProcessor.class);
   private final PsiMethod myConstructor;
   private final String myFactoryName;
   private final PsiElementFactory myFactory;

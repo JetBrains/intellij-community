@@ -30,13 +30,6 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
 
   private static final Key<Set<String>> IMPORTED_JAVA_PACKAGES = Key.create("imported_java_packages");
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.requires.statement.name");
-  }
-
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,

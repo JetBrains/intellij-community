@@ -62,7 +62,7 @@ import java.util.Set;
  * @author dsl
  */
 public class IntroduceParameterProcessor extends BaseRefactoringProcessor implements IntroduceParameterData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor");
+  private static final Logger LOG = Logger.getInstance(IntroduceParameterProcessor.class);
 
   private final PsiMethod myMethodToReplaceIn;
   private final PsiMethod myMethodToSearchFor;
@@ -347,7 +347,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     }
 
-    @Override public void visitElement(PsiElement element) {
+    @Override public void visitElement(@NotNull PsiElement element) {
       if(conflict != null) return;
       super.visitElement(element);
     }

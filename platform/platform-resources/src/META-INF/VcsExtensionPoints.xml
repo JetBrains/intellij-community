@@ -24,7 +24,8 @@
 
     <extensionPoint name="checkinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
 
     <extensionPoint name="vcsCheckinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"/>
@@ -49,7 +50,8 @@
     <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider" dynamic="true"/>
     <extensionPoint name="vcs.changes.changesViewModifier"
                     interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
                     area="IDEA_PROJECT"/>
@@ -80,6 +82,9 @@
     <extensionPoint name="vcsChangesViewRefresher" interface="com.intellij.openapi.vcs.changes.ChangesViewRefresher" area="IDEA_PROJECT"/>
     <extensionPoint name="vcsAnnotationGutterActionProvider" interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
 
+    <extensionPoint name="vcsAnnotationGutterColumnProvider"
+                    interface="com.intellij.openapi.vcs.annotate.AnnotationGutterColumnProvider"/>
+
     <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
 
     <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
@@ -88,7 +93,7 @@
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"/>
 
     <extensionPoint name="openapi.vcs.actions.AnnotateToggleAction.Provider"
-                    interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider"/>
+                    interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider" dynamic="true"/>
 
     <extensionPoint name="ignoredFileProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>

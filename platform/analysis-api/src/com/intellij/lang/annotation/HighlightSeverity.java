@@ -33,7 +33,6 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
    * @deprecated use {@link #WEAK_WARNING}
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 200);
 
   public static final HighlightSeverity WEAK_WARNING = new HighlightSeverity("WEAK WARNING", 200);

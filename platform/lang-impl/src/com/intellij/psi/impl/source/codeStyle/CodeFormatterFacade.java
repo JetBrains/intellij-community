@@ -34,8 +34,8 @@ import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -51,7 +51,7 @@ import java.util.*;
 
 public class CodeFormatterFacade {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade");
+  private static final Logger LOG = Logger.getInstance(CodeFormatterFacade.class);
 
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
@@ -445,7 +445,7 @@ public class CodeFormatterFacade {
       return;
     }
 
-    Editor editor = PsiUtilBase.findEditor(file);
+    Editor editor = PsiEditorUtil.findEditor(file);
     EditorFactory editorFactory = null;
     if (editor == null) {
       if (!ApplicationManager.getApplication().isDispatchThread()) {
@@ -583,8 +583,8 @@ public class CodeFormatterFacade {
     DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, true);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     try {
-      Runnable command =
-        () -> EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+      Runnable command = () -> EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
+        .execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
       if (commandProcessor.getCurrentCommand() == null) {
         commandProcessor.executeCommand(editor.getProject(), command, WRAP_LINE_COMMAND_NAME, null);
       }

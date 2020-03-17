@@ -39,7 +39,7 @@ public class PackageNode extends PackageDependenciesNode {
     myPackage = aPackage;
     myPackageName = showFQName ? aPackage.getQualifiedName() : aPackage.getName();
     if (myPackageName == null || myPackageName.length() == 0) {
-      myPackageName = CyclicDependenciesPanel.DEFAULT_PACKAGE_ABBREVIATION;
+      myPackageName = CyclicDependenciesPanel.getDefaultPackageAbbreviation();
     }
     String packageQName = aPackage.getQualifiedName();
     if (packageQName.length() == 0) {

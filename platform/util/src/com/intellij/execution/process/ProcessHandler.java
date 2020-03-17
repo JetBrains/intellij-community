@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ProcessHandler extends UserDataHolderBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessHandler");
+  private static final Logger LOG = Logger.getInstance(ProcessHandler.class);
   /**
    * todo: replace with an overridable method [nik]
    *
@@ -61,8 +61,26 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     }
   }
 
+  /**
+   * Performs process destruction.
+   *
+   * <p>This is an internal implementation of {@link #destroyProcess}. All sub-classes must implement this method and perform the
+   * destruction in this method. This method is called from {@link #destroyProcess} and it can be in any thread including the
+   * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
+   * background thread and return without waiting for it. If the performed destruction led to process termination,
+   * {@link #notifyProcessTerminated(int)} must be called in any thread (not necessary from this method).
+   */
   protected abstract void destroyProcessImpl();
 
+  /**
+   * Performs detaching process.
+   *
+   * <p>This is an internal implementation of {@link #detachProcess}. All sub-classes must implement this method and perform the
+   * detaching in this method. This method is called from {@link #detachProcess} and it can be in any thread including the
+   * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
+   * background thread and return without waiting for it. If the performed detaching is completed,
+   * {@link #notifyProcessTerminated(int)} must be called in any thread (not necessary from this method).
+   */
   protected abstract void detachProcessImpl();
 
   public abstract boolean detachIsDefault();
@@ -91,6 +109,13 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     }
   }
 
+  /**
+   * Destroys the process if {@link #isStartNotified()} returns {@code true},
+   * or postpones the action until {@link #startNotify()} is called.
+   *
+   * <p>It changes the process handler's state and {@link #isProcessTerminating} becomes true. This method may return without waiting for
+   * the process termination. Upon the completion of the process termination, {@link #isProcessTerminated} becomes true.
+   */
   public void destroyProcess() {
     myAfterStartNotifiedRunner.execute(() -> {
       if (myState.compareAndSet(State.RUNNING, State.TERMINATING)) {
@@ -100,6 +125,13 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     });
   }
 
+  /**
+   * Detaches the process if {@link #isStartNotified()} returns {@code true},
+   * or postpones the action until {@link #startNotify()} is called.
+   *
+   * <p>It changes the process handler's state and {@link #isProcessTerminating} becomes true. This method may return without waiting for
+   * detaching the process. Upon the completion of the detaching, {@link #isProcessTerminated} becomes true.
+   */
   public void detachProcess() {
     myAfterStartNotifiedRunner.execute(() -> {
       if (myState.compareAndSet(State.RUNNING, State.TERMINATING)) {

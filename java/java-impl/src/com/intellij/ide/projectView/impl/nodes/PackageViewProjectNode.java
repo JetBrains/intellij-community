@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -46,7 +46,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
 
   @Override
   @NotNull
-  public Collection<AbstractTreeNode> getChildren() {
+  public Collection<AbstractTreeNode<?>> getChildren() {
     if (getSettings().isShowModules()) {
       List<ModuleDescription> modulesWithSourceRoots = new ArrayList<>();
       for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
@@ -59,7 +59,7 @@ public class PackageViewProjectNode extends AbstractProjectNode {
     else {
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-      final List<AbstractTreeNode> children = new ArrayList<>();
+      final List<AbstractTreeNode<?>> children = new ArrayList<>();
       final Set<PsiPackage> topLevelPackages = new HashSet<>();
 
       for (final VirtualFile root : projectRootManager.getContentSourceRoots()) {

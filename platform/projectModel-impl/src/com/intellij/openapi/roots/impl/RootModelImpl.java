@@ -37,7 +37,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
+  private static final Logger LOG = Logger.getInstance(RootModelImpl.class);
 
   private final Set<ContentEntry> myContent = new TreeSet<>(ContentComparator.INSTANCE);
 
@@ -320,7 +320,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private void removeOrderEntryInternal(@NotNull OrderEntry entry) {
     LOG.assertTrue(myOrderEntries.contains(entry));
     Disposer.dispose((Disposable)entry);
-    myOrderEntries.remove(entry);
+    while (myOrderEntries.remove(entry));
   }
 
   @Override
@@ -484,7 +484,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
-  public void setInvalidSdk(@NotNull String jdkName, String jdkType) {
+  public void setInvalidSdk(@NotNull String jdkName, @NotNull String jdkType) {
     assertWritable();
     replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager));
   }

@@ -16,8 +16,8 @@
 package com.intellij.java.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
-import com.intellij.ide.hierarchy.HierarchyBrowserManager;
+import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.JavaPsiFacade;
@@ -80,7 +80,7 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     doHierarchyTest(() -> {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
       final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
-      return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+      return new MethodHierarchyTreeStructure(getProject(), method, HierarchyBrowserBaseEx.getScopeProject());
     }, fileNames);
   }
 

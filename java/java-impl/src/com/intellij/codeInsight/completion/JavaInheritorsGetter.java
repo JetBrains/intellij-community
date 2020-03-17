@@ -50,7 +50,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author peter
  */
 public class JavaInheritorsGetter extends CompletionProvider<CompletionParameters> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaInheritorsGetter");
+  private static final Logger LOG = Logger.getInstance(JavaInheritorsGetter.class);
   private final ConstructorInsertHandler myConstructorInsertHandler;
 
   public JavaInheritorsGetter(final ConstructorInsertHandler constructorInsertHandler) {

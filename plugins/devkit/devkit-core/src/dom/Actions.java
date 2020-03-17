@@ -2,12 +2,16 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface Actions extends DomElement {
+
+  @NotNull
+  GenericAttributeValue<String> getResourceBundle();
 
   @NotNull
   @Stubbed

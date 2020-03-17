@@ -21,7 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UCallExpression;
@@ -43,13 +42,6 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
   @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return JvmAnalysisBundle.message("jvm.inspections.blocking.method.display.name");
   }
 
   @NotNull
@@ -138,7 +130,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
       UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
       if (callExpression == null) return;

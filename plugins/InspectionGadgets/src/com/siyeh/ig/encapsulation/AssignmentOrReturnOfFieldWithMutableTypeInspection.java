@@ -15,7 +15,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,13 +36,6 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInsp
 
   @SuppressWarnings("PublicField")
   public boolean ignorePrivateMethods = true;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assignment.or.return.of.field.with.mutable.type.display.name");
-  }
 
   @Override
   @NotNull

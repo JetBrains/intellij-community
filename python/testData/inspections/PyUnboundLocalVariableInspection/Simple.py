@@ -11,7 +11,7 @@ print(a)
 
 if bla_bla(): #pass
     b = 1
-print(<warning descr="Name 'b' can be not defined">b</warning>) #fail
+print(<warning descr="Name 'b' can be undefined">b</warning>) #fail
 print(b) #pass
 c = 1
 

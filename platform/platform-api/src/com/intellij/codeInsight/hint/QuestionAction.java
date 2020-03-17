@@ -15,6 +15,16 @@
  */
 package com.intellij.codeInsight.hint;
 
-public interface QuestionAction{
+/**
+ * The corresponding action that will be applied for the hint 
+ * 
+ * @see PriorityQuestionAction
+ * @see HintManager
+ */
+public interface QuestionAction {
+
+  /**
+   * @return true if the action is successfully executed and we need to hide the hint
+   */
   boolean execute();
 }

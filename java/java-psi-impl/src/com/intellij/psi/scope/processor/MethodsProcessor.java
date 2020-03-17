@@ -22,15 +22,15 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   private boolean myStaticScopeFlag;
   private boolean myIsConstructor;
   protected PsiElement myCurrentFileContext;
-  protected PsiClass myAccessClass;
+  PsiClass myAccessClass;
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
   private final LanguageLevel myLanguageLevel;
 
-  public MethodsProcessor(@NotNull PsiConflictResolver[] resolvers,
-                          @NotNull List<CandidateInfo> container,
-                          @NotNull PsiElement place,
-                          @NotNull PsiFile placeFile) {
+  MethodsProcessor(@NotNull PsiConflictResolver[] resolvers,
+                   @NotNull List<CandidateInfo> container,
+                   @NotNull PsiElement place,
+                   @NotNull PsiFile placeFile) {
     super(null, ourFilter, resolvers, container, place, placeFile);
     myLanguageLevel = PsiUtil.getLanguageLevel(placeFile);
   }
@@ -55,7 +55,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     }
   }
 
-  protected void setTypeArguments(PsiType[] typeParameters) {
+  private void setTypeArguments(PsiType[] typeParameters) {
     myTypeArguments = typeParameters;
   }
 
@@ -63,7 +63,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
     return myTypeArguments;
   }
 
-  public boolean isInStaticScope() {
+  boolean isInStaticScope() {
     return myStaticScopeFlag;
   }
 
@@ -78,7 +78,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   }
 
   public void setAccessClass(PsiClass accessClass) {
-      myAccessClass = accessClass;
+    myAccessClass = accessClass;
   }
 
   public boolean isConstructor() {

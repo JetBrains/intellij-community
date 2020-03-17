@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -101,7 +100,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
         return factory.createType(resolvedClass, *mappedParameters.toTypedArray())
       }
       else {
-        return PsiWildcardType.createUnbounded(manager)
+        return classType
       }
     }
 
@@ -172,7 +171,7 @@ fun findOverridableMethod(method: GrMethod): PsiMethod? {
 
 private fun methodsAgree(pattern: PsiMethod,
                          tested: GrMethod): Boolean {
-  if (tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
+  if (pattern.name != tested.name || tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
     return false
   }
   val parameterList = pattern.parameters.zip(tested.parameters)
@@ -194,9 +193,37 @@ fun PsiClassType.erasure(): PsiClassType {
   }
 }
 
+private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
+  fun getContainingClassesMutable(startClass: PsiClass?): MutableList<PsiClass> {
+    startClass ?: return mutableListOf()
+    val enclosingClass = startClass.containingClass ?: return mutableListOf(startClass)
+    return getContainingClassesMutable(enclosingClass).apply { add(startClass) }
+  }
+  return getContainingClassesMutable(startClass)
+}
+
+private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int> {
+  val text = method.containingFile.text
+  val containingClasses = getContainingClasses(method.containingClass)
+  val classRepresentations = mutableListOf<String>()
+  val fieldRepresentations = mutableListOf<String>()
+  for (containingClass in containingClasses) {
+    fieldRepresentations.add(containingClass.fields.joinToString("\n") { (it.typeElement?.text ?: "def") + " " + it.text })
+    val startOffset = containingClass.textRange.startOffset
+    val lBraceOffset = containingClass.lBrace?.textOffset ?: startOffset
+    classRepresentations.add(text.substring(startOffset until lBraceOffset))
+  }
+  val header = classRepresentations.zip(fieldRepresentations)
+    .joinToString("") { (classDef, fields) -> "$classDef {\n $fields \n " }
+  val footer = " } ".repeat(containingClasses.size)
+  return header + method.text + footer to (header.length)
+}
+
 fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null): GrMethod? {
-  val virtualFile = method.containingFile.copy() as? GroovyFile ?: return null
-  val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: return null
+  val (fileText, offset) = buildVirtualEnvironmentForMethod(method)
+  val factory = GroovyPsiElementFactory.getInstance(method.project)
+  val newFile = factory.createGroovyFile(fileText, false, method)
+  val newMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
   if (newMethod.hasTypeParameters()) {
     if (typeParameterList != null) {
       newMethod.typeParameterList!!.replace(typeParameterList)
@@ -207,7 +234,7 @@ fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterLis
       newMethod.addAfter(typeParameterList, newMethod.firstChild)
     }
     else {
-      newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)
+      newMethod.addAfter(factory.createTypeParameterList(), newMethod.firstChild)
     }
   }
   return newMethod
@@ -231,6 +258,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
   val substitutions = mutableListOf<PsiType>()
   val allowedTypeParameters = method.typeParameters.asList()
   val factory = GroovyPsiElementFactory.getInstance(method.project)
+  val unboundedWildcard = PsiWildcardType.createUnbounded(method.manager)
 
   class ForeignTypeParameterEraser : PsiTypeMapper() {
     override fun visitClassType(classType: PsiClassType?): PsiType? {
@@ -240,7 +268,9 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
         return (compress(typeParameter.extendsListTypes.asList()) ?: getJavaLangObject(method)).accept(this)
       }
       else {
-        return factory.createType(classType.resolve() ?: return null, *classType.parameters.map { it.accept(this) }.toTypedArray())
+        val resolvedClass = classType.resolve() ?: return null
+        val classParameters = classType.parameters.map { it?.accept(this) ?: unboundedWildcard }.toTypedArray()
+        return factory.createType(resolvedClass, *classParameters)
       }
     }
 
@@ -249,10 +279,11 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
     }
 
     override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
+      wildcardType ?: return null
+      val bound = wildcardType.bound?.accept(this) ?: return wildcardType
       return when {
-        wildcardType == null -> null
-        wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, wildcardType.bound!!.accept(this))
-        wildcardType.isSuper -> PsiWildcardType.createSuper(method.manager, wildcardType.bound!!.accept(this))
+        wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, bound)
+        wildcardType.isSuper -> PsiWildcardType.createSuper(method.manager, bound)
         else -> wildcardType
       }
     }
@@ -277,8 +308,7 @@ fun compress(types: List<PsiType>?): PsiType? {
 }
 
 fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
-  method.typeParameters.asList() + (method.containingClass?.run { listOf(this) + supers }?.flatMap { it.typeParameters.asList() }
-                                    ?: emptyList())
+  method.typeParameters.asList() + (getContainingClasses(method.containingClass).flatMap { it.typeParameters.asList() })
 
 fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
   val virtualTypeParameters = allOuterTypeParameters(virtualMethod)

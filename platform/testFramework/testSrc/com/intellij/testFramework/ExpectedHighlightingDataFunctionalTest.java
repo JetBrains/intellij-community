@@ -80,7 +80,7 @@ public class ExpectedHighlightingDataFunctionalTest extends BasePlatformTestCase
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return new PsiElementVisitor() {
         @Override
-        public void visitPlainText(PsiPlainText content) {
+        public void visitPlainText(@NotNull PsiPlainText content) {
           report(content, holder);
         }
       };
@@ -93,7 +93,7 @@ public class ExpectedHighlightingDataFunctionalTest extends BasePlatformTestCase
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return new PsiElementVisitor() {
         @Override
-        public void visitPlainText(PsiPlainText content) {
+        public void visitPlainText(@NotNull PsiPlainText content) {
           report(content, holder);
           report(content, holder);
         }

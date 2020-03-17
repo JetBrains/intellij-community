@@ -22,12 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,10 +40,8 @@ public class GoToHashOrRefAction extends DumbAwareAction {
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
-    VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiEx logUi = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_EX);
     VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
-    assert ui instanceof AbstractVcsLogUi;
-    AbstractVcsLogUi logUi = (AbstractVcsLogUi)ui;
 
     Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
     GoToHashOrRefPopup popup =
@@ -58,7 +55,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi instanceof AbstractVcsLogUi);
+    VcsLogUiEx logUi = e.getData(VcsLogInternalDataKeys.LOG_UI_EX);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi != null);
   }
 }

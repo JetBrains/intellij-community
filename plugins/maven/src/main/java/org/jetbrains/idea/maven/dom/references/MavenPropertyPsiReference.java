@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -41,7 +27,6 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -67,6 +52,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
@@ -365,7 +352,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    return ElementManipulators.getManipulator(myElement).handleContentChange(myElement, myRange, newElementName);
+    return ElementManipulators.handleContentChange(myElement, myRange, newElementName);
   }
 
   @Override
@@ -399,22 +386,22 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     final String prefix = prefixLength == 0 ? null : myText.substring(0, prefixLength);
 
     PsiDirectory baseDir = getBaseDir(mavenProject);
-    addVariant(result, "basedir", baseDir, prefix, MavenIcons.MavenLogo);
+    addVariant(result, "basedir", baseDir, prefix, RepositoryLibraryLogo);
     if (prefix == null) {
-      result.add(createLookupElement(baseDir, "project.baseUri", MavenIcons.MavenLogo));
-      result.add(createLookupElement(baseDir, "pom.baseUri", MavenIcons.MavenLogo));
-      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(MavenIcons.MavenLogo));
+      result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
+      result.add(createLookupElement(baseDir, "pom.baseUri", RepositoryLibraryLogo));
+      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(RepositoryLibraryLogo));
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
       if (property.startsWith("project.")) {
-        addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MavenLogo);
+        addVariant(result, property.substring("project.".length()), descriptor, prefix, RepositoryLibraryLogo);
       }
       return null;
     });
 
     processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, (property, descriptor) -> {
-      result.add(createLookupElement(descriptor, property, MavenIcons.MavenLogo));
+      result.add(createLookupElement(descriptor, property, RepositoryLibraryLogo));
       return null;
     });
 

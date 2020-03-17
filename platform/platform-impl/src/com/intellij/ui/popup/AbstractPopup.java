@@ -65,7 +65,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
   public static final String FIRST_TIME_SIZE = "FirstTimeSize";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
+  private static final Logger LOG = Logger.getInstance(AbstractPopup.class);
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -137,13 +137,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       mySpeedSearchPatternField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
-      if (isHoldingFilter() && !searchFieldShown) {
-        setHeaderComponent(mySpeedSearchPatternField);
-        searchFieldShown = true;
-      }
-      else if (!isHoldingFilter() && searchFieldShown) {
-        setHeaderComponent(null);
-        searchFieldShown = false;
+      if (!myAlwaysShown) {
+        if (isHoldingFilter() && !searchFieldShown) {
+          setHeaderComponent(mySpeedSearchPatternField);
+          searchFieldShown = true;
+        }
+        else if (!isHoldingFilter() && searchFieldShown) {
+          setHeaderComponent(null);
+          searchFieldShown = false;
+        }
       }
     }
 
@@ -856,7 +858,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
     if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
-      LOG.warn("huge popup requested: " + targetBounds.width + " x " + targetBounds.height);
+      StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
+      sb.append(targetBounds.width).append("x").append(targetBounds.height);
+      IJSwingUtilities.appendComponentClassNames(sb, myContent);
+      LOG.warn(sb.toString());
     }
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
@@ -1330,14 +1335,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         int delta = screen.width + screen.x - location.x;
         if (size.width > delta) {
           size.width = delta;
-          // we shrank horizontally - need to increase height to fit the horizontal scrollbar
-          JScrollPane scrollPane = ScrollUtil.findScrollPane(myContent);
-          if (scrollPane != null && scrollPane.getHorizontalScrollBarPolicy() != ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
-            JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
-            if (scrollBar != null) {
-              prefSize.height += scrollBar.getPreferredSize().height;
-            }
-          }
         }
       }
     }
@@ -1664,8 +1661,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     Rectangle bounds = popupWindow.getBounds();
 
     ScreenUtil.moveRectangleToFitTheScreen(bounds);
-    setLocation(bounds.getLocation());
-    setSize(bounds.getSize(), false);
+    // calling #setLocation or #setSize makes the window move for a bit because of tricky computations
+    // our aim here is to just move the window as-is to make it fit the screen
+    // no tricks are included here
+    popupWindow.setBounds(bounds);
+    updateMaskAndAlpha(popupWindow);
   }
 
 
@@ -1771,11 +1771,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     if (owner == null) return false;
 
-    Window wnd = UIUtil.getWindow(owner);
+    Window wnd = ComponentUtil.getWindow(owner);
 
     for (Component each : components) {
       if (each != null && SwingUtilities.isDescendingFrom(owner, each)) {
-        Window eachWindow = UIUtil.getWindow(each);
+        Window eachWindow = ComponentUtil.getWindow(each);
         if (eachWindow == wnd) {
           return true;
         }
@@ -1795,7 +1795,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return myCaption;
   }
 
-  private void setHeaderComponent(JComponent c) {
+  protected void setHeaderComponent(JComponent c) {
     boolean doRevalidate = false;
     if (myHeaderComponent != null) {
       myHeaderPanel.remove(myHeaderComponent);

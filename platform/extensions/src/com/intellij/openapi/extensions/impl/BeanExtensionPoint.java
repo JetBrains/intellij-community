@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -6,15 +6,26 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
-  BeanExtensionPoint(@NotNull String name,
+import java.util.List;
+
+@ApiStatus.Internal
+public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
+  public BeanExtensionPoint(@NotNull String name,
                      @NotNull String className,
-                     @NotNull ComponentManager componentManager,
                      @NotNull PluginDescriptor pluginDescriptor,
                      boolean dynamic) {
-    super(name, className, componentManager, pluginDescriptor, dynamic);
+    super(name, className, pluginDescriptor, dynamic);
+  }
+
+  @NotNull
+  @Override
+  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+    result.setComponentManager(manager);
+    return result;
   }
 
   @Override
@@ -30,5 +41,16 @@ final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
       return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
     }
     return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
+  }
+
+  @Override
+  public boolean unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
+    return unregisterExtensions((x, adapter) -> {
+      if (!(adapter instanceof XmlExtensionAdapter)) {
+        return true;
+      }
+      XmlExtensionAdapter xmlExtensionAdapter = (XmlExtensionAdapter)adapter;
+      return !xmlExtensionAdapter.isLoadedFromAnyElement(elements);
+    }, false, listenerCallbacks);
   }
 }

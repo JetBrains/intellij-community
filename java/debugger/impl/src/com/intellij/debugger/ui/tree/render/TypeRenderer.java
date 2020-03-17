@@ -11,7 +11,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class TypeRenderer implements Renderer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ReferenceRenderer");
+  private static final Logger LOG = Logger.getInstance(ReferenceRenderer.class);
   protected BasicRendererProperties myProperties = new BasicRendererProperties(false);
 
   protected TypeRenderer() {

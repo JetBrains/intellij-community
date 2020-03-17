@@ -16,7 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
-  private static final Color SEPARATOR_COLOR = new JBColor(Gray.xC9, Gray.x55);
+  private static final Color SEPARATOR_COLOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
 
   private final JProgressBar myProgressBar;
   private String initialLabelText;
@@ -156,7 +156,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
-    addToPanel(panel, gc);
+    addToPanel(panel, gc, false);
     return panel;
   }
 
@@ -166,7 +166,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   }
 
   @Override
-  public void addToPanel(JPanel panel, GridBagConstraints gc) {
+  public void addToPanel(JPanel panel, GridBagConstraints gc, boolean splitColumns) {
     if (constrainsValid()) {
       new LabeledPanelImpl().addToPanel(panel, gc);
     }
@@ -199,7 +199,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       label = new JLabel(StringUtil.isNotEmpty(initialLabelText) ? initialLabelText : "");
 
       comment = new JLabel(myCommentText);
-      comment.setForeground(Gray.x78);
+      comment.setForeground(UIUtil.getContextHelpForeground());
       if (SystemInfo.isMac) {
         Font font = comment.getFont();
         float size = font.getSize2D();

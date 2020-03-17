@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import gnu.trove.TIntIntHashMap;
@@ -37,11 +38,11 @@ public class SharedIndicesData {
   private static IndexedStateMap ourSharedFileInputs;
   private static IndexedStateMap ourSharedFileContentIndependentInputs;
   private static IndexedStateMap ourSharedContentInputs;
-  static final boolean ourFileSharedIndicesEnabled = SystemProperties.getBooleanProperty("idea.shared.input.index.enabled", false);
-  static final boolean DO_CHECKS =
+  public static final boolean ourFileSharedIndicesEnabled = SystemProperties.getBooleanProperty("idea.shared.input.index.enabled", false);
+  public static final boolean DO_CHECKS =
     ourFileSharedIndicesEnabled && SystemProperties.getBooleanProperty("idea.shared.input.index.checked", false);
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.MapReduceIndex");
+  private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
 
   static {
     if (ourFileSharedIndicesEnabled) {
@@ -79,7 +80,7 @@ public class SharedIndicesData {
     final IndexedStateCache myStateCache;
 
     IndexedStateMap(@NotNull File file) throws IOException {
-      super(file, EnumeratorIntegerDescriptor.INSTANCE,
+      super(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE,
             new DataExternalizer<byte[]>() {
               @Override
               public void save(@NotNull DataOutput out, byte[] value) throws IOException {
@@ -309,7 +310,7 @@ public class SharedIndicesData {
   // Record:  (<chunkSize> <indexId> <indexStamp> <SavedData>)*
 
   @Nullable
-  static <Key, Value> Value recallFileData(int id, @NotNull ID<Key, ?> indexId, @NotNull DataExternalizer<Value> externalizer)
+  public static <Key, Value> Value recallFileData(int id, @NotNull ID<Key, ?> indexId, @NotNull DataExternalizer<Value> externalizer)
     throws IOException {
     int type = ourRegisteredIndices.get(indexId.getUniqueId());
     if (type == 0) return null;
@@ -320,7 +321,7 @@ public class SharedIndicesData {
   }
 
   @Nullable
-  static <Key, Value> Value recallContentData(int id, @NotNull ID<Key, ?> indexId, @NotNull DataExternalizer<Value> externalizer)
+  public static <Key, Value> Value recallContentData(int id, @NotNull ID<Key, ?> indexId, @NotNull DataExternalizer<Value> externalizer)
     throws IOException {
     return doRecallData(id, indexId, externalizer, ourSharedContentInputs);
   }
@@ -353,7 +354,7 @@ public class SharedIndicesData {
                     contentlessIndex ? ourSharedFileContentIndependentInputs : ourSharedFileInputs);
   }
 
-  static <Key, Value> void associateContentData(int id, @NotNull ID<Key, ?> indexId, Value keys, @NotNull DataExternalizer<Value> externalizer)
+  public static <Key, Value> void associateContentData(int id, @NotNull ID<Key, ?> indexId, Value keys, @NotNull DataExternalizer<Value> externalizer)
     throws IOException {
     doAssociateData(id, indexId, keys, externalizer, ourSharedContentInputs);
   }

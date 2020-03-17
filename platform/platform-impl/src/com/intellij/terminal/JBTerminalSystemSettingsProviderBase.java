@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jediterm.terminal.TerminalColor;
@@ -210,6 +209,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       getGlobal().setName(name);
     }
 
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGlobal().getDisplayName();
+    }
+
     @Override
     public TextAttributes getAttributes(TextAttributesKey key) {
       if (myOwnAttributes.containsKey(key)) return myOwnAttributes.get(key);
@@ -265,16 +270,6 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     @Override
     public void setEditorFontSize(int fontSize) {
 
-    }
-
-    @Override
-    public FontSize getQuickDocFontSize() {
-      return myGlobalScheme.getQuickDocFontSize();
-    }
-
-    @Override
-    public void setQuickDocFontSize(@NotNull FontSize fontSize) {
-      myGlobalScheme.setQuickDocFontSize(fontSize);
     }
 
     @Override

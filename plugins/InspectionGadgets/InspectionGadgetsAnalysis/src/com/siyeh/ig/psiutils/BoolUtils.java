@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -255,6 +255,7 @@ public class BoolUtils {
     return null;
   }
 
+  @Contract("null -> false")
   public static boolean isBooleanLiteral(PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (!(expression instanceof PsiLiteralExpression)) {
@@ -305,8 +306,8 @@ public class BoolUtils {
     if (expression1 instanceof PsiBinaryExpression && expression2 instanceof PsiBinaryExpression) {
       PsiBinaryExpression binOp1 = (PsiBinaryExpression)expression1;
       PsiBinaryExpression binOp2 = (PsiBinaryExpression)expression2;
-      DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(binOp1.getOperationTokenType());
-      DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(binOp2.getOperationTokenType());
+      RelationType rel1 = RelationType.fromElementType(binOp1.getOperationTokenType());
+      RelationType rel2 = RelationType.fromElementType(binOp2.getOperationTokenType());
       if (rel1 == null || rel2 == null) return false;
       PsiType type = binOp1.getLOperand().getType();
       // a > b and a <= b are not strictly opposite due to NaN semantics

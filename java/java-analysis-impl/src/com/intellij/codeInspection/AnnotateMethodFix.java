@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
@@ -79,19 +80,12 @@ public class AnnotateMethodFix implements LocalQuickFix {
       toAnnotate.add(method);
     }
 
-    if (annotateOverriddenMethods() && !ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
-      for (PsiMethod psiMethod : methods) {
-        ReadAction.run(() -> {
-          if (psiMethod.isPhysical() &&
-              AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
-              !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE) &&
-              !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
-            toAnnotate.add(psiMethod);
-          }
-        });
+    if (annotateOverriddenMethods() && !processModifiableInheritorsUnderProgress(method, psiMethod -> {
+      if (AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
+          !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE)) {
+        toAnnotate.add(psiMethod);
       }
-    }, "Searching for Overriding Methods", true, project)) {
+    })) {
       return;
     }
 
@@ -113,5 +107,17 @@ public class AnnotateMethodFix implements LocalQuickFix {
   private void annotateMethod(@NotNull PsiMethod method) {
     AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
     fix.invoke(method.getProject(), method.getContainingFile(), method, method);
+  }
+
+  public static boolean processModifiableInheritorsUnderProgress(@NotNull PsiMethod method, @NotNull Consumer<? super PsiMethod> consumer) {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
+        ReadAction.run(() -> {
+          if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
+            consumer.accept(psiMethod);
+          }
+        });
+      }
+    }, "Searching for Overriding Methods", true, method.getProject());
   }
 }

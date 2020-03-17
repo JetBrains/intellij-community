@@ -175,26 +175,11 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            valuesXTypes,
-           ['[] -> BigInteger', '[1] -> BigInteger'],
+           ['[] -> BigInteger', '[1] -> BigInteger', '[0L] -> BigInteger'],
            [
              '[] -> int', '[] -> double', '[] -> short', '[] -> byte',
-             '[1] -> int', '[1] -> double', '[1] -> int',
-             '[0L] -> double',
-             '[1.2f] -> double',
-             '["str"] -> int', '["str"] -> double', '["str"] -> short', '["str"] -> byte',
              'new ArrayList<>() -> int[]', 'new ArrayList<>() -> double[]', 'new ArrayList<>() -> Integer[]', 'new ArrayList<>() -> List[]', 'new ArrayList<>() -> Thread[]'
            ]
-  }
-
-  void testWrongConstructorResolve() {
-    testHighlighting '''
-    import groovy.transform.CompileStatic
-
-    @CompileStatic
-    void method() {
-      BigInteger param = [(int)1]
-    }
-'''
   }
 
   private void doTest(String body, List<List<String>> arguments, List<String> wrongFalseByIdea, List<String> wrongTrueByIdea) {

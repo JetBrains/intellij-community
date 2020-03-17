@@ -42,13 +42,6 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "static.variable.used.before.initialization.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "static.variable.used.before.initialization.problem.descriptor");

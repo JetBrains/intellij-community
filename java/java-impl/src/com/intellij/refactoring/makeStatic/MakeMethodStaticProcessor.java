@@ -50,7 +50,7 @@ import java.util.Set;
  * @author dsl
  */
 public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiMethod> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
+  private static final Logger LOG = Logger.getInstance(MakeMethodStaticProcessor.class);
   private List<PsiMethod> myAdditionalMethods;
 
   public MakeMethodStaticProcessor(final Project project, final PsiMethod method, final Settings settings) {

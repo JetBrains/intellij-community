@@ -13,6 +13,10 @@
     <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.profile.codeInspection.ProjectInspectionProfileManager"
+                    serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"
+                    preload="notHeadless" overrides="true"/>
+
     <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
 
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>

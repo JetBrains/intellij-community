@@ -62,7 +62,7 @@ public class MismatchedCollectionQueryUpdateInspection
     CollectionUtils.DERIVED_COLLECTION,
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "subList"),
     CallMatcher.instanceCall("java.util.SortedMap", "headMap", "tailMap", "subMap"),
-    CallMatcher.instanceCall("java.util.SortedSet", "headSet", "tailSet", "subSet"));
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_SORTED_SET, "headSet", "tailSet", "subSet"));
   private static final CallMatcher COLLECTION_SAFE_ARGUMENT_METHODS =
     CallMatcher.anyOf(
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll", "removeAll", "containsAll", "remove"),
@@ -114,12 +114,6 @@ public class MismatchedCollectionQueryUpdateInspection
   @NotNull
   public String getID() {
     return "MismatchedQueryAndUpdateOfCollection";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("mismatched.update.collection.display.name");
   }
 
   @Override
@@ -386,16 +380,19 @@ public class MismatchedCollectionQueryUpdateInspection
     if (argumentList == null) {
       return false;
     }
+    PsiMethod ctor = newExpression.resolveMethod();
+    if (ctor == null) return true;
+    PsiParameter[] parameters = ctor.getParameterList().getParameters();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    for (final PsiExpression argument : arguments) {
-      final PsiType argumentType = argument.getType();
-      if (argumentType == null) {
+    if (ctor.isVarArgs() && arguments.length >= parameters.length) {
+      return false;
+    }
+    for (PsiParameter parameter : parameters) {
+      PsiType type = parameter.getType();
+      if (CollectionUtils.isCollectionClassOrInterface(type)) {
         return false;
       }
-      if (CollectionUtils.isCollectionClassOrInterface(argumentType)) {
-        return false;
-      }
-      if (argumentType instanceof PsiArrayType) {
+      if (type instanceof PsiArrayType && !(type instanceof PsiEllipsisType)) {
         return false;
       }
     }

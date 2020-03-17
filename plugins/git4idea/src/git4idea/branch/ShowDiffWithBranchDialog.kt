@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
 import com.intellij.dvcs.ui.CompareBranchesDiffPanel
@@ -24,13 +24,11 @@ internal class ShowDiffWithBranchDialog(val project: Project,
                                         val branchName: String,
                                         val repositories: List<GitRepository>,
                                         val currentBranchName: String
-) : FrameWrapper(project, "ShowDiffWithBranchDialog") {
-
+) : FrameWrapper(project, "ShowDiffWithBranchDialog", title = "Show Diff Between $branchName and Current Working Tree") {
   private var diffPanel : CompareBranchesDiffPanel
   private val loadingPanel: JBLoadingPanel
 
   init {
-    setTitle("Show Diff Between $branchName and Current Working Tree")
     closeOnEsc()
 
     diffPanel = CompareBranchesDiffPanel(project, GitVcsSettings.getInstance(project), branchName, currentBranchName)
@@ -45,7 +43,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
     val rootPanel = JBUI.Panels.simplePanel()
     rootPanel.addToCenter(loadingPanel)
     rootPanel.border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP)
-    setComponent(rootPanel)
+    component = rootPanel
   }
 
   override fun show() {
@@ -72,7 +70,9 @@ internal class ShowDiffWithBranchDialog(val project: Project,
     }
   }
 
-  override fun getPreferredFocusedComponent(): JComponent = diffPanel.preferredFocusComponent
+  override var preferredFocusedComponent: JComponent?
+    get() = diffPanel.preferredFocusComponent
+    set(_) {}
 
   private fun loadDiff() : LoadingResult {
     try {

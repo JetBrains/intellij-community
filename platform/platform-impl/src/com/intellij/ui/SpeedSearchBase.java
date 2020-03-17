@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -39,17 +40,22 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
+  private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
   private static final Border BORDER = new CustomLineBorder(JBColor.namedColor("SpeedSearch.borderColor", JBColor.GRAY), JBUI.insets(1));
   private static final Color FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.foreground", UIUtil.getToolTipForeground());
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(UIUtil.getToolTipBackground().brighter(), Gray._111));
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("SpeedSearch.background", new JBColor(Gray.xFF, Gray._111));
   private static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("SpeedSearch.errorForeground", JBColor.RED);
 
   private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
-  private final ToolWindowManagerListener myWindowManagerListener = new MyToolWindowManagerListener();
+  private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {
+    @Override
+    public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+      manageSearchPopup(null);
+    }
+  };
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private String myRecentEnteredPrefix;
   private SpeedSearchComparator myComparator = new SpeedSearchComparator(false);
@@ -641,14 +647,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return myComponent.getLocationOnScreen();
   }
 
-  private class MyToolWindowManagerListener implements ToolWindowManagerListener {
-    @Override
-    public void stateChanged() {
-      manageSearchPopup(null);
-    }
-  }
-
-  protected class ViewIterator implements ListIterator<Object> {
+  protected final class ViewIterator implements ListIterator<Object> {
     private final SpeedSearchBase mySpeedSearch;
     private int myCurrentIndex;
     private final Object[] myElements;

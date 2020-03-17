@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsIgnoreManager {
-
   boolean isRunConfigurationVcsIgnored(@NotNull String configurationName);
 
   void removeRunConfigurationFromVcsIgnore(@NotNull String configurationName);
@@ -24,6 +22,6 @@ public interface VcsIgnoreManager {
   boolean isPotentiallyIgnoredFile(@NotNull FilePath filePath);
 
   static VcsIgnoreManager getInstance(@NotNull Project project){
-    return ServiceManager.getService(project, VcsIgnoreManager.class);
+    return project.getService(VcsIgnoreManager.class);
   }
 }

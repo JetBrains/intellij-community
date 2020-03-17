@@ -122,7 +122,9 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
   public void navigate(@NotNull final PsiPackage psiPackage, final boolean requestFocus) {
     final Project project = psiPackage.getProject();
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-    window.activate(null);
+    if (window != null) {
+      window.activate(null);
+    }
     final ProjectView projectView = ProjectView.getInstance(project);
     PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
     if (directories.length == 0) return;

@@ -40,7 +40,7 @@ import java.util.NoSuchElementException;
  * @author Eugene Zhuravlev
  */
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.ValueContainerImpl");
+  private static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
   private static final Object myNullValue = new Object();
 
   // there is no volatile as we modify under write lock and read under read lock

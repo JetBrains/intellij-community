@@ -31,13 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

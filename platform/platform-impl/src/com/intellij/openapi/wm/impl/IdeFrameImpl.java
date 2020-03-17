@@ -55,8 +55,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
     void setTitle(String title);
 
-    void releaseFrame();
-
     void updateView();
 
     @Nullable
@@ -151,12 +149,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   void doDispose() {
     super.dispose();
-  }
-
-  void releaseFrame() {
-    if (myFrameHelper != null) {
-      myFrameHelper.releaseFrame();
-    }
   }
 
   protected final class AccessibleIdeFrameImpl extends AccessibleJFrame {

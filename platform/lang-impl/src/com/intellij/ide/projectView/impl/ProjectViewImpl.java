@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
@@ -23,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -63,10 +61,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.AutoScrollFromSourceHandler;
-import com.intellij.ui.AutoScrollToSourceHandler;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.IdeUICustomization;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -105,7 +100,7 @@ import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 })
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectViewImpl.class);
   private static final Key<String> ID_KEY = Key.create("pane-id");
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
   private final CopyPasteDelegator myCopyPasteDelegator;
@@ -664,9 +659,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       private boolean toolWindowVisible;
 
       @Override
-      public void stateChanged() {
-        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-        if (window == null || toolWindowVisible == window.isVisible()) return;
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+        if (window == null || toolWindowVisible == window.isVisible()) {
+          return;
+        }
+
         myCurrentSelectionObsolete = ThreeState.NO;
         if (window.isVisible() && !toolWindowVisible) {
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
@@ -1077,7 +1075,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }, getComponent());
     collapseAllAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-    collapseAllAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     titleActions.add(collapseAllAction);
   }
 
@@ -1303,7 +1300,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> DeleteHandler.deletePsiElement(elements, myProject));
+        DeleteHandler.deletePsiElement(elements, myProject);
       }
       finally {
         a.finish();
@@ -1357,18 +1354,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     MyPanel() {
       super(new BorderLayout());
       Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(myId2Pane.values());
-      UIUtil.putClientProperty(
-        this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> JBIterable.from(snapshot)
-          .map(pane -> {
-            JComponent last = null;
-            for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
-              if (c == this || !(c instanceof JComponent)) return null;
-              last = (JComponent)c;
-            }
-            return last;
-          })
-          .filter(Conditions.notNull())
-          .iterator());
+      ComponentUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
+                                      (Iterable<? extends Component>)(Iterable<JComponent>)() -> JBIterable.from(snapshot)
+                                        .map(pane -> {
+                                          JComponent last = null;
+                                          for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
+                                            if (c == this || !(c instanceof JComponent)) return null;
+                                            last = (JComponent)c;
+                                          }
+                                          return last;
+                                        })
+                                        .filter(Conditions.notNull())
+                                        .iterator());
     }
 
     @Nullable
@@ -1775,7 +1772,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   public void setAutoscrollToSource(boolean autoscrollMode, String paneId) {
-    if (myAutoscrollToSource.isEnabled(paneId)) myAutoscrollToSource.setSelected(autoscrollMode);
+    if (myAutoscrollToSource.isEnabled(paneId)) {
+      myAutoscrollToSource.setSelected(autoscrollMode);
+    }
   }
 
   @Override
@@ -1784,7 +1783,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   public void setAutoscrollFromSource(boolean autoscrollMode, String paneId) {
-    if (myAutoscrollFromSource.isEnabled(paneId)) myAutoscrollFromSource.setSelected(autoscrollMode);
+    if (myAutoscrollFromSource.isEnabled(paneId)) {
+      myAutoscrollFromSource.setSelected(autoscrollMode);
+    }
   }
 
   @Override
@@ -1793,7 +1794,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   public void setFlattenPackages(String paneId, boolean flattenPackages) {
-    if (myFlattenPackages.isEnabled(paneId)) myFlattenPackages.setSelected(flattenPackages);
+    if (myFlattenPackages.isEnabled(paneId)) {
+      myFlattenPackages.setSelected(flattenPackages);
+    }
   }
 
   @Override
@@ -1805,13 +1808,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
    * @deprecated use {@link ProjectView#isFoldersAlwaysOnTop(String)} instead
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFoldersAlwaysOnTop() {
     return myFoldersAlwaysOnTop.isSelected() && myFoldersAlwaysOnTop.isEnabled();
   }
 
   public void setFoldersAlwaysOnTop(boolean foldersAlwaysOnTop) {
-    if (myFoldersAlwaysOnTop.isEnabled()) myFoldersAlwaysOnTop.setSelected(foldersAlwaysOnTop);
+    if (myFoldersAlwaysOnTop.isEnabled()) {
+      myFoldersAlwaysOnTop.setSelected(foldersAlwaysOnTop);
+    }
   }
 
   @Override
@@ -2143,8 +2147,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     String selectInShortcut = KeymapUtil.getFirstKeyboardShortcutText("SelectIn");
     if (!selectInShortcut.isEmpty()) {
-      SelectInTarget[] targets = SelectInManager.getInstance(myProject).getTargets();
-      int index = ContainerUtil.indexOf(Arrays.asList(targets), (target) -> target instanceof ProjectViewSelectInGroupTarget);
+      List<SelectInTarget> targets = SelectInManager.getInstance(myProject).getTargetList();
+      int index = ContainerUtil.indexOf(targets, (target) -> target instanceof ProjectViewSelectInGroupTarget);
       if (index >= 0) {
         return " (" + selectInShortcut + ", " + (index + 1) + ")";
       }
@@ -2174,16 +2178,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       pane = myId2Pane.get(myCurrentViewId);
     }
     return pane != null ? pane.getReady(requestor) : ActionCallback.DONE;
-  }
-
-  @NotNull
-  public ToggleAction getAutoScrollToSourceAction() {
-    return Action.AUTOSCROLL_TO_SOURCE;
-  }
-
-  @NotNull
-  public ToggleAction getAutoScrollFromSourceAction() {
-    return Action.AUTOSCROLL_FROM_SOURCE;
   }
 
   private void updatePanes(boolean withComparator) {

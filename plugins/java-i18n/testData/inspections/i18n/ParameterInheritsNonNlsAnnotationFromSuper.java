@@ -1,17 +1,23 @@
 class A {
-    void foo(@org.jetbrains.annotations.NonNls String p){
-
+    String foo(@org.jetbrains.annotations.NonNls String p){
+        return p;
     }
 }
 
 class B extends A{
-    void foo(String p){
-
+    String foo(String p){
+        return p;
     }
 }
 
 class C extends B{
-    void foo(String p){
-        foo("text");
+    String foo(String p){
+        return foo("text").substring(1);
+    }
+
+    void bar(C c) {
+        c.foo("text");
+        c.foo("text" + " " + "text");
+        new C().foo(("text"));
     }
 }

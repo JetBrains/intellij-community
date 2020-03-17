@@ -672,16 +672,11 @@ public class JBUI {
 
       @NotNull
       public static Font headerFont() {
-        JBFont font = JBFont.label();
-        Object size = UIManager.get("ToolWindow.header.font.size");
-        if (size instanceof Integer) {
-          return font.deriveFont(((Integer)size).floatValue());
-        }
-        return font;
+        return JBFont.label();
       }
 
       public static float overrideHeaderFontSizeOffset() {
-        Object offset = UIManager.get("ToolWindow.overridden.header.font.size.offset");
+        Object offset = UIManager.get("ToolWindow.Header.font.size.offset");
         if (offset instanceof Integer) {
           return ((Integer)offset).floatValue();
         }

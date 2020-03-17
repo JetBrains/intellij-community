@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -54,7 +55,8 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     final List<PsiClass> targetClasses = new ArrayList<>();
     for (PsiClass psiClass : super.getTargetClasses(element)) {
       if (canModify(psiClass) &&
-          (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
+          (!psiClass.isInterface() && !psiClass.isAnnotationType() && !psiClass.isRecord()
+           || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
         targetClasses.add(psiClass);
       }
     }
@@ -63,11 +65,15 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return canModify(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
+    return canModify(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType() && !psiClass.isRecord();
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    chooseTargetClass(project, editor, this::invokeImpl);
+  }
+
+  private void invokeImpl(@NotNull PsiClass targetClass) {
     final Project project = myReferenceExpression.getProject();
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (factory == null) factory = JavaPsiFacade.getElementFactory(project);

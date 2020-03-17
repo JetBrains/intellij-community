@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.Consumer;
@@ -18,7 +19,6 @@ import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.history.EdgeData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
@@ -35,6 +35,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.ObjIntConsumer;
 
@@ -58,8 +59,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   @Nullable
   @Override
   protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, List<ChangeKind>>> createdForwardIndex() throws IOException {
-    if (!VcsLogIndexService.isPathsForwardIndexRequired()) return null;
-    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx")),
+    if (!isPathsForwardIndexRequired()) return null;
+    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), false),
                        new KeyCollectionForwardIndexAccessor<Integer, List<ChangeKind>>(new IntCollectionDataExternalizer()) {
                          @Nullable
                          @Override
@@ -76,7 +77,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   private static PersistentEnumeratorBase<LightFilePath> createPathsEnumerator(@NotNull StorageId storageId) throws IOException {
-    File storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
+    Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentBTreeEnumerator<>(storageFile, new LightFilePathKeyDescriptor(),
                                            Page.PAGE_SIZE, null, storageId.getVersion());
   }
@@ -84,7 +85,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   @NotNull
   private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId)
     throws IOException {
-    File storageFile = storageId.getStorageFile(RENAMES_MAP);
+    Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), Page.PAGE_SIZE,
                                    storageId.getVersion());
   }
@@ -178,6 +179,10 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   private static FilePath toFilePath(@Nullable LightFilePath lightFilePath) {
     if (lightFilePath == null) return null;
     return VcsUtil.getFilePath(lightFilePath.getPath(), lightFilePath.isDirectory());
+  }
+
+  public static boolean isPathsForwardIndexRequired() {
+    return Registry.is("vcs.log.index.paths.forward.index.on");
   }
 
   private static class PathsIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {

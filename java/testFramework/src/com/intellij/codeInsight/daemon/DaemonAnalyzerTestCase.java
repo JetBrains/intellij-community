@@ -18,7 +18,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.ExternalAnnotatorsFilter;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -79,7 +78,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     daemonCodeAnalyzer.prepareForTest();
     StartupManagerImpl startupManager = (StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject());
     startupManager.runStartupActivities();
-    startupManager.runPostStartupActivities();
+    startupManager.runPostStartupActivitiesRegisteredDynamically();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
     if (isStressTest()) {
@@ -102,7 +101,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   protected void tearDown() throws Exception {
     try {
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-      final Project project = getProject();
+      Project project = getProject();
       if (project != null) {
         ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
@@ -114,7 +113,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     finally {
       super.tearDown();
     }
-    //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
@@ -344,11 +342,9 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
     if (intentionAction == null) {
-      fail(String.format("Could not find action by name %s.\n" +
-                         "Actions: [%s]\n" +
-                         "HighlightInfos: [%s]", intentionActionName,
-                         StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
-                         StringUtil.join(infos, ", ")));
+      fail("Could not find action '" + intentionActionName+
+           "'.\nAvailable actions: [" +StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", ")+ "]\n" +
+           "HighlightInfos: [" +StringUtil.join(infos, ", ")+"]");
     }
     CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
   }

@@ -45,7 +45,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   public boolean ADD_NONJAVA_TO_ENTRIES = true;
   private boolean TEST_ENTRY_POINTS = true;
 
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
   public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   public static final String ALTERNATIVE_ID = "UnusedDeclaration";
 
@@ -111,12 +110,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public void setTestEntryPoints(boolean testEntryPoints) {
     TEST_ENTRY_POINTS = testEntryPoints;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
   }
 
   @Override
@@ -247,6 +240,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         if (isSerializable(subClass.getUastElement(), subClass, serializableClass)) return true;
       }
     }
+    return false;
+  }
+
+  @Override
+  public boolean isReadActionNeeded() {
     return false;
   }
 
@@ -574,10 +572,23 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         // Process class's static initializers
         if (method.isStatic() || method.isConstructor() || method.isEntry()) {
           if (method.isStatic()) {
-            ((RefElementImpl)method.getOwner()).setReachable(true);
+            RefElementImpl owner = (RefElementImpl)method.getOwner();
+            if (owner != null) {
+              owner.setReachable(true);
+            }
           }
           else {
-            addInstantiatedClass(method.getOwnerClass());
+            RefClass ownerClass = method.getOwnerClass();
+            if (ownerClass != null) {
+              addInstantiatedClass(ownerClass);
+            } else {
+              LOG.error("owner class is null for " + method.getPsiElement()
+                      + " is static ? " + method.isStatic()
+                      + "; is abstract ? " + method.isAbstract()
+                      + "; is main method ? " + method.isAppMain()
+                      + "; is constructor " + method.isConstructor()
+                      + "; containing file " + method.getPointer().getVirtualFile().getFileType());
+            }
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
@@ -619,7 +630,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
 
-    private void addInstantiatedClass(RefClass refClass) {
+    private void addInstantiatedClass(@NotNull RefClass refClass) {
       if (myInstantiatedClasses.add(refClass)) {
         ((RefClassImpl)refClass).setReachable(true);
         myInstantiatedClassesCount++;
@@ -688,5 +699,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public List<EntryPoint> getExtensions() {
     return myExtensions;
+  }
+
+  public static String getDisplayNameText() {
+    return InspectionsBundle.message("inspection.dead.code.display.name");
   }
 }

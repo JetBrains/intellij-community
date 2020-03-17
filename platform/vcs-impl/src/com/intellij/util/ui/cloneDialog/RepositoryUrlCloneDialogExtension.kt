@@ -2,6 +2,7 @@
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
@@ -36,14 +37,21 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     return tooltip
   }
 
-  override fun createMainComponent(project: Project): RepositoryUrlMainExtensionComponent {
-    return RepositoryUrlMainExtensionComponent(project)
+  override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
+    throw AssertionError("Shouldn't be called")
   }
 
-  class RepositoryUrlMainExtensionComponent(private val project: Project) : VcsCloneDialogExtensionComponent() {
+  override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
+    return RepositoryUrlMainExtensionComponent(project, modalityState)
+  }
+
+  class RepositoryUrlMainExtensionComponent(private val project: Project,
+                                            private val modalityState: ModalityState) : VcsCloneDialogExtensionComponent() {
     override fun onComponentSelected() {
       dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: "Clone")
       dialogStateListener.onOkActionEnabled(true)
+
+      getCurrentVcsComponent()?.onComponentSelected(dialogStateListener)
     }
 
     private val vcsComponents = HashMap<CheckoutProvider, VcsCloneComponent>()
@@ -75,7 +83,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
           centerPanel.setContent(vcsComponents.getOrPut(provider, {
-            val cloneComponent = provider.buildVcsCloneComponent(project)
+            val cloneComponent = provider.buildVcsCloneComponent(project, modalityState)
             Disposer.register(this, cloneComponent)
             cloneComponent
           }).getView())

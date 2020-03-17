@@ -28,13 +28,6 @@ public class NonSerializableObjectPassedToObjectStreamInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.object.passed.to.object.stream.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.serializable.object.passed.to.object.stream.problem.descriptor");

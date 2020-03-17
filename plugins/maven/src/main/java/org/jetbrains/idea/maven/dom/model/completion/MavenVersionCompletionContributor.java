@@ -25,11 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
+import org.jetbrains.idea.reposearch.DependencySearchService;
+import org.jetbrains.idea.reposearch.RepositoryArtifactData;
+import org.jetbrains.idea.reposearch.SearchParameters;
 
 import java.util.function.Consumer;
 
@@ -39,10 +40,10 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
   }
 
   @Override
-  protected Promise<Void> find(@NotNull DependencySearchService service,
-                               @NotNull MavenDomShortArtifactCoordinates coordinates,
-                               @NotNull CompletionParameters parameters,
-                               @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
+  protected Promise<Integer> find(@NotNull DependencySearchService service,
+                                  @NotNull MavenDomShortArtifactCoordinates coordinates,
+                                  @NotNull CompletionParameters parameters,
+                                  @NotNull Consumer<RepositoryArtifactData> consumer) {
 
     SearchParameters searchParameters = createSearchParameters(parameters);
     String groupId = trimDummy(coordinates.getGroupId().getStringValue());
@@ -52,9 +53,12 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
       return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactId(service, artifactId, searchParameters, consumer);
     }
 
-    return service.suggestPrefix(groupId, artifactId, searchParameters, mrai -> {
-      if (StringUtil.equals(mrai.getArtifactId(), artifactId) && StringUtil.equals(mrai.getGroupId(), groupId)) {
-        consumer.accept(mrai);
+    return service.suggestPrefix(groupId, artifactId, searchParameters, rad -> {
+      if (rad instanceof MavenRepositoryArtifactInfo) {
+        MavenRepositoryArtifactInfo mrai = (MavenRepositoryArtifactInfo)rad;
+        if (StringUtil.equals(mrai.getArtifactId(), artifactId) && StringUtil.equals(mrai.getGroupId(), groupId)) {
+          consumer.accept(mrai);
+        }
       }
     });
   }

@@ -3,7 +3,7 @@ package com.intellij.util.exception;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -43,7 +43,7 @@ public class FrequentErrorLogger {
   }
 
   private void report(@NotNull Throwable t, @NotNull Runnable writeToLog) {
-    int hash = ExceptionUtil.getThrowableText(t).hashCode();
+    int hash = ThrowableInterner.computeHashCode(t);
     Integer reportedTimes = ourReportedIssues.get(hash);
     if (reportedTimes == null || reportedTimes > REPORT_EVERY_NUM) {
       writeToLog.run();

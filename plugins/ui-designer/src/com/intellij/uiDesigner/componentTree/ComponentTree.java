@@ -61,7 +61,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class ComponentTree extends Tree implements DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.componentTree.ComponentTree");
+  private static final Logger LOG = Logger.getInstance(ComponentTree.class);
 
   public static final DataKey<LwInspectionSuppression[]> LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY =
     DataKey.create(LwInspectionSuppression.class.getName());

@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -27,15 +26,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class JBTabsDemoAction extends AnAction {
-
+public final class JBTabsDemoAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
-    final JBTabsImpl tabs = new JBTabsImpl(null, ActionManager.getInstance(), null, Disposer.newDisposable());
-
+    final JBTabsImpl tabs = new JBTabsImpl(null, null, Disposer.newDisposable());
 
     //final JPanel flow = new JPanel(new FlowLayout(FlowLayout.CENTER));
     //frame.getContentPane().add(flow);
@@ -46,7 +43,6 @@ public class JBTabsDemoAction extends AnAction {
     JPanel south = new JPanel(new FlowLayout());
     south.setOpaque(true);
     south.setBackground(Color.white);
-
 
     final JComboBox pos = new JComboBox(new Object[]{JBTabsPosition.top, JBTabsPosition.left, JBTabsPosition.right, JBTabsPosition.bottom});
     pos.setSelectedIndex(0);

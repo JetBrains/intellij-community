@@ -35,13 +35,6 @@ public class FeatureStatisticsBundle {
     if (providerBundle != null) {
       return providerBundle;
     }
-    final FeatureStatisticsBundleProvider[] providers = FeatureStatisticsBundleProvider.EP_NAME.getExtensions();
-    for (FeatureStatisticsBundleProvider provider : providers) {
-      final ResourceBundle bundle = provider.getBundle();
-      if (bundle.containsKey(key)) {
-        return bundle;
-      }
-    }
 
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {

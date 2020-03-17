@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class GrEnumConstructorReference(element: GrEnumConstant) : GrConstructorReference<GrEnumConstant>(element) {
 
-  override fun resolveClass(): GroovyResolveResult? {
+  override fun doResolveClass(): GroovyResolveResult? {
     return element.containingClass?.let {
       BaseGroovyResolveResult(it, element, ResolveState.initial())
     }

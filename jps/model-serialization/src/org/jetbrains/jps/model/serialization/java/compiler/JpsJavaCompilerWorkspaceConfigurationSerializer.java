@@ -33,7 +33,7 @@ public class JpsJavaCompilerWorkspaceConfigurationSerializer extends JpsProjectE
 
   @Override
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     String assertNotNull = JDOMExternalizerUtil.readField(componentTag, "ASSERT_NOT_NULL");
     if (assertNotNull != null) {
       configuration.setAddNotNullAssertions(Boolean.parseBoolean(assertNotNull));

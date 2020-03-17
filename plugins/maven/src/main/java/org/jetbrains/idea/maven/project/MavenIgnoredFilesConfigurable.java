@@ -59,7 +59,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
 
   private void createUIComponents() {
     myIgnoredFilesPathsChooser = new ElementsChooser<>(true);
-    myIgnoredFilesPathsChooser.getEmptyText().setText(ProjectBundle.message("maven.ingored.no.file"));
+    myIgnoredFilesPathsChooser.getEmptyText().setText(MavenProjectBundle.message("maven.ingored.no.file"));
   }
 
   @Override
@@ -98,7 +98,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.ignored.files");
+    return MavenProjectBundle.message("maven.tab.ignored.files");
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,8 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
     Runnable task = () -> {
       myCardLayout.show(myContentPanel, card);
       myCurrentCard = card;
-      myContentPanel.revalidate();
+      UIUtil.layoutRecursively(myContentPanel);
+      myContentPanel.repaint();
     };
 
     if (keepFocus) {

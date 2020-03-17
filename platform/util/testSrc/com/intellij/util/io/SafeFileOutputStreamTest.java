@@ -129,10 +129,11 @@ public class SafeFileOutputStreamTest {
     }
     assertThat(target).isFile().hasBinaryContent(TEST_DATA);
     try (SafeFileOutputStream out = openStream(target)) {
-      out.write(new byte[] {'b', 'y', 'e'});
+      out.write(new byte[]{'b', 'y', 'e'});
       out.abort();
     }
     assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+    assertThat(backup).doesNotExist();
   }
 
   @Test public void readOnlyFileBackup() throws IOException {

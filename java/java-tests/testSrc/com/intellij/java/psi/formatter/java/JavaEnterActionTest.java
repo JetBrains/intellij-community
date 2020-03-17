@@ -556,4 +556,34 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                                     "      x(); } }");
     PlatformTestUtil.startPerformanceTest("enter", 1500, this::performAction).assertTiming();
   }
+
+  public void testIdea181263() {
+    doTextTest(
+      "java",
+
+      "package com.company;\n" +
+      "\n" +
+      "public class Test3 {\n" +
+      "    public static void main(String[] args)\n" +
+      "    {\n" +
+      "/*\n" +
+      "        System.out.println(\"Commented\");\n" +
+      "*/\n" +
+      "        <caret>System.out.println(\"Hello\");\n" +
+      "    }\n" +
+      "}",
+
+      "package com.company;\n" +
+      "\n" +
+      "public class Test3 {\n" +
+      "    public static void main(String[] args)\n" +
+      "    {\n" +
+      "/*\n" +
+      "        System.out.println(\"Commented\");\n" +
+      "*/\n" +
+      "        \n" +
+      "        <caret>System.out.println(\"Hello\");\n" +
+      "    }\n" +
+      "}");
+  }
 }

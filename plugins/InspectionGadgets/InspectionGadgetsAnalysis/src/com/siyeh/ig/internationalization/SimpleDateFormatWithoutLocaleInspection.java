@@ -28,12 +28,6 @@ public class SimpleDateFormatWithoutLocaleInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("instantiating.simpledateformat.without.locale.problem.descriptor");
   }

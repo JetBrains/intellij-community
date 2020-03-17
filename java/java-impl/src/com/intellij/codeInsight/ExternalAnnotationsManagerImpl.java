@@ -198,11 +198,21 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
    * Tries to add external annotations into given root if possible.
    * Notifies about each addition result separately.
    */
-  public void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
+  private void annotateExternally(@NotNull VirtualFile root, @NotNull List<? extends ExternalAnnotation> annotations) {
     Project project = myPsiManager.getProject();
 
     Map<Optional<XmlFile>, List<ExternalAnnotation>> annotationsByFiles = annotations.stream()
       .collect(Collectors.groupingBy(annotation -> Optional.ofNullable(getFileForAnnotations(root, annotation.getOwner(), project))));
+
+    List<VirtualFile> files = StreamEx.ofKeys(annotationsByFiles).flatMap(StreamEx::of).map(XmlFile::getVirtualFile).nonNull().toList();
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+    if (status.hasReadonlyFiles()) {
+      VirtualFile[] readonlyFiles = status.getReadonlyFiles();
+      annotationsByFiles.keySet()
+        .removeIf(opt -> opt.map(XmlFile::getVirtualFile).filter(f -> ArrayUtil.contains(f, readonlyFiles)).isPresent());
+    }
+    
+    if (annotationsByFiles.isEmpty()) return;
 
     WriteCommandAction.writeCommandAction(project).run(() -> {
       try {
@@ -610,10 +620,6 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
         if (!file.isValid()) {
           continue;
         }
-        if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
-          .ensureFilesWritable(Collections.singletonList(file.getVirtualFile())).hasReadonlyFiles()) {
-          continue;
-        }
         final XmlDocument document = file.getDocument();
         if (document == null) {
           continue;
@@ -640,6 +646,10 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
           }
         }
         if (tagsToProcess.isEmpty()) {
+          continue;
+        }
+        if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
+          .ensureFilesWritable(Collections.singletonList(file.getVirtualFile())).hasReadonlyFiles()) {
           continue;
         }
 
@@ -778,7 +788,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     }
 
     List<XmlTag> sorted = new ArrayList<>(itemTags);
-    Collections.sort(sorted, (item1, item2) -> {
+    sorted.sort((item1, item2) -> {
       String externalName1 = item1.getAttributeValue("name");
       String externalName2 = item2.getAttributeValue("name");
       assert externalName1 != null && externalName2 != null; // null names were not added
@@ -805,7 +815,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   @NotNull
   private static String createItemTag(@NotNull String ownerName, @NotNull ExternalAnnotation annotation) {
     String annotationTag = createAnnotationTag(annotation.getAnnotationFQName(), annotation.getValues());
-    return String.format("<item name=\'%s\'>%s</item>", ownerName, annotationTag);
+    return String.format("<item name='%s'>%s</item>", ownerName, annotationTag);
   }
 
   @NonNls
@@ -814,14 +824,14 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   public static String createAnnotationTag(@NotNull String annotationFQName, @Nullable PsiNameValuePair[] values) {
     @NonNls String text;
     if (values != null && values.length != 0) {
-      text = "  <annotation name=\'" + annotationFQName + "\'>\n";
+      text = "  <annotation name='" + annotationFQName + "'>\n";
       text += StringUtil.join(values, pair -> "<val" +
                                               (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
                                               " val=\"" + StringUtil.escapeXmlEntities(pair.getValue().getText()) + "\"/>", "    \n");
       text += "  </annotation>";
     }
     else {
-      text = "  <annotation name=\'" + annotationFQName + "\'/>\n";
+      text = "  <annotation name='" + annotationFQName + "'/>\n";
     }
     return text;
   }
@@ -869,26 +879,31 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   @Nullable
   private XmlFile getFileForAnnotations(@NotNull VirtualFile root, @NotNull PsiModifierListOwner owner, Project project) {
+    final PsiFile containingFile = owner.getOriginalElement().getContainingFile();
+    String packageName = owner instanceof PsiPackage
+                         ? ((PsiPackage)owner).getQualifiedName()
+                         : containingFile instanceof PsiJavaFile
+                           ? ((PsiJavaFile)containingFile).getPackageName() : null;
+    if (packageName == null) {
+      return null;
+    }
+
+    List<XmlFile> annotationsFiles = findExternalAnnotationsXmlFiles(owner);
+
+    XmlFile fileInRoot = findXmlFileInRoot(annotationsFiles, root);
+    if (fileInRoot != null) {
+      return fileInRoot;
+    }
     return WriteCommandAction.writeCommandAction(project).compute(() -> {
-      final PsiFile containingFile = owner.getOriginalElement().getContainingFile();
-      if (!(containingFile instanceof PsiJavaFile)) {
+      XmlFile newAnnotationsFile = createAnnotationsXml(root, packageName);
+      if (newAnnotationsFile == null) {
         return null;
       }
-      String packageName = ((PsiJavaFile)containingFile).getPackageName();
 
-      List<XmlFile> annotationsFiles = findExternalAnnotationsXmlFiles(owner);
-
-      XmlFile fileInRoot = findXmlFileInRoot(annotationsFiles, root);
-      if (fileInRoot != null && FileModificationService.getInstance().preparePsiElementForWrite(fileInRoot)) {
-        return fileInRoot;
+      Object key = owner instanceof PsiPackage ? owner : containingFile.getVirtualFile();
+      if (key != null) {
+        registerExternalAnnotations(key, newAnnotationsFile);
       }
-
-        XmlFile newAnnotationsFile = createAnnotationsXml(root, packageName);
-        if (newAnnotationsFile == null) {
-          return null;
-        }
-
-      registerExternalAnnotations(containingFile, newAnnotationsFile);
       return newAnnotationsFile;
     });
   }
@@ -930,18 +945,16 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
     private final Project myProject;
-    private static final String ADD_IN_CODE = ProjectBundle.message("external.annotations.in.code.option");
-    private static final String MESSAGE = ProjectBundle.message("external.annotations.suggestion.message");
 
     MyExternalPromptDialog(final Project project) {
-      super(project, MESSAGE, ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
+      super(project, getMessage(), ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
     }
 
     @Override
     protected String getOkActionName() {
-      return ADD_IN_CODE;
+      return getAddInCode();
     }
 
     @Override
@@ -954,7 +967,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     @NotNull
     protected Action[] createActions() {
       final Action okAction = getOKAction();
-      assignMnemonic(ADD_IN_CODE, okAction);
+      assignMnemonic(getAddInCode(), okAction);
       final String externalName = ProjectBundle.message("external.annotations.external.option");
       return new Action[]{okAction, new AbstractAction(externalName) {
         {
@@ -985,13 +998,21 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     @Override
     protected JComponent createNorthPanel() {
       final JPanel northPanel = (JPanel)super.createNorthPanel();
-      northPanel.add(new JLabel(MESSAGE), BorderLayout.CENTER);
+      northPanel.add(new JLabel(getMessage()), BorderLayout.CENTER);
       return northPanel;
     }
 
     @Override
     protected boolean shouldSaveOptionsOnCancel() {
       return true;
+    }
+
+    private static String getAddInCode() {
+      return ProjectBundle.message("external.annotations.in.code.option");
+    }
+
+    private static String getMessage() {
+      return ProjectBundle.message("external.annotations.suggestion.message");
     }
   }
 

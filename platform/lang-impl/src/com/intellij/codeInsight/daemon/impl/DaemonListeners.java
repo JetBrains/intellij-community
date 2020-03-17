@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
@@ -26,7 +26,10 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -42,7 +45,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -70,6 +72,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -85,7 +88,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class DaemonListeners implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
+  private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
 
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
@@ -117,7 +120,7 @@ public final class DaemonListeners implements Disposable {
       return;
     }
 
-    MessageBusConnection connection = messageBus.connect(this);
+    MessageBusConnection connection = messageBus.connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -163,25 +166,22 @@ public final class DaemonListeners implements Disposable {
     eventMulticaster.addEditorMouseMotionListener(new MyEditorMouseMotionListener(), this);
     eventMulticaster.addEditorMouseListener(new MyEditorMouseListener(TooltipController.getInstance()), this);
 
-    connection.subscribe(EditorTrackerListener.TOPIC, new EditorTrackerListener() {
-      @Override
-      public void activeEditorsChanged(@NotNull List<Editor> activeEditors) {
-        if (myActiveEditors.equals(activeEditors)) {
-          return;
-        }
+    connection.subscribe(EditorTrackerListener.TOPIC, activeEditors -> {
+      if (myActiveEditors.equals(activeEditors)) {
+        return;
+      }
 
-        myActiveEditors = activeEditors;
-        // do not stop daemon if idea loses/gains focus
-        DaemonListeners.this.stopDaemon(true, "Active editor change");
-        if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
-          // editor appear in modal context, re-enable the daemon
-          myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-        }
+      myActiveEditors = activeEditors;
+      // do not stop daemon if idea loses/gains focus
+      stopDaemon(true, "Active editor change");
+      if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
+        // editor appear in modal context, re-enable the daemon
+        myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+      }
 
-        ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
-        for (Editor editor : activeEditors) {
-          errorStripeUpdateManager.repaintErrorStripePanel(editor);
-        }
+      ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
+      for (Editor editor : activeEditors) {
+        errorStripeUpdateManager.repaintErrorStripePanel(editor);
       }
     });
 
@@ -244,7 +244,7 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
     connection.subscribe(ProfileChangeAdapter.TOPIC, new MyProfileChangeListener());
 
-    ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(), this);
+    ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(), project);
 
     connection.subscribe(TodoConfiguration.PROPERTY_CHANGE, new MyTodoListener());
 
@@ -312,14 +312,11 @@ public final class DaemonListeners implements Disposable {
       }
     }, this);
 
-    LaterInvocator.addModalityStateListener(new ModalityStateListener() {
-      @Override
-      public void beforeModalityStateChanged(boolean __1) {
-        // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
-        boolean inModalContext = Registry.is("ide.perProjectModality") || LaterInvocator.isInModalContext();
-        DaemonListeners.this.stopDaemon(inModalContext, "Modality change. Was modal: " + inModalContext);
-        myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
-      }
+    LaterInvocator.addModalityStateListener(__ -> {
+      // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
+      boolean inModalContext = Registry.is("ide.perProjectModality") || LaterInvocator.isInModalContext();
+      stopDaemon(inModalContext, "Modality change. Was modal: " + inModalContext);
+      myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
     }, this);
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
@@ -362,19 +359,22 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+        stopDaemonAndRestartAllFiles("Plugin installed");
+      }
+
+      @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+        stopDaemonAndRestartAllFiles("Plugin will be uninstalled");
         removeQuickFixesContributedByPlugin(pluginDescriptor);
       }
     });
   }
 
   private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(ExtensionPointName<U> name, final String message) {
-    name.addExtensionPointListener(new ExtensionPointAdapter<U>() {
-      @Override
-      public void extensionListChanged() {
-        stopDaemonAndRestartAllFiles(message);
-      }
-    }, this);
+    name.addExtensionPointListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
   private boolean worthBothering(final Document document, Project project) {
@@ -456,19 +456,16 @@ public final class DaemonListeners implements Disposable {
     }
   }
 
+  private static class Holder {
+    private static final String myCutActionName = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
+  }
   private class MyCommandListener implements CommandListener {
-    private final String myCutActionName;
-
-    private MyCommandListener() {
-      myCutActionName = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
-    }
-
     @Override
     public void commandStarted(@NotNull CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
-      cutOperationJustHappened = myCutActionName.equals(event.getCommandName());
+      cutOperationJustHappened = Comparing.strEqual(Holder.myCutActionName, event.getCommandName());
       if (!myDaemonCodeAnalyzer.isRunning()) return;
       if (LOG.isDebugEnabled()) {
         LOG.debug("cancelling code highlighting by command:" + event.getCommand());
@@ -544,16 +541,20 @@ public final class DaemonListeners implements Disposable {
     }
   }
 
-  private class MyAnActionListener implements AnActionListener {
-    private final AnAction escapeAction;
-
-    private MyAnActionListener() {
-      escapeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
-    }
+  private final class MyAnActionListener implements AnActionListener {
+    private AnAction cachedEscapeAction;
 
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      myEscPressed = action == escapeAction;
+      if (cachedEscapeAction == null) {
+        myEscPressed = IdeActions.ACTION_EDITOR_ESCAPE.equals(event.getActionManager().getId(action));
+        if (myEscPressed) {
+          cachedEscapeAction = action;
+        }
+      }
+      else {
+        myEscPressed = cachedEscapeAction == action;
+      }
     }
 
     @Override
@@ -635,7 +636,7 @@ public final class DaemonListeners implements Disposable {
   }
 
   private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
-    if (myDaemonCodeAnalyzer.doRestart()) {
+    if (myDaemonCodeAnalyzer.doRestart() && !myProject.isDisposed()) {
       myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     }
   }
@@ -660,11 +661,11 @@ public final class DaemonListeners implements Disposable {
       if (info == null) continue;
       List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
       if (ranges != null) {
-        ranges.removeIf((pair) -> isContributedByPlugin(pair.first, pluginDescriptor));
+        ranges.removeIf(pair -> isContributedByPlugin(pair.first, pluginDescriptor));
       }
       List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> markers = info.quickFixActionMarkers;
       if (markers != null) {
-        markers.removeIf((pair) -> isContributedByPlugin(pair.first, pluginDescriptor));
+        markers.removeIf(pair -> isContributedByPlugin(pair.first, pluginDescriptor));
       }
     }
   }

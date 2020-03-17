@@ -32,12 +32,6 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("comparator.not.serializable.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("comparator.not.serializable.problem.descriptor");
   }

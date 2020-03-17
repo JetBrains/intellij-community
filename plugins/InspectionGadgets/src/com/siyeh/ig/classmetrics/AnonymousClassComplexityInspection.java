@@ -39,13 +39,6 @@ public class AnonymousClassComplexityInspection
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overly.complex.anonymous.inner.class.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return DEFAULT_COMPLEXITY_LIMIT;
   }

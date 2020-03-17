@@ -14,7 +14,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.imageio.ImageIO
 
-internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
+internal val File.children: List<File> get() = if (isDirectory) listFiles()?.toList() ?: emptyList() else emptyList()
 
 internal fun isImage(file: Path, iconsOnly: Boolean): Boolean {
   if (!isImage(file)) return false

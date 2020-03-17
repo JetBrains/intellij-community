@@ -130,4 +130,10 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
   public void testParenthesizedTupleWithUnpackingInYieldFrom() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
+
+  // PY-34262
+  public void testReturnOneElementTuple() {
+    doTestByText("def foo():\n" +
+                 "  return (1, )");
+  }
 }

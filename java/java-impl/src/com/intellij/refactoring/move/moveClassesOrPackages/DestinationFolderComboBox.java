@@ -94,6 +94,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     final VirtualFile initialSourceRoot =
       initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
     final VirtualFile[] selection = new VirtualFile[]{initialSourceRoot};
+    boolean hasLeaveInSameSourceRoot = initialSourceRoot != null && !fileIndex.isInLibrarySource(initialSourceRoot);
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -109,7 +110,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
             return;
           }
         }
-        setComboboxModel(getComboBox(), root, root, fileIndex, mySourceRoots, project, true, errorMessageUpdater);
+        setComboboxModel(getComboBox(), root, root, fileIndex, mySourceRoots, project, true, errorMessageUpdater, hasLeaveInSameSourceRoot);
       }
     });
 
@@ -118,10 +119,13 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       public void documentChanged(@NotNull DocumentEvent e) {
         JComboBox comboBox = getComboBox();
         DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)comboBox.getSelectedItem();
-        setComboboxModel(comboBox, selectedItem != null && selectedItem != NULL_WRAPPER ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile()) : initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
+        VirtualFile initialTargetDirectorySourceRoot = selectedItem != null && selectedItem != NULL_WRAPPER
+                                                       ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile())
+                                                       : initialSourceRoot;
+        setComboboxModel(comboBox, initialTargetDirectorySourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater, hasLeaveInSameSourceRoot);
       }
     });
-    setComboboxModel(getComboBox(), initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater);
+    setComboboxModel(getComboBox(), initialSourceRoot, selection[0], fileIndex, mySourceRoots, project, false, errorMessageUpdater, hasLeaveInSameSourceRoot);
     getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -179,7 +183,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                 final List<VirtualFile> sourceRoots,
                                 final Project project,
                                 final boolean forceIncludeAll,
-                                final Pass<String> updateErrorMessage) {
+                                final Pass<String> updateErrorMessage,
+                                final boolean hasLeaveInSameSourceRoot) {
     final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
     final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<>();
     MoveClassesOrPackagesUtil
@@ -201,7 +206,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         oldOne = itemWrapper;
       }
     }
-    if (oldSelection == null || !fileIndex.isInLibrarySource(oldSelection)) {
+    if (hasLeaveInSameSourceRoot) {
       items.add(NULL_WRAPPER);
     }
     final DirectoryChooser.ItemWrapper selection = chooseSelection(initialTargetDirectorySourceRoot, fileIndex, items, initial, oldOne);

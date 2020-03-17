@@ -11,6 +11,7 @@ import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.actions.bigPopup.ShowFilterAction;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -64,13 +65,17 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -217,25 +222,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       setEverywhereAuto(false);
     }
 
-    if (mySearchField instanceof ExtendableTextField) {
-      ExtendableTextField textField = (ExtendableTextField)mySearchField;
-
-      Boolean commandsSupported = mySelectedTab.getContributor()
-        .map(contributor -> !contributor.getSupportedCommands().isEmpty())
-        .orElse(true);
-      if (commandsSupported) {
-        textField.addExtension(hintExtension);
-      }
-      else {
-        textField.removeExtension(hintExtension);
-      }
-
-      textField.removeExtension(myAdvertisement);
-      if (!commandsSupported) {
-        tab.getContributor().map(c -> c.getAdvertisement()).
-          ifPresent(s -> textField.addExtension(myAdvertisement.withText(s)));
-      }
-    }
+    rebuildSearchFieldExtensions();
 
     if (prevTabIsAll != nextTabIsAll) {
       //reset cell renderer to show/hide group titles in "All" tab
@@ -246,6 +233,26 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
     repaint();
     rebuildList();
+  }
+
+  private void rebuildSearchFieldExtensions() {
+    if (mySearchField != null) {
+      Boolean commandsSupported = mySelectedTab.getContributor()
+        .map(contributor -> !contributor.getSupportedCommands().isEmpty())
+        .orElse(true);
+      if (commandsSupported) {
+        mySearchField.addExtension(hintExtension);
+      }
+      else {
+        mySearchField.removeExtension(hintExtension);
+      }
+
+      mySearchField.removeExtension(myAdvertisement);
+      if (!commandsSupported) {
+        mySelectedTab.getContributor().map(c -> c.getAdvertisement()).
+          ifPresent(s -> mySearchField.addExtension(myAdvertisement.withText(s)));
+      }
+    }
   }
 
   private final MyAdvertisement myAdvertisement = new MyAdvertisement();
@@ -701,7 +708,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     projectBusConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void exitDumbMode() {
-        ApplicationManager.getApplication().invokeLater(() -> rebuildList());
+        ApplicationManager.getApplication().invokeLater(() -> {
+          rebuildSearchFieldExtensions();
+          rebuildList();
+        });
       }
     });
     projectBusConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
@@ -945,6 +955,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     return isAllTabSelected() ? getAllTabContributors() : Collections.singleton(mySelectedTab.getContributor().get());
   }
 
+  @TestOnly
+  private CompletableFuture<List<Object>> testResultsFuture;
+
+  @TestOnly
+  public Future<List<Object>> findElementsForPattern(String pattern) {
+    testResultsFuture = new CompletableFuture<>();
+    mySearchField.setText(pattern);
+    return testResultsFuture;
+  }
+
   private class CompositeCellRenderer implements ListCellRenderer<Object> {
 
     @Override
@@ -964,7 +984,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
 
       if (component instanceof JComponent) {
-        ((JComponent)component).setBorder(JBUI.Borders.empty(1, 2));
+        Border border = ((JComponent)component).getBorder();
+        if (border != GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER) {
+          ((JComponent)component).setBorder(JBUI.Borders.empty(1, 2));
+        }
       }
       AppUIUtil.targetToDevice(component, list);
       component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
@@ -1608,6 +1631,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       hasMoreContributors.forEach(myListModel::setHasMore);
 
       mySelectionTracker.resetSelectionIfNeeded();
+
+      //noinspection TestOnlyProblems
+      if (testResultsFuture != null) {
+        //noinspection TestOnlyProblems
+        testResultsFuture.complete(myListModel.getItems());
+        //noinspection TestOnlyProblems
+        testResultsFuture = null;
+      }
     }
   }
 

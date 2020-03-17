@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class ScratchFileActions {
   public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
-    private static final String ACTION_ID = "NewScratchFile";
+    @NonNls private static final String ACTION_ID = "NewScratchFile";
 
     private final NotNullLazyValue<String> myActionText = NotNullLazyValue.createValue(
       () -> NewActionGroup.isActionInNewPopupMenu(this) ? ActionsBundle.actionText(ACTION_ID) : ActionsBundle.message("action.NewScratchFile.text.with.new")
@@ -163,7 +164,7 @@ public class ScratchFileActions {
     ScratchFileCreationHelper.EXTENSION.forLanguage(language).beforeCreate(project, context);
 
     VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
-    RootType rootType = dir == null ? null : ScratchFileService.findRootType(dir);
+    RootType rootType = dir == null ? null : ScratchFileService.getInstance().getRootType(dir);
     String relativePath = rootType != ScratchRootType.getInstance() ? "" :
                           FileUtil.getRelativePath(ScratchFileService.getInstance().getRootPath(rootType), dir.getPath(), '/');
 

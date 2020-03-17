@@ -24,7 +24,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ConstructionUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("constant.for.zero.length.array.display.name");
-  }
 
   @NotNull
   @Override

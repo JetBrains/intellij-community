@@ -21,13 +21,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TryStatementWithMultipleResourcesInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("try.statement.with.multiple.resources.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

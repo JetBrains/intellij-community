@@ -80,7 +80,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     Ref<Boolean> completeVersion = Ref.create(false);
     psiFile.accept(new PsiRecursiveElementVisitor(true) {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         if (!completeDependency.get() && element.getParent() instanceof XmlTag &&
             "dependency".equals(((XmlTag)element.getParent()).getName())) {

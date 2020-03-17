@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.impl;
 
@@ -29,7 +29,7 @@ import java.util.*;
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
 public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements PersistentStateComponent<ProjectFacetManagerImpl.ProjectFacetManagerState> {
   @NonNls public static final String COMPONENT_NAME = "ProjectFacetManager";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectFacetManagerImpl.class);
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
   private final Project myProject;
   private volatile MultiMap<FacetTypeId<?>, Module> myIndex;
@@ -48,7 +48,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
         myIndex = null;
       }
     }, project);
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         myIndex = null;

@@ -16,9 +16,7 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Experimental
 public interface RemovedKeyProcessor<Key> {
   void process(Key key, int inputId) throws StorageException;
 }

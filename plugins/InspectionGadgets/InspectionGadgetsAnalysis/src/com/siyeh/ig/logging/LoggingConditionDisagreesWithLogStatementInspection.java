@@ -46,12 +46,6 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("logging.condition.disagrees.with.log.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("logging.condition.disagrees.with.log.statement.problem.descriptor", infos[0]);
   }

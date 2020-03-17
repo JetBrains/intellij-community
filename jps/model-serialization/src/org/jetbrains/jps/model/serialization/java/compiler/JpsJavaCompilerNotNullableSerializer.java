@@ -24,7 +24,7 @@ public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSer
 
   @Override
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     List<String> annoNames = new ArrayList<>();
     for (Element option : componentTag.getChildren("instrumentedNotNulls")) {
       for (Element item : option.getChildren("option")) {
@@ -39,7 +39,7 @@ public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSer
 
   @Override
   public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).setNotNullAnnotations(
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).setNotNullAnnotations(
       Collections.singletonList(NotNull.class.getName()));
   }
 

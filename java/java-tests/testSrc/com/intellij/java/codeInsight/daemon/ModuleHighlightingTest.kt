@@ -474,7 +474,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.simpleName }
+      .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
       .filter { it != "GutterIntentionAction" }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }

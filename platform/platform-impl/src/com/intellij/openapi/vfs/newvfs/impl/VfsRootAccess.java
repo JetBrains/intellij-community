@@ -9,6 +9,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
@@ -115,8 +116,7 @@ public class VfsRootAccess {
     catch (URISyntaxException|IllegalArgumentException ignored) { }
 
     try {
-      String javaHome = SystemProperties.getJavaHome();
-      allowed.add(FileUtil.toSystemIndependentName(javaHome));
+      allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
       allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
       allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
@@ -148,6 +148,17 @@ public class VfsRootAccess {
     allowed.addAll(ourAdditionalRoots);
 
     return allowed;
+  }
+
+  private static String getJavaHome() {
+    String javaHome = SystemProperties.getJavaHome();
+    if (JdkUtil.checkForJre(javaHome) && !JdkUtil.checkForJdk(javaHome)) {
+      String javaHomeParent = PathUtil.getParentPath(javaHome);
+      if (JdkUtil.checkForJre(javaHomeParent) && JdkUtil.checkForJdk(javaHomeParent)) {
+        javaHome = javaHomeParent;
+      }
+    }
+    return javaHome;
   }
 
   @Nullable

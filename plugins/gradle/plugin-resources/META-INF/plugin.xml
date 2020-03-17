@@ -1,4 +1,4 @@
-<idea-plugin url="https://www.jetbrains.com/help/idea/gradle.html" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin url="https://www.jetbrains.com/help/idea/gradle.html">
   <name>Gradle</name>
   <id>com.intellij.gradle</id>
   <vendor>JetBrains</vendor>
@@ -23,7 +23,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.externalSystem</depends>
 
-  <resource-bundle>i18n.GradleBundle</resource-bundle>
+  <resource-bundle>messages.GradleBundle</resource-bundle>
 
   <application-components>
     <component>
@@ -33,6 +33,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.projectModelContributor" interface="org.jetbrains.plugins.gradle.service.project.ProjectModelContributor"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.importCustomizer" interface="org.jetbrains.plugins.gradle.service.project.GradleImportCustomizer"/>
@@ -43,10 +44,12 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -73,7 +76,7 @@
     <internalFileTemplate name="Gradle Build Script with wrapper"/>
     <projectConfigurable groupId="build.tools" groupWeight="110" id="reference.settingsdialog.project.gradle"
                          instance="org.jetbrains.plugins.gradle.service.settings.GradleConfigurable"
-                         key="gradle.name" bundle="i18n.GradleBundle">
+                         key="gradle.name" bundle="messages.GradleBundle">
     </projectConfigurable>
     <editorTabTitleProvider implementation="org.jetbrains.plugins.gradle.util.GradleEditorTabTitleProvider"/>
     <configurationType implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType"/>
@@ -86,6 +89,8 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.PerformanceTraceDataService"/>
     <externalSystemViewContributor implementation="org.jetbrains.plugins.gradle.service.project.view.GradleViewContributor"/>
     <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
+    <externalIconProvider key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.ui.GradleIconProvider"/>
+    <externalExecutionAware key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectImportNotificationListener"/>
 
@@ -136,14 +141,12 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
 
-    <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction" text="Execute Gradle Task"
+    <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction"
             icon="GradleIcons.Gradle">
     </action>
     <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
-            text="Toggle Offline Mode" description="Toggle offline mode for Gradle builds"
-            icon="GradleIcons.OfflineMode"/>
-    <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"
-            text="Composite Build Configuration"/>
+            icon="AllIcons.Actions.OfflineMode"/>
+    <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"/>
 
     <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"/>
 
@@ -172,10 +175,7 @@
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
 
-
-    <action id="Gradle.ImportExternalProject" class="org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction"
-            text="Import Gradle Project" description="Import Gradle project described by this file"
-            icon="GradleIcons.Gradle">
+    <action id="Gradle.ImportExternalProject" class="org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction" icon="GradleIcons.Gradle">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>

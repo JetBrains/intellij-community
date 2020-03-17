@@ -11,7 +11,6 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -76,8 +75,7 @@ import java.util.*;
 
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterHandler");
-  static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
+  private static final Logger LOG = Logger.getInstance(IntroduceParameterHandler.class);
   private JBPopup myEnclosingMethodsPopup;
   private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
 
@@ -85,7 +83,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project, new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+    ElementToWorkOn.processElementToWorkOn(editor, file, getRefactoringName(), HelpID.INTRODUCE_PARAMETER, project, new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
       @Override
       public boolean accept(ElementToWorkOn el) {
         return true;
@@ -99,7 +97,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
         if (elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {
           if (!introduceStrategy(project, editor, file)) {
-            ElementToWorkOn.showNothingSelectedErrorMessage(editor, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER, project);
+            ElementToWorkOn.showNothingSelectedErrorMessage(editor, getRefactoringName(), HelpID.INTRODUCE_PARAMETER, project);
           }
           return;
         }
@@ -154,7 +152,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     if (method == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
+                                                                                            getRefactoringName()));
       showErrorMessage(project, message, editor);
       return false;
     }
@@ -297,7 +296,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   private static void showErrorMessage(Project project, String message, Editor editor) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INTRODUCE_PARAMETER);
   }
 
 
@@ -464,22 +463,20 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                             PsiType initializerType,
                             boolean mustBeFinal,
                             List<? extends UsageInfo> classMemberRefs, NameSuggestionsGenerator nameSuggestionGenerator) {
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        final IntroduceParameterDialog dialog =
-          new IntroduceParameterDialog(myProject, classMemberRefs, occurrences, myLocalVar, myExpr,
-                                       nameSuggestionGenerator,
-                                       createTypeSelectorManager(occurrences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurrences), mustBeFinal);
-        dialog.setReplaceAllOccurrences(replaceAllOccurrences);
-        dialog.setGenerateDelegate(delegate);
-        if (dialog.showAndGet()) {
-          final Runnable cleanSelectionRunnable = () -> {
-            if (myEditor != null && !myEditor.isDisposed()) {
-              myEditor.getSelectionModel().removeSelection();
-            }
-          };
-          ApplicationManager.getApplication().invokeLater(cleanSelectionRunnable, ModalityState.any());
-        }
-      });
+      final IntroduceParameterDialog dialog =
+        new IntroduceParameterDialog(myProject, classMemberRefs, occurrences, myLocalVar, myExpr,
+                                     nameSuggestionGenerator,
+                                     createTypeSelectorManager(occurrences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurrences), mustBeFinal);
+      dialog.setReplaceAllOccurrences(replaceAllOccurrences);
+      dialog.setGenerateDelegate(delegate);
+      if (dialog.showAndGet()) {
+        final Runnable cleanSelectionRunnable = () -> {
+          if (myEditor != null && !myEditor.isDisposed()) {
+            myEditor.getSelectionModel().removeSelection();
+          }
+        };
+        ApplicationManager.getApplication().invokeLater(cleanSelectionRunnable, ModalityState.any());
+      }
     }
 
     private TypeSelectorManagerImpl createTypeSelectorManager(PsiExpression[] occurrences, PsiType initializerType) {
@@ -708,7 +705,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     private final PsiMethod myTopEnclosingMethod;
 
     MyExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull PsiMethod topEnclosing) {
-      super(project, editor, elements, null, REFACTORING_NAME, null, null);
+      super(project, editor, elements, null, getRefactoringName(), null, null);
       myTopEnclosingMethod = topEnclosing;
     }
 
@@ -803,5 +800,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         return true;
       }
     }
+  }
+
+  static String getRefactoringName() {
+    return RefactoringBundle.message("introduce.parameter.title");
   }
 }

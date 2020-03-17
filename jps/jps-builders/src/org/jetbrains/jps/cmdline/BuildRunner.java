@@ -53,7 +53,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  * @author nik
  */
 public class BuildRunner {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildRunner");
+  private static final Logger LOG = Logger.getInstance(BuildRunner.class);
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   public static final boolean PARALLEL_BUILD_AUTOMAKE_ENABLED = PARALLEL_BUILD_ENABLED && Boolean.parseBoolean(System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true"));
   private static final boolean STORE_TEMP_CACHES_IN_MEMORY = true;
@@ -113,10 +113,9 @@ public class BuildRunner {
       // second attempt succeeded
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
     }
-    BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(targetIndex, buildRootIndex, projectStamps, dataPaths, relativizer);
 
     return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
-                                 targetIndex, buildRootIndex, ignoredFileIndex, sourcesState);
+                                 targetIndex, buildRootIndex, ignoredFileIndex);
   }
 
   public void setForceCleanCaches(boolean forceCleanCaches) {

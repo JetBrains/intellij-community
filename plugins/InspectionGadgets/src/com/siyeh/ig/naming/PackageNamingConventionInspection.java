@@ -41,6 +41,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 3;
   private static final int DEFAULT_MAX_LENGTH = 16;
+  private static final String DEFAULT_NAME = "<default>";
   /**
    * @noinspection PublicField
    */
@@ -59,12 +60,6 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
 
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("package.naming.convention.display.name");
-  }
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,
@@ -74,7 +69,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
       return null;
     }
     @NonNls final String name = StringUtil.getShortName(refEntity.getQualifiedName());
-    if (InspectionsBundle.message("inspection.reference.default.package").equals(name)) {
+    if (DEFAULT_NAME.equals(name)) {
       return null;
     }
 

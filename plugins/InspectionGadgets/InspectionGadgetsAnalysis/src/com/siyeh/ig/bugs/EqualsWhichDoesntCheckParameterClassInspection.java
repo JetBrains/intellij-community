@@ -41,12 +41,6 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("equals.doesnt.check.class.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("equals.doesnt.check.class.parameter.problem.descriptor");
   }

@@ -174,12 +174,6 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.1.5.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

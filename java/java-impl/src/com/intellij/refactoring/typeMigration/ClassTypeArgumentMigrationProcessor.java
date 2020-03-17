@@ -142,7 +142,7 @@ public class ClassTypeArgumentMigrationProcessor {
       final int parameterIndex = superMethod.getParameterList().getParameterIndex((PsiParameter)memberToChangeSignature);
       final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, superMethod, true);
       if (method != null && method.getContainingClass() == currentClass) {
-        final PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
+        final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(parameterIndex));
         if (!parameter.getType().equals(memberType)) {
           myLabeler.addRoot(new TypeMigrationUsageInfo(parameter), memberType, parameter, false);
         }

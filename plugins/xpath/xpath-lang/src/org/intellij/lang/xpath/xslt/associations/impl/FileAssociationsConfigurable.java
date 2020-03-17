@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
@@ -40,7 +41,7 @@ public final class FileAssociationsConfigurable implements SearchableConfigurabl
 
   @Override
   public String getDisplayName() {
-    return "XSLT File Associations";
+    return IdeBundle.message("configurable.FileAssociationsConfigurable.display.name");
   }
 
   @Override

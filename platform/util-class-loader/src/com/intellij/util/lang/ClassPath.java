@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 
-public class ClassPath {
+public final class ClassPath {
   private static final ResourceStringLoaderIterator ourResourceIterator = new ResourceStringLoaderIterator();
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
@@ -94,7 +94,7 @@ public class ClassPath {
     Resource resource = null;
     try {
       String shortName = ClasspathCache.transformName(s);
-      
+
       int i;
       if (myCanUseCache) {
         boolean allUrlsWereProcessed = myAllUrlsWereProcessed;
@@ -184,7 +184,7 @@ public class ClassPath {
   @NotNull
   public Collection<String> getJarAccessLog() {
     if (myJarAccessLog == null) return Collections.emptySet();
-    
+
     synchronized (myJarAccessLog) {
       return new LinkedHashSet<String>(myJarAccessLog);
     }
@@ -262,7 +262,7 @@ public class ClassPath {
       synchronized (myUrls) {
         lastOne = myUrls.isEmpty();
       }
-      
+
       if (lastOne) {
         myAllUrlsWereProcessed = true;
       }
@@ -427,7 +427,7 @@ public class ClassPath {
   }
 
   static final boolean ourClassLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
-  
+
   static final Set<String> ourLoadedClasses = ourClassLoadingInfo ? Collections.synchronizedSet(new LinkedHashSet<String>()) : null;
   private static final AtomicLong ourTotalTime = new AtomicLong();
   private static final AtomicInteger ourTotalRequests = new AtomicInteger();
@@ -440,26 +440,26 @@ public class ClassPath {
     }
     ourDoingTiming.set(Boolean.TRUE);
     return System.nanoTime();
-  }                                            
+  }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logInfo(ClassPath path, long started, String resourceName, Resource resource) {
     if (!ourClassLoadingInfo) return;
-    
+
     if (resource != null) {
       String urlPath = resource.getURL().getPath();
-      
+
       if (urlPath.endsWith(resourceName)) {
         String modulePath = urlPath.substring(0, urlPath.length() - resourceName.length());
         if (modulePath.startsWith("file:")) modulePath = modulePath.substring("file:".length());
         if (modulePath.endsWith("/")) modulePath = modulePath.substring(0, modulePath.length() -1);
         if (modulePath.endsWith("!")) modulePath = modulePath.substring(0, modulePath.length() -1);
-        
+
         urlPath = resourceName + ":" + modulePath;
       }
       ourLoadedClasses.add(urlPath);
     }
-    
+
     if (started == 0) {
       return;
     }

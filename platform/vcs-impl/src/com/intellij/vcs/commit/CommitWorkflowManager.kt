@@ -50,7 +50,7 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
   private fun subscribeToChanges() {
     if (project.isDisposed) return
 
-    isForceNonModalCommit.addListener(object : RegistryValueListener.Adapter() {
+    isForceNonModalCommit.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) = updateWorkflow()
     }, project)
 

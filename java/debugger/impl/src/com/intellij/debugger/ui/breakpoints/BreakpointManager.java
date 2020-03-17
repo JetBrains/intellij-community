@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class BreakpointManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
+  private static final Logger LOG = Logger.getInstance(BreakpointManager.class);
 
   @NonNls private static final String MASTER_BREAKPOINT_TAG_NAME = "master_breakpoint";
   @NonNls private static final String SLAVE_BREAKPOINT_TAG_NAME = "slave_breakpoint";

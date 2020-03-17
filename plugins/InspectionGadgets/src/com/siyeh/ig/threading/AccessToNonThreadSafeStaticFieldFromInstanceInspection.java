@@ -9,7 +9,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,13 +44,6 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends
   @Override
   public String getID() {
     return "AccessToNonThreadSafeStaticField";
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.display.name");
   }
 
   @Override

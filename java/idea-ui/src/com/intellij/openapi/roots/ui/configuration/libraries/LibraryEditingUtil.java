@@ -50,7 +50,7 @@ import java.util.*;
  * @author nik
  */
 public class LibraryEditingUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil");
+  private static final Logger LOG = Logger.getInstance(LibraryEditingUtil.class);
 
   private LibraryEditingUtil() {
   }

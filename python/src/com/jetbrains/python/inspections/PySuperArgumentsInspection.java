@@ -35,12 +35,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexey.Ivanov
  */
 public class PySuperArgumentsInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.wrong.super.arguments");
-  }
 
   @NotNull
   @Override

@@ -1,6 +1,3 @@
-class MyClass {
-  private field
-}
+class MyClass {}
 
 print MyClass.metaClass.getMethods()
-print MyClass.<warning descr="Access to 'field' exceeds its access rights">field</warning>

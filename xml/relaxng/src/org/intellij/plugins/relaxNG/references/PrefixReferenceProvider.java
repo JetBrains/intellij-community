@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrefixReferenceProvider extends PsiReferenceProvider {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.references.PrefixReferenceProvider");
+  private static final Logger LOG = Logger.getInstance(PrefixReferenceProvider.class);
 
   @Override
   @NotNull

@@ -125,7 +125,7 @@ class MultiThreadSearcher implements SESearcher {
     ContributorSearchTask<?> task = new ContributorSearchTask<>(
       (SearchEverywhereContributor<Object>)contributor, pattern,
       accumulator, indicator, finalCallback);
-    return ConcurrencyUtil.underThreadNameRunnable("SE-SearchTask-" + contributor.getSearchProviderId(), task);
+    return ConcurrencyUtil.underThreadNameRunnable("SE-SearchTask", task);
   }
 
   private static Runnable createFinisherTask(CountDownLatch latch, FullSearchResultsAccumulator accumulator, ProgressIndicator indicator) {

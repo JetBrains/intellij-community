@@ -87,12 +87,6 @@ public class TooBroadCatchInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.broad.catch.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final List<PsiType> typesMasked = (List<PsiType>)infos[0];
     String typesMaskedString = typesMasked.get(0).getPresentableText();

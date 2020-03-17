@@ -16,7 +16,7 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 
 public class PendingEventDispatcher <T extends EventListener> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.PendingEventDispatcher");
+  private static final Logger LOG = Logger.getInstance(PendingEventDispatcher.class);
 
   private final T myMulticaster;
 

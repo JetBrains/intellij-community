@@ -2,6 +2,7 @@
 package com.intellij.appengine.cloud;
 
 import com.intellij.appengine.facet.AppEngineAccountDialog;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -85,7 +86,7 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
   @Nls
   @Override
   public String getDisplayName() {
-    return "Google App Engine Account";
+    return IdeBundle.message("configurable.AppEngineCloudConfigurable.display.name");
   }
 
   @Nullable

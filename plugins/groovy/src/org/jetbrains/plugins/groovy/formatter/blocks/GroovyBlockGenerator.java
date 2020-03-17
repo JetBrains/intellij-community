@@ -27,7 +27,10 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -43,7 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditiona
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
- import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -124,8 +127,8 @@ public class GroovyBlockGenerator {
     if (GroovyTokenSets.STRING_LITERALS.contains(elementType) && myBlock.getTextRange().equals(myNode.getTextRange())) {
       String text = myNode.getText();
       if (text.length() > 6) {
-        if (text.substring(0, 3).equals("'''") && text.substring(text.length() - 3).equals("'''") ||
-            text.substring(0, 3).equals("\"\"\"") & text.substring(text.length() - 3).equals("\"\"\"")) {
+        if (text.startsWith("'''") && text.endsWith("'''") ||
+            text.startsWith("\"\"\"") && text.endsWith("\"\"\"")) {
           return generateForMultiLineString();
         }
       }

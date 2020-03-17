@@ -74,7 +74,7 @@ public class PyImportOptimizer implements ImportOptimizer {
                                                                                                           Collections.emptyList());
     file.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement node) {
+      public void visitElement(@NotNull PsiElement node) {
         super.visitElement(node);
         node.accept(visitor);
       }

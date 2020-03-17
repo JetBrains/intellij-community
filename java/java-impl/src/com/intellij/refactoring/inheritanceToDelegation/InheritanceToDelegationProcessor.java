@@ -61,7 +61,7 @@ import java.util.*;
  * @author dsl
  */
 public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor");
+  private static final Logger LOG = Logger.getInstance(InheritanceToDelegationProcessor.class);
   private final PsiClass myClass;
   private final String myInnerClassName;
   private final boolean myIsDelegateOtherMembers;

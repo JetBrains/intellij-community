@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,14 +42,13 @@ import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIte
  * This class makes program structure tree matching:
  */
 public class Matcher {
-  static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
+  static final Logger LOG = Logger.getInstance(Matcher.class);
 
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Set<String>> ourRecursionGuard = ThreadLocal.withInitial(() -> new HashSet<>());
 
   // project being worked on
   final Project project;
-  final DumbService myDumbService;
 
   // context of matching
   final MatchContext matchContext;
@@ -77,7 +75,6 @@ public class Matcher {
       matchContext.setOptions(matchOptions);
       matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false, true));
     }
-    myDumbService = DumbService.getInstance(project);
   }
 
   public static Matcher buildMatcher(Project project, LanguageFileType fileType, String constraint) {
@@ -127,7 +124,7 @@ public class Matcher {
           return false;
         }
         final MatchingHandler matchingHandler = pattern.getHandler(patternNode);
-        if (matchingHandler == null || !matchingHandler.canMatch(patternNode, matchedNode, context)) {
+        if (!matchingHandler.canMatch(patternNode, matchedNode, context)) {
           return false;
         }
         matchedNodes.advance();
@@ -296,6 +293,10 @@ public class Matcher {
     }
   }
 
+  public Project getProject() {
+    return project;
+  }
+
   private CompiledPattern prepareMatching(MatchResultSink sink, MatchOptions options) {
     matchContext.clear();
     matchContext.setSink(new DuplicateFilteringResultSink(sink));
@@ -324,11 +325,13 @@ public class Matcher {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
 
     try {
-      final PsiElement[] elements =
-        MatcherImplUtil.createSourceTreeFromText(source, fileContext ? PatternTreeContext.File : PatternTreeContext.Block,
-                                                 sourceFileType, project, physicalSourceFile);
+      if (options.getScope() == null) {
+        final PsiElement[] elements =
+          MatcherImplUtil.createSourceTreeFromText(source, fileContext ? PatternTreeContext.File : PatternTreeContext.Block,
+                                                   sourceFileType, project, physicalSourceFile);
 
-      options.setScope(new LocalSearchScope(elements));
+        options.setScope(new LocalSearchScope(elements));
+      }
       testFindMatches(sink, options);
     } finally {
       options.setScope(null);
@@ -452,8 +455,7 @@ public class Matcher {
   void match(@NotNull PsiElement element, Language language) {
     final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
-    final Language elementLanguage = element.getLanguage();
-    if (strategy.continueMatching(element) && elementLanguage.isKindOf(language)) {
+    if (strategy.continueMatching(element) && element.getLanguage().isKindOf(language)) {
       visitor.matchContext(newSingleNodeIterator(element));
       return;
     }
@@ -461,7 +463,8 @@ public class Matcher {
       match(el, language);
     }
     if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageManager.getInstance(project).enumerate(element, (injectedPsi, places) -> match(injectedPsi, language));
+      InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
+                                                               (injectedPsi, places) -> match(injectedPsi, language));
     }
   }
 
@@ -600,16 +603,14 @@ public class Matcher {
           matchContext.getSink().processFile((PsiFile)file);
         }
 
-        myDumbService.runReadActionInSmartMode(
+        ReadAction.nonBlocking(
           () -> {
             if (!file.isValid()) return;
             final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(file.getLanguage());
-            if (profile == null) {
-              return;
-            }
+            if (profile == null) return;
             match(profile.extendMatchOnePsiFile(file), patternLanguage);
           }
-        );
+        ).inSmartMode(project).executeSynchronously();
       }
     }
 

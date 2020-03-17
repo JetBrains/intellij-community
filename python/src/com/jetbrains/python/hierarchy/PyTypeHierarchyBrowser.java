@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.hierarchy;
 
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
+import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.newAPI.TypeHierarchyBrowserBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.TypeHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(PyTypeHierarchyBrowser.class);
 
   protected PyTypeHierarchyBrowser(@NotNull PyClass pyClass) {
     super(pyClass.getProject(), pyClass);
@@ -36,7 +37,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<String, JTree> trees) {
+  protected void createTrees(@NotNull Map<HierarchyScopeType, JTree> trees) {
     createTreeAndSetupCommonActions(trees, IdeActions.GROUP_TYPE_HIERARCHY_POPUP);
   }
 
@@ -53,14 +54,14 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   @Override
   @Nullable
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
-    if (SUPERTYPES_HIERARCHY_TYPE.equals(typeName)) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull HierarchyScopeType typeName, @NotNull PsiElement psiElement) {
+    if (getSupertypesHierarchyType() == typeName) {
       return new PySuperTypesHierarchyTreeStructure((PyClass)psiElement);
     }
-    else if (SUBTYPES_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getSubtypesHierarchyType() == typeName) {
       return new PySubTypesHierarchyTreeStructure((PyClass)psiElement);
     }
-    else if (TYPE_HIERARCHY_TYPE.equals(typeName)) {
+    else if (getTypeHierarchyType() == typeName) {
       return new PyTypeHierarchyTreeStructure((PyClass)psiElement);
     }
     else {
@@ -71,7 +72,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   @Override
   @Nullable
-  protected Comparator<NodeDescriptor> getComparator() {
+  protected Comparator<NodeDescriptor<?>> getComparator() {
     return PyHierarchyUtils.getComparator(myProject);
   }
 

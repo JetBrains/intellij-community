@@ -228,12 +228,6 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
   }
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.display.name");
-  }
-
   private static String getClassName(@NotNull PsiClass aClass) {
     final String qualifiedName = aClass.getQualifiedName();
     return qualifiedName == null ? aClass.getName() : qualifiedName;
@@ -451,7 +445,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       }
       if (variable instanceof PsiParameter) {
         PsiMethod method = PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
-        if (method == null || UnusedSymbolUtil.isImplicitUsage(variable.getProject(), method, null)) return;
+        if (method == null || UnusedSymbolUtil.isImplicitUsage(variable.getProject(), method)) return;
       }
       if (UnusedSymbolUtil.isImplicitWrite(variable) || UnusedSymbolUtil.isImplicitRead(variable)) {
         return;

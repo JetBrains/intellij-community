@@ -16,7 +16,6 @@ import javax.swing.*;
 public class DeprecationInspection extends DeprecationInspectionBase {
   public static final String SHORT_NAME = DeprecationUtil.DEPRECATION_SHORT_NAME;
   public static final String ID = DeprecationUtil.DEPRECATION_ID;
-  public static final String DISPLAY_NAME = DeprecationUtil.DEPRECATION_DISPLAY_NAME;
   public static final String IGNORE_METHODS_OF_DEPRECATED_NAME = "IGNORE_METHODS_OF_DEPRECATED";
 
   public boolean IGNORE_INSIDE_DEPRECATED = true;
@@ -32,12 +31,6 @@ public class DeprecationInspection extends DeprecationInspectionBase {
                                       IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED,
                                       IGNORE_IN_SAME_OUTERMOST_CLASS, false, null)
     );
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
   }
 
   @Override

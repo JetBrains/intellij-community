@@ -1,0 +1,14 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener"/>
+    <extensionPoint name="syntaxHighlighter"
+                    beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
+  </extensions>
+</idea-plugin>

@@ -27,7 +27,7 @@ import java.io.IOException;
  * @author yole
  */
 public class SimpleTransferable implements Transferable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.clipboard.SimpleTransferable");
+  private static final Logger LOG = Logger.getInstance(SimpleTransferable.class);
 
   private final Object myData;
   private final DataFlavor myFlavor;

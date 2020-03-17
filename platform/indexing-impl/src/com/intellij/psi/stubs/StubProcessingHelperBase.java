@@ -39,7 +39,7 @@ import java.util.List;
  * Author: dmitrylomov
  */
 public abstract class StubProcessingHelperBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubProcessingHelperBase");
+  protected static final Logger LOG = Logger.getInstance(StubProcessingHelperBase.class);
 
   public <Psi extends PsiElement> boolean processStubsInFile(@NotNull Project project,
                                                              @NotNull VirtualFile file,

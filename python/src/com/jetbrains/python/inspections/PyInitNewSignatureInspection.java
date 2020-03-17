@@ -26,12 +26,6 @@ import java.util.List;
  * @author dcheryasov
  */
 public class PyInitNewSignatureInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.new.init.signature");
-  }
 
   @NotNull
   @Override

@@ -2096,79 +2096,6 @@ public class PyTypeTest extends PyTestCase {
            "expr = min(l)");
   }
 
-  // PY-37755
-  public void testGlobalType() {
-    doTest("list",
-           "expr = []\n" +
-           "\n" +
-           "def fun():\n" +
-           "    global expr\n" +
-           "    expr");
-
-    doTest("list",
-           "expr = []\n" +
-           "\n" +
-           "def fun():\n" +
-           "    def nuf():\n" +
-           "        global expr\n" +
-           "        expr");
-
-    doTest("list",
-           "expr = []\n" +
-           "\n" +
-           "def fun():\n" +
-           "    expr = True\n" +
-           "    \n" +
-           "    def nuf():\n" +
-           "        global expr\n" +
-           "        expr");
-
-    doTest("Union[bool, int]",
-           "if True:\n" +
-           "    a = True\n" +
-           "else:\n" +
-           "    a = 5\n" +
-           "\n" +
-           "def fun():\n" +
-           "    def nuf():\n" +
-           "        global a\n" +
-           "        expr = a");
-  }
-
-  // PY-37755
-  public void testNonLocalType() {
-    doTest("bool",
-           "def fun():\n" +
-           "    expr = True\n" +
-           "\n" +
-           "    def nuf():\n" +
-           "        nonlocal expr\n" +
-           "        expr");
-
-    doTest("bool",
-           "a = []\n" +
-           "\n" +
-           "def fun():\n" +
-           "    a = True\n" +
-           "\n" +
-           "    def nuf():\n" +
-           "        nonlocal a\n" +
-           "        expr = a");
-
-    doTest("Union[bool, int]",
-           "a = []\n" +
-           "\n" +
-           "def fun():\n" +
-           "    if True:\n" +
-           "        a = True\n" +
-           "    else:\n" +
-           "        a = 5\n" +
-           "\n" +
-           "    def nuf():\n" +
-           "        nonlocal a\n" +
-           "        expr = a");
-  }
-
   // PY-21906
   public void testSOFOnTransitiveNamedTupleFields() {
     final PyExpression expression = parseExpr("from collections import namedtuple\n" +
@@ -3812,6 +3739,42 @@ public class PyTypeTest extends PyTestCase {
                "expr = A");
       }
     );
+  }
+
+  // PY-37678
+  public void testDataclassesReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doMultiFileTest("Foo",
+                            "import dataclasses as dc\n" +
+                            "\n" +
+                            "@dc.dataclass\n" +
+                            "class Foo:\n" +
+                            "    x: int\n" +
+                            "    y: int\n" +
+                            "\n" +
+                            "foo = Foo(1, 2)\n" +
+                            "expr = dc.replace(foo, x=3)")
+    );
+  }
+
+  // PY-35881
+  public void testResolveToAnotherFileClassWithBuiltinNameField() {
+    doMultiFileTest(
+      "int",
+      "from foo import Foo\n" +
+      "foo = Foo(0)\n" +
+      "expr = foo.id"
+    );
+  }
+
+  // PY-35885
+  public void testFunctionDunderDoc() {
+    doTest("str",
+           "def example():\n" +
+           "    \"\"\"Example Docstring\"\"\"\n" +
+           "    return 0\n" +
+           "expr = example.__doc__");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

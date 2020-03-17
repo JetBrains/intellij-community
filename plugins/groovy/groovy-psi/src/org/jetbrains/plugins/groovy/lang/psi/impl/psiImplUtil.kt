@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
@@ -63,7 +64,7 @@ private fun GroovyFileImpl.collectScriptDeclarations(topLevelOnly: Boolean): Arr
 private fun GroovyFileImpl.doCollectScriptDeclarations(topLevelOnly: Boolean): Array<GrVariableDeclaration> {
   val result = mutableListOf<GrVariableDeclaration>()
   accept(object : PsiRecursiveElementWalkingVisitor() {
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
       if (element is GrVariableDeclaration && element.modifierList.rawAnnotations.isNotEmpty()) {
         result.add(element)
       }
@@ -101,6 +102,11 @@ fun getQualifiedReferenceName(reference: GrReferenceElement<*>): String? {
 fun GrMethodCall.isImplicitCall(): Boolean {
   val expression = invokedExpression
   return expression !is GrReferenceExpression || expression.isImplicitCallReceiver
+}
+
+fun GrMethodCall.isExplicitCall(): Boolean {
+  val expression = invokedExpression
+  return expression is GrReferenceExpression && !expression.isImplicitCallReceiver && expression.referenceName != null
 }
 
 fun GrCodeReferenceElement.getDiamondTypes(): Array<out PsiType?> {
@@ -160,4 +166,10 @@ fun GrVariable.isDeclaredIn(block: GrControlFlowOwner): Boolean {
   val parent = findFirstParent(this) { block == it || it is GrMethod || it is GrClosableBlock }
 
   return parent == block
+}
+
+fun isThisRef(expression: GrExpression?): Boolean {
+  return expression is GrReferenceExpression &&
+         expression.qualifier == null &&
+         "this" == expression.referenceName
 }

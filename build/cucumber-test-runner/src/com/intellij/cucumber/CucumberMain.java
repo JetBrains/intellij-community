@@ -15,6 +15,7 @@
  */
 package com.intellij.cucumber;
 
+import com.intellij.TestCaseLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestRunnerUtil;
@@ -22,11 +23,13 @@ import com.intellij.util.ui.UIUtil;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
+import cucumber.runtime.io.Resource;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Dennis.Ushakov
@@ -57,7 +60,22 @@ public class CucumberMain {
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         try {
           RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList(Arrays.asList(argv)));
-          MultiLoader resourceLoader = new MultiLoader(classLoader);
+          MultiLoader resourceLoader = new MultiLoader(classLoader) {
+            @Override
+            public Iterable<Resource> resources(String path, String suffix) {
+              Iterable<Resource> resources = super.resources(path, suffix);
+              if (TestCaseLoader.shouldBucketTests() && ".feature".equals(suffix)) {
+                List<Resource> filteredResource = new ArrayList<>();
+                resources.forEach(it -> {
+                  if (TestCaseLoader.matchesCurrentBucket(it.getPath())) {
+                    filteredResource.add(it);
+                  }
+                });
+                return filteredResource;
+              }
+              return resources;
+            }
+          };
           ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
           Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
           runtimeRef.set(runtime);

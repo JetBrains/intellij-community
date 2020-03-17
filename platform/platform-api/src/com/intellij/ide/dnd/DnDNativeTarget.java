@@ -26,7 +26,7 @@ import java.util.Map;
 
 public interface DnDNativeTarget extends DnDTarget {
 
-  Logger LOG = Logger.getInstance("#com.intellij.ide.dnd.DnDNativeTarget");
+  Logger LOG = Logger.getInstance(DnDNativeTarget.class);
 
   String EVENT_KEY = "DnDEvent";
 

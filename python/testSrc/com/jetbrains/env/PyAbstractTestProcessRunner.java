@@ -17,7 +17,6 @@ package com.jetbrains.env;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -38,7 +37,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -58,6 +56,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   extends ConfigurationBasedProcessRunner<CONF_T> {
 
   private final int myTimesToRerunFailedTests;
+  private boolean mySkipExitCodeAssertion;
 
   private int myCurrentRerunStep;
 
@@ -83,6 +82,24 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     myTimesToRerunFailedTests = timesToRerunFailedTests;
   }
 
+  public final void setSkipExitCodeAssertion(boolean skipExitCodeAssertion) {
+    mySkipExitCodeAssertion = skipExitCodeAssertion;
+  }
+
+  @Override
+  public final void assertExitCodeIsCorrect(int code) {
+    if (mySkipExitCodeAssertion) {
+      return;
+    }
+    // If test framework doesn't support exit codes, overwrite this method
+    SMRootTestProxy proxy = getTestProxy();
+    if (proxy.isPassed() || proxy.isIgnored()) {
+      Assert.assertEquals("Exit code must be 0 if all tests are passed or ignored", 0, code);
+    }
+    else {
+      Assert.assertNotEquals("Exit code must NOT be 0 if some tests failed", 0, code);
+    }
+  }
 
   @Override
   protected void fetchConsoleAndSetToField(@NotNull final RunContentDescriptor descriptor) {

@@ -22,6 +22,6 @@ fun installPluginFromCallbackData(callbackData: PluginInstallCallbackData) {
     PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(callbackData.pluginDescriptor.name)
   }
   else {
-    PluginInstaller.installAndLoadDynamicPlugin(callbackData.file, null, callbackData.pluginDescriptor as IdeaPluginDescriptorImpl)
+    PluginInstaller.installAndLoadDynamicPlugin(callbackData.file, null, callbackData.pluginDescriptor)
   }
 }

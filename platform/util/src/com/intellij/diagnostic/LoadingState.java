@@ -16,6 +16,7 @@ public enum LoadingState {
   COMPONENTS_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENTS_LOADED("app component loaded"),
+  APP_STARTED("app started"),
   PROJECT_OPENED("project opened"),
   INDEXING_FINISHED("indexing finished");
 
@@ -30,7 +31,7 @@ public enum LoadingState {
 
   @NotNull
   static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.diagnostic.LoadingState");
+    return Logger.getInstance(LoadingState.class);
   }
 
   @ApiStatus.Internal
@@ -88,7 +89,10 @@ public enum LoadingState {
   private static boolean isKnownViolator() {
     for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
       String className = element.getClassName();
-      if (className.contains("com.intellij.util.indexing.IndexInfrastructure") || className.contains("com.intellij.psi.impl.search.IndexPatternSearcher")) {
+      if (className.contains("com.intellij.util.indexing.IndexInfrastructure")
+          || className.contains("com.intellij.psi.impl.search.IndexPatternSearcher")
+          || className.contains("com.jetbrains.performancePlugin.ProjectLoaded")
+          || className.contains("com.jetbrains.python.conda.InstallCondaUtils")) {
         return true;
       }
     }

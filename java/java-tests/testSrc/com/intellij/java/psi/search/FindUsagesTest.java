@@ -3,15 +3,26 @@ package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.*;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory;
+import com.intellij.find.findUsages.JavaFindUsagesHandler;
+import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiReferenceProcessorAdapter;
@@ -25,13 +36,18 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FindUsagesTest extends JavaPsiTestCase {
   @Override
@@ -284,5 +300,67 @@ public class FindUsagesTest extends JavaPsiTestCase {
     Collections.sort(actual);
 
     assertEquals("Usages don't match", expected, actual);
+  }
+
+  public void testFindUsagesMustInterrupt/*DuringLongButInterruptibleResolveInsideReadAction*/() throws Exception {
+    PsiClass aClass = myJavaFacade.findClass("x.Ref", GlobalSearchScope.allScope(myProject));
+    PsiField field = Objects.requireNonNull(aClass).findFieldByName("ref", false);
+    AtomicInteger toSleepMs = new AtomicInteger();
+    AtomicBoolean resolveStarted = new AtomicBoolean();
+    final PsiReferenceProvider hardProvider = new PsiReferenceProvider() {
+      @Override
+      @NotNull
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        String text = String.valueOf(((PsiLiteralExpression)element).getValue());
+        if (text.equals("ref")) {
+          return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {
+            @Override
+            public PsiElement resolve() {
+              return field;
+            }
+
+            @Override
+            public boolean isReferenceTo(@NotNull PsiElement element) {
+              resolveStarted.set(true);
+              ApplicationManager.getApplication().assertReadAccessAllowed();
+              // emulate slow (but interruptible) resolve
+              while (toSleepMs.addAndGet(-100) > 0) {
+                ProgressManager.checkCanceled();
+                TimeoutUtil.sleep(100);
+              }
+              return super.isReferenceTo(element);
+            }
+          }};
+        }
+        else {
+          return PsiReference.EMPTY_ARRAY;
+        }
+      }
+    };
+    PsiReferenceRegistrarImpl registrar = (PsiReferenceRegistrarImpl)ReferenceProvidersRegistry.getInstance().getRegistrar(JavaLanguage.INSTANCE);
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiLiteralExpression.class), hardProvider);
+    toSleepMs.set(1_000_000);
+    try {
+      AtomicReference<Collection<PsiReference>> usages = new AtomicReference<>();
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ProgressManager.getInstance().runProcess(() -> {
+          usages.set(ReferencesSearch.search(field, GlobalSearchScope.fileScope(myProject, field.getContainingFile().getVirtualFile())).findAll());
+        }, new EmptyProgressIndicator());
+      });
+
+      while(!resolveStarted.get()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      
+      WriteAction.run(() -> {
+        toSleepMs.set(0);
+      });
+
+      future.get();
+      assertEquals(2, usages.get().size());
+    }
+    finally {
+      registrar.unregisterReferenceProvider(PsiLiteralExpression.class, hardProvider);
+    }
   }
 }

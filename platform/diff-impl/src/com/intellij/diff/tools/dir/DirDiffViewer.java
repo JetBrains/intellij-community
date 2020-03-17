@@ -27,7 +27,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
@@ -196,10 +195,10 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
       };
     }
     if (content instanceof DirectoryContent) {
-      return new VirtualFileDiffElement(((DirectoryContent)content).getFile());
+      return VirtualFileDiffElement.createElement(((DirectoryContent)content).getFile());
     }
     if (content instanceof FileContent && content.getContentType() instanceof ArchiveFileType) {
-      return new JarFileDiffElement(((FileContent)content).getFile());
+      return VirtualFileDiffElement.createElement(((FileContent)content).getFile());
     }
     throw new IllegalArgumentException(content.getClass() + " " + content.getContentType());
   }

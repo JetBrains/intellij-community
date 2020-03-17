@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class HeavyProcessLatch {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
+  private static final Logger LOG = Logger.getInstance(HeavyProcessLatch.class);
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
   private final Set<String> myHeavyProcesses = ContainerUtil.newConcurrentSet();

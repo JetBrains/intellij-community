@@ -19,9 +19,10 @@ public class StatusPanel extends JPanel {
     myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
     myBusySpinner.setVisible(false);
 
-    GridBag bag = new GridBag().setDefaultInsets(JBInsets.create(0, 2)).setDefaultFill(GridBagConstraints.BOTH);
+    GridBag bag = new GridBag().setDefaultInsets(JBInsets.create(0, 2)).setDefaultFill(GridBagConstraints.BOTH)
+      .setDefaultWeightY(1.0);
     add(myBusySpinner, bag.next());
-    add(myTextLabel, bag.next());
+    add(myTextLabel, bag.next().weightx(1.0));
     setBorder(JBUI.Borders.empty(0, 2));
   }
 

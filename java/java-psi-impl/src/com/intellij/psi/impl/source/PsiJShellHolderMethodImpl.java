@@ -23,7 +23,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements PsiJShellHolderMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJShellHolderMethodImpl");
+  private static final Logger LOG = Logger.getInstance(PsiJShellHolderMethodImpl.class);
 
   private final String myName;
   private PsiParameterList myParameterList;

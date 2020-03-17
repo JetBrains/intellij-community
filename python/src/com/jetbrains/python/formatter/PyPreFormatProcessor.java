@@ -73,7 +73,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     }
 
     @Override
-    public void visitComment(PsiComment comment) {
+    public void visitComment(@NotNull PsiComment comment) {
       if (!myRange.contains(comment.getTextRange())) {
         return;
       }

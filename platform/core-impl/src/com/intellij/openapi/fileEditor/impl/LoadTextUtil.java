@@ -35,7 +35,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 
 public final class LoadTextUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
+  private static final Logger LOG = Logger.getInstance(LoadTextUtil.class);
 
   public enum AutoDetectionReason { FROM_BOM, FROM_BYTES }
 

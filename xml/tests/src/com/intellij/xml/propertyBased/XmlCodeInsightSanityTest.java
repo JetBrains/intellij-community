@@ -45,7 +45,7 @@ public class XmlCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCas
                                                   String name = f.getName();
                                                   for (String extension: extensions) {
                                                     if (name.endsWith("." + extension)) {
-                                                      System.out.println(f.getPath());
+                                                      LOG.debug(f.getPath());
                                                       return true;
                                                     }
                                                   }

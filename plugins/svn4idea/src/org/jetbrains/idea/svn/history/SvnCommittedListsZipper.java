@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,8 +31,9 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
     myVcs = vcs;
   }
 
+  @NotNull
   @Override
-  public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<? extends RepositoryLocation> in) {
+  public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
     final List<RepositoryLocationGroup> groups = new ArrayList<>();
     final List<RepositoryLocation> singles = new ArrayList<>();
 
@@ -46,7 +47,7 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
       }
       if (root == null) {
         // should not occur
-        LOG.info("repository root not found for location:"+ location.toPresentableString());
+        LOG.info("repository root not found for location:" + location.toPresentableString());
         singles.add(location);
       } else {
         map.putValue(root, svnLocation);
@@ -66,13 +67,14 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
     return Pair.create(groups, singles);
   }
 
+  @NotNull
   @Override
-  public CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists) {
+  public CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
     return new SvnChangeList(lists, new SvnRepositoryLocation(group.toPresentableString()));
   }
 
   @Override
-  public long getNumber(final CommittedChangeList list) {
+  public long getNumber(@NotNull CommittedChangeList list) {
     return list.getNumber();
   }
 }

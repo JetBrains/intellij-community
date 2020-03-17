@@ -95,7 +95,7 @@ public class XDebuggerInlayUtil {
     CharSequence text = editor.getDocument().getImmutableCharSequence();
     int identifierEndOffset = getIdentifierEndOffset(text, offset);
     inlay.getRenderer().addValue(offset, identifierEndOffset, inlayText);
-    inlay.updateSize();
+    inlay.update();
   }
 
   public static void clearBlockInlays(@NotNull Editor editor) {

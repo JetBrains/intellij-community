@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.images.sync
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.serialization.JpsMacroExpander
@@ -9,6 +11,8 @@ import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
 
 private val vcsPattern = """(?<=mapping directory=").*(?=" vcs="Git")""".toRegex()
 private val jme by lazy {
@@ -30,7 +34,7 @@ internal fun vcsRoots(project: File): List<File> {
       .map {
         val file = File(it)
         if (file.exists()) file else File(project, it)
-      }.toList().also { roots ->
+      }.filter(File::exists).toList().also { roots ->
         log("Found ${roots.size} repo roots in $project:")
         roots.forEach { log(it.absolutePath) }
       }
@@ -44,9 +48,8 @@ internal fun vcsRoots(project: File): List<File> {
 internal fun expandJpsMacro(text: String) = jme.substitute(text, SystemInfo.isFileSystemCaseSensitive)
 
 internal fun searchTestRoots(project: String) = try {
-  JpsSerializationManager.getInstance()
-    .loadModel(project, null)
-    .project.modules.flatMap {
+  jpsProject(project)
+    .modules.flatMap {
     it.getSourceRoots(JavaSourceRootType.TEST_SOURCE) +
     it.getSourceRoots(JavaResourceRootType.TEST_RESOURCE)
   }.mapTo(mutableSetOf()) { it.file }
@@ -54,4 +57,16 @@ internal fun searchTestRoots(project: String) = try {
 catch (e: IOException) {
   System.err.println(e.message)
   emptySet<File>()
+}
+
+internal fun jpsProject(path: String): JpsProject {
+  val file = Paths.get(FileUtil.toCanonicalPath(path))
+  return if (path.endsWith(".ipr")
+             || Files.isDirectory(file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME))
+             || Files.isDirectory(file) && file.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
+    JpsSerializationManager.getInstance().loadModel(path, null).project
+  }
+  else {
+    jpsProject(file.parent.toString())
+  }
 }

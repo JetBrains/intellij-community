@@ -255,7 +255,7 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
   public void testIndent() throws Exception {
     CommonCodeStyleSettings.IndentOptions htmlIndentOptions = getSettings().getCommonSettings(HTMLLanguage.INSTANCE).getIndentOptions();
     assert  htmlIndentOptions != null : "HTML Indent options not found!";
-    int indentSize = htmlIndentOptions.INDENT_SIZE = 2;
+    int indentSize = htmlIndentOptions.INDENT_SIZE;
     int contIndentSize = htmlIndentOptions.CONTINUATION_INDENT_SIZE;
     try {
       htmlIndentOptions.INDENT_SIZE = 2;

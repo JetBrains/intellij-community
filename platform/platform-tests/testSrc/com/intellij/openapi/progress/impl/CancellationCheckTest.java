@@ -35,12 +35,11 @@ public class CancellationCheckTest extends LightPlatformTestCase {
   public void testExceededThreshold() {
     CancellationCheck cancellation = new CancellationCheck(1);
 
-    try {
-      runWithCheckCancellation(cancellation, 10, 1, 1);
-      fail();
-    } catch (Throwable e) {
-      assertTrue(e.getMessage().matches("AWT-EventQueue-0 last checkCanceled was \\d+ ms ago"));
-    }
+    assertThrows(Throwable.class,
+                 "AWT-EventQueue-0 last checkCanceled was ",
+                 () -> {
+                   runWithCheckCancellation(cancellation, 10, 1, 1);
+                 });
   }
 
   private void runWithCheckCancellation(CancellationCheck cancellation, int period, int times, int depth) {

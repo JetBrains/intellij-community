@@ -49,12 +49,6 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("exception.from.catch.which.doesnt.wrap.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("exception.from.catch.which.doesnt.wrap.problem.descriptor");
   }

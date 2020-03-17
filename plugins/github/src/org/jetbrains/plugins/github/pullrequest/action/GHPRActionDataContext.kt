@@ -3,30 +3,39 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionHolder
+import org.jetbrains.plugins.github.pullrequest.data.GHPRBusyStateTracker
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-class GHPRActionDataContext internal constructor(private val dataContext: GHPullRequestsDataContext,
-                                                 private val selectionHolder: GithubPullRequestsListSelectionHolder,
-                                                 val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory) {
+interface GHPRActionDataContext {
 
-  val gitRepositoryCoordinates: GitRemoteUrlCoordinates = dataContext.gitRepositoryCoordinates
-  val repositoryCoordinates: GHRepositoryCoordinates = dataContext.repositoryCoordinates
-  val requestExecutor: GithubApiRequestExecutor = dataContext.requestExecutor
+  val account: GithubAccount
 
-  fun resetAllData() {
-    dataContext.metadataService.resetData()
-    dataContext.listLoader.reset()
-    dataContext.dataLoader.invalidateAllData()
-  }
+  val securityService: GHPRSecurityService
+  val busyStateTracker: GHPRBusyStateTracker
+  val stateService: GHPRStateService
+  val reviewService: GHPRReviewService
+  val commentService: GHPRCommentService
 
-  private val selectedPullRequest: Long?
-    get() = selectionHolder.selectionNumber
+  val requestExecutor: GithubApiRequestExecutor
 
-  val selectedPullRequestDataProvider: GithubPullRequestDataProvider?
-    get() = selectedPullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
+  val gitRepositoryCoordinates: GitRemoteUrlCoordinates
+  val repositoryCoordinates: GHRepositoryCoordinates
 
+  val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory
+  val currentUser: GHUser
+
+  val pullRequest: Long?
+  val pullRequestDetails: GHPullRequestShort?
+  val pullRequestDataProvider: GHPRDataProvider?
+
+  fun resetAllData()
 }

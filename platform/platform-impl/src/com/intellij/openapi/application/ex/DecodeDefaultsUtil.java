@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class DecodeDefaultsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.ex.DecodeDefaultsUtil");
+  private static final Logger LOG = Logger.getInstance(DecodeDefaultsUtil.class);
   private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<>());
 
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
@@ -28,7 +28,12 @@ public class DecodeDefaultsUtil {
       else {
         url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
         if (url == null) {
-          url = getResource(appendExt('/' + componentResourcePath), requestor);
+          if (requestor instanceof ClassLoader) {
+            url = getResource(appendExt(componentResourcePath), requestor);
+          }
+          else {
+            url = getResource(appendExt('/' + componentResourcePath), requestor);
+          }
         }
       }
       RESOURCE_CACHE.put(componentResourcePath, url);

@@ -20,11 +20,12 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PyReferringObjectsValue extends PyDebugValue {
   private static final Logger LOG = Logger.getInstance(PyReferringObjectsValue.class);
 
-  private final @NotNull PyReferrersLoader myReferrersLoader;
+  private final @Nullable PyReferrersLoader myReferrersLoader;
 
   public PyReferringObjectsValue(@NotNull String name,
                                  String type,
@@ -52,7 +53,10 @@ public class PyReferringObjectsValue extends PyDebugValue {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-
+    if (myReferrersLoader == null) {
+      LOG.error("Failed to load Referring Objects. Frame accessor: " + getFrameAccessor());
+      return;
+    }
     myReferrersLoader.loadReferrers(this, new PyDebugCallback<XValueChildrenList>() {
       @Override
       public void ok(XValueChildrenList value) {
@@ -72,6 +76,6 @@ public class PyReferringObjectsValue extends PyDebugValue {
   }
 
   public boolean isField() {
-    return false; //TODO
+    return false;
   }
 }

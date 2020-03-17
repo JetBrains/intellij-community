@@ -46,6 +46,11 @@ public abstract class GlobalSimpleInspectionTool extends GlobalInspectionTool {
   }
 
   @Override
+  public boolean isReadActionNeeded() {
+    return false;
+  }
+
+  @Override
   public final boolean isGraphNeeded() {
     return false;
   }

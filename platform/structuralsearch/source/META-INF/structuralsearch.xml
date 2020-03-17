@@ -7,8 +7,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name" groupName="General"
-                     enabledByDefault="false" level="WARNING"
+    <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
+                     enabledByDefault="false" level="WARNING" dynamicGroup="true"
                      implementationClass="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.StructuralSearchPlugin"/>
@@ -22,17 +23,16 @@
     <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
     <codeInsight.linkHandler prefix="#ssr_edit_filters/" handlerClass="com.intellij.structuralsearch.plugin.ui.filters.FilterTooltipLinkHandler"/>
     <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
+    <inspectionProfileActionProvider implementation="com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider"/>
   </extensions>
 
   <actions>
     <group id="StructuralSearchActions">
-      <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
-        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="ReplaceInPath"/>
-      </action>
+      <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="ReplaceInPath"/>
 
-      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
-        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
-      </action>
+      <separator/>
+      <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction"/>
+      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction"/>
     </group>
   </actions>
 </idea-plugin>

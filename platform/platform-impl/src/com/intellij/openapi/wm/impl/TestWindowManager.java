@@ -80,10 +80,10 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public void setWindowMask(final Window window, final Shape mask) { }
+  public void setWindowMask(Window window, final Shape mask) { }
 
   @Override
-  public void resetWindow(final Window window) { }
+  public void resetWindow(Window window) { }
 
   @Override
   @NotNull
@@ -98,26 +98,17 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Nullable
   @Override
-  public final IdeFrameImpl getFrame(final Project project) {
+  public final IdeFrameImpl getFrame(Project project) {
     return null;
   }
 
   @Override
-  @NotNull
-  public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
-    // no need to setup min / pref size for a test window
-    ProjectFrameHelper frame = new ProjectFrameHelper(new IdeFrameImpl(), null);
-    frame.init();
-    return frame;
-  }
-
-  @Override
-  public final Component getFocusedComponent(@NotNull final Window window) {
+  public final Component getFocusedComponent(@NotNull Window window) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public final Component getFocusedComponent(final Project project) {
+  public final Component getFocusedComponent(Project project) {
     return null;
   }
 
@@ -131,19 +122,13 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
-  @NotNull
-  @Override
-  public final CommandProcessor getCommandProcessor() {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public final DesktopLayout getLayout() {
     return myLayout;
   }
 
   @Override
-  public final void setLayout(final DesktopLayout layout) {
+  public final void setLayout(@NotNull DesktopLayout layout) {
     throw new UnsupportedOperationException();
   }
 
@@ -196,7 +181,7 @@ public final class TestWindowManager extends WindowManagerEx {
   public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) { }
 
   @Override
-  public void addListener(final WindowManagerListener listener) { }
+  public void addListener(@NotNull WindowManagerListener listener) { }
 
   @Override
   public void removeListener(final WindowManagerListener listener) { }

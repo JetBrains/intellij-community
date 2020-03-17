@@ -162,7 +162,7 @@ public class Xsd2InstanceUtils {
     final StringBuilder result = new StringBuilder();
 
     file.acceptChildren(new XmlRecursiveElementVisitor() {
-      @Override public void visitElement(PsiElement psiElement) {
+      @Override public void visitElement(@NotNull PsiElement psiElement) {
         super.visitElement(psiElement);
         if (psiElement instanceof LeafPsiElement) {
           final String text = psiElement.getText();

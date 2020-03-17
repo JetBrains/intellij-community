@@ -21,12 +21,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiWhileStatementImpl extends PsiLoopStatementImpl implements PsiWhileStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiWhileStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiWhileStatementImpl.class);
 
   public PsiWhileStatementImpl() {
     super(WHILE_STATEMENT);
@@ -110,6 +115,47 @@ public class PsiWhileStatementImpl extends PsiLoopStatementImpl implements PsiWh
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
+    if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
+    if (lastParent == null) {
+      return processDeclarationsInLoopCondition(processor, state, place, this);
+    }
+    PsiExpression condition = getCondition();
+    if (condition != null && lastParent == getBody()) {
+      return condition.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+    }
+    return true;
+  }
+
+  static boolean processDeclarationsInLoopCondition(@NotNull PsiScopeProcessor processor,
+                                                    @NotNull ResolveState state,
+                                                    @NotNull PsiElement place,
+                                                    @NotNull PsiConditionalLoopStatement loop) {
+    if (state.get(PatternResolveState.KEY) == PatternResolveState.WHEN_NONE) return true;
+    PsiExpression condition = loop.getCondition();
+    if (condition == null) return true;
+    PsiScopeProcessor conditionProcessor = (element, s) -> {
+      assert element instanceof PsiPatternVariable;
+      final NameHint hint = processor.getHint(NameHint.KEY);
+      if (hint != null && !((PsiPatternVariable)element).getName().equals(hint.getName(s))) {
+        return true;
+      }
+      PatternResolveState resolveState = PatternResolveState.stateAtParent((PsiPatternVariable)element, condition);
+      if (resolveState == PatternResolveState.WHEN_TRUE ||
+          !PsiTreeUtil
+            .processElements(loop, e -> !(e instanceof PsiBreakStatement) || ((PsiBreakStatement)e).findExitedStatement() != loop)) {
+        return true;
+      }
+      return processor.execute(element, s);
+    };
+    return condition.processDeclarations(conditionProcessor, PatternResolveState.WHEN_BOTH.putInto(state), null, place);
   }
 
   @Override

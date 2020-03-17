@@ -25,7 +25,11 @@ import java.util.List;
 import java.util.Set;
 
 public class MoveHandler implements RefactoringActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("move.title");
+  /**
+   * @deprecated Use {code {@link #getRefactoringName()}} instead
+   */
+  @Deprecated
+  public static final String REFACTORING_NAME = "Move";
 
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
@@ -53,7 +57,7 @@ public class MoveHandler implements RefactoringActionHandler {
     while (true) {
       if (element == null) {
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.at.the.class.method.or.field.to.be.refactored"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, null);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), null);
         return;
       }
 
@@ -123,7 +127,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
   /**
    * Performs some extra checks (that canMove does not)
-   * May replace some elements with others which actulaly shall be moved (e.g. directory->package)
+   * May replace some elements with others which actually shall be moved (e.g. directory->package)
    */
   @Nullable
   public static PsiElement[] adjustForMove(Project project, final PsiElement[] sourceElements, final PsiElement targetElement) {
@@ -232,5 +236,9 @@ public class MoveHandler implements RefactoringActionHandler {
       if (delegate.isMoveRedundant(source, target)) return true;
     }
     return false;
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("move.title");
   }
 }

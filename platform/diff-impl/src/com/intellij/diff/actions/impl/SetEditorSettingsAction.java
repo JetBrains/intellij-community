@@ -4,6 +4,7 @@ package com.intellij.diff.actions.impl;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.HighlightingLevel;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
+import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -132,7 +133,8 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
           super.applyDefaults(editors);
         }
       },
-      new EditorHighlightingLayerAction(),
+      new EditorHighlightingLayerGroup(),
+      new EditorBreadcrumbsPlacementGroup(),
     };
   }
 
@@ -207,10 +209,10 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
   }
 
-  private class EditorHighlightingLayerAction extends ActionGroup implements EditorSettingAction, DumbAware {
+  private class EditorHighlightingLayerGroup extends ActionGroup implements EditorSettingAction, DumbAware {
     private final AnAction[] myOptions;
 
-    EditorHighlightingLayerAction() {
+    EditorHighlightingLayerGroup() {
       super("Highlighting Level", true);
       myOptions = ContainerUtil.map(HighlightingLevel.values(), level -> new OptionAction(level), AnAction.EMPTY_ARRAY);
     }
@@ -249,6 +251,45 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myTextSettings.setHighlightingLevel(myLayer);
         apply(myLayer);
+      }
+    }
+  }
+
+  private class EditorBreadcrumbsPlacementGroup extends ActionGroup implements EditorSettingAction, DumbAware {
+    private final AnAction[] myOptions;
+
+    EditorBreadcrumbsPlacementGroup() {
+      ActionUtil.copyFrom(this, IdeActions.BREADCRUMBS_OPTIONS_GROUP);
+      myOptions = ContainerUtil.map(BreadcrumbsPlacement.values(), option -> new OptionAction(option), AnAction.EMPTY_ARRAY);
+      setPopup(true);
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return myOptions;
+    }
+
+    @Override
+    public void applyDefaults(@NotNull List<? extends Editor> editors) {
+    }
+
+    private class OptionAction extends ToggleAction implements DumbAware {
+      @NotNull private final BreadcrumbsPlacement myOption;
+
+      OptionAction(@NotNull BreadcrumbsPlacement option) {
+        ActionUtil.copyFrom(this, option.getActionId());
+        myOption = option;
+      }
+
+      @Override
+      public boolean isSelected(@NotNull AnActionEvent e) {
+        return myTextSettings.getBreadcrumbsPlacement() == myOption;
+      }
+
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        myTextSettings.setBreadcrumbsPlacement(myOption);
       }
     }
   }

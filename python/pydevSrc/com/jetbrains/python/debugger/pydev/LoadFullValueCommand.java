@@ -49,10 +49,7 @@ public class LoadFullValueCommand extends AbstractFrameCommand {
   private String buildPayloadForVar(@NotNull PyDebugValue var) {
     StringBuilder sb = new StringBuilder();
     String varName = GetVariableCommand.composeName(var);
-    if (var.getVariableLocator() != null) {
-      sb.append(var.getVariableLocator().getThreadId()).append(var.getVariableLocator().getPyDBLocation());
-    }
-    else if (varName.contains(GetVariableCommand.BY_ID)) {
+    if (varName.contains(GetVariableCommand.BY_ID)) {
       sb.append(getThreadId()).append(varName);
     }
     else {

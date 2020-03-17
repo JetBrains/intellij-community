@@ -20,12 +20,6 @@ public class VariableShadowingInspection extends XsltInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Variable Shadowing";
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "XsltVariableShadowing";
   }

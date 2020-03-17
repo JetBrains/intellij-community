@@ -6,7 +6,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.CommonClassNames;
@@ -74,7 +74,7 @@ public class MapUpdateInliner implements CallInliner {
         .evaluateFunction(function)
         .pushUnknown()
         .ifNotNull()
-        .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
+        .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
         .swap()
         .invokeFunction(2, function)
         .end()
@@ -89,7 +89,7 @@ public class MapUpdateInliner implements CallInliner {
     DfaValueFactory factory = builder.getFactory();
     DfaValue value = factory.createValue(qualifier);
     DfaValue size = SpecialField.COLLECTION_SIZE.createValue(factory, value);
-    builder.assignAndPop(size, DfaUnknownValue.getInstance());
+    builder.flush(size);
   }
 
   private static void inlineComputeIfAbsent(@NotNull CFGBuilder builder,
@@ -106,7 +106,7 @@ public class MapUpdateInliner implements CallInliner {
       .chain(b -> flushSize(qualifier, b))
       .elseBranch()
       .pop()
-      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
+      .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
       .end();
   }
 
@@ -119,7 +119,7 @@ public class MapUpdateInliner implements CallInliner {
       .evaluateFunction(function)
       .pushUnknown() // stack: .. key; get() result
       .ifNotNull() // stack: .. key
-      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
+      .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
       .invokeFunction(2, function) // stack: .. mapping result
       .chain(b -> flushSize(qualifier, b))
       .elseBranch()
@@ -135,7 +135,7 @@ public class MapUpdateInliner implements CallInliner {
     builder
       .pushExpression(key) // stack: .. key
       .evaluateFunction(function)
-      .push(builder.getFactory().createTypeValue(type, Nullability.NULLABLE))
+      .push(DfTypes.typedObject(type, Nullability.NULLABLE))
       .invokeFunction(2, function) // stack: .. mapping result
       .chain(b -> flushSize(qualifier, b));
   }

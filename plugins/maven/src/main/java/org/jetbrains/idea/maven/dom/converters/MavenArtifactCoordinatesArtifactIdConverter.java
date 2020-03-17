@@ -8,8 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.util.Collections;
 import java.util.Set;
@@ -43,7 +43,7 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
   }
 
   @Override
-  protected Set<String> doGetVariants(MavenId id, OfflineSearchService searchService) {
+  protected Set<String> doGetVariants(MavenId id, DependencySearchService searchService) {
     return Collections.emptySet();
   }
 

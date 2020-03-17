@@ -35,13 +35,6 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "properties.object.as.hashtable.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "properties.object.as.hashtable.problem.descriptor");

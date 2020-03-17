@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.compiler.impl.*;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -25,13 +24,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -53,9 +50,10 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class CompilerManagerImpl extends CompilerManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerManagerImpl");
+  private static final Logger LOG = Logger.getInstance(CompilerManagerImpl.class);
 
   private final Project myProject;
 
@@ -80,23 +78,16 @@ public class CompilerManagerImpl extends CompilerManager {
   public CompilerManagerImpl(@NotNull Project project) {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(CompilerTopics.COMPILATION_STATUS);
-
     // predefined compilers
-    for (Compiler compiler : Compiler.EP_NAME.getExtensions(myProject)) {
-      addCompiler(compiler);
-    }
     for (CompilerFactory factory : CompilerFactory.EP_NAME.getExtensionList(project)) {
       Compiler[] compilers = factory.createCompilers(this);
-      for (Compiler compiler : compilers) {
-        addCompiler(compiler);
+      if (compilers != null) {
+        for (Compiler compiler : compilers) {
+          addCompiler(compiler);
+        }
       }
     }
 
-    for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensionList(project)) {
-      addCompiler(
-        new InspectionValidatorWrapper(this, InspectionManager.getInstance(project), InspectionProjectProfileManager.getInstance(project),
-                                       PsiDocumentManager.getInstance(project), PsiManager.getInstance(project), validator));
-    }
     addCompilableFileType(StdFileTypes.JAVA);
 
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
@@ -158,9 +149,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public final void removeCompiler(@NotNull Compiler compiler) {
-    for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {
-      tasks.removeIf(
-        task -> task instanceof FileProcessingCompilerAdapterTask && ((FileProcessingCompilerAdapterTask)task).getCompiler() == compiler);
+    if (myCompilers.remove(compiler)) {
+      for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {
+        tasks.removeIf(
+          task -> task instanceof FileProcessingCompilerAdapterTask && ((FileProcessingCompilerAdapterTask)task).getCompiler() == compiler
+        );
+      }
     }
   }
 
@@ -168,11 +162,16 @@ public class CompilerManagerImpl extends CompilerManager {
   @NotNull
   public <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
-    for (final Compiler item : myCompilers) {
+    for (final Compiler item : ContainerUtil.concat(myCompilers, Compiler.EP_NAME.getExtensions(myProject))) {
       T concreteCompiler = ObjectUtils.tryCast(item, compilerClass);
       if (concreteCompiler != null) {
         compilers.add(concreteCompiler);
       }
+    }
+    if (compilerClass.isAssignableFrom(InspectionValidatorWrapper.class)) {
+      InspectionValidator.EP_NAME.extensions(myProject).forEach(
+        validator -> compilers.add(compilerClass.cast(InspectionValidatorWrapper.create(myProject, validator)))
+      );
     }
     final T[] array = ArrayUtil.newArray(compilerClass, compilers.size());
     return compilers.toArray(array);
@@ -206,24 +205,29 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   @NotNull
   public List<CompileTask> getBeforeTasks() {
-    return getCompileTasks(myBeforeTasks, CompileTaskBean.CompileTaskExecutionPhase.BEFORE);
-  }
-
-  @NotNull
-  private List<CompileTask> getCompileTasks(@NotNull List<? extends CompileTask> taskList, @NotNull CompileTaskBean.CompileTaskExecutionPhase phase) {
-    List<CompileTask> beforeTasks = new ArrayList<>(taskList);
-    for (CompileTaskBean extension : CompileTaskBean.EP_NAME.getExtensions(myProject)) {
-      if (extension.myExecutionPhase == phase) {
-        beforeTasks.add(extension.getTaskInstance(myProject));
-      }
-    }
-    return beforeTasks;
+    final List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
+    return ContainerUtil.concat(
+      myBeforeTasks,
+      extCompilers.stream().filter(compiler -> compiler instanceof SourceInstrumentingCompiler).map(compiler -> new FileProcessingCompilerAdapterTask((SourceInstrumentingCompiler)compiler)).collect(Collectors.toList()),
+      getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase.BEFORE)
+    );
   }
 
   @Override
   @NotNull
   public List<CompileTask> getAfterTaskList() {
-    return getCompileTasks(myAfterTasks, CompileTaskBean.CompileTaskExecutionPhase.AFTER);
+    final List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
+    return ContainerUtil.concat(
+      myAfterTasks,
+      extCompilers.stream().filter(compiler -> compiler instanceof Validator).map(compiler -> new FileProcessingCompilerAdapterTask((Validator)compiler)).collect(Collectors.toList()),
+      InspectionValidator.EP_NAME.extensions(myProject).map(validator -> new FileProcessingCompilerAdapterTask(InspectionValidatorWrapper.create(myProject, validator))).collect(Collectors.toList()),
+      getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase.AFTER)
+    );
+  }
+
+  @NotNull
+  private List<CompileTask> getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase phase) {
+    return CompileTaskBean.EP_NAME.extensions(myProject).filter(ext -> ext.myExecutionPhase == phase).map(ext -> ext.getTaskInstance(myProject)).collect(Collectors.toList());
   }
 
   @Override

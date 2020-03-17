@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.SystemProperties
@@ -79,6 +79,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
     BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "macosx")
+    BuildTasksImpl.generateBuildTxt(buildContext, "$macDistPath/Resources")
 
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
@@ -165,8 +166,9 @@ Android Studio: removed by Change I22bfabed */
 
     //todo[nik] don't mix properties for idea.properties file with properties for Info.plist
     Map<String, String> properties = readIdeaProperties(ideaPropertiesFile, customIdeaProperties)
+    properties["idea.vendor.name"] = buildContext.applicationInfo.shortCompanyName
 
-    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
+    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable", "idea.vendor.name"]
 
     String coreProperties = submapToXml(properties, coreKeys)
 
@@ -320,7 +322,9 @@ TODO(b/118034991): generate product-info.json files (or not) */
           }
         }
 
-        // build.txt etc.
+        // the root directory must not have files other than Info.plist so files like NOTICE.TXT and LICENSE.txt are copied to Resources subfolder
+        //todo specify paths to such files in ProductProperties and put them to dist.mac/Resources to get rid of this exclusion
+        //todo remove code which does the same from tools/mac/scripts/signapp.sh
         zipfileset(dir: buildContext.paths.distAll, prefix: "$zipRoot/Resources") {
           include(name: "*.txt")
         }

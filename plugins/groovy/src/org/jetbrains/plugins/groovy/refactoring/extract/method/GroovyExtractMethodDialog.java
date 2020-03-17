@@ -73,7 +73,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     myParameterTablePanel.init(myHelper);
 
     setModal(true);
-    setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
+    setTitle(GroovyExtractMethodHandler.getRefactoringName());
     init();
     setUpNameField();
     setUpDialog();

@@ -34,15 +34,18 @@ import org.jetbrains.annotations.Nullable;
  * @author Irina.Chernushina on 3/31/2016.
  */
 public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
-  public static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref", true, false);
-  public static final PsiElementPattern.Capture<JsonValue> SCHEMA_PATTERN = createPropertyValuePattern("$schema", false, true);
-  public static final PsiElementPattern.Capture<JsonStringLiteral> REQUIRED_PROP_PATTERN = createRequiredPropPattern();
-
+  private static class Holder {
+    private static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref", true, false);
+    private static final PsiElementPattern.Capture<JsonValue> REC_REF_PATTERN = createPropertyValuePattern("$recursiveRef", true, false);
+    private static final PsiElementPattern.Capture<JsonValue> SCHEMA_PATTERN = createPropertyValuePattern("$schema", false, true);
+    private static final PsiElementPattern.Capture<JsonStringLiteral> REQUIRED_PROP_PATTERN = createRequiredPropPattern();
+  }
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(REF_PATTERN, new JsonPointerReferenceProvider(false));
-    registrar.registerReferenceProvider(SCHEMA_PATTERN, new JsonPointerReferenceProvider(true));
-    registrar.registerReferenceProvider(REQUIRED_PROP_PATTERN, new JsonRequiredPropsReferenceProvider());
+    registrar.registerReferenceProvider(Holder.REF_PATTERN, new JsonPointerReferenceProvider(false));
+    registrar.registerReferenceProvider(Holder.REC_REF_PATTERN, new JsonPointerReferenceProvider(false));
+    registrar.registerReferenceProvider(Holder.SCHEMA_PATTERN, new JsonPointerReferenceProvider(true));
+    registrar.registerReferenceProvider(Holder.REQUIRED_PROP_PATTERN, new JsonRequiredPropsReferenceProvider());
   }
 
   private static PsiElementPattern.Capture<JsonValue> createPropertyValuePattern(

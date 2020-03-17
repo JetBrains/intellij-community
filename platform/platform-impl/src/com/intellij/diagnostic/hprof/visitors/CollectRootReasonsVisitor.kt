@@ -15,12 +15,13 @@
  */
 package com.intellij.diagnostic.hprof.visitors
 
+import com.intellij.diagnostic.hprof.classstore.ThreadInfo
 import com.intellij.diagnostic.hprof.navigator.RootReason
 import com.intellij.diagnostic.hprof.parser.HProfVisitor
 import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
 import gnu.trove.TLongObjectHashMap
 
-class CollectRootReasonsVisitor : HProfVisitor() {
+class CollectRootReasonsVisitor(private val threadsMap: TLongObjectHashMap<ThreadInfo>) : HProfVisitor() {
   val roots = TLongObjectHashMap<RootReason>()
 
   override fun preVisit() {
@@ -49,7 +50,14 @@ class CollectRootReasonsVisitor : HProfVisitor() {
   }
 
   override fun visitRootJavaFrame(objectId: Long, threadSerialNumber: Long, frameNumber: Long) {
-    roots.put(objectId, RootReason.rootJavaFrame)
+    val rootReason =
+      if (frameNumber >= 0) {
+        RootReason.createJavaFrameReason(threadsMap[threadSerialNumber].frames[frameNumber.toInt()])
+      }
+      else {
+        RootReason.createJavaFrameReason("Unknown location")
+      }
+    roots.put(objectId, rootReason)
   }
 
   override fun visitRootNativeStack(objectId: Long, threadSerialNumber: Long) {

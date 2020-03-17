@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException;
 import com.intellij.openapi.externalSystem.service.notification.*;
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -147,14 +148,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       setState(ExternalSystemTaskState.FINISHED);
     }
     catch (Exception e) {
-      setState(ExternalSystemTaskState.FAILED);
-      myError.set(e);
       LOG.debug(e);
+      myError.set(e);
+      setState(ExternalSystemTaskState.FAILED);
     }
     catch (Throwable e) {
-      setState(ExternalSystemTaskState.FAILED);
-      myError.set(e);
       LOG.error(e);
+      myError.set(e);
+      setState(ExternalSystemTaskState.FAILED);
     }
     finally {
       for (ExternalSystemTaskNotificationListener listener : listeners) {
@@ -284,5 +285,20 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
     String description = event.getDescription();
     indicator.setText(wrapProgressText(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
+  }
+
+  @NotNull
+  protected static ExternalSystemTaskNotificationListener wrapWithListener(@NotNull ExternalSystemProgressNotificationManagerImpl manager) {
+    return new ExternalSystemTaskNotificationListenerAdapter() {
+      @Override
+      public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+        manager.onStatusChange(event);
+      }
+
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        manager.onTaskOutput(id, text, stdOut);
+      }
+    };
   }
 }

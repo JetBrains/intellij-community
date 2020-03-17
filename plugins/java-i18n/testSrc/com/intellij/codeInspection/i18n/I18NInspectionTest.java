@@ -47,13 +47,62 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNonNlsEquals() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
+  public void _testConstructorChains() { doTest(); }
   public void testSwitchOnNonNlsString() { doTest(); }
   public void testNonNlsComment() {
     myTool.nonNlsCommentPattern = "MYNON-NLS";
     myTool.cacheNonNlsCommentPattern();
     doTest();
   }
+
+  public void testNlsOnly() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
+  public void testNlsPackage() {
+    myFixture.addFileToProject("package-info.java", "@Nls\n" +
+                                                    "package foo;\n" +
+                                                    "import org.jetbrains.annotations.Nls;");
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
   public void testAnnotationArgument() { doTest(); }
+  public void testAssertionStmt() { doTest(); }
+  public void testExceptionCtor() { doTest(); }
+  public void testSpecifiedExceptionCtor() {
+    boolean old = myTool.ignoreForExceptionConstructors;
+    try {
+      myTool.ignoreForSpecifiedExceptionConstructors = "java.io.IOException";
+      myTool.ignoreForExceptionConstructors = false;
+      doTest();
+    }
+    finally {
+      myTool.ignoreForSpecifiedExceptionConstructors = "";
+      myTool.ignoreForExceptionConstructors = old;
+    }
+  }
+
+  public void testEnumConstantIgnored() {
+    boolean oldState = myTool.setIgnoreForEnumConstants(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForEnumConstants(oldState);
+    }
+  }
 
   @Override
   protected String getTestDataPath() {

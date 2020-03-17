@@ -38,7 +38,7 @@ abstract class PersistentMapTestBase extends TestCase {
     myFile = new File(directory, "map");
     assertTrue(myFile.createNewFile());
     myDataFile = new File(directory, myFile.getName() + PersistentHashMap.DATA_FILE_EXTENSION);
-    myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+    myMap = new PersistentHashMap<>(myFile.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
   }
 
   @Override

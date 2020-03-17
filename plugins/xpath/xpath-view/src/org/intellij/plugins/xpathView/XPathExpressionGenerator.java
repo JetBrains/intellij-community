@@ -28,6 +28,7 @@ import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -184,7 +185,7 @@ public class XPathExpressionGenerator {
         }
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
             if (element instanceof XmlProcessingInstruction) {
                 visitProcessingInstruction(((XmlProcessingInstruction)element));
             } else {

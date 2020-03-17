@@ -19,7 +19,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -133,11 +136,11 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   public static MockWolfTheProblemSolver prepareWolf(final Project project) {
     MockWolfTheProblemSolver wolfTheProblemSolver = (MockWolfTheProblemSolver)WolfTheProblemSolver.getInstance(project);
 
-    WolfTheProblemSolverImpl theRealSolver = new WolfTheProblemSolverImpl(project, PsiManager.getInstance(project), project.getMessageBus());
+    WolfTheProblemSolverImpl theRealSolver = new WolfTheProblemSolverImpl(project);
     wolfTheProblemSolver.setDelegate(theRealSolver);
     return wolfTheProblemSolver;
   }
-    
+
   private VirtualFile configureRoot() throws Exception {
     configureByFile(BASE_PATH + "/x/X.java", BASE_PATH);
     return ModuleRootManager.getInstance(myModule).getContentRoots()[0];

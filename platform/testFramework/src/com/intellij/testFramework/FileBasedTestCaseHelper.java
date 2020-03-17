@@ -39,7 +39,7 @@ public interface FileBasedTestCaseHelper {
    * @return for 'after' files should return core file name or null otherwise
    */
   @Nullable
-  default String getFileAfterSuffix(@NotNull String fileName) {
+  default String getBaseName(@NotNull String fileAfterSuffix) {
     return null;
   }
 }

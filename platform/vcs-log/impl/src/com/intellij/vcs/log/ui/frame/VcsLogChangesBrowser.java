@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
@@ -28,6 +29,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -45,6 +47,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcsUtil.UIVcsUtilKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +106,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     Disposer.register(parent, this);
 
-    myToolbarWrapper = new Wrapper(getToolbar().getComponent());
+    JComponent toolbarComponent = getToolbar().getComponent();
+    myToolbarWrapper = new Wrapper(toolbarComponent);
+    UIVcsUtilKt.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
 
     init();
 
@@ -115,6 +120,14 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @Override
   protected JComponent createToolbarComponent() {
     return myToolbarWrapper;
+  }
+
+  @NotNull
+  @Override
+  protected JComponent createCenterPanel() {
+    JComponent centerPanel = super.createCenterPanel();
+    ComponentUtil.putClientProperty(centerPanel, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    return centerPanel;
   }
 
   @NotNull

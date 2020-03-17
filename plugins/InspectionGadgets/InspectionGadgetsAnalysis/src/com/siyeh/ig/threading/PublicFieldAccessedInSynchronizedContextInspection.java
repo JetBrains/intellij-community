@@ -26,12 +26,6 @@ public class PublicFieldAccessedInSynchronizedContextInspection extends BaseInsp
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("public.field.accessed.in.synchronized.context.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "NonPrivateFieldAccessedInSynchronizedContext";
   }

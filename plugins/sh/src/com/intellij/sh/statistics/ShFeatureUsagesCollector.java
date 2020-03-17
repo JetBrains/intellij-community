@@ -5,6 +5,6 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 
 public class ShFeatureUsagesCollector {
   public static void logFeatureUsage(String eventId) {
-    FUCounterUsageLogger.getInstance().logEvent("shell.script", eventId);
+    FUCounterUsageLogger.getInstance().logEvent("sh.shell.script", eventId);
   }
 }

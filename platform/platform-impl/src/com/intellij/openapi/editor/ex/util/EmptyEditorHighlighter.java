@@ -15,7 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter");
+  private static final Logger LOG = Logger.getInstance(EmptyEditorHighlighter.class);
 
   private TextAttributes myAttributes;
   private int myTextLength = 0;

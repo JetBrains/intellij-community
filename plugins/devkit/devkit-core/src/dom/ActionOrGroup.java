@@ -49,4 +49,9 @@ public interface ActionOrGroup extends DomElement {
   @NotNull
   @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
   GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
+
+  @NotNull
+  @Stubbed
+  @Required(value = false)
+  GenericAttributeValue<Boolean> getInternal();
 }

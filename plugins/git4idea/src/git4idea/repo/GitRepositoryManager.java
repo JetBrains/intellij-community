@@ -9,8 +9,10 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -22,12 +24,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+
+import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 
 public final class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
   public static final Comparator<GitRepository> DEPENDENCY_COMPARATOR =
-    (repo1, repo2) -> - VirtualFileHierarchicalComparator.getInstance().compare(repo1.getRoot(), repo2.getRoot());
+    (repo1, repo2) -> -VirtualFileHierarchicalComparator.getInstance().compare(repo1.getRoot(), repo2.getRoot());
+
+  private final ExecutorService myUpdateExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("GitRepositoryManager");
 
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
 
@@ -96,6 +104,14 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
         LOG.warn("Submodule not registered as a repository: " + submoduleDir);
       }
       return repository;
+    });
+  }
+
+  void notifyListenersAsync(@NotNull GitRepository repository) {
+    myUpdateExecutor.execute(() -> {
+      if (!Disposer.isDisposed(repository)) {
+        syncPublisher(repository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository);
+      }
     });
   }
 

@@ -41,7 +41,7 @@ class RootIndex {
     return name1.compareTo(name2);
   };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
+  private static final Logger LOG = Logger.getInstance(RootIndex.class);
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
   private final Map<VirtualFile, String> myPackagePrefixByRoot;

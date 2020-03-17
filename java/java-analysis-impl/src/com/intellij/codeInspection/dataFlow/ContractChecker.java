@@ -6,11 +6,10 @@ import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstrai
 import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,23 +121,23 @@ class ContractChecker {
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    DataFlowRunner runner = new StandardDataFlowRunner(false, null);
+    DataFlowRunner runner = new DataFlowRunner(method.getProject(), null);
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = runner.createMemoryState();
     final DfaValueFactory factory = runner.getFactory();
     for (int i = 0; i < contract.getParameterCount(); i++) {
       ValueConstraint constraint = contract.getParameterConstraint(i);
-      DfaConstValue comparisonValue = constraint.getComparisonValue(factory);
+      DfaValue comparisonValue = constraint.getComparisonValue(factory);
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
         DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i]);
-        initialState.applyCondition(factory.createCondition(dfaParam, RelationType.equivalence(!negated), comparisonValue));
+        initialState.applyCondition(dfaParam.cond(RelationType.equivalence(!negated), comparisonValue));
       }
     }
 
     ContractCheckerVisitor visitor = new ContractCheckerVisitor(method, contract, ownContract);
-    runner.analyzeMethod(body, visitor, false, Collections.singletonList(initialState));
+    runner.analyzeMethod(body, visitor, Collections.singletonList(initialState));
     return visitor.getErrors();
   }
 }

@@ -16,7 +16,6 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.siyeh.ig.testFrameworks.AssertsWithoutMessagesInspection;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,13 +50,6 @@ public class AssertsWithoutMessagesTestNGInspection extends AssertsWithoutMessag
   @Override
   protected boolean checkTestNG() {
     return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Message missing on TestNG assertion";
   }
 
   @NotNull

@@ -17,7 +17,14 @@ class GdkArgumentMapping(
 
   override val arguments: Arguments = listOf(receiverArgument) + original.arguments
 
-  override fun targetParameter(argument: Argument): PsiParameter? = original.targetParameter(argument)
+  override fun targetParameter(argument: Argument): PsiParameter? {
+    return if (argument == receiverArgument) {
+      receiverParameter
+    }
+    else {
+      original.targetParameter(argument)
+    }
+  }
 
   override fun expectedType(argument: Argument): PsiType? = original.expectedType(argument)
 

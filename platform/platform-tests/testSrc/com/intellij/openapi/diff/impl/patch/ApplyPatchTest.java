@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.diff.impl.patch;
 
@@ -173,6 +173,14 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
 
   public void testAddFileWithoutNewlineAtEOF() throws Exception {
     doTest(1, ApplyPatchStatus.SUCCESS, null);
+  }
+
+  public void testFileWithGitStyleCyrillicPaths() throws Exception {
+    doTest(0, ApplyPatchStatus.SUCCESS, null);
+  }
+
+  public void testFileWithGitStylePathsWithSpaces() throws Exception {
+    doTest(0, ApplyPatchStatus.SUCCESS, null);
   }
 
   private void doTest(final int skipTopDirs, final ApplyPatchStatus expectedStatus, final VirtualFileFilter fileFilter) throws Exception {

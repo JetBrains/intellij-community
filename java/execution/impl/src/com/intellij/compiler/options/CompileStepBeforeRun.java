@@ -12,7 +12,7 @@ import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -37,7 +37,7 @@ import javax.swing.*;
  * @author spleaner
  */
 public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompileStepBeforeRun");
+  private static final Logger LOG = Logger.getInstance(CompileStepBeforeRun.class);
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
   /**
    * @deprecated to be removed in IDEA 2020.1
@@ -130,9 +130,8 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     try {
-      final Semaphore done = new Semaphore();
-      done.down();
-      TransactionGuard.submitTransaction(myProject, () -> {
+      Semaphore done = new Semaphore(1);
+      ApplicationManager.getApplication().invokeLater(() -> {
         final ProjectTask projectTask;
         Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
         final ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);

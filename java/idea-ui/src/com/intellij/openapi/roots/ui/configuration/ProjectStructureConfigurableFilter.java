@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ProjectStructureConfigurableFilter {
@@ -26,5 +27,6 @@ public abstract class ProjectStructureConfigurableFilter {
     PROJECT, MODULES, PROJECT_LIBRARIES, FACETS, ARTIFACTS, JDK_LIST, GLOBAL_LIBRARIES
   }
 
+  @Contract(pure = true)
   public abstract boolean isAvailable(@NotNull ConfigurableId id, @NotNull Project project);
 }

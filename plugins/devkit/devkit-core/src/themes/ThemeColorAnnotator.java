@@ -4,9 +4,9 @@ package org.jetbrains.idea.devkit.themes;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.json.psi.*;
 import com.intellij.json.psi.impl.JsonPsiImplUtils;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -47,9 +47,9 @@ public class ThemeColorAnnotator implements Annotator {
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!isColorLineMarkerProviderEnabled() || !isTargetElement(element, holder.getCurrentAnnotationSession().getFile())) return;
 
-    Annotation annotation = holder.createInfoAnnotation(element, null);
     JsonStringLiteral literal = (JsonStringLiteral)element;
-    annotation.setGutterIconRenderer(new MyRenderer(literal.getValue(), literal));
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+    .gutterIconRenderer(new MyRenderer(literal.getValue(), literal)).create();
   }
 
   private static boolean isColorLineMarkerProviderEnabled() {

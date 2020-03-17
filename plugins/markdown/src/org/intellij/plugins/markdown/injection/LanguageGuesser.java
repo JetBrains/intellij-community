@@ -16,15 +16,6 @@ import java.util.Map;
 public enum LanguageGuesser {
   INSTANCE;
 
-  private final NotNullLazyValue<List<EmbeddedTokenTypesProvider>> embeddedTokenTypeProviders =
-    new NotNullLazyValue<List<EmbeddedTokenTypesProvider>>() {
-      @NotNull
-      @Override
-      protected List<EmbeddedTokenTypesProvider> compute() {
-        return EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getExtensionList();
-      }
-    };
-
   private final NotNullLazyValue<Map<String, Language>> langIdToLanguage = new NotNullLazyValue<Map<String, Language>>() {
     @NotNull
     @Override
@@ -70,7 +61,7 @@ public enum LanguageGuesser {
       return languageFromMap;
     }
 
-    for (EmbeddedTokenTypesProvider provider : embeddedTokenTypeProviders.getValue()) {
+    for (EmbeddedTokenTypesProvider provider : EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       if (provider.getName().equalsIgnoreCase(languageName)) {
         return provider.getElementType().getLanguage();
       }

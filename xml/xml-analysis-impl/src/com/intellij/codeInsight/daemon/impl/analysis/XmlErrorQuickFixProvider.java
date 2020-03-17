@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -43,12 +43,12 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
 
   private static void registerXmlErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
     final String text = element.getErrorDescription();
-    if (text.startsWith(XmlErrorMessages.message("unescaped.ampersand"))) {
+    if (text.startsWith(XmlErrorBundle.message("unescaped.ampersand"))) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
         @Override
         @NotNull
         public String getText() {
-          return XmlErrorMessages.message("escape.ampersand.quickfix");
+          return XmlErrorBundle.message("escape.ampersand.quickfix");
         }
 
         @Override

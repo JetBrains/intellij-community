@@ -47,7 +47,6 @@ const vuexLocal = new VuexPersistence({
 })
 
 export const store = new Vuex.Store({
-  // strict: process.env.NODE_ENV !== "production",
   plugins: [vuexLocal.plugin],
   mutations: {
     RESTORE_MUTATION: vuexLocal.RESTORE_MUTATION,

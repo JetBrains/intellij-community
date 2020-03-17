@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -74,7 +73,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.intellij.ide.actions.RecentLocationsAction.SHORTCUT_HEX_COLOR;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.getKeyStroke;
@@ -83,9 +81,8 @@ import static javax.swing.KeyStroke.getKeyStroke;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-public class Switcher extends AnAction implements DumbAware {
+public final class Switcher extends AnAction implements DumbAware {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
-  private static final Logger LOG = Logger.getInstance(Switcher.class);
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
   private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
@@ -107,7 +104,7 @@ public class Switcher extends AnAction implements DumbAware {
 
   static {
     Shortcut recentFiles = ArrayUtil.getFirstElement(getActiveKeymapShortcuts("RecentFiles").getShortcuts());
-    List<Shortcut> shortcuts = ContainerUtil.newArrayList();
+    List<Shortcut> shortcuts = new ArrayList<>();
     for (char ch = '0'; ch <= '9'; ch++) {
       shortcuts.add(CustomShortcutSet.fromString("control " + ch).getShortcuts()[0]);
     }
@@ -258,7 +255,7 @@ public class Switcher extends AnAction implements DumbAware {
     final JBPopup myPopup;
     final JBList<Object> toolWindows;
     final JBList<FileInfo> files;
-    final ToolWindowManager twManager;
+    final ToolWindowManager toolWindowManager;
     JBCheckBox myShowOnlyEditedFilesCheckBox;
     final JLabel pathLabel = new JLabel(" ");
     final JPanel myTopPanel;
@@ -393,12 +390,12 @@ public class Switcher extends AnAction implements DumbAware {
 
       descriptions.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       descriptions.add(pathLabel, BorderLayout.CENTER);
-      twManager = ToolWindowManager.getInstance(project);
+      toolWindowManager = ToolWindowManager.getInstance(project);
       CollectionListModel<Object> twModel = new CollectionListModel<>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
       List<ToolWindow> windows = new ArrayList<>();
       for (ActivateToolWindowAction action : actions) {
-        ToolWindow tw = twManager.getToolWindow(action.getToolWindowId());
+        ToolWindow tw = toolWindowManager.getToolWindow(action.getToolWindowId());
         if (tw.isAvailable()) {
           windows.add(tw);
         }
@@ -632,7 +629,7 @@ public class Switcher extends AnAction implements DumbAware {
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
       if (!myPinned) {
-        new DumbAwareAction(null, null, null) {
+        new DumbAwareAction("Suppress All Actions to Activate a Toolwindow", null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             //suppress all actions to activate a toolwindow : IDEA-71277
@@ -864,12 +861,6 @@ public class Switcher extends AnAction implements DumbAware {
       focusCycleRoot.setFocusTraversalKeys(focusTraversalType, set);
     }
 
-    @Deprecated
-    @NotNull
-    protected List<VirtualFile> getFiles(@NotNull Project project) {
-      throw new UnsupportedOperationException("deprecated");
-    }
-
     @NotNull
     private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
       List<VirtualFile> recentFiles = EditorHistoryManager.getInstance(project).getFileList();
@@ -1029,9 +1020,8 @@ public class Switcher extends AnAction implements DumbAware {
         }
         else if (value instanceof ToolWindow) {
           final ToolWindow toolWindow = (ToolWindow)value;
-          if (twManager instanceof ToolWindowManagerImpl) {
-            ToolWindowManagerImpl manager = (ToolWindowManagerImpl)twManager;
-            manager.hideToolWindow(((ToolWindowImpl)toolWindow).getId(), false, false);
+          if (toolWindowManager instanceof ToolWindowManagerImpl) {
+            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(((ToolWindowImpl)toolWindow).getId(), false, false);
           }
           else {
             toolWindow.hide(null);
@@ -1069,10 +1059,6 @@ public class Switcher extends AnAction implements DumbAware {
 
     private boolean isFilesVisible() {
       return files.getModel().getSize() > 0;
-    }
-
-    private boolean isToolWindowsSelected() {
-      return getSelectedList() == toolWindows;
     }
 
     private void cancel() {
@@ -1383,8 +1369,8 @@ public class Switcher extends AnAction implements DumbAware {
           myComponent.files.getEmptyText().setText("Press 'Enter' to search in Project");
         }
         else {
-          myComponent.files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
-          myComponent.toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          myComponent.files.getEmptyText().setText(StatusText.getDefaultEmptyText());
+          myComponent.toolWindows.getEmptyText().setText(StatusText.getDefaultEmptyText());
         }
         refreshSelection();
       }
@@ -1410,7 +1396,7 @@ public class Switcher extends AnAction implements DumbAware {
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
       return "<html>"
              + IdeBundle.message("recent.files.checkbox.label")
-             + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
+             + " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
              + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
              + "</html>";
     }

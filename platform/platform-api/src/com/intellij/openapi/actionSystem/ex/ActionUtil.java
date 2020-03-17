@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
@@ -21,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,10 +20,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +38,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class ActionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ex.ActionUtil");
+public final class ActionUtil {
+  private static final Logger LOG = Logger.getInstance(ActionUtil.class);
   @NonNls private static final String WAS_ENABLED_BEFORE_DUMB = "WAS_ENABLED_BEFORE_DUMB";
   @NonNls public static final String WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = "WOULD_BE_ENABLED_IF_NOT_DUMB_MODE";
   @NonNls private static final String WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = "WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE";
@@ -174,6 +159,9 @@ public class ActionUtil {
     if (edt && insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();
     }
+
+    action.applyTextOverride(e);
+
     try {
       if (beforeActionPerformed) {
         action.beforeActionPerformedUpdate(e);
@@ -291,28 +279,12 @@ public class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          action.actionPerformed(e);
-        }
-        catch (IndexNotReadyException ex) {
-          LOG.info(ex);
-          showDumbModeWarning(e);
-        }
-      }
-
-      @Override
-      public String toString() {
-        return action + " of " + action.getClass();
-      }
-    };
-
-    if (action.startInTransaction()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(runnable);
-    } else {
-      runnable.run();
+    try {
+      action.actionPerformed(e);
+    }
+    catch (IndexNotReadyException ex) {
+      LOG.info(ex);
+      showDumbModeWarning(e);
     }
   }
   @NotNull
@@ -352,11 +324,11 @@ public class ActionUtil {
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {
-    return ContainerUtil.notNullize(UIUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
+    return ContainerUtil.notNullize(ComponentUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
   }
 
   public static void clearActions(@NotNull JComponent component) {
-    UIUtil.putClientProperty(component, AnAction.ACTIONS_KEY, null);
+    ComponentUtil.putClientProperty(component, AnAction.ACTIONS_KEY, null);
   }
 
   public static void copyRegisteredShortcuts(@NotNull JComponent to, @NotNull JComponent from) {
@@ -489,11 +461,6 @@ public class ActionUtil {
       }
       invokeAction(action, component, place, null, null);
     };
-  }
-
-  @NotNull
-  public static ActionListener createActionListener(@NotNull AnAction action, @NotNull Component component, @NotNull String place) {
-    return e -> invokeAction(action, component, place, null, null);
   }
 
   private static class ActionUpdateData {

@@ -47,7 +47,7 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
@@ -76,7 +76,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
-    assertThat(watcher.isOperational).isFalse()
+    assertFalse(watcher.isOperational)
     watchedPaths += tempDir.root.path
     startup(watcher) { path ->
       if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
@@ -92,7 +92,9 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @After fun tearDown() {
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
-    shutdown(watcher)
+    if (this::watcher.isInitialized) {
+      shutdown(watcher)
+    }
 
     runInEdtAndWait {
       runWriteAction { root.delete(this) }
@@ -107,7 +109,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val dir = tempDir.newFolder("dir")
     val r1 = watch(dir)
     val r2 = watch(dir)
-    assertThat(r1 == r2).isFalse()
+    assertNotSame(r1, r2)
   }
 
   @Test fun testFileRoot() {
@@ -205,8 +207,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val pseudoDir = File(file, "sub/zip")
     refresh(root)
 
-    val checkRoots = if (SystemInfo.isLinux) WatchStatus.CHECK_NOT_WATCHED else WatchStatus.CHECK_WATCHED
-    watch(pseudoDir, false, checkRoots = checkRoots)
+    watch(pseudoDir, false, checkRoots = !SystemInfo.isLinux)
     assertEvents({ file.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
@@ -434,8 +435,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(root)
     assertEvents(
       {
-        assertTrue(dir.deleteRecursively());
-        assertTrue(dir.mkdir());
+        assertTrue(dir.deleteRecursively())
+        assertTrue(dir.mkdir())
         arrayOf(file1, file2).forEach { it.writeText("text") } },
       mapOf(file1 to 'U', file2 to 'U'))
   }
@@ -449,7 +450,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(root)
     assertEvents(
       {
-        assertTrue(root.deleteRecursively());
+        assertTrue(root.deleteRecursively())
         assertTrue(root.mkdir())
         if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
         arrayOf (file1, file2).forEach { it.writeText("text") }
@@ -493,8 +494,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
 
-    val checkRoots = if (SystemInfo.isLinux) WatchStatus.CHECK_NOT_WATCHED else WatchStatus.CHECK_WATCHED
-    val rootRequest = watch(fsRoot, checkRoots = checkRoots)
+    val rootRequest = watch(fsRoot, checkRoots = !SystemInfo.isLinux)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY)
     unwatch(rootRequest)
 
@@ -573,7 +573,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents({
-                   assertTrue(root.renameTo(root_bak));
+                   assertTrue(root.renameTo(root_bak))
                    assertTrue(root_copy.renameTo(root))
                  }, mapOf(file to 'U'))
     assertTrue(vFile.isValid)
@@ -604,7 +604,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(file)
     assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*ro)) }, mapOf(file to 'P'))
-    assertThat(vFile.isWritable).isFalse()
+    assertFalse(vFile.isWritable)
     assertEvents({ PlatformTestUtil.assertSuccessful(GeneralCommandLine(*rw)) }, mapOf(file to 'P'))
     assertTrue(vFile.isWritable)
   }
@@ -618,19 +618,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
   @Test fun testUncRoot() {
     IoTestUtil.assumeWindows()
-    watch(File("\\\\SRV\\share\\path"), checkRoots = WatchStatus.CHECK_NOT_WATCHED)
+    watch(File("\\\\SRV\\share\\path"), checkRoots = false)
   }
 
   //<editor-fold desc="Helpers">
-  private enum class WatchStatus { CHECK_WATCHED, CHECK_NOT_WATCHED, DO_NOT_CHECK }
-
-  private fun watch(file: File, recursive: Boolean = true, checkRoots: WatchStatus = WatchStatus.CHECK_WATCHED): LocalFileSystem.WatchRequest {
+  private fun watch(file: File, recursive: Boolean = true, checkRoots: Boolean = true): LocalFileSystem.WatchRequest {
     val request = watch(watcher, file, recursive)
-    @Suppress("NON_EXHAUSTIVE_WHEN")
-    when (checkRoots) {
-      WatchStatus.CHECK_WATCHED -> assertThat(watcher.manualWatchRoots).doesNotContain(file.path)
-      WatchStatus.CHECK_NOT_WATCHED -> assertThat(watcher.manualWatchRoots).contains(file.path)
-    }
+    assertThat(watcher.manualWatchRoots).let { if (checkRoots) it.doesNotContain(file.path) else it.contains(file.path) }
     return request
   }
 
@@ -667,7 +661,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()
-    assertThat(actual).isEqualTo(expected)
+    assertEquals(expected, actual)
   }
   //</editor-fold>
 }

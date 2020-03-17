@@ -18,7 +18,6 @@
 package com.intellij.codeInspection.dataFlow
 
 import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
@@ -43,7 +42,7 @@ interface TransferTarget {
   /** @return next instruction states assuming no traps */
   fun dispatch(state: DfaMemoryState, runner: DataFlowRunner) : List<DfaInstructionState> = emptyList()
 }
-data class ExceptionTransfer(val throwable: DfaPsiType) : TransferTarget {
+data class ExceptionTransfer(val throwable: TypeConstraint) : TransferTarget {
   override fun toString(): String = "Exception($throwable)"
 }
 data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val toFlush: List<DfaVariableValue>) : TransferTarget {
@@ -144,36 +143,40 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
     return head?.dispatch(this) ?: target.dispatch(state, runner)
   }
 
-  internal fun processCatches(thrownValue: DfaPsiType?,
+  internal fun processCatches(thrownValue: TypeConstraint,
                               catches: Map<PsiCatchSection, ControlFlow.ControlFlowOffset>): List<DfaInstructionState> {
     val result = arrayListOf<DfaInstructionState>()
     for ((catchSection, jumpOffset) in catches) {
       val param = catchSection.parameter ?: continue
       if (throwableType == null) {
-        throwableType = thrownValue?.asConstraint() ?: TypeConstraint.empty()
+        throwableType = thrownValue
       }
 
       for (caughtType in allCaughtTypes(param)) {
-        throwableType?.withInstanceofValue(caughtType)?.let { constraint ->
-          result.add(DfaInstructionState(runner.getInstruction(jumpOffset.instructionOffset), stateForCatchClause(param, constraint)))
+        val caught = throwableType!!.meet(caughtType)
+        if (caught != TypeConstraints.BOTTOM) {
+          result.add(DfaInstructionState(runner.getInstruction(jumpOffset.instructionOffset), stateForCatchClause(param, caught)))
         }
 
-        throwableType = throwableType?.withNotInstanceofValue(caughtType) ?: return result
+        val negated = caughtType.tryNegate()
+        if (negated != null) {
+          throwableType = throwableType?.meet(negated)
+          if (throwableType == TypeConstraints.BOTTOM) return result
+        }
       }
     }
     return result + dispatch()
   }
 
-  private fun allCaughtTypes(param: PsiParameter): List<DfaPsiType> {
+  private fun allCaughtTypes(param: PsiParameter): List<TypeConstraint> {
     val psiTypes = param.type.let { if (it is PsiDisjunctionType) it.disjunctions else listOfNotNull(it) }
-    return psiTypes.map { runner.factory.createDfaType(it) }
+    return psiTypes.map { TypeConstraints.instanceOf(it) }
   }
 
   private fun stateForCatchClause(param: PsiParameter, constraint: TypeConstraint): DfaMemoryState {
     val catchingCopy = state.createCopy()
     val value = runner.factory.varFactory.createVariableValue(param)
-    catchingCopy.applyFact(value, DfaFactType.TYPE_CONSTRAINT, constraint)
-    catchingCopy.applyFact(value, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+    catchingCopy.meetDfType(value, constraint.asDfType().meet(DfaNullability.NOT_NULL.asDfType()))
     return catchingCopy
   }
 

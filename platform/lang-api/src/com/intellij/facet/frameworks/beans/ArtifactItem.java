@@ -7,10 +7,12 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
 @Tag("item")
+@ApiStatus.Internal
 public class ArtifactItem {
   @Property(surroundWithTag = false)
   @XCollection

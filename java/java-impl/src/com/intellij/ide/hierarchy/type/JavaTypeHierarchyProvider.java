@@ -2,9 +2,9 @@
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.ide.hierarchy.HierarchyBrowser;
-import com.intellij.ide.hierarchy.HierarchyProvider;
-import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
+import com.intellij.ide.hierarchy.newAPI.TypeHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class JavaTypeHierarchyProvider implements HierarchyProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.JavaTypeHierarchyProvider");
+  private static final Logger LOG = Logger.getInstance(JavaTypeHierarchyProvider.class);
   @Override
   public PsiElement getTarget(@NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -75,8 +75,8 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
   @Override
   public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
     final TypeHierarchyBrowser browser = (TypeHierarchyBrowser)hierarchyBrowser;
-    final String typeName =
-      browser.isInterface() ? TypeHierarchyBrowserBase.SUBTYPES_HIERARCHY_TYPE : TypeHierarchyBrowserBase.TYPE_HIERARCHY_TYPE;
+    final HierarchyScopeType typeName =
+      browser.isInterface() ? TypeHierarchyBrowserBase.getSubtypesHierarchyType() : TypeHierarchyBrowserBase.getTypeHierarchyType();
     browser.changeView(typeName);
   }
 }

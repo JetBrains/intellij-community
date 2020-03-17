@@ -407,8 +407,9 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       final Presentation presentation = getTemplatePresentation();
       presentation.setIcon(icon);
 
-      final Keymap active = KeymapManager.getInstance().getActiveKeymap();
-      if (active != null) {
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        final Keymap active = keymapManager.getActiveKeymap();
         final Shortcut[] shortcuts = active.getShortcuts("NewElement");
         setShortcutSet(new CustomShortcutSet(shortcuts));
       }

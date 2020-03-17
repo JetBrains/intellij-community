@@ -16,7 +16,6 @@
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
-import com.intellij.openapi.diff.impl.splitter.Transformation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -30,6 +29,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
 public class DiffDividerDrawUtil {
   public static final BasicStroke BOLD_DOTTED_STROKE =
@@ -90,8 +91,6 @@ public class DiffDividerDrawUtil {
                                                            @NotNull DividerPaintable paintable) {
     final List<DividerPolygon> polygons = new ArrayList<>();
 
-    final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
-
     final LineRange leftInterval = getVisibleInterval(editor1);
     final LineRange rightInterval = getVisibleInterval(editor2);
 
@@ -104,7 +103,7 @@ public class DiffDividerDrawUtil {
 
         if (isIntervalVisible(editor1, startLine1, endLine1) ||
             isIntervalVisible(editor2, startLine2, endLine2)) {
-          polygons.add(createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, dottedBorder));
+          polygons.add(createPolygon(editor1, editor2, startLine1, endLine1, startLine2, endLine2, fillColor, borderColor, dottedBorder));
         }
         return true;
       }
@@ -124,8 +123,6 @@ public class DiffDividerDrawUtil {
                                                                @NotNull DividerSeparatorPaintable paintable) {
     final List<DividerSeparator> separators = new ArrayList<>();
 
-    final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
-
     final LineRange leftInterval = getVisibleInterval(editor1);
     final LineRange rightInterval = getVisibleInterval(editor2);
 
@@ -138,43 +135,41 @@ public class DiffDividerDrawUtil {
       if (leftInterval.start > line1 + 1 && rightInterval.start > line2 + 1) return true;
       if (leftInterval.end < line1 && rightInterval.end < line2) return false;
 
-      separators.add(createSeparator(transformations, line1, line2, height1, height2, scheme));
+      separators.add(createSeparator(editor1, editor2, line1, line2, height1, height2, scheme));
       return true;
     });
 
     return separators;
   }
 
-  @NotNull
-  private static Transformation getTransformation(@NotNull final Editor editor) {
-    return (line) -> {
-      int yOffset = editor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
-
-      final JComponent header = editor.getHeaderComponent();
-      int headerOffset = header == null ? 0 : header.getHeight();
-
-      return yOffset - editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
-    };
+  private static int getEditorTopOffset(@NotNull final Editor editor) {
+    final JComponent header = editor.getHeaderComponent();
+    int headerOffset = header == null ? 0 : header.getHeight();
+    return -editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
   }
 
   @NotNull
-  private static DividerPolygon createPolygon(@NotNull Transformation[] transformations,
+  private static DividerPolygon createPolygon(@NotNull Editor editor1, @NotNull Editor editor2,
                                               int startLine1, int endLine1,
                                               int startLine2, int endLine2,
                                               @Nullable Color fillColor, @Nullable Color borderColor, boolean dottedBorder) {
-    int start1 = transformations[0].transform(startLine1);
-    int end1 = transformations[0].transform(endLine1);
-    int start2 = transformations[1].transform(startLine2);
-    int end2 = transformations[1].transform(endLine2);
-    return new DividerPolygon(start1, start2, end1, end2, fillColor, borderColor, dottedBorder);
+    int topOffset1 = getEditorTopOffset(editor1);
+    int topOffset2 = getEditorTopOffset(editor2);
+    DiffDrawUtil.MarkerRange range1 = DiffDrawUtil.getGutterMarkerPaintRange(editor1, startLine1, endLine1);
+    DiffDrawUtil.MarkerRange range2 = DiffDrawUtil.getGutterMarkerPaintRange(editor2, startLine2, endLine2);
+    return new DividerPolygon(range1.y1 + topOffset1, range2.y1 + topOffset2,
+                              range1.y2 + topOffset1, range2.y2 + topOffset2,
+                              fillColor, borderColor, dottedBorder);
   }
 
   @NotNull
-  private static DividerSeparator createSeparator(@NotNull Transformation[] transformations,
+  private static DividerSeparator createSeparator(@NotNull Editor editor1, @NotNull Editor editor2,
                                                   int line1, int line2, int height1, int height2,
                                                   @Nullable EditorColorsScheme scheme) {
-    int start1 = transformations[0].transform(line1);
-    int start2 = transformations[1].transform(line2);
+    int topOffset1 = getEditorTopOffset(editor1);
+    int topOffset2 = getEditorTopOffset(editor2);
+    int start1 = lineToY(editor1, line1) + topOffset1;
+    int start2 = lineToY(editor2, line2) + topOffset2;
     return new DividerSeparator(start1, start2, start1 + height1, start2 + height2, scheme);
   }
 

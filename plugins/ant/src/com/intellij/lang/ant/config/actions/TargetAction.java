@@ -31,8 +31,6 @@ import java.util.Collections;
 import java.util.List;
 
 public final class TargetAction extends DumbAwareAction {
-  public static final String DEFAULT_TARGET_NAME = AntBundle.message("ant.target.name.default.target");
-
   private final String myBuildName;
   private final List<String> myTargets;
   private final String myDebugString;
@@ -60,7 +58,7 @@ public final class TargetAction extends DumbAwareAction {
     for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFileList()) {
       final String name = buildFile.getPresentableName();
       if (name != null && myBuildName.equals(name)) {
-        final List<String> targets = myTargets.size() == 1 && DEFAULT_TARGET_NAME.equals(myTargets.iterator().next()) ? Collections.emptyList() : myTargets;
+        final List<String> targets = myTargets.size() == 1 && getDefaultTargetName().equals(myTargets.iterator().next()) ? Collections.emptyList() : myTargets;
         ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, e.getDataContext(), Collections.emptyList(), AntBuildListener.NULL);
         return;
       }
@@ -70,5 +68,9 @@ public final class TargetAction extends DumbAwareAction {
   @Override
   public String getTemplateText() {
     return "Ant Target";
+  }
+
+  public static String getDefaultTargetName() {
+    return AntBundle.message("ant.target.name.default.target");
   }
 }

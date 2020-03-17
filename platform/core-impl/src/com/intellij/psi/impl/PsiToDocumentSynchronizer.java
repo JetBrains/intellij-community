@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
+  private static final Logger LOG = Logger.getInstance(PsiToDocumentSynchronizer.class);
   private static final Key<Boolean> PSI_DOCUMENT_ATOMIC_ACTION = Key.create("PSI_DOCUMENT_ATOMIC_ACTION");
 
   private final PsiDocumentManagerBase myPsiDocumentManager;

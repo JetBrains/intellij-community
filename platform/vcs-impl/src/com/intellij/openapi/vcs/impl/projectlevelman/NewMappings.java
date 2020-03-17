@@ -76,7 +76,8 @@ public class NewMappings implements Disposable {
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
-    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
+      .usePassThroughInUnitTestMode();
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, (DumbAwareRunnable)() -> {
       if (!myProject.isDisposed()) {
@@ -431,7 +432,6 @@ public class NewMappings implements Disposable {
       activator = updateActiveVcses();
     }
     activator.activate();
-    myFileWatchRequestsManager.ping();
   }
 
   public List<VcsDirectoryMapping> getDirectoryMappings() {

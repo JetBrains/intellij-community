@@ -98,14 +98,11 @@ public class JavaExecutionStack extends XExecutionStack {
       }
     }
 
-    DebugProcessImpl debugProcess = (DebugProcessImpl)descriptor.getDebugProcess();
-    Location location = descriptor.getLocation();
-    if (location != null) {
-      XStackFrame customFrame = debugProcess.getPositionManager().createStackFrame(stackFrameProxy, debugProcess, location);
-      if (customFrame != null) {
-        return customFrame;
-      }
+    XStackFrame customFrame = myDebugProcess.getPositionManager().createStackFrame(descriptor);
+    if (customFrame != null) {
+      return customFrame;
     }
+
     return new JavaStackFrame(descriptor, true);
   }
 

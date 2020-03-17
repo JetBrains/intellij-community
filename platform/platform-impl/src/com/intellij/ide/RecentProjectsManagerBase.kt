@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
-import com.intellij.configurationStore.readProjectNameFile
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
@@ -10,16 +9,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -33,7 +29,6 @@ import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
@@ -43,10 +38,13 @@ import com.intellij.util.ui.UIUtil
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
-import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.IIOImage
@@ -61,8 +59,6 @@ import kotlin.collections.component2
 
 /**
  * Used directly by IntelliJ IDEA.
- *
- * @see RecentDirectoryProjectsManager base class primary for minor IDEs on IntelliJ Platform
  */
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
@@ -99,13 +95,13 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
 
-  override fun getState(): RecentProjectManagerState {
+  final override fun getState(): RecentProjectManagerState {
     synchronized(stateLock) {
       // https://youtrack.jetbrains.com/issue/TBX-3756
       @Suppress("DEPRECATION")
       state.recentPaths.clear()
       @Suppress("DEPRECATION")
-      state.recentPaths.addAll(ContainerUtil.reverse(state.additionalInfo.keys.toList()))
+      state.recentPaths.addAll(state.additionalInfo.keys.reversed())
       if (state.pid == null) {
         //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
         state.pid = null
@@ -120,7 +116,15 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun loadState(state: RecentProjectManagerState) {
+  final override fun noStateLoaded() {
+    val old = service<OldRecentDirectoryProjectsManager>().loadedState ?: return
+    val newState = RecentProjectManagerState()
+    newState.copyFrom(old)
+    newState.intIncrementModificationCount()
+    loadState(newState)
+  }
+
+  final override fun loadState(state: RecentProjectManagerState) {
     synchronized(stateLock) {
       this.state = state
       state.pid = null
@@ -130,9 +134,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
-      if (state.recentPaths.isNotEmpty() && state.recentPaths.size != state.additionalInfo.size) {
-        val existingPaths = state.recentPaths.toSet()
-        state.additionalInfo.keys.removeIf { !existingPaths.contains(it) }
+      if (state.recentPaths.isNotEmpty()) {
+        if (state.recentPaths.size != state.additionalInfo.size) {
+          convertToSystemIndependentPaths(state.recentPaths)
+          val existingPaths = state.recentPaths.toSet()
+          state.additionalInfo.keys.removeIf {
+            !existingPaths.contains(it)
+          }
+        }
       }
     }
   }
@@ -143,7 +152,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       return
     }
 
-    val oldInfoMap: MutableMap<String, RecentProjectMetaInfo> = THashMap()
+    convertToSystemIndependentPaths(openPaths)
+
+    val oldInfoMap = mutableMapOf<String, RecentProjectMetaInfo>()
     for (path in openPaths) {
       val info = state.additionalInfo.remove(path)
       if (info != null) {
@@ -151,7 +162,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       }
     }
 
-    for (path in ContainerUtil.reverse(openPaths)) {
+    for (path in openPaths.asReversed()) {
       val info = oldInfoMap.get(path) ?: RecentProjectMetaInfo()
       info.opened = true
       state.additionalInfo.put(path, info)
@@ -160,11 +171,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     modCounter.incrementAndGet()
   }
 
-  override fun removePath(path: String?) {
-    if (path == null) {
-      return
-    }
-
+  override fun removePath(path: String) {
     synchronized(stateLock) {
       if (state.additionalInfo.remove(path) != null) {
         modCounter.incrementAndGet()
@@ -269,7 +276,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
   open fun getProjectPath(project: Project): String? {
-    return PathUtil.toSystemIndependentName(project.presentableUrl)
+    return FileUtilRt.toSystemIndependentName(project.presentableUrl ?: return null)
   }
 
   // open for Rider
@@ -392,7 +399,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
     get() = synchronized(stateLock) {
-      return ContainerUtil.reverse(ContainerUtil.findAll(state.additionalInfo.entries) { it.value.opened })
+      return state.additionalInfo.entries.filter { it.value.opened }.asReversed()
     }
 
   override fun getGroups(): List<ProjectGroup> {
@@ -411,7 +418,17 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun removeGroup(group: ProjectGroup) {
     synchronized(stateLock) {
+      for (path in group.projects) {
+        state.additionalInfo.remove(path)
+        for (anotherGroup in state.groups) {
+          if (anotherGroup !== group) {
+            group.removeProject(path)
+          }
+        }
+      }
+
       state.groups.remove(group)
+      modCounter.incrementAndGet()
     }
   }
 
@@ -568,17 +585,31 @@ private fun readProjectName(path: String): String {
     return FileUtilRt.getNameWithoutExtension(file.fileName.toString())
   }
 
-  val nameFile = file.resolve(Project.DIRECTORY_STORE_FOLDER).resolve(ProjectImpl.NAME_FILE)
-  try {
-    val result = readProjectNameFile(nameFile)
-    if (result != null) {
-      return result
-    }
-  }
-  catch (ignore: NoSuchFileException) { }
-  catch (ignored: IOException) { }
-
-  return file.fileName?.toString() ?: "<unknown>"
+  val projectDir = file.resolve(Project.DIRECTORY_STORE_FOLDER)
+  return JpsPathUtil.readProjectName(projectDir) ?:
+         JpsPathUtil.getDefaultProjectName(projectDir)
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
+
+private fun convertToSystemIndependentPaths(list: MutableList<String>) {
+  list.replaceAll {
+    FileUtilRt.toSystemIndependentName(it)
+  }
+}
+
+@Service
+@State(name = "RecentDirectoryProjectsManager", storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)])
+private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
+  internal var loadedState: RecentProjectManagerState? = null
+
+  companion object {
+    private val emptyState = RecentProjectManagerState()
+  }
+
+  override fun loadState(state: RecentProjectManagerState) {
+    loadedState = state
+  }
+
+  override fun getState() = emptyState
+}

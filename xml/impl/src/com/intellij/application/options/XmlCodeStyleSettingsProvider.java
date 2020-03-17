@@ -24,12 +24,10 @@ import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @deprecated Methods moved to {@link XmlLanguageCodeStyleSettingsProvider}
  */
+@Deprecated
 public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
-
-  public static final String CONFIGURABLE_DISPLAY_NAME = ApplicationBundle.message("title.xml");
-
   @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
@@ -48,11 +46,15 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
   public String getConfigurableDisplayName() {
-    return CONFIGURABLE_DISPLAY_NAME;
+    return getConfigurableDisplayNameText();
   }
 
   @Override
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return new XmlCodeStyleSettings(settings);
+  }
+
+  public static String getConfigurableDisplayNameText() {
+    return ApplicationBundle.message("title.xml");
   }
 }

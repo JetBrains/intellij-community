@@ -2,23 +2,47 @@
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.diff.tools.util.base.DiffViewerListener
+import com.intellij.diff.util.Range
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
-import kotlin.properties.Delegates.observable
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
-abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(protected val viewer: T,
-                                                                          protected val componentFactory: GHPREditorReviewThreadComponentFactory)
-  : GHPRDiffViewerReviewThreadsHandler {
+abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(private val commentableRangesModel: SingleValueModel<List<Range>?>,
+                                                                          private val reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
+                                                                          protected val viewer: T) {
 
   protected abstract val viewerReady: Boolean
 
-  override var mappings by observable<List<GHPRDiffReviewThreadMapping>>(emptyList()) { _, _, newValue ->
-    if (viewerReady) updateThreads(newValue)
+  init {
+    update()
+    viewer.addListener(object : DiffViewerListener() {
+      override fun onAfterRediff() {
+        update()
+      }
+    })
+    commentableRangesModel.addValueChangedListener {
+      if (viewerReady) {
+        markCommentableRanges(commentableRangesModel.value)
+      }
+    }
+    reviewThreadsModel.addValueChangedListener {
+      if (viewerReady) {
+        showThreads(reviewThreadsModel.value)
+      }
+    }
+  }
+
+  private fun update() {
+    if (viewerReady) {
+      markCommentableRanges(commentableRangesModel.value)
+      showThreads(reviewThreadsModel.value)
+    }
   }
 
   @CalledInAwt
-  abstract fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>)
+  abstract fun markCommentableRanges(ranges: List<Range>?)
 
-  override fun dispose() {}
+  @CalledInAwt
+  abstract fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?)
 }

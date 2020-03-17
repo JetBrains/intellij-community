@@ -37,13 +37,6 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "constant.value.variable.use.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "constant.value.variable.use.problem.descriptor");
@@ -104,16 +97,18 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      final PsiStatement body = statement.getBody();
-      checkCondition(condition, body);
+      checkLoop(statement);
     }
 
     @Override
     public void visitForStatement(PsiForStatement statement) {
       super.visitForStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      final PsiStatement body = statement.getBody();
+      checkLoop(statement);
+    }
+
+    private void checkLoop(PsiConditionalLoopStatement loop) {
+      final PsiExpression condition = loop.getCondition();
+      final PsiStatement body = loop.getBody();
       checkCondition(condition, body);
     }
 

@@ -34,6 +34,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
-  public static final String NAME = ProjectBundle.message("modules.classpath.title");
+  /**
+   * Use {code {@link #getName()}} instead
+   */
+  @Deprecated
+  public static final String NAME = "Dependencies";
 
   private ClasspathPanelImpl myPanel;
   private ClasspathFormatPanel myClasspathFormatPanel;
@@ -66,7 +71,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   @Override
   public String getDisplayName() {
-    return NAME;
+    return getName();
   }
 
   @Override
@@ -138,7 +143,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
-  public void setSdk(final Sdk newJDK) {
+  public void setSdk(@Nullable final Sdk newJDK) {
     final ModifiableRootModel model = getModel();
     if (newJDK != null) {
       model.setSdk(newJDK);
@@ -198,5 +203,9 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       canApply();
       ClasspathStorage.setStorageType(rootModel, getSelectedClasspathFormat());
     }
+  }
+
+  public static String getName() {
+    return ProjectBundle.message("modules.classpath.title");
   }
 }

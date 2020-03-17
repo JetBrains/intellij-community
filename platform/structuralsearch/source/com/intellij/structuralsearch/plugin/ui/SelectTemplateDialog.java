@@ -251,8 +251,4 @@ public class SelectTemplateDialog extends DialogWrapper {
       return configurations.toArray(Configuration.EMPTY_ARRAY);
     }
   }
-
-  public void selectConfiguration(String name) {
-    existingTemplatesComponent.selectConfiguration(name);
-  }
 }

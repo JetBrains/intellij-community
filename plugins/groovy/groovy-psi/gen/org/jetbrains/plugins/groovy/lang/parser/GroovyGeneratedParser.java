@@ -1,3 +1,5 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -43,6 +45,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     }
     else if (t == BLOCK_LAMBDA_BODY) {
       r = block_lambda_body(b, l + 1);
+    }
+    else if (t == BLOCK_STATEMENT) {
+      r = block_statement(b, l + 1);
     }
     else if (t == CLOSURE) {
       r = closure(b, l + 1);

@@ -680,7 +680,7 @@ public class MavenIndex implements MavenSearchIndex {
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
-      return new PersistentHashMap<>(f, EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
+      return new PersistentHashMap<>(f.toPath(), EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
     public void close(boolean releaseIndexContext) throws MavenIndexException {

@@ -36,7 +36,7 @@ import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROpe
  * @author mike
  */
 public class SplitIfAction extends BaseElementAtCaretIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.SplitIfAction");
+  private static final Logger LOG = Logger.getInstance(SplitIfAction.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {

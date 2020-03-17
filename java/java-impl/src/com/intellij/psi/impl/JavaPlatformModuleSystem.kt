@@ -4,7 +4,7 @@ package com.intellij.psi.impl
 import com.intellij.codeInsight.JavaModuleSystemEx
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.JavaErrorMessages
+import com.intellij.codeInsight.daemon.JavaErrorBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
@@ -52,7 +52,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
               val test = index.isInTestSourceContent(useVFile)
               val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
               if (dirs.isEmpty()) {
-                return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("package.not.found", target.qualifiedName))
+                return if (quick) ERR else ErrorWithFixes(
+                  JavaErrorBundle.message("package.not.found", target.qualifiedName))
               }
               val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
               return when {
@@ -98,7 +99,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
         if (!isRoot) {
           return if (quick) ERR else ErrorWithFixes(
-            JavaErrorMessages.message("module.access.not.in.graph", packageName, targetName),
+            JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
             listOf(AddModulesOptionFix(module, targetName)))
         }
       }
@@ -114,8 +115,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           else -> emptyList()
         }
         return when (useModule) {
-          null -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetName), fixes)
-          else -> ErrorWithFixes(JavaErrorMessages.message("module.access.from.named", packageName, targetName, useName), fixes)
+          null -> ErrorWithFixes(
+            JavaErrorBundle.message("module.access.from.unnamed", packageName, targetName), fixes)
+          else -> ErrorWithFixes(
+            JavaErrorBundle.message("module.access.from.named", packageName, targetName, useName), fixes)
         }
       }
 
@@ -123,14 +126,16 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         return when {
           quick -> ERR
           PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
-            JavaErrorMessages.message("module.access.does.not.read", packageName, targetName, useName),
+            JavaErrorBundle.message("module.access.does.not.read", packageName, targetName, useName),
             listOf(AddRequiresDirectiveFix(useModule, targetName)))
-          else -> ErrorWithFixes(JavaErrorMessages.message("module.access.bad.name", packageName, targetName))
+          else -> ErrorWithFixes(
+            JavaErrorBundle.message("module.access.bad.name", packageName, targetName))
         }
       }
     }
     else if (useModule != null) {
-      return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("module.access.to.unnamed", packageName, useModule.name))
+      return if (quick) ERR else ErrorWithFixes(
+        JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
     }
 
     return null

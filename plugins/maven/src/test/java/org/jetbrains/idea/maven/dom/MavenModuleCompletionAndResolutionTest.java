@@ -24,9 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 
 public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  private static final String CREATE_MODULE_INTENTION = MavenDomBundle.message("fix.create.module");
-  private static final String CREATE_MODULE_WITH_PARENT_INTENTION = MavenDomBundle.message("fix.create.module.with.parent");
-
   public void testCompleteFromAllAvailableModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -302,7 +299,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>subDir/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -339,7 +336,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>subDir/new<caret>Module.xml</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -377,7 +374,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</modules>");
     createProjectSubFile("subDir/newModule.xml/empty"); // ensure that "subDir/newModule.xml" exists as a directory
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -418,7 +415,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -458,7 +455,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>${dirName}/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
 
     myFixture.launchAction(i);
@@ -481,7 +478,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -517,7 +514,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_WITH_PARENT_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleWithParentIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -559,7 +556,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>ppp/new<caret>Module</module>" +
                      "</modules>");
 
-    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_WITH_PARENT_INTENTION);
+    IntentionAction i = getIntentionAtCaret(getCreateModuleWithParentIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -605,7 +602,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                                 "  <module>../ppp/new<caret>Module</module>" +
                                 "</modules>"));
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    IntentionAction i = getIntentionAtCaret(parentPom, CREATE_MODULE_WITH_PARENT_INTENTION);
+    IntentionAction i = getIntentionAtCaret(parentPom, getCreateModuleWithParentIntention());
     assertNotNull(i);
     myFixture.launchAction(i);
 
@@ -648,7 +645,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module><caret></module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret(CREATE_MODULE_INTENTION));
+    assertNull(getIntentionAtCaret(getCreateModuleIntention()));
   }
 
   public void testDoesNotShowCreatePomQuickFixExistingModule() {
@@ -676,7 +673,7 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <module>m<caret>odule</module>" +
                      "</modules>");
 
-    assertNull(getIntentionAtCaret(CREATE_MODULE_INTENTION));
+    assertNull(getIntentionAtCaret(getCreateModuleIntention()));
   }
 
   private void assertCreateModuleFixResult(String relativePath, String expectedText) {
@@ -689,5 +686,13 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals(doc, selectedEditor.getDocument());
 
     assertEquals(expectedText, doc.getText());
+  }
+
+  private static String getCreateModuleIntention() {
+    return MavenDomBundle.message("fix.create.module");
+  }
+
+  private static String getCreateModuleWithParentIntention() {
+    return MavenDomBundle.message("fix.create.module.with.parent");
   }
 }

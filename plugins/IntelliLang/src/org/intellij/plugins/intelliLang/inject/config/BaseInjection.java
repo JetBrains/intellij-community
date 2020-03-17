@@ -66,9 +66,14 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @NonNls
   private String myValuePattern = "";
   private Pattern myCompiledValuePattern;
+
+  @NonNls
+  private String myIgnorePattern = "";
+  private Pattern myCompiledIgnorePattern;
+
   private boolean mySingleFile;
 
-  public BaseInjection(@NotNull final String id) {
+  public BaseInjection(@NotNull String id) {
     mySupportId = id;
   }
 
@@ -140,6 +145,22 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public void setSuffix(@NotNull String suffix) {
     mySuffix = suffix;
+  }
+
+  /**
+   * Determines whether injection to host or concatenation must be ignored. If at least one place in concatenation is ignored then
+   * the entire concatenation must be ignored and language must not be injected.
+   */
+  public boolean isIgnoredPlace(PsiElement element) {
+    if (myCompiledIgnorePattern == null) {
+      return false;
+    }
+
+    LiteralTextEscaper<? extends PsiLanguageInjectionHost> textEscaper = ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
+    StringBuilder sb = new StringBuilder();
+    textEscaper.decode(ElementManipulators.getValueTextRange(element), sb);
+
+    return myCompiledIgnorePattern.matcher(StringPattern.newBombedCharSequence(sb)).find();
   }
 
   @Override
@@ -224,6 +245,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     result = 31 * result + myPrefix.hashCode();
     result = 31 * result + mySuffix.hashCode();
     result = 31 * result + myValuePattern.hashCode();
+    result = 31 * result + myIgnorePattern.hashCode();
     return result;
   }
 
@@ -237,6 +259,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myDisplayName = other.getDisplayName();
 
     setValuePattern(other.getValuePattern());
+    setIgnorePattern(other.getIgnorePattern());
     mySingleFile = other.mySingleFile;
 
     myPlaces = other.getInjectionPlaces().clone();
@@ -251,6 +274,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
     setValuePattern(element.getChildText("value-pattern"));
+    setIgnorePattern(element.getChildText("ignore-pattern"));
     mySingleFile = element.getChild("single-file") != null;
     readExternalImpl(element);
     final List<Element> placeElements = element.getChildren("place");
@@ -291,6 +315,9 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     if (StringUtil.isNotEmpty(myValuePattern)) {
       e.addContent(new Element("value-pattern").setText(myValuePattern));
     }
+    if (StringUtil.isNotEmpty(myIgnorePattern)) {
+      e.addContent(new Element("ignore-pattern").setText(myIgnorePattern));
+    }
     if (mySingleFile) {
       e.addContent(new Element("single-file"));
     }
@@ -322,9 +349,31 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
         myCompiledValuePattern = null;
       }
     }
-    catch (Exception e1) {
+    catch (Exception ex) {
       myCompiledValuePattern = null;
-      Logger.getInstance(getClass().getName()).info("Invalid pattern", e1);
+      Logger.getInstance(getClass().getName()).info("Invalid value-pattern", ex);
+    }
+  }
+
+  @NotNull
+  public String getIgnorePattern() {
+    return myIgnorePattern;
+  }
+
+  public void setIgnorePattern(@RegExp @Nullable String pattern) {
+    try {
+      if (pattern != null && pattern.length() > 0) {
+        myIgnorePattern = pattern;
+        myCompiledIgnorePattern = Pattern.compile(pattern, Pattern.DOTALL);
+      }
+      else {
+        myIgnorePattern = "";
+        myCompiledIgnorePattern = null;
+      }
+    }
+    catch (Exception ex) {
+      myCompiledIgnorePattern = null;
+      Logger.getInstance(getClass().getName()).info("Invalid ignore-pattern", ex);
     }
   }
 
@@ -347,7 +396,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   public boolean isTerminal() {
     return myCompiledValuePattern == null;
   }
-
 
   private static List<TextRange> getMatchingRanges(Matcher matcher, final int length) {
     final List<TextRange> list = new SmartList<>();

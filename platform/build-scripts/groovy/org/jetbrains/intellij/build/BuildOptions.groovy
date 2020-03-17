@@ -104,7 +104,7 @@ class BuildOptions {
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
-   * Metadata is a {@linkplain org.jetbrains.intellij.build.impl.CompilationPartsMetadata} serialized into json format
+   * Metadata is a {@linkplain org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata} serialized into json format
    */
   String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
@@ -136,7 +136,7 @@ class BuildOptions {
    * <p>By default 'development mode' is enabled if build is not running under continuous integration server (TeamCity).</p>
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
-                                                                    System.getProperty("teamcity.buildType.id") == null)
+                                                                    System.getenv("TEAMCITY_VERSION") == null)
 
 
   /**

@@ -38,13 +38,6 @@ public class NonProtectedConstructorInAbstractClassInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.protected.constructor.in.abstract.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "ConstructorNotProtectedInAbstractClass";
   }

@@ -15,12 +15,10 @@
  */
 package com.jetbrains.python.module;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,16 +36,6 @@ public abstract class PyModuleService {
   public static PyModuleService getInstance() {
     return ServiceManager.getService(PyModuleService.class);
   }
-
-  /**
-   * Creates a ModuleBuilder that creates a Python module and runs the specified DirectoryProjectGenerator to perform
-   * further initialization. The showGenerationSettings() method on the generator is not called, and the generateProject() method
-   * receives null as the 'settings' parameter.
-   *
-   * @param generator the generator to run for configuring the project
-   * @return the created module builder instance
-   */
-  public abstract ModuleBuilder createPythonModuleBuilder(DirectoryProjectGenerator generator);
 
 
   public boolean isFileIgnored(@NotNull VirtualFile file) {

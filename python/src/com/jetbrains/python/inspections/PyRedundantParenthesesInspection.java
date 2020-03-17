@@ -29,7 +29,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,13 +45,6 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public boolean myIgnorePercOperator = false;
   public boolean myIgnoreTupleInReturn = false;
   public boolean myIgnoreEmptyBaseClasses = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.redundant.parentheses");
-  }
 
   @NotNull
   @Override
@@ -75,6 +67,10 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   private static boolean isTupleWithUnpacking(@NotNull PyExpression expression) {
     return expression instanceof PyTupleExpression &&
            ContainerUtil.or(((PyTupleExpression)expression).getElements(), PyStarExpression.class::isInstance);
+  }
+
+  private static boolean oneElementTuple(@NotNull PyExpression expression) {
+    return expression instanceof PyTupleExpression && ((PyTupleExpression)expression).getElements().length == 1;
   }
 
   private static boolean isYieldFrom(@NotNull PsiElement element) {
@@ -120,7 +116,8 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (parent instanceof PyReturnStatement || parent instanceof PyYieldExpression) {
-        if (!isTupleWithUnpacking(expression) || (languageLevel.isAtLeast(LanguageLevel.PYTHON38) && !isYieldFrom(parent))) {
+        if (!isTupleWithUnpacking(expression) && !oneElementTuple(expression) ||
+            languageLevel.isAtLeast(LanguageLevel.PYTHON38) && !isYieldFrom(parent)) {
           registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
         }
       }

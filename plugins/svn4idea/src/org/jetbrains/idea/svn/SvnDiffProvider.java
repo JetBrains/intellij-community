@@ -36,7 +36,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, DiffMixin {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnDiffProvider");
+  private static final Logger LOG = Logger.getInstance(SvnDiffProvider.class);
 
   public static final String COMMIT_MESSAGE = "svn:log";
   private static final int BATCH_INFO_SIZE = 20;

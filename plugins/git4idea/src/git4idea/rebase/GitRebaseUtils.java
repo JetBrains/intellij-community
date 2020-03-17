@@ -25,21 +25,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-/**
- * The utilities related to rebase functionality
- */
 public class GitRebaseUtils {
-  public static final String CONTINUE_PROGRESS_TITLE = "Continue Rebase Process...";
-  /**
-   * The logger instance
-   */
+  public static final String CONTINUE_PROGRESS_TITLE = "Continue Rebase Process" + ELLIPSIS;
   private final static Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
 
-  /**
-   * A private constructor for utility class
-   */
   private GitRebaseUtils() {
   }
 
@@ -161,24 +153,13 @@ public class GitRebaseUtils {
   }
 
   /**
-   * Checks if the rebase is in the progress for the specified git root
-   *
-   *
-   * @param project
-   * @param root the git root
-   * @return true if the rebase directory presents in the root
+   * @deprecated Use {@link GitRepository#isRebaseInProgress()}.
    */
   @Deprecated
   public static boolean isRebaseInTheProgress(@NotNull Project project, @NotNull VirtualFile root) {
     return getRebaseDir(project, root) != null;
   }
 
-  /**
-   * Get rebase directory
-   *
-   * @param root the vcs root
-   * @return the rebase directory or null if it does not exist.
-   */
   @Nullable
   public static File getRebaseDir(@NotNull Project project, @NotNull VirtualFile root) {
     GitRepository repository = assertNotNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root));
@@ -253,13 +234,8 @@ public class GitRebaseUtils {
   @NotNull
   static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
     return saver != null && saver.wereChangesSaved() ?
-           "<br/>Local changes were " + toPast(saver.getOperationName()) + " before rebase." :
+           "<br/>Local changes were " + saver.getSaveMethod().getVerbInPast() + " before rebase." :
            "";
-  }
-
-  @NotNull
-  private static String toPast(@NotNull String word) {
-    return word.endsWith("e") ? word + "d" : word + "ed";
   }
 
   @NotNull

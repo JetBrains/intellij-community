@@ -154,10 +154,6 @@ go('a', 'c', 1, 2, 3)
     doTest()
   }
 
-  void testLiteralConstructorUsages() {
-    doTest()
-  }
-
   void testSpreadArguments() {
     doTest()
   }

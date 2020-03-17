@@ -2,37 +2,32 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Function;
 
 public final class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
-  private final Convertor<? super Src, ? extends Dst> mySrcToDstConvertor;
+  private final Function<? super Src, ? extends Dst> mySrcToDstConvertor;
   private final SettingsEditor<Dst> myWrapped;
 
   private final SettingsEditorListener<Dst> myListener;
 
-  public SettingsEditorWrapper(SettingsEditor<Dst> wrapped, Convertor<? super Src, ? extends Dst> convertor) {
+  public SettingsEditorWrapper(SettingsEditor<Dst> wrapped, Function<? super Src, ? extends Dst> convertor) {
     mySrcToDstConvertor = convertor;
     myWrapped = wrapped;
-    myListener = new SettingsEditorListener<Dst>() {
-      @Override
-      public void stateChanged(@NotNull SettingsEditor<Dst> settingsEditor) {
-        fireEditorStateChanged();
-      }
-    };
+    myListener = settingsEditor -> fireEditorStateChanged();
     myWrapped.addSettingsEditorListener(myListener);
   }
 
   @Override
   public void resetEditorFrom(@NotNull Src src) {
-    myWrapped.resetFrom(mySrcToDstConvertor.convert(src));
+    myWrapped.resetFrom(mySrcToDstConvertor.apply(src));
   }
 
   @Override
   public void applyEditorTo(@NotNull Src src) throws ConfigurationException {
-    myWrapped.applyTo(mySrcToDstConvertor.convert(src));
+    myWrapped.applyTo(mySrcToDstConvertor.apply(src));
   }
 
   @Override

@@ -174,7 +174,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
   public JComponent createComponent() {
     // all listeners will be removed when dialog is closed
-    mavenHomeComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.home.directory"),
+    mavenHomeComponent.getComponent().addBrowseFolderListener(MavenProjectBundle.message("maven.select.maven.home.directory"),
                                                               "",
                                                               null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
                                                               TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
@@ -185,9 +185,9 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       }
     });
 
-    settingsFileComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.settings.file"), "", null,
+    settingsFileComponent.getComponent().addBrowseFolderListener(MavenProjectBundle.message("maven.select.maven.settings.file"), "", null,
                                                                  FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    localRepositoryComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.local.repository"), "", null,
+    localRepositoryComponent.getComponent().addBrowseFolderListener(MavenProjectBundle.message("maven.select.local.repository"), "", null,
                                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor());
     return panel;
   }

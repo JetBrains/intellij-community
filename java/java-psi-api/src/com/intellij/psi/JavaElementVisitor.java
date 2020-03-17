@@ -196,12 +196,21 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitVariable(parameter);
   }
 
+  public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    visitVariable(recordComponent);
+  }
+
   public void visitReceiverParameter(PsiReceiverParameter parameter) {
     visitVariable(parameter);
   }
 
   public void visitParameterList(PsiParameterList list) {
     visitElement(list);
+  }
+
+
+  public void visitRecordHeader(PsiRecordHeader recordHeader) {
+    visitElement(recordHeader);
   }
 
   public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
@@ -413,5 +422,17 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitProvidesStatement(PsiProvidesStatement statement) {
     visitModuleStatement(statement);
+  }
+
+  public void visitPattern(PsiPattern pattern) {
+    visitElement(pattern);
+  }
+
+  public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
+    visitPattern(pattern);
+  }
+
+  public void visitPatternVariable(PsiPatternVariable variable) {
+    visitParameter(variable);
   }
 }

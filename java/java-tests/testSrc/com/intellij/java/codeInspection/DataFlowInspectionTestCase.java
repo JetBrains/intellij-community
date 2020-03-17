@@ -18,11 +18,19 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
+import java.util.function.Consumer;
+
 public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected void doTest() {
+    doTestWith(i -> {
+      i.SUGGEST_NULLABLE_ANNOTATIONS = true;
+      i.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    });
+  }
+
+  protected void doTestWith(Consumer<DataFlowInspection> inspectionMutator) {
     DataFlowInspection inspection = new DataFlowInspection();
-    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
-    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    inspectionMutator.accept(inspection);
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }

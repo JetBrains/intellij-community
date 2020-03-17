@@ -33,13 +33,13 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, String text, int offset, final boolean soft) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull String text, int offset, final boolean soft) {
     return getReferencesByElement(element, text, offset, soft, Module.EMPTY_ARRAY);
   }
 
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                               String text,
+                                               @NotNull String text,
                                                int offset,
                                                final boolean soft,
                                                @NotNull final Module... forModules) {

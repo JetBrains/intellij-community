@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -10,6 +10,7 @@ import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
@@ -27,8 +28,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -48,17 +47,11 @@ import java.util.List;
 /**
  * @author peter
  */
-class EventLogConsole {
+final class EventLogConsole {
   private static final Key<String> GROUP_ID = Key.create("GROUP_ID");
   private static final Key<String> NOTIFICATION_ID = Key.create("NOTIFICATION_ID");
 
-  private final NotNullLazyValue<Editor> myLogEditor = new NotNullLazyValue<Editor>() {
-    @NotNull
-    @Override
-    protected Editor compute() {
-      return createLogEditor();
-    }
-  };
+  private final EditorEx myLogEditor;
 
   private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<EditorHyperlinkSupport>() {
     @NotNull
@@ -67,48 +60,41 @@ class EventLogConsole {
       return EditorHyperlinkSupport.get(getConsoleEditor());
     }
   };
+
   private final LogModel myProjectModel;
 
   private String myLastDate;
 
   private List<RangeHighlighter> myNMoreHighlighters;
 
-  EventLogConsole(LogModel model) {
+  EventLogConsole(@NotNull LogModel model, @NotNull Disposable parentDisposable) {
     myProjectModel = model;
-  }
 
-  private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
-    final EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
-    editor.getSettings().setWhitespacesShown(false);
-    installNotificationsFont(editor);
-    myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        if (project == myProjectModel.getProject()) {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      }
+    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+    Disposer.register(parentDisposable, () -> {
+      EditorFactory.getInstance().releaseEditor(myLogEditor);
     });
 
-    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
+    myLogEditor.getSettings().setWhitespacesShown(false);
+    installNotificationsFont(myLogEditor, parentDisposable);
 
-    final ClearLogAction clearLog = new ClearLogAction(this);
+    ((EditorMarkupModel)myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
+
+    ClearLogAction clearLog = new ClearLogAction(this);
     clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(),
-                                       editor.getContentComponent());
+                                       myLogEditor.getContentComponent());
 
-    editor.installPopupHandler(new ContextMenuPopupHandler() {
+    myLogEditor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
       public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
-        final ActionManager actionManager = ActionManager.getInstance();
-        return createPopupActions(actionManager, clearLog, editor, event);
+        return createPopupActions(ActionManager.getInstance(), clearLog, myLogEditor, event);
       }
     });
-    return editor;
   }
 
-  private void installNotificationsFont(@NotNull final EditorEx editor) {
-    final DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
+  private static void installNotificationsFont(@NotNull EditorEx editor, @NotNull Disposable parentDisposable) {
+    DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
       @Override
       public String getEditorFontName() {
         return getConsoleFontName();
@@ -148,7 +134,7 @@ class EventLogConsole {
       }
     };
 
-    ApplicationManager.getApplication().getMessageBus().connect(myProjectModel).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         globalScheme.setDelegate(EditorColorsManager.getInstance().getGlobalScheme());
@@ -238,7 +224,7 @@ class EventLogConsole {
     }
   }
 
-  void doPrintNotification(final Notification notification) {
+  void doPrintNotification(@NotNull Notification notification) {
     Editor editor = getConsoleEditor();
     if (editor.isDisposed()) {
       return;
@@ -370,8 +356,9 @@ class EventLogConsole {
     }
   }
 
+  @NotNull
   public Editor getConsoleEditor() {
-    return myLogEditor.getValue();
+    return myLogEditor;
   }
 
   public void clearNMore() {
@@ -453,11 +440,11 @@ class EventLogConsole {
     return null;
   }
 
-  private static void append(Document document, String s) {
+  private static void append(@NotNull Document document, @NotNull String s) {
     document.insertString(document.getTextLength(), s);
   }
 
-  public static class ClearLogAction extends DumbAwareAction {
+  public static final class ClearLogAction extends DumbAwareAction {
     private final EventLogConsole myConsole;
 
     public ClearLogAction(EventLogConsole console) {

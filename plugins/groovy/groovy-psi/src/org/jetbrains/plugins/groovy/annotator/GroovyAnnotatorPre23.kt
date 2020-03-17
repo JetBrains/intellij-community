@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
@@ -11,6 +12,6 @@ class GroovyAnnotatorPre23(private val holder: AnnotationHolder, private val ver
 
   override fun visitTraitDefinition(traitTypeDefinition: GrTraitTypeDefinition) {
     val keyword = traitTypeDefinition.node.findChildByType(GroovyElementTypes.KW_TRAIT) ?: error("trait without keyword")
-    holder.createErrorAnnotation(keyword, message("unsupported.traits.0", version))
+    holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.traits.0", version)).range(keyword.textRange).create()
   }
 }

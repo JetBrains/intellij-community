@@ -46,12 +46,6 @@ public class DummyEntryPointsTool extends UnusedDeclarationInspectionBase {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.dead.code.entry.points.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return "";
   }

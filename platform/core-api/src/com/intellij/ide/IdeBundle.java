@@ -15,14 +15,11 @@
  */
 package com.intellij.ide;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-/**
- * @author yole
- */
-public class IdeBundle extends AbstractBundle {
+public class IdeBundle extends DynamicBundle {
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return INSTANCE.getMessage(key, params);
   }

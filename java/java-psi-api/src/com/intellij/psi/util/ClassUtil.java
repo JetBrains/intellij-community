@@ -109,7 +109,7 @@ public class ClassUtil {
       private int myCurrentIdx;
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (result[0] == null) {
           super.visitElement(element);
         }
@@ -274,10 +274,10 @@ public class ClassUtil {
     StringBuilder signature = new StringBuilder();
     signature.append("(");
     for (PsiParameter param : method.getParameterList().getParameters()) {
-      signature.append(toAsm(param.getType()));
+      signature.append(getBinaryPresentation(param.getType()));
     }
     signature.append(")");
-    signature.append(toAsm(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
+    signature.append(getBinaryPresentation(Optional.ofNullable(method.getReturnType()).orElse(PsiType.VOID)));
     return signature.toString();
   }
 
@@ -322,14 +322,24 @@ public class ClassUtil {
   }
 
   @NotNull
-  private static String toAsm(@NotNull PsiType psiType) {
+  public static String getClassObjectPresentation(@NotNull PsiType psiType) {
+     return toBinary(psiType, false);
+  }
+
+  @NotNull
+  public static String getBinaryPresentation(@NotNull PsiType psiType) {
+    return toBinary(psiType, true);
+  }
+
+  @NotNull
+  private static String toBinary(@NotNull PsiType psiType, final boolean slashes) {
     return Optional.of(psiType)
                    .map(type -> TypeConversionUtil.erasure(type))
-                   .map(type -> type.accept(createAsmSignatureVisitor()))
+                   .map(type -> type.accept(createBinarySignatureVisitor(slashes)))
                    .orElseGet(() -> psiType.getPresentableText());
   }
 
-  private static PsiTypeVisitor<String> createAsmSignatureVisitor() {
+  private static PsiTypeVisitor<String> createBinarySignatureVisitor(boolean slashes) {
     return new PsiTypeVisitor<String>() {
       @Override
       public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
@@ -344,7 +354,7 @@ public class ClassUtil {
         }
         String jvmClassName = getJVMClassName(aClass);
         if (jvmClassName != null) {
-          jvmClassName = "L" + jvmClassName.replace(".", "/") + ";";
+          jvmClassName = "L" + (slashes ? jvmClassName.replace(".", "/") : jvmClassName) + ";";
         }
         return jvmClassName;
       }

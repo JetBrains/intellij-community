@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +29,7 @@ public class DfaBoxedValue extends DfaValue {
   private final @NotNull DfaVariableValue myWrappedValue;
   private final @Nullable PsiType myType;
 
-  private DfaBoxedValue(@NotNull DfaVariableValue valueToWrap, DfaValueFactory factory, @Nullable PsiType type) {
+  private DfaBoxedValue(@NotNull DfaVariableValue valueToWrap, @NotNull DfaValueFactory factory, @Nullable PsiType type) {
     super(factory);
     myWrappedValue = valueToWrap;
     myType = type;
@@ -48,6 +51,12 @@ public class DfaBoxedValue extends DfaValue {
     return myType;
   }
 
+  @NotNull
+  @Override
+  public DfType getDfType() {
+    return DfTypes.typedObject(myType, Nullability.NOT_NULL);
+  }
+
   public static class Factory {
     private final TIntObjectHashMap<DfaBoxedValue> cachedValues = new TIntObjectHashMap<>();
 
@@ -55,10 +64,6 @@ public class DfaBoxedValue extends DfaValue {
 
     public Factory(DfaValueFactory factory) {
       myFactory = factory;
-    }
-
-    public DfaBoxedValue getBoxedIfExists(DfaVariableValue variable) {
-      return cachedValues.get(variable.getID());
     }
 
     @Nullable
@@ -69,12 +74,9 @@ public class DfaBoxedValue extends DfaValue {
           return qualifier;
         }
       }
-      if (valueToWrap instanceof DfaConstValue || valueToWrap instanceof DfaFactMapValue) {
-        DfaFactMap facts = DfaFactMap.EMPTY
-          .with(DfaFactType.TYPE_CONSTRAINT, type == null ? null : TypeConstraint.exact(myFactory.createDfaType(type)))
-          .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
-          .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.UNBOX.withValue(valueToWrap));
-        return myFactory.getFactFactory().createValue(facts);
+      if (valueToWrap instanceof DfaTypeValue) {
+        DfType dfType = SpecialField.UNBOX.asDfType(valueToWrap.getDfType(), type);
+        return myFactory.fromDfType(dfType);
       }
       if (valueToWrap instanceof DfaVariableValue) {
         int id = valueToWrap.getID();

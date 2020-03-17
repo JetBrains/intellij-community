@@ -1,14 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.io.DigestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -21,22 +18,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class BytecodeAnalysisConverter {
-  private static final ThreadLocalCachedValue<MessageDigest> DIGEST_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
-    @NotNull
-    @Override
-    public MessageDigest create() {
-      return DigestUtil.md5();
-    }
-
-    @Override
-    protected void init(@NotNull MessageDigest value) {
-      value.reset();
-    }
-  };
-
-  public static MessageDigest getMessageDigest() {
-    return DIGEST_CACHE.getValue();
-  }
 
   /**
    * Creates a stable non-negated EKey for given PsiMethod and direction

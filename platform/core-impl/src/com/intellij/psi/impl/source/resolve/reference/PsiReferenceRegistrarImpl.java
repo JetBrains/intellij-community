@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Dmitry Avdeev
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
+  private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new THashMap<>();
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new THashMap<>();
   private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;

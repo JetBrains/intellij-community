@@ -18,7 +18,7 @@ import java.util.List;
 public abstract class Property<T extends RadComponent, V> implements IProperty {
   public static final Property[] EMPTY_ARRAY=new Property[]{};
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.Property");
+  private static final Logger LOG = Logger.getInstance(Property.class);
 
   /**
    * Parent property

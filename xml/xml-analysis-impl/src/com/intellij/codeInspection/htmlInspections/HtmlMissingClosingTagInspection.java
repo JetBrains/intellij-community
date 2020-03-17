@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -49,7 +49,7 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
       return;
     }
 
-    holder.registerProblem(tagNameElement, XmlErrorMessages.message("element.missing.end.tag"),
+    holder.registerProblem(tagNameElement, XmlErrorBundle.message("element.missing.end.tag"),
                            new MissingClosingTagFix(tagName));
   }
 
@@ -65,14 +65,14 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return XmlErrorMessages.message("add.named.closing.tag", myName);
+      return XmlErrorBundle.message("add.named.closing.tag", myName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return XmlErrorMessages.message("add.closing.tag");
+      return XmlErrorBundle.message("add.closing.tag");
     }
 
     @Override

@@ -45,7 +45,7 @@ import java.util.*;
  * @author yole
  */
 public class CopyAbstractMethodImplementationHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CopyAbstractMethodImplementationHandler");
+  private static final Logger LOG = Logger.getInstance(CopyAbstractMethodImplementationHandler.class);
 
   private final Project myProject;
   private final Editor myEditor;

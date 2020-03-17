@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -20,11 +21,11 @@ open class GetFromVersionControlAction : DumbAwareAction() {
       return
     if (e.place == ActionPlaces.WELCOME_SCREEN) {
       presentation.icon = AllIcons.Vcs.Clone
-      presentation.text = "Get from Version Control"
+      presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text")
     }
     else {
       presentation.icon = null
-      presentation.text = "Get from Version Control..."
+      presentation.text = ActionsBundle.message("action.Vcs.VcsClone.text")
     }
   }
 
@@ -40,7 +41,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
 class ProjectFromVersionControlAction : GetFromVersionControlAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.text = "Project from Version Control..."
+    e.presentation.text = ActionsBundle.message("Vcs.VcsClone.Project.text")
   }
 }
 

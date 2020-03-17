@@ -20,7 +20,7 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class InspectionToolsRegistrarCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsRegistrarCore");
+  private static final Logger LOG = Logger.getInstance(InspectionToolsRegistrarCore.class);
   static <T> T instantiateTool(@NotNull Class<T> toolClass) {
     try {
       return ReflectionUtil.newInstance(toolClass);

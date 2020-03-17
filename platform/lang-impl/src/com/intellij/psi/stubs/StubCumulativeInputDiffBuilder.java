@@ -23,27 +23,10 @@ class StubCumulativeInputDiffBuilder extends InputDataDiffBuilder<Integer, Seria
   }
 
   @Override
-  public boolean differentiateWithoutExternalModification(@NotNull Map<Integer, SerializedStubTree> newData,
-                                                          @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
-                                                          @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
-                                                          @NotNull RemovedKeyProcessor<? super Integer> removeProcessor)
-    throws StorageException {
-    return _differentiate(newData, addProcessor, removeProcessor, false);
-  }
-
-  @Override
   public boolean differentiate(@NotNull Map<Integer, SerializedStubTree> newData,
                                @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
                                @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
                                @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
-    return _differentiate(newData, addProcessor, removeProcessor, true);
-  }
-
-  private boolean _differentiate(@NotNull Map<Integer, SerializedStubTree> newData,
-                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
-                                 @NotNull RemovedKeyProcessor<? super Integer> removeProcessor,
-                                 boolean modifyStubIndexes)
-    throws StorageException {
     if (!newData.isEmpty()) {
       SerializedStubTree newSerializedStubTree = newData.values().iterator().next();
       if (myCurrentTree != null) {
@@ -51,15 +34,11 @@ class StubCumulativeInputDiffBuilder extends InputDataDiffBuilder<Integer, Seria
         removeProcessor.process(myInputId, myInputId);
       }
       addProcessor.process(myInputId, newSerializedStubTree, myInputId);
-      if (modifyStubIndexes) {
-        updateStubIndices(newSerializedStubTree);
-      }
+      updateStubIndices(newSerializedStubTree);
     }
     else {
       removeProcessor.process(myInputId, myInputId);
-      if (modifyStubIndexes) {
-        updateStubIndices(null);
-      }
+      updateStubIndices(null);
     }
     return true;
   }

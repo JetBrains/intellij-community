@@ -34,6 +34,8 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
     }
   }
 
+  override fun isSilent(): Boolean = true
+
   override fun getAuthData(project: Project, url: String, login: String): GithubAccountAuthData? {
     return getSuitableAccounts(project, url, login).singleOrNull()?.let { account ->
       return GithubAuthenticationManager.getInstance().getTokenForAccount(account)?.let { GithubAccountAuthData(account, login, it) }

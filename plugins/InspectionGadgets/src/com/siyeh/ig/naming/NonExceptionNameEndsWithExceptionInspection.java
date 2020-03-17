@@ -48,13 +48,6 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.exception.name.ends.with.exception.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.exception.name.ends.with.exception.problem.descriptor");

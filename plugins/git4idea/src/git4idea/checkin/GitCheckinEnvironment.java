@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -87,7 +87,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
   private final Project myProject;
   public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-  private final VcsDirtyScopeManager myDirtyScopeManager;
 
   private VcsUser myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
@@ -95,9 +94,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private boolean myNextCommitSignOff;
   private boolean myNextCommitSkipHook;
 
-  public GitCheckinEnvironment(@NotNull Project project, @NotNull VcsDirtyScopeManager dirtyScopeManager) {
+  public GitCheckinEnvironment(@NotNull Project project) {
     myProject = project;
-    myDirtyScopeManager = dirtyScopeManager;
   }
 
   @Override
@@ -305,7 +303,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       VirtualFile root = repository.getRoot();
       String rootPath = root.getPath();
 
-      List<File> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
+      List<FilePath> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
       if (!unmergedFiles.isEmpty()) {
         throw new VcsException("Committing is not possible because you have unmerged files.");
       }
@@ -549,8 +547,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
                                            @NotNull Set<FilePath> removed,
                                            @NotNull PairConsumer<? super FilePath, ? super FilePath> function) {
     for (GitDiffChange change : changes) {
-      FilePath before = change.getBeforePath();
-      FilePath after = change.getAfterPath();
+      FilePath before = change.beforePath;
+      FilePath after = change.afterPath;
       if (removed.contains(before)) before = null;
       if (added.contains(after)) after = null;
       function.consume(before, after);
@@ -1119,7 +1117,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private void markRootDirty(final VirtualFile root) {
     // Note that the root is invalidated because changes are detected per-root anyway.
     // Otherwise it is not possible to detect moves.
-    myDirtyScopeManager.dirDirtyRecursively(root);
+    VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
   }
 
   @SuppressWarnings("InnerClassMayBeStatic") // used by external plugins

@@ -12,6 +12,9 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -122,7 +125,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
 
-  public SearchForTestsTask createSearchingForTestsTask() {
+  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
   }
 
@@ -134,19 +137,26 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return false;
   }
 
+  @NotNull
   @Override
-  protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    GeneralCommandLine commandLine = super.createCommandLine().withInput(InputRedirectAware.getInputFile(getConfiguration()));
-    Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
+                                                                 @Nullable TargetEnvironmentConfiguration configuration)
+    throws ExecutionException {
+    TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request, configuration);
+    File inputFile = InputRedirectAware.getInputFile(getConfiguration());
+    if (inputFile != null) {
+      commandLineBuilder.setInputFile(request.createUpload(inputFile.getAbsolutePath()));
+    }
+    Map<String, String> content = commandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
     }
-    return commandLine;
+    return commandLineBuilder;
   }
 
   @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -212,14 +222,19 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected abstract void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException;
 
+  protected Sdk getJdk() {
+    Project project = getConfiguration().getProject();
+    final Module module = getConfiguration().getConfigurationModule().getModule();
+
+    return module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
+  }
+  
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
     Project project = getConfiguration().getProject();
     final Module module = getConfiguration().getConfigurationModule().getModule();
-
-    Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
-    javaParameters.setJdk(jdk);
+    javaParameters.setJdk(getJdk());
 
     final String parameters = getConfiguration().getProgramParameters();
     getConfiguration().setProgramParameters(null);

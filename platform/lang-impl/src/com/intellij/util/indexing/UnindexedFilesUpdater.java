@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.android.tools.analytics.UsageTracker;
-import com.google.wireless.android.sdk.stats.AndroidStudioEvent;
-import com.google.wireless.android.sdk.stats.IntellijIndexingStats;
 import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
@@ -12,11 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.CacheUpdateRunner;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -25,7 +18,6 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.util.indexing.counters.IndexCounters;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,14 +26,14 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class UnindexedFilesUpdater extends DumbModeTask {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
+public final class UnindexedFilesUpdater extends DumbModeTask {
+  private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
   private final PushedFilePropertiesUpdater myPusher;
 
-  public UnindexedFilesUpdater(final Project project) {
+  public UnindexedFilesUpdater(@NotNull Project project) {
     myProject = project;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -66,7 +58,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     myIndex.clearIndicesIfNecessary();
 
-    CollectingContentIterator finder = myIndex.createContentIterator();
+    CollectingContentIterator finder = new UnindexedFilesFinder(myProject);
     snapshot = PerformanceWatcher.takeSnapshot();
 
     myIndex.iterateIndexableFilesConcurrently(finder, myProject, indicator);
@@ -103,9 +95,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     if (!app.isCommandLine()) {
       long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
       MessageBusConnection connection = app.getMessageBus().connect();
-      connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
+      connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
-        public void afterProjectClosed(@NotNull Project project) {
+        public void projectClosed(@NotNull Project project) {
           if (project == myProject) {
             RefreshQueue.getInstance().cancelSession(sessionId);
             connection.disconnect();
@@ -119,22 +111,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   private void indexFiles(ProgressIndicator indicator, List<VirtualFile> files) {
-    // Android Studio: Code instrumented to log the number of files indexed and the duration of indexing.
-    final int fileCount = files.size();
-    long startTimeMs = System.currentTimeMillis();
     CacheUpdateRunner.processFiles(indicator, files, myProject, content -> myIndex.indexFileContent(myProject, content));
-    int durationMs = (int)(System.currentTimeMillis() - startTimeMs);
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> {
-        IntellijIndexingStats.Builder indexingStats = IndexCounters.addAllIndexCountersAndReset(
-          IntellijIndexingStats.newBuilder().setDurationMs(durationMs).setFileCount(fileCount));
-        UsageTracker.log(
-          AndroidStudioEvent.newBuilder()
-            .setKind(AndroidStudioEvent.EventKind.INTELLIJ_INDEXING_STATS)
-            .setIntellijIndexingStats(indexingStats)
-        );
-      }
-    );
   }
 
   @Override

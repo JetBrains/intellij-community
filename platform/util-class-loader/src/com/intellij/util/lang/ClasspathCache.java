@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author max
  */
-public class ClasspathCache {
+public final class ClasspathCache {
   static final int NUMBER_OF_ACCESSES_FOR_LAZY_CACHING = 1000;
   private final IntObjectHashMap myResourcePackagesCache = new IntObjectHashMap();
   private final IntObjectHashMap myClassPackagesCache = new IntObjectHashMap();
@@ -96,7 +96,7 @@ public class ClasspathCache {
 
     @NotNull
     LoaderData build() {
-      int uniques = myUsedNameFingerprints.size(); 
+      int uniques = myUsedNameFingerprints.size();
       if (uniques > 20000) {
         uniques += (int)(uniques * 0.03d); // allow some growth for Idea main loader
       }
@@ -108,7 +108,7 @@ public class ClasspathCache {
           return true;
         }
       });
-      
+
       return new ClasspathCache.LoaderData(myResourcePackageHashes.toArray(), myClassPackageHashes.toArray(), nameFilter);
     }
   }
@@ -125,7 +125,7 @@ public class ClasspathCache {
       for(int classPackageHash:loaderData.myClassPackageHashes) {
         addResourceEntry(classPackageHash, myClassPackagesCache, loader);
       }
-      
+
       loader.applyData(loaderData);
     } finally {
       myLock.writeLock().unlock();
@@ -215,7 +215,7 @@ public class ClasspathCache {
 
   static class NameFilter extends BloomFilterBase {
     private static final int SEED = 31;
-    
+
     NameFilter(int _maxElementCount, double probability) {
       super(_maxElementCount, probability);
     }
@@ -229,7 +229,7 @@ public class ClasspathCache {
       int hash2 = (int)nameFingerprint;
       addIt(hash, hash2);
     }
-    
+
     boolean maybeContains(@NotNull String name) {
       int hash = name.hashCode();
       int hash2 = StringHash.murmur(name, SEED);

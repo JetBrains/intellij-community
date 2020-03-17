@@ -20,6 +20,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public abstract class DetectedFacetPresentation {
 
   @Nullable

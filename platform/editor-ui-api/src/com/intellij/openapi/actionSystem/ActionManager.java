@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +25,7 @@ public abstract class ActionManager {
    * Fetches the instance of ActionManager implementation.
    */
   public static ActionManager getInstance() {
-    return ServiceManager.getService(ActionManager.class);
+    return ApplicationManager.getApplication().getService(ActionManager.class);
   }
 
   /**

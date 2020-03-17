@@ -27,10 +27,10 @@
     <updater filetype="HTML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
   </extensions>
   <extensionPoints>
-    <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+    <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider"/>
     </extensionPoint>
-    <extensionPoint name="variablesProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+    <extensionPoint name="variablesProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.maddyhome.idea.copyright.pattern.CopyrightVariablesProvider"/>
     </extensionPoint>
   </extensionPoints>

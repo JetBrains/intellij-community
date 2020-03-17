@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -10,8 +10,8 @@ import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -24,8 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -77,7 +77,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
+public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
 
   @NonNls
@@ -87,23 +87,17 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   @XCollection
   public List<PluginModuleSet> PLUGINS_MODULES = new ArrayList<>();
-  private final AtomicClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName =
-    AtomicClearableLazyValue.create(() -> {
-      Map<String, PluginModuleSet> result = new HashMap<>();
-      for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
-        for (String module : modulesSet.modules) {
-          result.put(module, modulesSet);
-        }
+  private final ClearableLazyValue<Map<String, PluginModuleSet>> myPluginModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
+    Map<String, PluginModuleSet> result = new HashMap<>();
+    for (PluginModuleSet modulesSet : PLUGINS_MODULES) {
+      for (String module : modulesSet.modules) {
+        result.put(module, modulesSet);
       }
-      return result;
-    });
+    }
+    return result;
+  });
 
-
-  public PluginXmlDomInspection() {
-    super(IdeaPlugin.class);
-  }
-
-  @Nullable
+  @NotNull
   @Override
   public JComponent createOptionsPanel() {
     ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, ""));
@@ -170,9 +164,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
     else {
       ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
-        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName,
-                                               myRegistrationCheckIgnoreClassList,
-                                               holder);
+        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName, myRegistrationCheckIgnoreClassList, holder);
       if (element instanceof Extension) {
         annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
       }
@@ -471,10 +463,6 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     checkEpBeanClassAndInterface(extensionPoint, holder);
     checkEpNameAndQualifiedName(extensionPoint, holder);
 
-    if (DomUtil.hasXml(extensionPoint.getDynamic())) {
-      highlightExperimental(extensionPoint.getDynamic(), holder);
-    }
-
     if (DomUtil.hasXml(extensionPoint.getQualifiedName())) {
       IdeaPlugin ideaPlugin = DomUtil.getParentOfType(extensionPoint, IdeaPlugin.class, true);
       assert ideaPlugin != null;
@@ -687,7 +675,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
-          if (DomUtil.hasXml(vendor) && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
+          vendor.getValue();
+          if (DomUtil.hasXml(vendor) && PluginManager.isDevelopedByJetBrains(vendor.getValue())) {
             highlightRedundant(extension,
                                DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);
@@ -711,7 +700,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
-        final GenericAttributeValue testServiceImplementation = getAttribute(extension, "testServiceImplementation");
+        GenericAttributeValue<?> testServiceImplementation = getAttribute(extension, "testServiceImplementation");
         if (testServiceImplementation != null &&
             !DomUtil.hasXml(testServiceImplementation)) {
           highlightRedundant(serviceInterface,

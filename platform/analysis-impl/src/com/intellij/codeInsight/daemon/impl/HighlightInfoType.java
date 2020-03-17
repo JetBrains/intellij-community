@@ -26,7 +26,6 @@ import java.util.Set;
 
 public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_SHORT_NAME = "unused";
-  @NonNls String UNUSED_SYMBOL_DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
 
   HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
@@ -42,17 +41,17 @@ public interface HighlightInfoType {
   HighlightInfoType DUPLICATE_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.DUPLICATE_FROM_SERVER);
 
   HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(
-    HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, UNUSED_SYMBOL_DISPLAY_NAME, UNUSED_SYMBOL_SHORT_NAME),
+    HighlightDisplayKey.findOrRegister(UNUSED_SYMBOL_SHORT_NAME, getUnusedSymbolDisplayName(), UNUSED_SYMBOL_SHORT_NAME),
     CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(
     HighlightDisplayKey.findOrRegister(
-      DeprecationUtil.DEPRECATION_SHORT_NAME, DeprecationUtil.DEPRECATION_DISPLAY_NAME, DeprecationUtil.DEPRECATION_ID),
+      DeprecationUtil.DEPRECATION_SHORT_NAME, DeprecationUtil.getDeprecationDisplayName(), DeprecationUtil.DEPRECATION_ID),
     CodeInsightColors.DEPRECATED_ATTRIBUTES);
 
   HighlightInfoType MARKED_FOR_REMOVAL = new HighlightInfoTypeSeverityByKey(
     HighlightDisplayKey.findOrRegister(
-      DeprecationUtil.FOR_REMOVAL_SHORT_NAME, DeprecationUtil.FOR_REMOVAL_DISPLAY_NAME, DeprecationUtil.FOR_REMOVAL_ID),
+      DeprecationUtil.FOR_REMOVAL_SHORT_NAME, DeprecationUtil.getForRemovalDisplayName(), DeprecationUtil.FOR_REMOVAL_ID),
     CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES);
 
   HighlightSeverity SYMBOL_TYPE_SEVERITY = new HighlightSeverity("SYMBOL_TYPE_SEVERITY", HighlightSeverity.INFORMATION.myVal-2);
@@ -190,7 +189,7 @@ public interface HighlightInfoType {
 
   class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
     @SuppressWarnings("unused")
-    static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeSeverityByKey");
+    static final Logger LOG = Logger.getInstance(HighlightInfoTypeSeverityByKey.class);
 
     private final TextAttributesKey myAttributesKey;
     private final HighlightDisplayKey myToolKey;
@@ -234,5 +233,9 @@ public interface HighlightInfoType {
   @FunctionalInterface
   interface UpdateOnTypingSuppressible {
     boolean needsUpdateOnTyping();
+  }
+
+  static String getUnusedSymbolDisplayName() {
+    return InspectionsBundle.message("inspection.dead.code.display.name");
   }
 }

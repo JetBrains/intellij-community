@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -37,7 +37,7 @@ import java.util.List;
  * @author yole
  */
 public class CustomCreateProperty extends Property<RadComponent, Boolean> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty");
+  private static final Logger LOG = Logger.getInstance(CustomCreateProperty.class);
 
   public static CustomCreateProperty getInstance(Project project) {
     return ServiceManager.getService(project, CustomCreateProperty.class);
@@ -152,7 +152,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     );
 
     if (!refMethod.isNull()) {
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         final PsiMethod element = (PsiMethod) refMethod.get().getElement();
         if (element != null) {
           final PsiCodeBlock body = element.getBody();

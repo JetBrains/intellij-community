@@ -43,7 +43,11 @@ import java.util.List;
  * @author dsl
  */
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
+  /**
+   * Use {code {@link #getRefactoringName()}} instead
+   */
+  @Deprecated
+  public static final String REFACTORING_NAME = "Push Members Down";
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
@@ -59,7 +63,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     if (elements.isEmpty()) {
       String message =
         !errorMessage.isNull() ? errorMessage.get() : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
     }
     else {
       invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
@@ -111,7 +115,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("refactoring.cannot.be.performed") +
-                                                           ": Class " + aClass.getName() + " is final", REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
+                                                           ": Class " + aClass.getName() + " is final", getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;
     }
 
@@ -136,5 +140,9 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   public boolean isEnabledOnElements(PsiElement[] elements) {
     // todo: multiple selection etc
     return elements.length == 1 && elements[0] instanceof PsiClass;
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("push.members.down.title");
   }
 }

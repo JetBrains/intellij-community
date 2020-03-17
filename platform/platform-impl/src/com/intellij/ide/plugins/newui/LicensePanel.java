@@ -2,6 +2,8 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
@@ -79,35 +82,10 @@ public class LicensePanel extends NonOpaquePanel {
     myPanel.setVisible(true);
   }
 
-  public void setTextFromStamp(@NotNull String stamp) {
+  public void setTextFromStamp(@NotNull String stamp, @Nullable Date expirationDate) {
+    long days = expirationDate == null ? 0 : DateFormatUtil.getDifferenceInDays(new Date(), expirationDate);
+
     if (stamp.startsWith("eval:")) {
-      long[] expTime = parseExpTime(StringUtil.substringAfter(stamp, ":"));
-      setTextFromStamp(true, expTime[0], expTime[1]);
-    }
-    else if (stamp.startsWith("key:")) {
-      setTextFromStamp(false, 0, 0);
-      // XXX: get exp time
-    }
-    else if (stamp.startsWith("stamp:")) {
-      setTextFromStamp(false, 0, 0);
-      // XXX: get exp time
-    }
-  }
-
-  @NotNull
-  private static long[] parseExpTime(@Nullable String timeValue) {
-    try {
-      long time = StringUtil.isEmpty(timeValue) ? 0 : Long.parseLong(timeValue);
-      long days = time == 0 ? 0 : (time - System.currentTimeMillis()) / DateFormatUtil.DAY_FACTOR;
-      return new long[]{time, days};
-    }
-    catch (NumberFormatException e) {
-      return new long[]{0, 0};
-    }
-  }
-
-  private void setTextFromStamp(boolean trial, long time, long days) {
-    if (trial) {
       if (days <= 0) {
         setText("Trial expired.", false, true);
       }
@@ -115,11 +93,11 @@ public class LicensePanel extends NonOpaquePanel {
         setText("Trial expires in " + days + " days.", days < 11, false);
       }
     }
-    else if (time == 0) {
+    else if (expirationDate == null) {
       setText("License is active.", false, false);
     }
     else if (days > 30) {
-      setText("License is active until " + PluginManagerConfigurable.DATE_FORMAT.format(new Date(time)) + ".", false, false);
+      setText("License is active until " + PluginManagerConfigurable.DATE_FORMAT.format(expirationDate) + ".", false, false);
     }
     else if (days <= 0) {
       setText("License expired.", false, true);
@@ -145,12 +123,9 @@ public class LicensePanel extends NonOpaquePanel {
     }
   }
 
-  @Override
-  public void setVisible(boolean aFlag) {
-    super.setVisible(aFlag);
-    if (!aFlag) {
-      hideElements();
-    }
+  public void hideWithChildren() {
+    hideElements();
+    setVisible(false);
   }
 
   private void hideElements() {
@@ -158,5 +133,18 @@ public class LicensePanel extends NonOpaquePanel {
     myMessage.setVisible(false);
     myLink.setVisible(false);
     myPanel.setVisible(false);
+  }
+
+  public void showBuyPlugin(@NotNull Supplier<IdeaPluginDescriptor> getPlugin) {
+    IdeaPluginDescriptor plugin = getPlugin.get();
+
+    setLink("buy the plugin", () ->
+      BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode()), true);
+
+    PluginPriceService.getPrice(plugin, price -> updateLink("buy the plugin from " + price, false), price -> {
+      if (plugin == getPlugin.get()) {
+        updateLink("buy the plugin from " + price, true);
+      }
+    });
   }
 }

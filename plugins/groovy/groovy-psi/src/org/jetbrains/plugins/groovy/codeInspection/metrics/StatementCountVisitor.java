@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -27,7 +28,7 @@ class StatementCountVisitor extends PsiRecursiveElementWalkingVisitor {
   private int statementCount = 0;
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (element instanceof GrBlockStatement || element instanceof GrOpenBlock) {
       super.visitElement(element);
     }

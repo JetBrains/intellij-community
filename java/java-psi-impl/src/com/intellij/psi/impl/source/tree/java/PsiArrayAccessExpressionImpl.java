@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implements PsiArrayAccessExpression, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiArrayAccessExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiArrayAccessExpressionImpl.class);
 
   public PsiArrayAccessExpressionImpl() {
     super(ARRAY_ACCESS_EXPRESSION);

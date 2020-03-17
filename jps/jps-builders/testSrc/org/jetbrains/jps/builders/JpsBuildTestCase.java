@@ -211,9 +211,8 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject(), dataPaths.getDataStorageRoot());
       ProjectTimestamps timestamps = new ProjectTimestamps(myDataStorageRoot, targetsState, relativizer);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, true);
-      BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(targetIndex, buildRootIndex, timestamps, dataPaths, relativizer);
       return new ProjectDescriptor(myModel, new BuildFSState(true), timestamps, dataManager, buildLoggingManager, index, targetsState,
-                                   targetIndex, buildRootIndex, ignoredFileIndex, sourcesState);
+                                   targetIndex, buildRootIndex, ignoredFileIndex);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

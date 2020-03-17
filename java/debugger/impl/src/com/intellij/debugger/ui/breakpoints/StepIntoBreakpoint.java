@@ -21,7 +21,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class StepIntoBreakpoint extends RunToCursorBreakpoint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint");
+  private static final Logger LOG = Logger.getInstance(StepIntoBreakpoint.class);
   @NotNull private final BreakpointStepMethodFilter myFilter;
   @Nullable private RequestHint myHint;
 

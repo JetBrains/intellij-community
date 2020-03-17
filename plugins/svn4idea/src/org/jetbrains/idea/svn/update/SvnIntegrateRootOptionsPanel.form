@@ -21,7 +21,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.description.label"/>
+              <text resource-bundle="messages/SvnBundle" key="integrate.configuration.description.label"/>
             </properties>
           </component>
           <grid id="96f5e" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -38,7 +38,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="a6192"/>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.source1.label"/>
+                  <text resource-bundle="messages/SvnBundle" key="integrate.configuration.source1.label"/>
                 </properties>
               </component>
               <component id="a6192" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myMergeText1">
@@ -54,7 +54,7 @@
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.revision1.label"/>
+                  <text resource-bundle="messages/SvnBundle" key="integrate.configuration.revision1.label"/>
                 </properties>
               </component>
               <component id="ee183" class="org.jetbrains.idea.svn.update.SvnRevisionPanel" binding="myRevision1">
@@ -79,7 +79,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="93f39"/>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.source2.label"/>
+                  <text resource-bundle="messages/SvnBundle" key="integrate.configuration.source2.label"/>
                 </properties>
               </component>
               <component id="93f39" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myMergeText2">
@@ -95,7 +95,7 @@
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="integrate.configuration.revision2.label"/>
+                  <text resource-bundle="messages/SvnBundle" key="integrate.configuration.revision2.label"/>
                 </properties>
               </component>
               <component id="bcee4" class="org.jetbrains.idea.svn.update.SvnRevisionPanel" binding="myRevision2">

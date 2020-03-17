@@ -24,7 +24,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InvertBooleanFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
@@ -33,13 +32,6 @@ public class BooleanVariableAlwaysNegatedInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.quickfix", variable.getName()));
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("boolean.variable.always.inverted.display.name");
   }
 
   @NotNull

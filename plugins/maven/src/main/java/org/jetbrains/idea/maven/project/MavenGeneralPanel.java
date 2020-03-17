@@ -131,7 +131,7 @@ public class MavenGeneralPanel implements PanelWithAnchor {
 
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.general");
+    return MavenProjectBundle.message("maven.tab.general");
   }
 
   @Override

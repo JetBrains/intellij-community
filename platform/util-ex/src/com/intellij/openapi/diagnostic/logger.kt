@@ -21,9 +21,8 @@ fun logger(category: String) = Logger.getInstance(category)
 
  * Notice explicit type declaration which can't be skipped in this case.
  */
-fun logger(field: KProperty<Logger>) = Logger.getInstance(field.declaringClass)
-
-private val KProperty<*>.declaringClass: Class<*> get() = (javaField ?: javaGetter as? Member)?.declaringClass!!
+@Deprecated("Use Logger.getInstance() instead", replaceWith = ReplaceWith("Logger.getInstance(class)", "com.intellij.openapi.diagnostic.Logger"))
+fun logger(field: KProperty<Logger>) = Logger.getInstance((field.javaField ?: field.javaGetter as? Member)?.declaringClass!!)
 
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   if (isDebugEnabled) {

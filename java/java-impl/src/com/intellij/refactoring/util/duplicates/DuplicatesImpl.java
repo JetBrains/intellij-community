@@ -54,7 +54,7 @@ import java.util.List;
  * @author dsl
  */
 public class DuplicatesImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesImpl");
+  private static final Logger LOG = Logger.getInstance(DuplicatesImpl.class);
 
   private DuplicatesImpl() {}
 
@@ -144,8 +144,8 @@ public class DuplicatesImpl {
     // call change signature when needed
     provider.prepareSignature(match);
 
-    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.REFACTORING_NAME)
-                      .withGroupId(MethodDuplicatesHandler.REFACTORING_NAME).run(() -> {
+    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.getRefactoringName())
+                      .withGroupId(MethodDuplicatesHandler.getRefactoringName()).run(() -> {
       try {
         provider.processMatch(match);
       }

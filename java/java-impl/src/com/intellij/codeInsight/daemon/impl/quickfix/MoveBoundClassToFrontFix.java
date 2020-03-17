@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveBoundClassToFrontFix extends ExtendsListFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveBoundClassToFrontFix");
+  private static final Logger LOG = Logger.getInstance(MoveBoundClassToFrontFix.class);
   private final String myName;
 
   public MoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {

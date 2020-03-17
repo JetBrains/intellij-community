@@ -631,6 +631,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       else {
         GeneralTestEventsProcessor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
+        fireOnUncapturedOutput(msg.asString() + "\n", ProcessOutputTypes.STDOUT);
       }
     }
 

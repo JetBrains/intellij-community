@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,15 +53,15 @@ public abstract class Language extends UserDataHolderBase {
     }
   };
 
-  protected Language(@NotNull String ID) {
+  protected Language(@NonNls @NotNull String ID) {
     this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NotNull String ID, @NotNull String... mimeTypes) {
+  protected Language(@NonNls @NotNull String ID, @NonNls @NotNull String... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 
-  protected Language(@Nullable Language baseLanguage, @NotNull String ID, @NotNull String... mimeTypes) {
+  protected Language(@Nullable Language baseLanguage, @NonNls @NotNull String ID, @NonNls @NotNull String... mimeTypes) {
     if (baseLanguage instanceof MetaLanguage) {
       throw new ImplementationConflictException(
         "MetaLanguage cannot be a base language.\n" +
@@ -111,7 +112,7 @@ public abstract class Language extends UserDataHolderBase {
 
   public static void unregisterLanguage(@NotNull Language language) {
     IElementType.unregisterElementTypes(language);
-    ReferenceProvidersRegistry.getInstance().unloadRegistrar(language);
+    ReferenceProvidersRegistry.getInstance().unloadProvidersFor(language);
     ourRegisteredLanguages.remove(language.getClass());
     ourRegisteredIDs.remove(language.getID());
     for (String mimeType : language.getMimeTypes()) {

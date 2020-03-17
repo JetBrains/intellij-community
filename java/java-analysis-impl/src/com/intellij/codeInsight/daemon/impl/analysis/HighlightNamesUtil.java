@@ -159,7 +159,7 @@ public class HighlightNamesUtil {
     }
     if (variable instanceof PsiField) {
       TextAttributes attributes = mergeWithScopeAttributes(variable, varType, colorsScheme);
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight.getTextRange());
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
       if (attributes != null) {
         builder.textAttributes(attributes);
       }

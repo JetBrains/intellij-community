@@ -334,7 +334,7 @@ NSString *getPropertiesFilePath() {
 
 
 NSString *getPreferencesFolderPath() {
-    return [NSString stringWithFormat:@"%@/Library/Preferences/%@", NSHomeDirectory(), getSelector()];
+    return [NSString stringWithFormat:@"%@/Library/Application Support/%@/%@", NSHomeDirectory(), getJVMProperty(@"idea.vendor.name"), getSelector()];
 }
 
 // NSString *getDefaultVMOptionsFilePath() {

@@ -11,8 +11,6 @@ import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.VcsLogStructureFilterImpl
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -24,6 +22,8 @@ import java.util.regex.PatternSyntaxException
 private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
 
 object VcsLogFilterObject {
+  const val ME = "me"
+
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
     if (isRegexpAllowed && VcsLogUtil.maybeRegexp(text)) {
@@ -45,7 +45,12 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromBranch(branchName: String): VcsLogBranchFilter {
-    return VcsLogBranchFilterImpl(listOf(branchName), emptyList(), emptyList(), emptyList())
+    return fromBranches(listOf(branchName))
+  }
+
+  @JvmStatic
+  fun fromBranches(branchNames: List<String>): VcsLogBranchFilter {
+    return VcsLogBranchFilterImpl(branchNames, emptyList(), emptyList(), emptyList())
   }
 
   @JvmStatic
@@ -161,7 +166,6 @@ object VcsLogFilterObject {
 
   @JvmStatic
   fun fromPaths(files: Collection<FilePath>): VcsLogStructureFilter {
-    @Suppress("DEPRECATION")
     return VcsLogStructureFilterImpl(files)
   }
 
@@ -216,22 +220,22 @@ fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
 
 fun VcsLogFilterCollection.getPresentation(): String {
   if (get(HASH_FILTER) != null) {
-    return get(HASH_FILTER)!!.presentation
+    return get(HASH_FILTER)!!.displayText
   }
   return filters.joinToString(" ") { filter ->
     val prefix = if (filters.size != 1) filter.getPrefix() else ""
-    prefix + filter.presentation
+    prefix + filter.displayText
   }
 }
 
 private fun VcsLogFilter.getPrefix(): String {
-  when {
-    this is VcsLogTextFilter -> return "containing "
-    this is VcsLogUserFilter -> return "by "
-    this is VcsLogDateFilter -> return "made "
-    this is VcsLogBranchFilter -> return "on "
-    this is VcsLogRootFilter -> return "in "
-    this is VcsLogStructureFilter -> return "for "
+  when (this) {
+    is VcsLogTextFilter -> return "containing "
+    is VcsLogUserFilter -> return "by "
+    is VcsLogDateFilter -> return "made "
+    is VcsLogBranchFilter -> return "on "
+    is VcsLogRootFilter -> return "in "
+    is VcsLogStructureFilter -> return "for "
   }
   return ""
 }

@@ -28,7 +28,7 @@ class ComponentStateTest {
 
 @Suppress("SameParameterValue")
 private fun doReadComponentConfiguration(namePath: String, @Language("YAML") data: String): TestState? {
-  return readComponentConfiguration(findValueNodeByPath(namePath, doRead(data.trimIndent().reader())!!)!!, TestState::class.java)
+  return readComponentConfiguration(findValueNodeByPath(namePath, doRead(data.trimIndent().reader())!!.value)!!, TestState::class.java)
 }
 
 private class TestState : BaseState() {

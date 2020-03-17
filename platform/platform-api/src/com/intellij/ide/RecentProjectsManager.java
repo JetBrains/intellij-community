@@ -34,7 +34,7 @@ public abstract class RecentProjectsManager {
 
   public abstract void updateLastProjectPath();
 
-  public abstract void removePath(@Nullable @SystemIndependent String path);
+  public abstract void removePath(@NotNull @SystemIndependent String path);
 
   /**
    * @deprecated Use {@link RecentProjectListActionProvider#getActions}

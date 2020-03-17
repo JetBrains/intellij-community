@@ -31,7 +31,7 @@ public class RemoteStateState implements RemoteState {
   }
 
   @Override
-  public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
     ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
     RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject, myAutoRestart);
     consoleView.attachToProcess(process);

@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,7 +108,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   @Nls
   @Override
   public String getDisplayName() {
-    return "Console";
+    return PyBundle.message("configurable.PyConsoleOptionsConfigurable.display.name");
   }
 
   @Override

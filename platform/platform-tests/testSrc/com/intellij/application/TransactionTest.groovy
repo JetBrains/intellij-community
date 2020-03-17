@@ -15,7 +15,7 @@
  */
 package com.intellij.application
 
-import com.intellij.ide.IdeEventQueue
+
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.progress.ProgressManager
@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ui.UIUtil
@@ -34,6 +33,7 @@ import javax.swing.*
 /**
  * @author peter
  */
+@SuppressWarnings("GrDeprecatedAPIUsage")
 class TransactionTest extends LightPlatformTestCase {
   List<String> log = []
 
@@ -154,24 +154,8 @@ class TransactionTest extends LightPlatformTestCase {
       TransactionGuard.submitTransaction testRootDisposable, {
         log << '2'
         assert guard.contextTransaction
-        assert id != guard.contextTransaction
       }
       assert log == ['1', '2']
-    }
-    UIUtil.dispatchAllInvocationEvents()
-    assert log == ['1', '2']
-  }
-
-  void "test modal progress started from inside a transaction has the same id"() {
-    TransactionGuard.submitTransaction testRootDisposable, {
-      log << '1'
-      def id = guard.contextTransaction
-      assert id
-      ProgressManager.instance.runProcessWithProgressSynchronously({
-                                                                     assert !ApplicationManager.application.dispatchThread
-                                                                     assert id == guard.contextTransaction
-                                                                     log << '2'
-                                                                   }, 'title', true, project)
     }
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
@@ -188,46 +172,6 @@ class TransactionTest extends LightPlatformTestCase {
     }
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2']
-  }
-
-  void "test do not merge transactions with null id"() {
-    TransactionGuard.submitTransaction testRootDisposable, {
-      log << '1'
-      guard.submitTransaction testRootDisposable, (TransactionId)null, { log << '2' }
-      UIUtil.dispatchAllInvocationEvents()
-      assert log == ['1']
-    }
-    UIUtil.dispatchAllInvocationEvents()
-    assert log == ['1', '2']
-  }
-
-  void "test do not merge into newly started nested transactions"() {
-    TransactionGuard.submitTransaction testRootDisposable, {
-      log << '1'
-      def id = guard.contextTransaction
-      SwingUtilities.invokeLater {
-        guard.submitTransaction testRootDisposable, id, { log << '4' }
-      }
-      guard.submitTransaction testRootDisposable, id, {
-        UIUtil.dispatchAllInvocationEvents()
-        log << '2'
-        UIUtil.dispatchAllInvocationEvents()
-        guard.submitTransaction testRootDisposable, id, { log << '5' }
-        def nestedId = guard.contextTransaction
-        SwingUtilities.invokeLater {
-          String trace = guard.toString()
-          guard.submitTransaction testRootDisposable, nestedId, {
-            trace += "  " + IdeEventQueue.instance.trueCurrentEvent.toString() + "  " + DebugUtil.currentStackTrace()
-            log << '3'
-          }
-          assert log == ['1', '2'] : log + " " + trace
-        }
-        UIUtil.dispatchAllInvocationEvents()
-      }
-      assert log == ['1', '2', '3']
-      UIUtil.dispatchAllInvocationEvents()
-      assert log == ['1', '2', '3', '4', '5']
-    }
   }
 
   void "test submit with finished transaction id"() {
@@ -283,33 +227,6 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', '2', '3', '4', '5']
   }
 
-  void "test submitTransactionLater happens ASAP regardless of modality bounds"() {
-    TransactionGuard.submitTransaction testRootDisposable, {
-      log << '1'
-      guard.submitTransactionLater testRootDisposable, { log << '2' }
-      LaterInvocator.enterModal(new Object())
-      UIUtil.dispatchAllInvocationEvents()
-      LaterInvocator.leaveAllModals()
-      log << '3'
-    }
-    UIUtil.dispatchAllInvocationEvents()
-    assert log == ['1', '2', '3']
-  }
-
-  void "test don't add transaction to outdated queue"() {
-    TransactionGuard.submitTransaction testRootDisposable, {
-      log << '1'
-      guard.submitTransactionLater testRootDisposable, { log << '3' }
-      log << '2'
-    }
-    TransactionGuard.submitTransaction testRootDisposable, {
-      UIUtil.dispatchAllInvocationEvents()
-      assert log == ['1', '2']
-    }
-    UIUtil.dispatchAllInvocationEvents()
-    assert log == ['1', '2', '3']
-  }
-
   void "test no synchronous transactions inside invokeLater"() {
     LoggedErrorProcessor.instance.disableStderrDumping(testRootDisposable)
     SwingUtilities.invokeLater {
@@ -325,20 +242,6 @@ class TransactionTest extends LightPlatformTestCase {
     assert log == ['1', 'assert']
   }
 
-  void "test write-unsafe modality ends inside a transaction"() {
-    LaterInvocator.enterModal(new Object())
-    guard.performUserActivity { assertWritingProhibited() }
-    TransactionGuard.submitTransaction testRootDisposable, {
-      LaterInvocator.leaveAllModals()
-      log << '1'
-    }
-    UIUtil.dispatchAllInvocationEvents()
-    assert log == ['1']
-    assert ModalityState.current() == ModalityState.NON_MODAL
-    guard.performUserActivity { app.runWriteAction { log << '2' } }
-    assert log == ['1', '2']
-  }
-
   void "test progress created on EDT and run on pooled thread"() {
     TransactionGuard.submitTransaction testRootDisposable, {
       def progress = new ProgressWindow(true, project)
@@ -346,7 +249,6 @@ class TransactionTest extends LightPlatformTestCase {
       def process = {
         log << '1'
         assert progress.modalityState != ModalityState.NON_MODAL
-        assert guard.getModalityTransaction(progress.modalityState)
 
         Runnable writeAction = {
           makeRootsChange()
@@ -367,10 +269,8 @@ class TransactionTest extends LightPlatformTestCase {
       def id = guard.contextTransaction
       assert id
       ProgressManager.instance.runProcessWithProgressSynchronously({
-        assert id == guard.contextTransaction
         ProgressManager.instance.runProcess({
           assert !ApplicationManager.application.dispatchThread
-          assert id == guard.contextTransaction
           log << '2'
         }, new ProgressIndicatorBase())
       }, 'title', true, project)
@@ -387,6 +287,15 @@ class TransactionTest extends LightPlatformTestCase {
     }
     UIUtil.dispatchAllInvocationEvents()
     assert log == ['1', '2', '3']
+  }
+
+  void "test submitTransaction does not go inside modal dialog"() {
+    TransactionGuard.submitTransaction testRootDisposable, {
+      log << '1'
+    }
+    LaterInvocator.enterModal(new Object())
+    UIUtil.dispatchAllInvocationEvents()
+    assert log == []
   }
 
 }

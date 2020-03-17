@@ -314,13 +314,6 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
   }
 
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Type checker";
-  }
-
   static class AnalyzeCalleeResults {
 
     @NotNull

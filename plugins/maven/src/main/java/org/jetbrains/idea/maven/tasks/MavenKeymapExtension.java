@@ -16,7 +16,6 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
@@ -38,12 +37,13 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 
+import static icons.ExternalSystemIcons.Task;
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
+
 public final class MavenKeymapExtension implements ExternalSystemKeymapExtension.ActionsProvider {
   @Override
   public KeymapGroup createGroup(Condition<? super AnAction> condition, final Project project) {
-    KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"),
-                                                                      MavenIcons.MavenLogo
-    );
+    KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"), RepositoryLibraryLogo);
     if (project == null) return result;
 
     Comparator<MavenProject> projectComparator = (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
@@ -203,7 +203,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
       myGoal = goal;
       Presentation template = getTemplatePresentation();
       template.setText(goal + " (" + mavenProject.getMavenId() + ")", false);
-      template.setIcon(MavenIcons.Phase);
+      template.setIcon(Task);
     }
 
     @Override

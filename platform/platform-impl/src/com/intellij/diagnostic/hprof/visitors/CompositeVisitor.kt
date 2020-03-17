@@ -53,12 +53,21 @@ class CompositeVisitor(private vararg val visitors: HProfVisitor) : HProfVisitor
     visitors.forEach { it.visitLoadClass(classSerialNumber, classObjectId, stackSerialNumber, classNameStringId) }
   }
 
-  override fun visitStackFrame() {
-    visitors.forEach { it.visitStackFrame() }
+  override fun visitStackFrame(stackFrameId: Long,
+                               methodNameStringId: Long,
+                               methodSignatureStringId: Long,
+                               sourceFilenameStringId: Long,
+                               classSerialNumber: Long,
+                               lineNumber: Int) {
+    visitors.forEach {
+      it.visitStackFrame(stackFrameId, methodNameStringId, methodSignatureStringId, sourceFilenameStringId, classSerialNumber, lineNumber)
+    }
   }
 
-  override fun visitStackTrace() {
-    visitors.forEach { it.visitStackTrace() }
+  override fun visitStackTrace(stackTraceSerialNumber: Long, threadSerialNumber: Long, numberOfFrames: Int, stackFrameIds: LongArray) {
+    visitors.forEach {
+      it.visitStackTrace(stackTraceSerialNumber, threadSerialNumber, numberOfFrames, stackFrameIds)
+    }
   }
 
   override fun visitAllocSites() {

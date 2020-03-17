@@ -35,7 +35,8 @@ import javax.swing.tree.DefaultTreeModel;
 /**
  * @author Konstantin Bulenkov
  */
-public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
+public final class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
+  public static final String ID = "Favorites";
 
   public FavoritesViewTreeBuilder(@NotNull Project project,
                                   JTree tree,
@@ -45,7 +46,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
           tree,
           treeModel,
           treeStructure,
-          new FavoritesComparator(FavoritesProjectViewPane.ID));
+          new FavoriteComparator());
     final MessageBusConnection bus = myProject.getMessageBus().connect(this);
     ProjectViewPsiTreeChangeListener psiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       @Override
@@ -146,8 +147,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     for (int i = 0; i < aRoot.getChildCount(); i++) {
       final DefaultMutableTreeNode child = (DefaultMutableTreeNode)aRoot.getChildAt(i);
       Object userObject = child.getUserObject();
-      if (userObject instanceof FavoritesTreeNodeDescriptor) {
-        if (Comparing.equal(((FavoritesTreeNodeDescriptor)userObject).getElement(), aObject)) {
+      if (userObject instanceof FavoriteTreeNodeDescriptor) {
+        if (Comparing.equal(((FavoriteTreeNodeDescriptor)userObject).getElement(), aObject)) {
           return child;
         }
       }

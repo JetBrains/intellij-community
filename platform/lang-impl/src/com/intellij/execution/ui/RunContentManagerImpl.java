@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.KillableProcess;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
@@ -19,8 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -67,11 +70,8 @@ public final class RunContentManagerImpl implements RunContentManager, Disposabl
   // must be called on EDT
   private void init() {
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(myProject);
-    if (toolWindowManager == null) {
-      return;
-    }
 
-    for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       registerToolWindow(executor, toolWindowManager);
     }
 
@@ -82,12 +82,7 @@ public final class RunContentManagerImpl implements RunContentManager, Disposabl
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void stateChanged() {
-        if (myProject.isDisposed()) {
-          return;
-        }
-
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
         Set<String> currentWindows = new THashSet<>();
         ContainerUtil.addAll(currentWindows, toolWindowManager.getToolWindowIds());
         myToolwindowIdZBuffer.retainAll(currentWindows);
@@ -106,14 +101,14 @@ public final class RunContentManagerImpl implements RunContentManager, Disposabl
   public void dispose() {
   }
 
-  private void registerToolWindow(@NotNull final Executor executor, @NotNull ToolWindowManagerEx toolWindowManager) {
-    final String toolWindowId = executor.getToolWindowId();
+  private void registerToolWindow(@NotNull Executor executor, @NotNull ToolWindowManagerEx toolWindowManager) {
+    String toolWindowId = executor.getToolWindowId();
     if (toolWindowManager.getToolWindow(toolWindowId) != null) {
       return;
     }
 
-    final ToolWindow toolWindow = toolWindowManager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM, this, true);
-    final ContentManager contentManager = toolWindow.getContentManager();
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(toolWindowId));
+    ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addDataProvider(new DataProvider() {
       private int myInsideGetData = 0;
 
@@ -204,13 +199,6 @@ public final class RunContentManagerImpl implements RunContentManager, Disposabl
         toolWindow.hide(null);
       }
     }, myProject.getDisposed());
-  }
-
-  @Override
-  @Nullable
-  public RunContentDescriptor getSelectedContent(final Executor executor) {
-    final Content selectedContent = getContentManagerForRunner(executor, null).getSelectedContent();
-    return selectedContent != null ? getRunContentDescriptorByContent(selectedContent) : null;
   }
 
   @Override
@@ -680,29 +668,19 @@ public final class RunContentManagerImpl implements RunContentManager, Disposabl
     }
 
     @Override
-    protected boolean closeQuery(@NotNull Content content, boolean modal) {
+    protected boolean closeQuery(@NotNull Content content, boolean projectClosing) {
       final RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
       if (descriptor == null) {
         return true;
       }
 
       final ProcessHandler processHandler = descriptor.getProcessHandler();
-      if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) {
+      if (processHandler == null || processHandler.isProcessTerminated()) {
         return true;
       }
       final String sessionName = descriptor.getDisplayName();
-      final WaitForProcessTask task = new WaitForProcessTask(processHandler, sessionName, modal, myProject) {
-        final boolean killable =
-          !modal && (processHandler instanceof KillableProcess) && ((KillableProcess)processHandler).canKillProcess();
-
-        {
-          if (killable) {
-            String cancelText = ExecutionBundle.message("terminating.process.progress.kill");
-            setCancelText(cancelText);
-            setCancelTooltipText(cancelText);
-          }
-        }
-
+      boolean killable = processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess();
+      WaitForProcessTask task = new WaitForProcessTask(processHandler, sessionName, projectClosing, myProject) {
         @Override
         public void onCancel() {
           if (killable && !processHandler.isProcessTerminated()) {
@@ -710,6 +688,11 @@ public final class RunContentManagerImpl implements RunContentManager, Disposabl
           }
         }
       };
+      if (killable) {
+        String cancelText = ExecutionBundle.message("terminating.process.progress.kill");
+        task.setCancelText(cancelText);
+        task.setCancelTooltipText(cancelText);
+      }
       return askUserAndWait(processHandler, sessionName, task);
     }
   }

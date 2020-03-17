@@ -24,7 +24,7 @@ import java.awt.*;
  */
 public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadScrollPane");
+  private static final Logger LOG = Logger.getInstance(RadScrollPane.class);
 
   public static class Factory extends RadComponentFactory {
     @Override

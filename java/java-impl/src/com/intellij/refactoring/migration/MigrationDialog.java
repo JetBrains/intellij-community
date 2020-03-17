@@ -14,7 +14,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 
 public class MigrationDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationDialog");
+  private static final Logger LOG = Logger.getInstance(MigrationDialog.class);
 
   private JPanel myPanel;
   private JComboBox<MigrationMap> myMapComboBox;

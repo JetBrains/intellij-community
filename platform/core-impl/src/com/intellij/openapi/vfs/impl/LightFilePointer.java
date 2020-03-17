@@ -32,7 +32,7 @@ public class LightFilePointer implements VirtualFilePointer {
   private final String myUrl;
   @Nullable
   private volatile VirtualFile myFile;
-  private volatile boolean myRefreshed = false;
+  private volatile boolean myRefreshed;
 
   public LightFilePointer(@NotNull String url) {
     myUrl = url;

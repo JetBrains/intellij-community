@@ -100,7 +100,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
 
   private fun fetchPlugins(): List<Plugin> {
     var plugins = emptyList<Plugin>()
-    HttpRequests.request("http://vscode.blob.core.windows.net/gallery/index").connect { request ->
+    HttpRequests.request("https://vscode.blob.core.windows.net/gallery/index").connect { request ->
       plugins = loadPlugins(request.reader)
     }
     return plugins

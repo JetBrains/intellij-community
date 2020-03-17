@@ -130,7 +130,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
       PsiLambdaExpression trueLambda =
         (PsiLambdaExpression)factory.createExpressionFromText("(" + variable.getType().getCanonicalText() + " " +
                                                               inLambdaName + ")->" + ct.text(notNullBranch), ternary);
-      PsiParameter lambdaParameter = trueLambda.getParameterList().getParameters()[0];
+      PsiParameter lambdaParameter = Objects.requireNonNull(trueLambda.getParameterList().getParameter(0));
       PsiExpression trueBody = Objects.requireNonNull((PsiExpression)trueLambda.getBody());
       String ofNullableText = CommonClassNames.JAVA_UTIL_OPTIONAL + ".ofNullable(" + (origExpression == null ? name : origExpression) + ")";
       String replacement = OptionalRefactoringUtil.generateOptionalUnwrap(ofNullableText,

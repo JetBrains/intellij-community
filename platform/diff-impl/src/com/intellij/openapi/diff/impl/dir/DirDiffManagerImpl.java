@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.*;
+import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffModel;
+import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
@@ -99,9 +101,7 @@ public class DirDiffManagerImpl extends DirDiffManager {
   public DiffElement createDiffElement(Object obj) {
     //TODO make EP
     if (obj instanceof VirtualFile) {
-      final VirtualFile file = (VirtualFile)obj;
-      return JarFileSystem.PROTOCOL.equalsIgnoreCase(file.getExtension())
-             ? new JarFileDiffElement(file) : new VirtualFileDiffElement(file);
+      return VirtualFileDiffElement.createElement((VirtualFile)obj);
     }
     return null;
   }

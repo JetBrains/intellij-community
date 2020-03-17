@@ -23,11 +23,6 @@ class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionToo
                                                         JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
   }
 
-  @Nls
-  override fun getDisplayName(): String {
-    return InspectionGadgetsBundle.message("junit5.malformed.repeated.test.display.name")
-  }
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val file = holder.file
     if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return PsiElementVisitor.EMPTY_VISITOR

@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -17,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
-import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
+import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -28,19 +24,19 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
+import org.jetbrains.idea.reposearch.DependencySearchService;
+import org.jetbrains.idea.reposearch.SearchParameters;
 
 import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   private volatile List<MavenIndex> myProjectIndices = new ArrayList<>();
   private final DependencySearchService myDependencySearchService;
   private final MergingUpdateQueue myUpdateQueue;
-
-  public boolean hasOfflineIndexes() {
-    return !myProjectIndices.isEmpty();
-  }
 
   public static MavenProjectIndicesManager getInstance(Project p) {
     return p.getComponent(MavenProjectIndicesManager.class);
@@ -49,9 +45,11 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public MavenProjectIndicesManager(Project project) {
     super(project);
     myUpdateQueue = new MavenMergingUpdateQueue(getClass().getSimpleName(), 1000, true, project);
-    myDependencySearchService = new DependencySearchService(project);
+    myDependencySearchService = DependencySearchService.getInstance(project);
 
-    if (!isNormalProject()) return;
+    if (!isNormalProject()) {
+      return;
+    }
     doInit();
   }
 
@@ -59,6 +57,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       scheduleUpdateIndicesList();
     }
+
+    MavenRepositoryProvider.EP_NAME.addExtensionPointListener(this::scheduleUpdateIndicesList, myProject);
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       @Override
@@ -85,31 +85,41 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     scheduleUpdateIndicesList(null);
   }
 
-  public void scheduleUpdateIndicesList(@Nullable final Consumer<? super List<MavenIndex>> consumer) {
-    myUpdateQueue.queue(new Update(this) {
+  public void scheduleUpdateIndicesList(@Nullable Consumer<? super List<MavenIndex>> consumer) {
+    Update update = new Update(this) {
       @Override
       public void run() {
-
-        Set<Pair<String, String>> remoteRepositoriesIdsAndUrls =
-          ReadAction.compute(() -> myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls());
+        Set<Pair<String, String>> remoteRepositoriesIdsAndUrls = ReadAction.compute(() -> {
+          return myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls();
+        });
         File localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
-        if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
+        if (remoteRepositoriesIdsAndUrls == null || localRepository == null) {
+          return;
+        }
 
-
+        List<MavenIndex> newProjectIndices;
+        MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance();
         if (remoteRepositoriesIdsAndUrls.isEmpty()) {
-          myProjectIndices.clear();
+          newProjectIndices = new ArrayList<>();
         }
         else {
-          myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
+          newProjectIndices = mavenIndicesManager.ensureIndicesExist(remoteRepositoriesIdsAndUrls);
         }
-        ContainerUtil.addIfNotNull(myProjectIndices, MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
-        myDependencySearchService.reload();
+        ContainerUtil.addIfNotNull(newProjectIndices, mavenIndicesManager.createIndexForLocalRepo(myProject, localRepository));
+        myDependencySearchService.updateProviders();
 
+        myProjectIndices = newProjectIndices;
         if (consumer != null) {
           consumer.consume(myProjectIndices);
         }
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      update.run();
+    }
+    else {
+      myUpdateQueue.queue(update);
+    }
   }
 
   private File getLocalRepository() {
@@ -156,10 +166,6 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
 
-  public synchronized OfflineSearchService getOfflineSearchService() {
-    return myDependencySearchService.getOfflineSearchService();
-  }
-
   public synchronized DependencySearchService getDependencySearchService() {
     return myDependencySearchService;
   }
@@ -186,10 +192,13 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public Set<String> getGroupIds(String pattern) {
     pattern = pattern == null ? "" : pattern;
     //todo fix
-    return getOfflineSearchService().findGroupCandidates(new MavenDependencyCompletionItem(pattern))
-      .stream().map(d -> d.getArtifactId())
-      .collect(
-        Collectors.toSet());
+    Set<String> result = new HashSet<>();
+    myDependencySearchService.fulltextSearch(pattern, new SearchParameters(true, true), it -> {
+      if (it instanceof MavenRepositoryArtifactInfo) {
+        result.add(((MavenRepositoryArtifactInfo)it).getGroupId());
+      }
+    });
+    return result;
   }
 
   /**
@@ -198,9 +207,13 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   @Deprecated
   public Set<String> getArtifactIds(String groupId) {
     ProgressIndicatorProvider.checkCanceled();
-    return getOfflineSearchService().findArtifactCandidates(new MavenDependencyCompletionItem(groupId)).stream().map(d -> d.getArtifactId())
-      .collect(
-        Collectors.toSet());
+    Set<String> result = new HashSet<>();
+    myDependencySearchService.fulltextSearch(groupId + ":", new SearchParameters(true, true), it -> {
+      if (it instanceof MavenRepositoryArtifactInfo) {
+        result.add(((MavenRepositoryArtifactInfo)it).getArtifactId());
+      }
+    });
+    return result;
   }
 
   /**
@@ -209,9 +222,13 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   @Deprecated
   public Set<String> getVersions(String groupId, String artifactId) {
     ProgressIndicatorProvider.checkCanceled();
-    return getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream()
-      .map(d -> d.getVersion()).collect(
-        Collectors.toSet());
+    Set<String> result = new HashSet<>();
+    myDependencySearchService.fulltextSearch(groupId + ":" + artifactId, new SearchParameters(true, true), it -> {
+      if (it instanceof MavenRepositoryArtifactInfo) {
+        result.add(((MavenRepositoryArtifactInfo)it).getVersion());
+      }
+    });
+    return result;
   }
 
   /**
@@ -223,9 +240,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       return false;
     }
     ProgressIndicatorProvider.checkCanceled();
-    if (hasProjectGroupId(groupId)) return true;
-    return getOfflineSearchService().findGroupCandidates(new MavenDependencyCompletionItem(groupId)).stream()
-      .anyMatch(p -> StringUtil.equals(groupId, p.getGroupId()));
+    return getGroupIds().contains(groupId);
   }
 
   /**
@@ -237,9 +252,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       return false;
     }
     ProgressIndicatorProvider.checkCanceled();
-    if (hasProjectArtifactId(groupId, artifactId)) return true;
-    return !getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null),
-                                                      SearchParameters.DEFAULT).isEmpty();
+    return getArtifactIds(groupId).contains(artifactId);
   }
 
   /**
@@ -249,9 +262,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
     ProgressIndicatorProvider.checkCanceled();
-    return getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream().anyMatch(
-      s -> version.equals(s.getVersion())
-    );
+    return getVersions(groupId, artifactId).contains(version);
   }
 
   private Set<String> getProjectGroupIds() {

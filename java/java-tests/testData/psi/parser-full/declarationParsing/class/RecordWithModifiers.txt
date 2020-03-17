@@ -1,0 +1,19 @@
+PsiJavaFile:RecordWithModifiers.java
+  PsiImportList
+    <empty list>
+  PsiClass:ClassName
+    PsiModifierList:private
+      PsiKeyword:private('private')
+    PsiWhiteSpace(' ')
+    PsiKeyword:record('record')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:ClassName('ClassName')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

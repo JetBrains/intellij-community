@@ -44,8 +44,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
 
   @NotNull
   public static PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType));
-    LOG.assertTrue(bound != PsiType.NULL);
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
     return new PsiWildcardType(manager, true, bound);
   }
 

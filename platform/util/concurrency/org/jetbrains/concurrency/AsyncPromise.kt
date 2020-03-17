@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
@@ -10,15 +9,38 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-open class AsyncPromise<T> private constructor(private val f: CompletableFuture<T>,
-                                               private val hasErrorHandler: AtomicBoolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
-  constructor() : this(CompletableFuture(), AtomicBoolean())
+open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
+                                               private val hasErrorHandler: AtomicBoolean,
+                                               addExceptionHandler: Boolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
+  private val f: CompletableFuture<T>
+  private companion object {
+    val CANCELED = CancellationException()
+  }
 
-  override fun isDone() = f.isDone
+  constructor() : this(CompletableFuture(), AtomicBoolean(), addExceptionHandler = false)
 
-  override fun get() = nullizeCancelled { f.get() }
+  init {
+    // cannot be performed outside of AsyncPromise constructor because this instance `hasErrorHandler` must be checked
+    this.f = when {
+      addExceptionHandler -> {
+        f.exceptionally { originalError ->
+          val error = (originalError as? CompletionException)?.cause ?: originalError
+          if (!hasErrorHandler.get()) {
+            Logger.getInstance(AsyncPromise::class.java).errorIfNotMessage((error as? CompletionException)?.cause ?: error)
+          }
 
-  override fun get(timeout: Long, unit: TimeUnit) = nullizeCancelled { f.get(timeout, unit) }
+          throw error
+        }
+      }
+      else -> f
+    }
+  }
+
+  override fun isDone(): Boolean = f.isDone
+
+  override fun get(): T? = nullizeCancelled { f.get() }
+
+  override fun get(timeout: Long, unit: TimeUnit): T? = nullizeCancelled { f.get(timeout, unit) }
 
   // because of the contract: get() should return null for canceled promise
   private inline fun nullizeCancelled(value: () -> T?): T? {
@@ -34,10 +56,10 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }
   }
 
-  override fun isCancelled() = f.isCancelled
+  override fun isCancelled(): Boolean = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
-  override fun cancel(mayInterruptIfRunning: Boolean) = !isCancelled && f.cancel(mayInterruptIfRunning)
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.completeExceptionally(CANCELED)
 
   override fun cancel() {
     cancel(true)
@@ -52,41 +74,37 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
   }
 
   override fun onSuccess(handler: Consumer<in T>): AsyncPromise<T> {
-    return AsyncPromise(f.whenComplete { value, exception ->
-      if (exception == null && !InternalPromiseUtil.isHandlerObsolete(handler)) {
-        try {
-          handler.accept(value)
-        }
-        catch (e: Throwable) {
-          if (e !is ControlFlowException) {
-            Logger.getInstance(AsyncPromise::class.java).error(e)
-          }
-        }
+    return AsyncPromise(f.whenComplete { value, error ->
+      if (error != null) {
+        throw error
       }
-    }, hasErrorHandler)
+
+      if (!InternalPromiseUtil.isHandlerObsolete(handler)) {
+        handler.accept(value)
+      }
+    }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun onError(rejected: Consumer<in Throwable>): AsyncPromise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
-        val toReport = if (exception is CompletionException && exception.cause != null) exception.cause!! else exception
         if (!InternalPromiseUtil.isHandlerObsolete(rejected)) {
-          rejected.accept(toReport)
+          rejected.accept((exception as? CompletionException)?.cause ?: exception)
         }
       }
-    }, hasErrorHandler)
+    }, hasErrorHandler, addExceptionHandler = false)
   }
 
   override fun onProcessed(processed: Consumer<in T?>): AsyncPromise<T> {
-    hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { value, _ ->
       if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
         processed.accept(value)
       }
-    }, hasErrorHandler)
+    }, hasErrorHandler, addExceptionHandler = true)
   }
 
+  @Throws(TimeoutException::class)
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
     try {
       return get(timeout.toLong(), timeUnit)
@@ -102,19 +120,18 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
   }
 
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
-    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler)
+    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
-    val convert: (T) -> CompletableFuture<SUB_RESULT> = {
+    return AsyncPromise(f.thenCompose {
       val promise = doneF.`fun`(it)
       val future = CompletableFuture<SUB_RESULT>()
       promise
         .onSuccess { value -> future.complete(value) }
         .onError { error -> future.completeExceptionally(error) }
       future
-    }
-    return AsyncPromise(f.thenCompose(convert), hasErrorHandler)
+    }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun processed(child: Promise<in T>): Promise<T> {
@@ -141,7 +158,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     return true
   }
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {

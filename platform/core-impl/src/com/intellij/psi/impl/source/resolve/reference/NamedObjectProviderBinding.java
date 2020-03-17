@@ -74,7 +74,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     }
   }
 
-  public boolean isEmpty() {
+  boolean isEmpty() {
     return myNamesToProvidersMap.isEmpty() && myNamesToProvidersMapInsensitive.isEmpty();
   }
 

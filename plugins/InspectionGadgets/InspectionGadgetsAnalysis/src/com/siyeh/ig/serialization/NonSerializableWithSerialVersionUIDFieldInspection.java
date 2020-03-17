@@ -40,12 +40,6 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInsp
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass.isAnnotationType()) {

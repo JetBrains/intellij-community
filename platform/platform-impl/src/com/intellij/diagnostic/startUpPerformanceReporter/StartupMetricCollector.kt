@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 // todo `com.intellij.internal.statistic` package should be moved out of platform-impl module to own,
 // and then this will be class moved to corresponding `intellij.platform.diagnostic` module
-internal class StartupMetricCollector : StartupActivity {
+internal class StartupMetricCollector : StartupActivity.Background {
   private var wasReported = AtomicBoolean(ApplicationManager.getApplication().isUnitTestMode)
 
   override fun runActivity(project: Project) {

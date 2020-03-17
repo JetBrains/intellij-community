@@ -129,7 +129,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
       type = iterator.getTokenType();
     }
 
-    if (COMPLEX_ASSIGNMENTS.indexOf(type) >= 0) {
+    if (COMPLEX_ASSIGNMENTS.contains(type)) {
       return true;
     }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -58,6 +59,10 @@ public class JsonSortPropertiesIntention implements IntentionAction, LowPriority
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "File is readonly", "Cannot sort properties", null);
+      return;
+    }
     PsiElement parentObject = findParentObject(editor, file);
     assert parentObject instanceof JsonObject;
     // cycle-sort performs the minimal amount of modifications, and we want to patch the tree as little as possible

@@ -5,8 +5,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +33,8 @@ public abstract class ExecutionTargetManager {
   @NotNull
   public static List<ExecutionTarget> getTargetsToChooseFor(@NotNull Project project, @Nullable RunConfiguration configuration) {
     List<ExecutionTarget> result = getInstance(project).getTargetsFor(configuration);
-    // Android Studio: b/119839260
-    result = Collections.unmodifiableList(result.stream().filter(target -> !target.isExternallyManaged()).collect(Collectors.toList()));
+    if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) return Collections.emptyList();
+    result = Collections.unmodifiableList(ContainerUtil.filter(result, target -> !target.isExternallyManaged()));
     if (result.size() == 1 && DefaultExecutionTarget.INSTANCE.equals(result.get(0))) {
       return Collections.emptyList();
     }

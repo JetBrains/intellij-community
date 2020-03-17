@@ -49,9 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class AnonymousToInnerHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler");
-
-  static final String REFACTORING_NAME = RefactoringBundle.message("anonymousToInner.refactoring.name");
+  private static final Logger LOG = Logger.getInstance(AnonymousToInnerHandler.class);
 
   private Project myProject;
 
@@ -90,7 +88,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void showErrorMessage(Editor editor, String message) {
-    CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.ANONYMOUS_TO_INNER);
+    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.ANONYMOUS_TO_INNER);
   }
 
   public void invoke(final Project project, Editor editor, final PsiAnonymousClass anonymousClass) {
@@ -109,14 +107,14 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
 
     if (PsiUtil.isLocalClass(baseClass)) {
-      String message = RefactoringBundle.message("error.not.supported.for.local", REFACTORING_NAME);
+      String message = RefactoringBundle.message("error.not.supported.for.local", getRefactoringName());
       showErrorMessage(editor, message);
       return;
     }
 
     PsiElement targetContainer = findTargetContainer(myAnonClass);
     if (FileTypeUtils.isInServerPageFile(targetContainer) && targetContainer instanceof PsiFile) {
-      String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
+      String message = RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName());
       showErrorMessage(editor, message);
       return;
     }
@@ -153,7 +151,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         };
         ApplicationManager.getApplication().runWriteAction(action);
       },
-      REFACTORING_NAME,
+      getRefactoringName(),
       null
     );
 
@@ -597,5 +595,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         }
       }
     });
+  }
+
+  static String getRefactoringName() {
+    return RefactoringBundle.message("anonymousToInner.refactoring.name");
   }
 }

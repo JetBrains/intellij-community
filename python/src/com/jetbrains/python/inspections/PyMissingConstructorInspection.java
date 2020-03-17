@@ -40,13 +40,6 @@ import static com.jetbrains.python.PyNames.*;
  */
 public class PyMissingConstructorInspection extends PyInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.missing.super.constructor");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {

@@ -7,18 +7,21 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
+import org.jetbrains.idea.reposearch.DependencySearchProvider;
+import org.jetbrains.idea.reposearch.RepositoryArtifactData;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
-public class PackageSearchService {
+public class PackageSearchService implements DependencySearchProvider {
   private static final MyErrorHandler<Throwable> myErrorHandler = new MyErrorHandler<>();
 
   private final Gson myGson;
@@ -29,81 +32,65 @@ public class PackageSearchService {
     myPackageServiceConfig = new PackageServiceConfig();
   }
 
-  public Promise<Void> fullTextSearch(@NotNull String text,
-                                      @NotNull SearchParameters parameters,
-                                      @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
+
+  @Override
+  public void fulltextSearch(@NotNull String searchString, @NotNull Consumer<RepositoryArtifactData> consumer) {
     ProgressManager.checkCanceled();
-    String url = createUrlFullTextSearch(text);
-    return doRequest(parameters, consumer, url);
+    String url = createUrlFullTextSearch(searchString);
+    doRequest(consumer, url);
   }
 
-
-  public Promise<Void> suggestPrefix(@NotNull String groupId,
-                                     @NotNull String artifactId,
-                                     @NotNull SearchParameters parameters,
-                                     @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
+  @Override
+  public void suggestPrefix(@Nullable String groupId, @Nullable String artifactId, @NotNull Consumer<RepositoryArtifactData> consumer) {
     ProgressManager.checkCanceled();
     String url = createUrlSuggestPrefix(groupId, artifactId);
-    return doRequest(parameters, consumer, url);
+    doRequest(consumer, url);
   }
 
-  private Promise<Void> doRequest(@NotNull SearchParameters parameters,
-                                  @NotNull Consumer<MavenRepositoryArtifactInfo> consumer,
-                                  String url) {
+  @Override
+  public boolean isLocal() {
+    return false;
+  }
+
+
+  private void doRequest(@NotNull Consumer<RepositoryArtifactData> consumer,
+                         String url) {
 
     if (url == null) {
-      AsyncPromise<Void> result = new AsyncPromise<>();
-      result.setResult(null);
-      return result;
+      return;
     }
-
-    Promise<Void> promise = myErrorHandler.errorResult();
-    if (promise != null) {
-      return promise;
-    }
-
-
     try {
-      return HttpRequests.request(url)
+
+      HttpRequests.request(url)
         .userAgent(myPackageServiceConfig.getUserAgent())
         .forceHttps(true)
-        .connectTimeout((int)parameters.getMillisToWait())
-        .readTimeout((int)parameters.getMillisToWait())
-        .connect(request -> process(parameters, consumer, request))
-        .onSuccess(v -> myErrorHandler.markSuccess());
+        .connectTimeout((int)PackageServiceConfig.MAX_TIMEOUT)
+        .readTimeout((int)PackageServiceConfig.MAX_TIMEOUT)
+        .connect(request -> process(consumer, request));
     }
-    catch (IOException e) {
-      AsyncPromise<Void> error = new AsyncPromise<>();
-      error.onError(myErrorHandler);
-      error.setError(e);
-      return error;
+    catch (IOException ignore) {
     }
   }
 
-  @NotNull
-  private Promise<Void> process(@NotNull SearchParameters parameters,
-                                @NotNull Consumer<MavenRepositoryArtifactInfo> consumer,
-                                HttpRequests.Request request) {
-    AsyncPromise<Void> result = new AsyncPromise<>();
-    result.onError(myErrorHandler);
+  private Object process(@NotNull Consumer<RepositoryArtifactData> consumer,
+                         HttpRequests.Request request) {
     try {
       JsonReader reader = myGson.newJsonReader(request.getReader());
       reader.beginObject();
       while (reader.hasNext()) {
         String name = reader.nextName();
         if ("items".equals(name)) {
-          readVariants(reader, parameters, consumer);
+          readVariants(reader, consumer);
         }
         else {
           reader.nextString();
         }
       }
-      result.setResult(null);
     }
-    catch (Exception e) {
-      result.setError(e);
+    catch (Exception ignore) {
+
     }
-    return result;
+    return null;
   }
 
   private String createUrlFullTextSearch(@NotNull String coord) {
@@ -126,11 +113,10 @@ public class PackageSearchService {
   }
 
   private void readVariants(JsonReader reader,
-                            SearchParameters parameters,
-                            Consumer<MavenRepositoryArtifactInfo> consumer) throws IOException {
+                            Consumer<RepositoryArtifactData> consumer) throws IOException {
     reader.beginArray();
     int results = 0;
-    while (reader.hasNext() && results++ < parameters.getMaxResults()) {
+    while (reader.hasNext() && results++ < 20) {
       PackageSearchResultModel resultModel = myGson.fromJson(reader, PackageSearchResultModel.class);
       ProgressManager.checkCanceled();
       if (resultModel.versions == null ||
@@ -140,11 +126,15 @@ public class PackageSearchService {
         continue;
       }
 
-      MavenDependencyCompletionItem[] items = new MavenDependencyCompletionItem[resultModel.versions.length];
+      Set<String> versions = new HashSet<>();
+      ArrayList<MavenDependencyCompletionItem> itemList = new ArrayList<>();
       for (int i = 0; i < resultModel.versions.length; i++) {
-        items[i] = new MavenDependencyCompletionItem(resultModel.groupId, resultModel.artifactId, resultModel.versions[i],
-                                                     MavenDependencyCompletionItem.Type.REMOTE);
+        if (versions.add(resultModel.versions[i])) {
+          itemList.add(new MavenDependencyCompletionItem(resultModel.groupId, resultModel.artifactId, resultModel.versions[i],
+                                                         MavenDependencyCompletionItem.Type.REMOTE));
+        }
       }
+      MavenDependencyCompletionItem[] items = itemList.toArray(new MavenDependencyCompletionItem[0]);
       consumer.accept(new MavenRepositoryArtifactInfo(items[0].getGroupId(), items[0].getArtifactId(), items));
     }
   }

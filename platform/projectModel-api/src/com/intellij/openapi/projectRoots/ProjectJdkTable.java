@@ -16,6 +16,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.EventListener;
 import java.util.List;
 
+@ApiStatus.NonExtendable
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
     return ServiceManager.getService(ProjectJdkTable.class);

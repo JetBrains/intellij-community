@@ -28,7 +28,7 @@ public final class JavaHighlightInfoTypes {
   }
   
   public final static HighlightInfoType UNUSED_IMPORT = new HighlightInfoType.HighlightInfoTypeSeverityByKey(
-    HighlightDisplayKey.findOrRegister(UnusedImportInspection.SHORT_NAME, UnusedImportInspection.DISPLAY_NAME), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
+    HighlightDisplayKey.findOrRegister(UnusedImportInspection.SHORT_NAME, UnusedImportInspection.getDisplayNameText()), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   public final static HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, JavaHighlightingColors.KEYWORD);
 

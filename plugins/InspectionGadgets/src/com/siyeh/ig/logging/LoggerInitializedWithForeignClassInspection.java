@@ -73,12 +73,6 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.problem.descriptor");
   }

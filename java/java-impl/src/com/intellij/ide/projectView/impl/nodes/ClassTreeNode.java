@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -16,10 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
-
-  private final Collection<? extends AbstractTreeNode> myMandatoryChildren;
+  private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
 
   public ClassTreeNode(Project project, @NotNull PsiClass value, ViewSettings viewSettings) {
     this(project, value, viewSettings, ContainerUtil.emptyList());
@@ -28,16 +28,15 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   public ClassTreeNode(Project project,
                        @NotNull PsiClass value,
                        ViewSettings viewSettings,
-                       @NotNull Collection<? extends AbstractTreeNode> mandatoryChildren) {
+                       @NotNull Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
     super(project, value, viewSettings);
     myMandatoryChildren = mandatoryChildren;
   }
 
   @Override
-  public Collection<AbstractTreeNode> getChildrenImpl() {
+  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
     PsiClass parent = getValue();
-    final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<>(myMandatoryChildren);
-
+    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(myMandatoryChildren);
     if (getSettings().isShowMembers()) {
       ArrayList<PsiElement> result = new ArrayList<>();
       try {

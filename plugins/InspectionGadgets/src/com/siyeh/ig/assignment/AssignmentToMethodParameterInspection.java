@@ -24,12 +24,6 @@ public class AssignmentToMethodParameterInspection extends BaseAssignmentToParam
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assignment.to.method.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.method.parameter.problem.descriptor");
   }

@@ -57,7 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler");
+  private static final Logger LOG = Logger.getInstance(BaseExpressionToFieldHandler.class);
 
   public enum InitializationPlace {
     IN_CURRENT_METHOD,
@@ -174,7 +174,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     PsiElement tempAnchorElement = RefactoringUtil.getParentExpressionAnchorElement(selectedExpr);
-    if (!Comparing.strEqual(IntroduceConstantHandler.REFACTORING_NAME, getRefactoringName()) &&
+    if (!Comparing.strEqual(IntroduceConstantHandler.getRefactoringNameText(), getRefactoringName()) &&
         IntroduceFieldHandler.isInSuperOrThis(selectedExpr) &&
         isStaticFinalInitializer(selectedExpr) != null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
@@ -942,7 +942,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       final PsiElement psiElement = expression.resolve();
-      if ((psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) &&
+      if ((PsiUtil.isJvmLocalVariable(psiElement)) &&
           !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
         myElementReference = expression;
       }
@@ -988,7 +988,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (myElementReference != null) return;
       super.visitElement(element);
     }

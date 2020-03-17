@@ -21,13 +21,13 @@ internal fun disableInputMethodsIfPossible() {
 
   EventQueue.invokeLater {
     try {
-      for (frameHelper in WindowManagerEx.getInstanceEx().projectFrameHelpers) {
-        disableIMRecursively(SwingUtilities.getRoot(frameHelper.frame))
-      }
-
       val componentClass = ReflectionUtil.forName("java.awt.Component")
       val method = ReflectionUtil.getMethod(componentClass, "disableInputMethodSupport") ?: return@invokeLater
       method.invoke(componentClass)
+
+      for (frameHelper in WindowManagerEx.getInstanceEx().projectFrameHelpers) {
+        freeIMRecursively(SwingUtilities.getRoot(frameHelper.frame))
+      }
       Logger.getInstance(Main::class.java).info("InputMethods was disabled")
     }
     catch (e: Throwable) {
@@ -38,13 +38,16 @@ internal fun disableInputMethodsIfPossible() {
 
 private fun getLogger() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-private fun disableIMRecursively(c: Component) {
-  c.enableInputMethods(false)
+private fun freeIMRecursively(c: Component) {
+  val ic = c.getInputContext()
+  if (ic != null)
+    ic.removeNotify(c);
+
   if (c !is Container) {
     return
   }
   for (k in c.components) {
-    disableIMRecursively(k)
+    freeIMRecursively(k)
   }
 }
 

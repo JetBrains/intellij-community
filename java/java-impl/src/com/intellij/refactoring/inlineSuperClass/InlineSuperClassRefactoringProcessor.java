@@ -211,10 +211,10 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
                                                  List<? super FixableUsageInfo> usages,
                                                  Set<? super PsiMethod> addedSuperConstructors) {
     addedSuperConstructors.add(superConstructorWithChain);
-    PsiMethod chainedConstructor = InlineUtil.getChainedConstructor(superConstructorWithChain);
+    PsiMethod chainedConstructor = RefactoringUtil.getChainedConstructor(superConstructorWithChain);
     while (chainedConstructor != null && addedSuperConstructors.add(chainedConstructor)) {
       usages.add(new CopyDefaultConstructorUsageInfo(targetClass, chainedConstructor));
-      chainedConstructor = InlineUtil.getChainedConstructor(chainedConstructor);
+      chainedConstructor = RefactoringUtil.getChainedConstructor(chainedConstructor);
     }
   }
 

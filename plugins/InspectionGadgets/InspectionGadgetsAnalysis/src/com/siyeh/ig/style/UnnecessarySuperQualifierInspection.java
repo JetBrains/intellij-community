@@ -28,7 +28,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +35,6 @@ import javax.swing.*;
 
 public class UnnecessarySuperQualifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean ignoreClarification;
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.super.qualifier.display.name");
-  }
 
   @Override
   @NotNull

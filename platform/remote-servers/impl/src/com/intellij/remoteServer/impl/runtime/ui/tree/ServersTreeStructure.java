@@ -170,9 +170,9 @@ public class ServersTreeStructure {
             }
             if (runConfigOrSourceType instanceof SingletonDeploymentSourceType) {
               String displayName = ((SingletonDeploymentSourceType)runConfigOrSourceType).getPresentableName();
-              return CloudBundle.getText("create.new.deployment.configuration.for.singleton.type", displayName);
+              return CloudBundle.message("create.new.deployment.configuration.for.singleton.type", displayName);
             }
-            return CloudBundle.getText("create.new.deployment.configuration.generic");
+            return CloudBundle.message("create.new.deployment.configuration.generic");
           }
 
           @Override

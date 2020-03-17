@@ -39,7 +39,7 @@ import java.util.*;
  * @author dsl
  */
 public final class Match {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.Match");
+  private static final Logger LOG = Logger.getInstance(Match.class);
   private final PsiElement myMatchStart;
   private final PsiElement myMatchEnd;
   private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<>();

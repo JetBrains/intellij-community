@@ -20,13 +20,14 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiMethodCallExpression;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
 public abstract class NotInSuperOrThisCallFilterBase implements OccurrenceFilter {
   @Override
-  public boolean isOK(PsiExpression occurrence) {
+  public boolean isOK(@NotNull PsiExpression occurrence) {
     PsiElement parent = occurrence.getParent();
     while(parent instanceof PsiExpression) {
       parent = parent.getParent();

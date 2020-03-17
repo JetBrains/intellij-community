@@ -10,7 +10,6 @@ import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -20,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -43,7 +43,7 @@ import java.util.*;
  */
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
   private final Project myProject;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl");
+  private static final Logger LOG = Logger.getInstance(CodeSmellDetectorImpl.class);
 
   public CodeSmellDetectorImpl(final Project project) {
     myProject = project;
@@ -94,23 +94,22 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
       final Ref<Exception> exception = Ref.create();
-      TransactionGuard.getInstance().submitTransactionAndWait(
-        () -> ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
-          @Override
-          public void run(@NotNull ProgressIndicator progress) {
-            try {
-              result.addAll(findCodeSmells(filesToCheck, progress));
-            }
-            catch (ProcessCanceledException e) {
-              LOG.info("Code analysis canceled", e);
-              exception.set(e);
-            }
-            catch (Exception e) {
-              LOG.error(e);
-              exception.set(e);
-            }
+      ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator progress) {
+          try {
+            result.addAll(findCodeSmells(filesToCheck, progress));
           }
-        }));
+          catch (ProcessCanceledException e) {
+            LOG.info("Code analysis canceled", e);
+            exception.set(e);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            exception.set(e);
+          }
+        }
+      });
       if (!exception.isNull()) {
         ExceptionUtil.rethrowAllAsUnchecked(exception.get());
       }
@@ -130,7 +129,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
                                              @NotNull ProgressIndicator progress) {
     final List<CodeSmellInfo> result = new ArrayList<>();
     for (int i = 0; i < files.size(); i++) {
-      if (progress.isCanceled()) throw new ProcessCanceledException();
+      ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
 
       final VirtualFile file = files.get(i);
 

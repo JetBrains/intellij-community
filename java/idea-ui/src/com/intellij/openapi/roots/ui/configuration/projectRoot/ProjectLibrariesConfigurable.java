@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return "Libraries";
+    return IdeBundle.message("configurable.ProjectLibrariesConfigurable.display.name");
   }
 
   @Override

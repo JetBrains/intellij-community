@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.ui.HgUpdateDialog;
 
 import javax.swing.*;
@@ -95,11 +96,11 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       this.updateConfiguration = updateConfiguration;
     }
 
-    @Override
     @Nls
-    public String getDisplayName() {
-      return "Update";
-    }
+    @Override
+  public String getDisplayName() {
+    return HgBundle.message("configurable.UpdateConfigurable.display.name");
+  }
 
     @Override
     public String getHelpTopic() {

@@ -34,7 +34,7 @@ import java.util.List;
  * @author mike
  */
 public class ProjectRootUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootUtil");
+  private static final Logger LOG = Logger.getInstance(ProjectRootUtil.class);
 
   private ProjectRootUtil() {
   }

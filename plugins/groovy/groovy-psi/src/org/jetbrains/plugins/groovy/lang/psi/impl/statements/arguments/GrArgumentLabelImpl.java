@@ -31,13 +31,21 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrMapConstructorPropertyReference;
 
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.references.GrMapConstructorPropertyReference.getConstructorReference;
 
 /**
  * @author ilyas
  */
 public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgumentLabel {
+
+  private final GrMapConstructorPropertyReference myConstructorPropertyReference = new GrMapConstructorPropertyReference(this);
 
   public GrArgumentLabelImpl(@NotNull ASTNode node) {
     super(node);
@@ -71,7 +79,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
     String labelName = getName();
 
-    Map<String,NamedArgumentDescriptor> providers = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, labelName, false);
+    Map<String, NamedArgumentDescriptor> providers = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, labelName, false);
     if (providers != null) {
       NamedArgumentDescriptor descr = providers.get(labelName);
       if (descr != null) {
@@ -122,8 +130,14 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   @Override
   public PsiReference getReference() {
-    final PsiElement name = getNameElement();
-    return name instanceof GrLiteral || name instanceof LeafPsiElement ? this : null;
+    GroovyPropertyWriteReference constructorPropertyReference = getConstructorPropertyReference();
+    if (constructorPropertyReference != null) {
+      return constructorPropertyReference;
+    }
+    else {
+      final PsiElement name = getNameElement();
+      return name instanceof GrLiteral || name instanceof LeafPsiElement ? this : null;
+    }
   }
 
   @Override
@@ -197,11 +211,11 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   public String getCanonicalText() {
     PsiElement resolved = resolve();
     if (resolved instanceof PsiMember && resolved instanceof PsiNamedElement) {
-      PsiClass clazz = ((PsiMember) resolved).getContainingClass();
+      PsiClass clazz = ((PsiMember)resolved).getContainingClass();
       if (clazz != null) {
         String qName = clazz.getQualifiedName();
         if (qName != null) {
-          return qName + "." + ((PsiNamedElement) resolved).getName();
+          return qName + "." + ((PsiNamedElement)resolved).getName();
         }
       }
     }
@@ -262,5 +276,31 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   public PsiElement setName(@NotNull String newName) {
     PsiImplUtil.setName(newName, getNameElement());
     return this;
+  }
+
+  @Nullable
+  @Override
+  public GroovyPropertyWriteReference getConstructorPropertyReference() {
+    return hasConstructorPropertyReference() ? myConstructorPropertyReference : null;
+  }
+
+  private boolean hasConstructorPropertyReference() {
+    if (getName() == null) {
+      return false;
+    }
+    PsiElement parent = getParent();
+    if (!(parent instanceof GrNamedArgument)) {
+      return false;
+    }
+    return hasConstructorPropertyReference((GrNamedArgument)parent);
+  }
+
+  private static boolean hasConstructorPropertyReference(@NotNull GrNamedArgument argument) {
+    GroovyCallReference constructorReference = getConstructorReference(argument);
+    if (constructorReference == null) {
+      return false;
+    }
+    GroovyResolveResult result = constructorReference.advancedResolve();
+    return result instanceof GroovyConstructorResult && ((GroovyConstructorResult)result).isMapConstructor();
   }
 }

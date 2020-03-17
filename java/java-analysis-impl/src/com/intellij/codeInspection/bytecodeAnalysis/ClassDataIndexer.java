@@ -24,7 +24,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
@@ -55,7 +54,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   static final BinaryOperator<Equations> MERGER =
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
-  private static final int VERSION = 12; // change when inference algorithm changes
+  private static final int VERSION = 13; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
@@ -69,11 +68,10 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       return map;
     }
     try {
-      MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       ClassReader reader = new ClassReader(file.contentsToByteArray(false));
       Map<EKey, Equations> allEquations = processClass(reader, file.getPresentableUrl());
       allEquations = solvePartially(reader.getClassName(), allEquations);
-      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(md), hash(equations, md), MERGER));
+      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(), hash(equations), MERGER));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -125,33 +123,33 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       .toMap();
   }
 
-  private static Equations hash(Equations equations, MessageDigest md) {
-    return new Equations(ContainerUtil.map(equations.results, drp -> hash(drp, md)), equations.stable);
+  private static Equations hash(Equations equations) {
+    return new Equations(ContainerUtil.map(equations.results, ClassDataIndexer::hash), equations.stable);
   }
 
-  private static DirectionResultPair hash(DirectionResultPair drp, MessageDigest md) {
-    return new DirectionResultPair(drp.directionKey, hash(drp.result, md));
+  private static DirectionResultPair hash(DirectionResultPair drp) {
+    return new DirectionResultPair(drp.directionKey, hash(drp.result));
   }
 
-  private static Result hash(Result result, MessageDigest md) {
+  private static Result hash(Result result) {
     if (result instanceof Effects) {
       Effects effects = (Effects)result;
-      return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(effect -> hash(effect, md)).toSet());
+      return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(ClassDataIndexer::hash).toSet());
     }
     else if (result instanceof Pending) {
-      return new Pending(ContainerUtil.map(((Pending)result).delta, component -> hash(component, md)));
+      return new Pending(ContainerUtil.map(((Pending)result).delta, ClassDataIndexer::hash));
     }
     return result;
   }
 
-  private static Component hash(Component component, MessageDigest md) {
-    return new Component(component.value, StreamEx.of(component.ids).map(key -> key.hashed(md)).toArray(EKey[]::new));
+  private static Component hash(Component component) {
+    return new Component(component.value, StreamEx.of(component.ids).map(EKey::hashed).toArray(EKey[]::new));
   }
 
-  private static EffectQuantum hash(EffectQuantum effect, MessageDigest md) {
+  private static EffectQuantum hash(EffectQuantum effect) {
     if (effect instanceof EffectQuantum.CallQuantum) {
       EffectQuantum.CallQuantum call = (EffectQuantum.CallQuantum)effect;
-      return new EffectQuantum.CallQuantum(call.key.hashed(md), call.data, call.isStatic);
+      return new EffectQuantum.CallQuantum(call.key.hashed(), call.data, call.isStatic);
     }
     return effect;
   }
@@ -169,9 +167,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
     // of states/actions/results which were written by the current pass of the analysis.
     // Since states/actions/results are quite expensive to create (32K array) for each analysis, we create them once per class analysis.
-    final State[] sharedPendingStates = new State[Analysis.STEPS_LIMIT];
-    final PendingAction[] sharedPendingActions = new PendingAction[Analysis.STEPS_LIMIT];
-    final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
+    final ExpandableArray<State> sharedPendingStates = new ExpandableArray<>();
+    final ExpandableArray<PendingAction> sharedPendingActions = new ExpandableArray<>();
+    final ExpandableArray<PResults.PResult> sharedResults = new ExpandableArray<>();
     final Map<EKey, Equations> equations = new HashMap<>();
 
     registerVolatileFields(equations, classReader);
@@ -256,16 +254,16 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   private static class MethodAnalysisVisitor extends KeyedMethodVisitor {
     private final Map<EKey, Equations> myEquations;
     private final String myPresentableUrl;
-    private final State[] mySharedPendingStates;
-    private final PendingAction[] mySharedPendingActions;
-    private final PResults.PResult[] mySharedResults;
+    private final ExpandableArray<State> mySharedPendingStates;
+    private final ExpandableArray<PendingAction> mySharedPendingActions;
+    private final ExpandableArray<PResults.PResult> mySharedResults;
     private final Set<Member> myStaticFinalFields;
 
     private MethodAnalysisVisitor(Map<EKey, Equations> equations,
                                   String presentableUrl,
-                                  State[] sharedPendingStates,
-                                  PendingAction[] sharedPendingActions,
-                                  PResults.PResult[] sharedResults, Set<Member> staticFinalFields) {
+                                  ExpandableArray<State> sharedPendingStates,
+                                  ExpandableArray<PendingAction> sharedPendingActions,
+                                  ExpandableArray<PResults.PResult> sharedResults, Set<Member> staticFinalFields) {
       myEquations = equations;
       myPresentableUrl = presentableUrl;
       mySharedPendingStates = sharedPendingStates;

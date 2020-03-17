@@ -2,7 +2,6 @@
 package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
@@ -102,7 +101,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
     @NotNull
     public String getPresentableText() {
-      return myScheme != null ? SchemeManager.getDisplayName(myScheme) : "";
+      return myScheme != null ? myScheme.getDisplayName() : "";
     }
 
     public boolean isSeparator() {

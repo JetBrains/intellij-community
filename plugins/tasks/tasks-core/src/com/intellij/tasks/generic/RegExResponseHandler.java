@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  */
 @Tag("RegExResponseHandler")
 public final class RegExResponseHandler extends ResponseHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.generic.RegExResponseHandler");
+  private static final Logger LOG = Logger.getInstance(RegExResponseHandler.class);
   private static final String ID_PLACEHOLDER = "{id}";
   private static final String SUMMARY_PLACEHOLDER = "{summary}";
 

@@ -7,14 +7,19 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
+  private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION =
+    a -> a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
+
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
@@ -55,10 +60,14 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
 
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       getPopupTitle(e), group, e.getDataContext(), aid, true, null, -1,
-      (a) -> a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward,
-      myActionPlace);
+      preselectAction(), myActionPlace);
 
     showPopup(e, popup);
+  }
+
+  @Nullable
+  protected Condition<? super AnAction> preselectAction() {
+    return DEFAULT_PRESELECT_ACTION;
   }
 
   protected void showPopup(AnActionEvent e, ListPopup popup) {

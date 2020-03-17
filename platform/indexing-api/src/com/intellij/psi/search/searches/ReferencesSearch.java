@@ -16,17 +16,19 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Locates all references to a specified PSI element.
  *
- * @see PsiReference
  * @author max
+ * @see PsiReference
+ * @see ReferenceSearcher
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
+  public static final ExtensionPointName<QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
   private static final ReferencesSearch INSTANCE = new ReferencesSearch();
 
   private ReferencesSearch() {
+    super(EP_NAME);
   }
 
-  public static class SearchParameters implements DumbAwareSearchParameters {
+  public static class SearchParameters implements DumbAwareSearchParameters, com.intellij.model.search.SearchParameters<PsiReference> {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
     private volatile SearchScope myEffectiveScope;
@@ -46,6 +48,11 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
     public SearchParameters(@NotNull PsiElement elementToSearch, @NotNull SearchScope scope, final boolean ignoreAccessScope) {
       this(elementToSearch, scope, ignoreAccessScope, null);
+    }
+
+    @Override
+    public final boolean areValid() {
+      return isQueryValid();
     }
 
     @Override

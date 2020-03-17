@@ -24,13 +24,6 @@ public class UseOfJDBCDriverClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "use.of.concrete.jdbc.driver.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.of.concrete.jdbc.driver.class.problem.descriptor");

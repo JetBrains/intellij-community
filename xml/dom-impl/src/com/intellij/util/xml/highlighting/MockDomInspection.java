@@ -37,13 +37,6 @@ public class MockDomInspection<T extends DomElement> extends BasicDomElementsIns
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    throw new UnsupportedOperationException("Method getDisplayName is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

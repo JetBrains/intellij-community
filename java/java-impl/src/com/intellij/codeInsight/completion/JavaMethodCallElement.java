@@ -338,17 +338,20 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     setCompletionMode(methodCall, true);
-    ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
-                                                                     methodCall.getArgumentList(), handler, false, false);
-    Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
-    if (Disposer.isDisposed(controller)) {
-      Disposer.dispose(hintsDisposal);
-      document.deleteString(offset, offset + commas.length());
-    }
-    else {
-      ParameterHintsPass.syncUpdate(methodCall, editor);
-      Disposer.register(controller, hintsDisposal);
-    }
+    context.setLaterRunnable(() -> {
+      ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
+                                                                       methodCall.getArgumentList(), handler, false, false);
+      Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
+      if (Disposer.isDisposed(controller)) {
+        Disposer.dispose(hintsDisposal);
+        document.deleteString(offset, offset + commas.length());
+      }
+      else {
+        ParameterHintsPass.syncUpdate(methodCall, editor);
+        Disposer.register(controller, hintsDisposal);
+      }
+    });
+
   }
 
   public static int getCompletionHintsLimit() {

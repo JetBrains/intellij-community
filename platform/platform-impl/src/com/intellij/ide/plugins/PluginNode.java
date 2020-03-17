@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author stathik
  */
-public class PluginNode implements IdeaPluginDescriptor {
+public final class PluginNode implements IdeaPluginDescriptor {
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
@@ -304,38 +304,12 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  @Nullable
-  public String getVendorLogoPath() {
-    return null;
-  }
-
-  @Override
-  public boolean getUseIdeaClassLoader() {
-    return false;
-  }
-
-  @Override
   public String getUntilBuild() {
     return untilBuild;
   }
 
   public void setUntilBuild(final String untilBuild) {
     this.untilBuild = untilBuild;
-  }
-
-  @Override
-  public boolean isBundled() {
-    return false;
-  }
-
-  @Override
-  public boolean allowBundledUpdate() {
-    return false;
-  }
-
-  @Override
-  public boolean isImplementationDetail() {
-    return false;
   }
 
   @Override

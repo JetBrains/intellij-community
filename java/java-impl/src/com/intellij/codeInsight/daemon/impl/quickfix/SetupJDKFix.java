@@ -23,9 +23,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
@@ -63,14 +65,13 @@ public class SetupJDKFix implements IntentionAction, HighPriorityAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
-    Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
-    if (projectJdk == null) return;
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      Module module = ModuleUtilCore.findModuleForPsiElement(file);
-      if (module != null) {
-        ModuleRootModificationUtil.setSdkInherited(module);
-      }
-    });
+    SdkPopupFactory
+      .newBuilder()
+      .withProject(project)
+      .withSdkTypeFilter(type -> type instanceof JavaSdkType)
+      .updateSdkForFile(file)
+      .buildPopup()
+      .showInBestPositionFor(editor);
   }
 
   @Override

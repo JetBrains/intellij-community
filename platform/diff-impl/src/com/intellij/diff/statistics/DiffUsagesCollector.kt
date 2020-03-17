@@ -45,6 +45,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isUseSoftWraps }, "use.soft.wraps", data)
       addBoolIfDiffers(set, diffSettings, defaultDiffSettings, { isUnifiedToolDefault(it) }, "use.unified.diff", data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isReadOnlyLock }, "enable.read.lock", data)
+      addIfDiffers(set, textSettings, defaultTextSettings, { it.breadcrumbsPlacement }, "show.breadcrumbs", data)
     }
 
     val diffSettings = DiffSettings.getSettings(DiffPlaces.DEFAULT)

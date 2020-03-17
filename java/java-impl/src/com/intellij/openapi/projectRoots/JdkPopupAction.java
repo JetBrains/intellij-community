@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class JdkPopupAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.JDKPopupAction");
+  private static final Logger LOG = Logger.getInstance(JdkPopupAction.class);
 
   public JdkPopupAction() {
     super("Show Quick list", "", AllIcons.General.AddJdk);

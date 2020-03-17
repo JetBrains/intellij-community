@@ -24,11 +24,11 @@ public class ResourceUtil {
   private ResourceUtil() {
   }
 
-  public static URL getResource(@NotNull Class loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
+  public static URL getResource(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResource(loaderClass.getClassLoader(), basePath, fileName);
   }
 
-  public static InputStream getResourceAsStream(@NotNull Class loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
+  public static InputStream getResourceAsStream(@NotNull Class<?> loaderClass, @NonNls @NotNull String basePath, @NonNls @NotNull String fileName) {
     return getResourceAsStream(loaderClass.getClassLoader(), basePath, fileName);
   }
 

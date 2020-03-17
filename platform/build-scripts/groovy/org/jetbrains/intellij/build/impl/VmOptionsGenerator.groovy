@@ -17,7 +17,7 @@ class VmOptionsGenerator {
       '-ea',
 Android Studio: removed by Change Ie7351d92 */
       '-XX:CICompilerCount=2',
-      '-Dsun.io.useCanonPrefixCache=false', '-Djava.net.preferIPv4Stack=true',
+      '-Dsun.io.useCanonPrefixCache=false',
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
 /* Android Studio: removed by Change Ie7351d92
       '-XX:+HeapDumpOnOutOfMemoryError',

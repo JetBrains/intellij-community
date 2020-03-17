@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PyTestCreator implements TestCreator {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.testIntegration.PyTestCreator");
+  private static final Logger LOG = Logger.getInstance(PyTestCreator.class);
 
   @Override
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

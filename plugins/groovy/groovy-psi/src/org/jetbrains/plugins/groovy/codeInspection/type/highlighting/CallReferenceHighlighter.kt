@@ -6,47 +6,50 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.util.containers.toArray
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.*
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 
-abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val sink: HighlightSink) {
+abstract class CallReferenceHighlighter(protected val reference: GroovyCallReference, protected val sink: HighlightSink) {
 
-  abstract val unknownArgsMessage: String
+  protected open val ambiguousMethodMessage: String get() = GroovyBundle.message("method.call.is.ambiguous")
 
-  abstract val ambiguousMethodMessage: String
-
-  abstract fun getInapplicableMethodMessage(result: GroovyMethodResult, containingType: PsiType, arguments: Arguments): String
-
-  abstract fun getHighlightElement(): PsiElement
-
-  abstract fun buildFix(argument: Argument, expectedType: PsiType): LocalQuickFix?
-
-  fun highlightCannotApplyError(invokedText: String, typesString: String) {
-    sink.registerError(getHighlightElement(), GroovyBundle.message("cannot.apply.method.or.closure", invokedText, typesString))
+  protected open fun getInapplicableMethodMessage(result: GroovyMethodResult, containingType: PsiType, arguments: Arguments): String {
+    val typeText = containingType.internalCanonicalText
+    val argumentsString = argumentsString(arguments)
+    return GroovyBundle.message("cannot.apply.method1", result.element.name, typeText, argumentsString)
   }
 
-  fun highlightUnknownArgs() {
-    sink.registerProblem(getHighlightElement(), ProblemHighlightType.WEAK_WARNING, unknownArgsMessage)
+  protected abstract val highlightElement: PsiElement
+
+  private fun highlightCannotApplyError(invokedText: String, typesString: String) {
+    sink.registerError(highlightElement, GroovyBundle.message("cannot.apply.method.or.closure", invokedText, typesString))
   }
 
-  fun highlightAmbiguousMethod() {
-    sink.registerError(getHighlightElement(), ambiguousMethodMessage)
+  private fun highlightUnknownArgs() {
+    sink.registerProblem(highlightElement, ProblemHighlightType.WEAK_WARNING, GroovyBundle.message("cannot.infer.argument.types"))
   }
 
-  fun highlightInapplicableMethod(results: Set<GroovyMethodResult>, arguments: Arguments) {
+  private fun highlightAmbiguousMethod() {
+    sink.registerError(highlightElement, ambiguousMethodMessage)
+  }
+
+  private fun highlightInapplicableMethod(results: Collection<GroovyMethodResult>, arguments: Arguments) {
     val result = results.firstOrNull() ?: return
     val method = result.element
     val containingClass = if (method is GrGdkMethod) method.staticMethod.containingClass else method.containingClass
 
     val methodName = method.name
-    val highlightElement = getHighlightElement()
+    val highlightElement = highlightElement
     val argumentsString = argumentsString(arguments)
     if (containingClass == null) {
       highlightCannotApplyError(methodName, argumentsString)
@@ -55,22 +58,31 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
     val factory = JavaPsiFacade.getElementFactory(method.project)
     val containingType = factory.createType(containingClass, result.substitutor)
 
-    val fixes = generateFixes(results)
+    val fixes = (buildCastFixes(results) + buildFixes()).toArray(LocalQuickFix.EMPTY_ARRAY)
     val message = getInapplicableMethodMessage(result, containingType, arguments)
     sink.registerProblem(highlightElement, ProblemHighlightType.GENERIC_ERROR, message, *fixes)
   }
 
-  fun highlightMethodApplicability(): Boolean {
+  protected open fun shouldHighlightInapplicable(): Boolean = true
+
+  open fun highlightMethodApplicability(): Boolean {
     val userArguments = reference.arguments ?: run {
       highlightUnknownArgs()
       return true
     }
 
-    val results = reference.resolve(false).filterIsInstance(GroovyMethodResult::class.java).associate {
-      it to (it.candidate?.argumentMapping?.applicability(it.substitutor, false) ?: inapplicable)
+    val results: Collection<GroovyResolveResult> = reference.resolve(false)
+    if (results.isEmpty()) {
+      // will be highlighted by GrUnresolvedAccessInspection
+      return false
     }
+    val resultApplicabilities: List<Pair<GroovyMethodResult, Applicability>> = results
+      .filterIsInstance(GroovyMethodResult::class.java)
+      .map {
+        Pair(it, it.candidate?.argumentMapping?.applicability(it.substitutor, false) ?: inapplicable)
+      }
 
-    val totalApplicability = results.entries.fold(applicable) { status, (_, applicability) ->
+    val totalApplicability = resultApplicabilities.fold(applicable) { status, (_, applicability) ->
       when {
         status == inapplicable -> inapplicable
         applicability == inapplicable -> inapplicable
@@ -80,17 +92,23 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
 
     when (totalApplicability) {
       inapplicable -> {
-        highlightInapplicableMethod(results.filter { it.value == inapplicable }.keys, userArguments)
+        if (!shouldHighlightInapplicable()) {
+          return false
+        }
+        val inapplicableResults: Collection<GroovyMethodResult> = resultApplicabilities.mapNotNull { (result, applicability) ->
+          if (applicability == inapplicable) result else null
+        }
+        highlightInapplicableMethod(inapplicableResults, userArguments)
         return true
       }
       canBeApplicable -> {
-        if (results.size > 1) {
+        if (resultApplicabilities.size > 1) {
           highlightUnknownArgs()
           return true
         }
       }
       applicable -> {
-        if (results.size > 1) {
+        if (resultApplicabilities.size > 1) {
           highlightAmbiguousMethod()
           return true
         }
@@ -99,11 +117,11 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
     return false
   }
 
-  open fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
-    return results.flatMap(::generateFixes).toTypedArray()
+  private fun buildCastFixes(results: Collection<GroovyMethodResult>): List<LocalQuickFix> {
+    return results.flatMap(::buildCastFixes)
   }
 
-  private fun generateFixes(result: GroovyMethodResult): List<LocalQuickFix> {
+  private fun buildCastFixes(result: GroovyMethodResult): List<LocalQuickFix> {
     val candidate = result.candidate ?: return emptyList()
     val mapping = candidate.argumentMapping ?: return emptyList()
     val applicabilities = candidate.argumentMapping?.highlightingApplicabilities(result.substitutor) ?: return emptyList()
@@ -114,11 +132,21 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
       .ignoreArguments(notApplicableArguments)
       .build().inferSubst()
 
-    return notApplicableArguments.mapNotNull { argument ->
+    return notApplicableArguments.filterIsInstance<ExpressionArgument>().mapNotNull { argument ->
       val fixType = substitutor.substitute(mapping.expectedType(argument))
-      if (fixType != null) buildFix(argument, fixType)
+      if (fixType != null) buildCastFix(argument, fixType)
       else null
     }
   }
 
+  protected open fun buildCastFix(argument: ExpressionArgument, expectedType: PsiType): LocalQuickFix? {
+    val arguments = reference.arguments ?: return null
+    val position = arguments.indexOf(argument)
+    if (position < 0) {
+      return null
+    }
+    return ParameterCastFix(argument.expression, position, expectedType)
+  }
+
+  protected open fun buildFixes(): List<LocalQuickFix> = emptyList()
 }

@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,7 +29,6 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -359,7 +357,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
 
       while (refreshed.getCount() != 0) {
-        StartupUiUtil.pump();
+        UIUtil.pump();
       }
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
@@ -369,14 +367,14 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void asyncRefreshInModalTransactionCompletesWithinIt() {
+  public void asyncRefreshInModalProgressCompletesWithinIt() {
     EdtTestUtil.runInEdtAndWait(() -> {
       VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
       assertThat(vTemp.getChildren()).isEmpty();
 
       myTempDir.newFile("x.txt");
 
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
+      ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           assertFalse(ApplicationManager.getApplication().isDispatchThread());
@@ -386,18 +384,17 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
           assertTrue(semaphore.waitFor(10_000));
           assertThat(vTemp.getChildren()).hasSize(1);
         }
-      }));
-
+      });
     });
   }
 
   @Test(timeout = 20_000)
-  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh_NoWaiting() {
+  public void olderRefreshWithLessSpecificModalityDoesNotBlockNewerRefresh_NoWaiting() {
     checkNonModalThenModalRefresh(false);
   }
 
   @Test(timeout = 20_000)
-  public void olderRefreshWithLessSpecificTransactionDoesNotBlockNewerRefresh_WithWaiting() {
+  public void olderRefreshWithLessSpecificModalityDoesNotBlockNewerRefresh_WithWaiting() {
     checkNonModalThenModalRefresh(true);
   }
 
@@ -430,7 +427,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         UIUtil.dispatchAllInvocationEvents();
       }
 
-      TransactionGuard.submitTransaction(getTestRootDisposable(), () -> ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
+      ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           assertFalse(ApplicationManager.getApplication().isDispatchThread());
@@ -443,12 +440,12 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
           assertTrue(local.waitFor(10_000));
           assertThat(vDir2.getChildren()).hasSize(1);
         }
-      }));
+      });
 
-      int i = 0;
-      while (!semaphore.waitFor(1) & i < 10_000) {
+      for (int i = 0; i < 10_000 && !semaphore.waitFor(1); i++) {
         UIUtil.dispatchAllInvocationEvents();
       }
+      assertTrue(semaphore.waitFor(1));
 
       assertThat(vDir1.getChildren()).hasSize(1);
       assertThat(vDir2.getChildren()).hasSize(1);

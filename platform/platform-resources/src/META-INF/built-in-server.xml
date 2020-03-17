@@ -29,6 +29,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.OpenSettingsService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
 
     <jbProtocolCommand implementation="org.jetbrains.ide.OpenSettingsJbProtocolService"/>
 

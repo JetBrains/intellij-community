@@ -38,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements PsiAnnotationStub {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl");
+  private static final Logger LOG = Logger.getInstance(PsiAnnotationStubImpl.class);
 
   static {
     CharTableImpl.addStringsFromClassToStatics(AnnotationUtil.class);

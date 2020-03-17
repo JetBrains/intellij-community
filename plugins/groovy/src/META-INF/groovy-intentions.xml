@@ -1,5 +1,5 @@
 <idea-plugin>
-  <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
+  <resource-bundle>messages.GroovyBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
       <categoryKey>intention.category.groovy</categoryKey>

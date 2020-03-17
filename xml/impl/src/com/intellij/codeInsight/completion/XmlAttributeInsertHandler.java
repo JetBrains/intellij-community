@@ -31,7 +31,7 @@ import java.util.Collections;
 * @author peter
 */
 public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlAttributeInsertHandler");
+  private static final Logger LOG = Logger.getInstance(XmlAttributeInsertHandler.class);
 
   public static final XmlAttributeInsertHandler INSTANCE = new XmlAttributeInsertHandler();
 

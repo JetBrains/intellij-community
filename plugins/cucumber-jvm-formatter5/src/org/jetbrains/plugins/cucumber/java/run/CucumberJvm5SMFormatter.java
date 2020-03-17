@@ -6,7 +6,7 @@ import io.cucumber.plugin.event.*;
 
 import java.io.PrintStream;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "Convert2Lambda"})
 public class CucumberJvm5SMFormatter extends CucumberJvmSMConverter implements ConcurrentEventListener {
   public CucumberJvm5SMFormatter() {
     //noinspection UseOfSystemOutOrSystemErr

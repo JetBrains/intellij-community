@@ -18,6 +18,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -27,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents;
-import static com.intellij.util.ui.UIUtil.pump;
 
 public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnnotationLocalChangesListener {
   private static final Logger LOG = Logger.getInstance(VcsAnnotationLocalChangesListenerImpl.class);
@@ -72,7 +72,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       dispatchAllInvocationEvents();
     }
     else {
-      pump();
+      UIUtil.pump();
     }
   }
 

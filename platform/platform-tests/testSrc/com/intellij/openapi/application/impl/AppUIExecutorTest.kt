@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.constraints.ConstrainedExecution
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Disposer
@@ -144,14 +145,13 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     return file.viewProvider.document!!
   }
 
+  @ExperimentalCoroutinesApi
   fun `test withDocumentsCommitted`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-      .inWriteAction()
       .withDocumentsCommitted(project)
 
     val transactionExecutor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
       .inTransaction(project)
-      .inWriteAction()
 
     GlobalScope.async(SwingDispatcher) {
       val pdm = PsiDocumentManager.getInstance(project)
@@ -160,16 +160,21 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
 
-        val document = createDocument()
-        document.insertString(0, "a")
-        assertTrue(pdm.hasUncommitedDocuments())
+        val document = runWriteAction {
+          createDocument().apply {
+            insertString(0, "a")
+            assertTrue(pdm.hasUncommitedDocuments())
+          }
+        }
 
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
         assertEquals("a", document.text)
 
-        document.insertString(1, "b")
-        assertTrue(pdm.hasUncommitedDocuments())
+        runWriteAction {
+          document.insertString(1, "b")
+          assertTrue(pdm.hasUncommitedDocuments())
+        }
 
         commitChannel.receive()
         assertFalse(pdm.hasUncommitedDocuments())
@@ -177,12 +182,17 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
         commitChannel.close()
       }
-      launch(transactionExecutor.coroutineDispatchingContext() + job) {
+      withContext(transactionExecutor.coroutineDispatchingContext() + job) {
         while (true) {
-          pdm.commitAllDocuments()
-          commitChannel.send(Unit)
+          runWriteAction { pdm.commitAllDocuments() }
+          if (!commitChannel.isClosedForSend) {
+            commitChannel.send(Unit)
+          }
+          else {
+            return@withContext
+          }
         }
-      }.join()
+      }
       coroutineContext.cancelChildren()
 
     }.joinNonBlocking()

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class VfsEventGenerationHelper {
-  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+  static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private int myMarkedStart = -1;
@@ -77,12 +77,11 @@ class VfsEventGenerationHelper {
           children = scanChildren(child, relevantExcluded, checkCanceled);
         }
       }
-      catch (InvalidPathException ignored) {
-        // Paths.get() throws sometimes
+      catch (InvalidPathException e) {
+        LOG.warn("Invalid child name: '" + childName + "'", e);
       }
     }
-    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true,
-                                                  children);
+    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
     myEvents.add(event);
   }
 
@@ -101,10 +100,10 @@ class VfsEventGenerationHelper {
     return false;
   }
 
-
   void beginTransaction() {
     myMarkedStart = myEvents.size();
   }
+
   void endTransaction(boolean success) {
     if (!success) {
       myEvents.subList(myMarkedStart, myEvents.size()).clear();

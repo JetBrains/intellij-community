@@ -10,6 +10,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
@@ -126,9 +128,12 @@ public class DfaPsiUtil {
   private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
     NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
-    if (info == null ||
-        ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
+    if (info == null) {
       return Nullability.UNKNOWN;
+    }
+    if (ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
+      List<PsiParameter> supers = AnnotationUtil.getSuperAnnotationOwners((PsiParameter)owner);
+      return ContainerUtil.exists(supers, each -> manager.isNullable(each, false)) ? Nullability.NULLABLE :  Nullability.UNKNOWN;
     }
     return info.getNullability();
   }
@@ -226,14 +231,16 @@ public class DfaPsiUtil {
     }
     PsiClassType type = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
     PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
-    if (sam != null && index < sam.getParameterList().getParametersCount()) {
-      PsiParameter parameter = sam.getParameterList().getParameters()[index];
-      nullability = getElementNullability(null, parameter);
-      if(nullability != Nullability.UNKNOWN) {
-        return nullability;
+    if (sam != null) {
+      PsiParameter parameter = sam.getParameterList().getParameter(index);
+      if (parameter != null) {
+        nullability = getElementNullability(null, parameter);
+        if (nullability != Nullability.UNKNOWN) {
+          return nullability;
+        }
+        PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
+        return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
       }
-      PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
-      return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
     }
     return Nullability.UNKNOWN;
   }
@@ -315,7 +322,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = new HashMap<>();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, null) {
+        final DataFlowRunner dfaRunner = new DataFlowRunner(constructor.getProject()) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {
@@ -561,5 +568,19 @@ public class DfaPsiUtil {
     PsiType expressionType = expression.getType();
     if (!(expressionType instanceof PsiClassType)) return classType;
     return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+  }
+
+  /**
+   * @param expr literal to create a constant type from
+   * @return a DfType that describes given literal
+   */
+  @NotNull
+  public static DfType fromLiteral(@NotNull PsiLiteralExpression expr) {
+    PsiType type = expr.getType();
+    if (type == null) return DfTypes.TOP;
+    if (PsiType.NULL.equals(type)) return DfTypes.NULL;
+    Object value = expr.getValue();
+    if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
+    return DfTypes.constant(value, type);
   }
 }

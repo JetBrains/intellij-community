@@ -178,7 +178,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                   @NotNull final CoverageEngine coverageEngine,
                                                   Set<? super VirtualFile> visitedDirs,
                                                   @NotNull final Map<String, String> normalizedFiles2Files) {
-    if (!index.isInContent(dir)) {
+    if (!index.isInContent(dir) && !index.isInLibrary(dir)) {
       return null;
     }
 
@@ -299,10 +299,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return () -> {
       final Project project = getProject();
 
-      final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-
-      // find all modules content roots
-      final VirtualFile[] modulesContentRoots = dataManager.doInReadActionIfProjectOpen(() -> rootManager.getContentRoots());
+      final VirtualFile[] modulesContentRoots = getRoots(project, dataManager, suite);
 
       if (modulesContentRoots == null) {
         return;
@@ -391,6 +388,15 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
       dataManager.triggerPresentationUpdate();
     };
+  }
+
+  protected VirtualFile[] getRoots(Project project,
+                                   @NotNull CoverageDataManager dataManager,
+                                   CoverageSuitesBundle suite) {
+    final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+
+    // find all modules content roots
+    return dataManager.doInReadActionIfProjectOpen(() -> rootManager.getContentRoots());
   }
 
   @Nullable

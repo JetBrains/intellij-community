@@ -15,8 +15,9 @@
  */
 package com.intellij.refactoring.util.occurrences;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import org.jetbrains.annotations.NotNull;
 
 public interface OccurrenceFilter {
-  boolean isOK(PsiExpression occurrence);
+  boolean isOK(@NotNull PsiExpression occurrence);
 }

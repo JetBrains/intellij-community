@@ -33,7 +33,7 @@ import java.util.*;
  * @author Jeka
  */
 public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChangeInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
+  private static final Logger LOG = Logger.getInstance(JavaChangeInfoImpl.class);
 
   @PsiModifier.ModifierConstant
   @NotNull

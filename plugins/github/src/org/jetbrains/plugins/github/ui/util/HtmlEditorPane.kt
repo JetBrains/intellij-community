@@ -10,12 +10,15 @@ import icons.GithubIcons
 import java.awt.Graphics
 import java.awt.Shape
 import javax.swing.JEditorPane
+import javax.swing.SizeRequirements
 import javax.swing.text.DefaultCaret
 import javax.swing.text.Element
 import javax.swing.text.View
 import javax.swing.text.ViewFactory
 import javax.swing.text.html.HTML
 import javax.swing.text.html.InlineView
+import javax.swing.text.html.ParagraphView
+import kotlin.math.max
 
 internal class HtmlEditorPane() : JEditorPane() {
   constructor(body: String) : this() {
@@ -48,7 +51,24 @@ internal class HtmlEditorPane() : JEditorPane() {
                 }
               }
             }
-            return super.create(elem)
+
+            val view = super.create(elem)
+            if (view is ParagraphView) {
+              return object : ParagraphView(elem) {
+                override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
+                  var r = r
+                  if (r == null) {
+                    r = SizeRequirements()
+                  }
+                  r.minimum = layoutPool.getMinimumSpan(axis).toInt()
+                  r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
+                  r.maximum = Integer.MAX_VALUE
+                  r.alignment = 0.5f
+                  return r
+                }
+              }
+            }
+            return view
           }
         }
       }

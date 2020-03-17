@@ -344,7 +344,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
     return new SvnCloneDialogExtension(project);
   }
 }

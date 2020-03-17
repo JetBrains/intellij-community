@@ -25,8 +25,11 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -98,27 +101,24 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
     busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     busConnection.subscribe(CommandListener.TOPIC, MyCommandListener())
+    busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
 
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
-    StartupManager.getInstance(project).registerPreStartupActivity {
-      if (isDisposed) return@registerPreStartupActivity
-
+    StartupManager.getInstance(project).registerStartupActivity {
       ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
-
       FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
 
       val editorFactory = EditorFactory.getInstance()
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), this)
       editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), this)
-
-      ChangeListManagerImpl.getInstance(project).addChangeListListener(MyChangeListListener())
     }
   }
 
   override fun dispose() {
     isDisposed = true
+    Disposer.dispose(loader)
 
     synchronized(LOCK) {
       for ((document, multiset) in forcedDocuments) {
@@ -133,8 +133,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         data.tracker.release()
       }
       trackers.clear()
-
-      loader.dispose()
     }
   }
 
@@ -1038,7 +1036,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         val changes = defaultList.changes.filter { virtualFiles.contains(it.virtualFile) }
 
         val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-        window.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
+        window?.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
         expire()
       })
     }
@@ -1097,7 +1095,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
  * - Allows to check whether request is scheduled or is waiting for completion.
  * - Notifies callbacks when queue is exhausted.
  */
-private abstract class SingleThreadLoader<Request, T> {
+private abstract class SingleThreadLoader<Request, T> : Disposable {
   private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
   private val LOCK: Any = Any()
 
@@ -1130,7 +1128,7 @@ private abstract class SingleThreadLoader<Request, T> {
   }
 
   @CalledInAwt
-  fun dispose() {
+  override fun dispose() {
     val callbacks = mutableListOf<Runnable>()
     synchronized(LOCK) {
       isDisposed = true
@@ -1188,7 +1186,9 @@ private abstract class SingleThreadLoader<Request, T> {
 
       isScheduled = true
       lastFuture = ApplicationManager.getApplication().executeOnPooledThread {
-        handleRequests()
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, Runnable {
+          handleRequests()
+        })
       }
     }
   }
@@ -1214,6 +1214,9 @@ private abstract class SingleThreadLoader<Request, T> {
   private fun handleSingleRequest(request: Request) {
     val result: Result<T> = try {
       loadRequest(request)
+    }
+    catch (e: ProcessCanceledException) {
+      Result.Canceled()
     }
     catch (e: Throwable) {
       LOG.error(e)
@@ -1254,6 +1257,8 @@ private abstract class SingleThreadLoader<Request, T> {
     for (callback in callbacks) {
       try {
         callback.run()
+      }
+      catch (e: ProcessCanceledException) {
       }
       catch (e: Throwable) {
         LOG.error(e)

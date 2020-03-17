@@ -47,13 +47,6 @@ public class NegatedConditionalInspection extends BaseInspection {
    */
   public boolean m_ignoreNegatedZeroComparison = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "negated.conditional.display.name");
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull

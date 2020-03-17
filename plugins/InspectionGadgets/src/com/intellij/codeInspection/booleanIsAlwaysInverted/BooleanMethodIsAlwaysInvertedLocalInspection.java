@@ -28,12 +28,6 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return myGlobalTool.getDisplayName();
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return myGlobalTool.getShortName();
   }

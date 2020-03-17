@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiParameterList
@@ -180,7 +181,6 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
-private val allowedServiceNames = setOf("Project", "Module", "MessageBus", "SchemeManagerFactory", "TypedActionHandler", "Dbms")
 private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
   "com.intellij.openapi.module.Module",
@@ -189,6 +189,7 @@ private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
   "com.intellij.database.Dbms"
 )
+private val allowedServiceNames = allowedServiceQualifiedNames.map { StringUtil.getShortName(it) }
 
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,

@@ -232,7 +232,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       .map(PyArgumentList::getCallExpression)
       .ifPresent(
         call -> StreamEx
-          .of(call.multiMapArguments(PyResolveContext.noImplicits().withTypeEvalContext(context)))
+          .of(call.multiMapArguments(PyResolveContext.defaultContext().withTypeEvalContext(context)))
           .map(mapping -> mapping.getMappedParameters().get(expression))
           .nonNull()
           .map(PyCallableParameter::getName)
@@ -540,7 +540,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     @Override
-    public void visitWhiteSpace(PsiWhiteSpace space) {
+    public void visitWhiteSpace(@NotNull PsiWhiteSpace space) {
       final String text = space.getText();
       myResult.append(myPreserveFormatting ? text : text.replace('\n', ' ').replace("\\", ""));
     }
@@ -578,7 +578,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (element.getChildren().length == 0) {
         myResult.append(element.getText());
       }

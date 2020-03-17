@@ -33,13 +33,6 @@ public class ExternalizableWithSerializationMethodsInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "externalizable.with.serialization.methods.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
     final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();

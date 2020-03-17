@@ -18,7 +18,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.ZipUtil");
+  private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
   private ZipUtil() { }
 
@@ -131,7 +131,7 @@ public class ZipUtil {
   }
 
   private static class FileFilterAdapter implements Condition<String> {
-    private static FileFilterAdapter wrap(File outputDir, FilenameFilter filter) {
+    private static FileFilterAdapter wrap(File outputDir, @Nullable FilenameFilter filter) {
       return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }
 

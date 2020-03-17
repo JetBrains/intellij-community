@@ -33,7 +33,7 @@ class WindowsJavaFinder extends JavaHomeFinder {
     ArrayList<String> result = new ArrayList<>();
     Set<File> roots = findRootsToScan();
     for (File root : roots) {
-       scanFolder(root, result);
+       scanFolder(root, true, result);
     }
     result.sort((o1, o2) -> {
       String name1 = new File(o1).getName();

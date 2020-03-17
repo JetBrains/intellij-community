@@ -100,7 +100,7 @@
               <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="dialog.create.branch.or.tag.from.working.copy.warning"/>
+              <text resource-bundle="messages/SvnBundle" key="dialog.create.branch.or.tag.from.working.copy.warning"/>
             </properties>
           </component>
         </children>
@@ -184,7 +184,7 @@
         </constraints>
         <properties>
           <labelFor value="cdd55"/>
-          <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.copy.comment"/>
+          <text resource-bundle="messages/SvnBundle" key="label.copy.comment"/>
         </properties>
       </component>
       <component id="d0494" class="com.intellij.ui.components.JBCheckBox" binding="mySwitchOnCreate">

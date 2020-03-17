@@ -14,14 +14,18 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsFileUtilKt.isUnder
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -43,7 +47,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
   private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
   private val repositoryRootPath = VcsUtil.getFilePath(repository.root)
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(repository.project)
 
   override fun addUpdateStateListener(listener: VcsIgnoredHolderUpdateListener) {
     listeners.addListener(listener, this)
@@ -81,7 +84,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       unprocessedFiles.removeAll(filesToCheck)
     }
     //if the files already unversioned, there is no need to check it for ignore
-    filesToCheck.removeAll(changeListManager.unversionedFilesPaths)
+    val unversioned = ChangeListManagerImpl.getInstanceImpl(repository.project).unversionedFilesPaths
+    filesToCheck.removeAll(unversioned)
 
     if (filesToCheck.isNotEmpty()) {
       removeIgnoredFiles(filesToCheck)
@@ -106,7 +110,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     runReadAction {
       if (repository.project.isDisposed) return@runReadAction
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
-      changeListManager.addChangeListListener(this, this)
+      repository.project.messageBus.connect(this).subscribe(ChangeListListener.TOPIC, this)
     }
 
   @Throws(VcsException::class)
@@ -240,6 +244,19 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       awaitLatch.await()
       listeners.removeListener(this)
     }
+  }
+
+  @TestOnly
+  fun startRescanAndWait() {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+    updateQueue.flush()
+    while (updateQueue.isFlushing) {
+      TimeoutUtil.sleep(100)
+    }
+    val waiter = createWaiter()
+    AppExecutorUtil.getAppScheduledExecutorService().schedule({ startRescan() }, 1, TimeUnit.SECONDS)
+    waiter.waitFor()
   }
 
   @TestOnly

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
@@ -21,6 +22,7 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 class ShShellcheckUtil {
-  private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
+  @NonNls private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
   private static final String WINDOWS_EXTENSION = ".exe";
   static final String SHELLCHECK = "shellcheck";
@@ -82,7 +84,7 @@ class ShShellcheckUtil {
     DownloadableFileDescription description = service.createFileDescription(url, downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, "Download Shellcheck") {
+    Task.Backgroundable task = new Task.Backgroundable(project, ShBundle.message("sh.shellcheck.download.label.text")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -173,7 +175,7 @@ class ShShellcheckUtil {
     return null;
   }
 
-  static final Map<String, String> shellCheckCodes = new TreeMap<String, String>(){{
+  public static final Map<String, String> SHELLCHECK_CODES = new TreeMap<String, String>(){{
     put("SC1000", "$ is not used specially and should therefore be escaped.");
     put("SC1001", "This \\o will be a regular 'o' in this context.");
     put("SC1003", "Want to escape a single quote? echo 'This is how it'\\''s done'.");

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Utils {
 
@@ -187,16 +188,16 @@ public class Utils {
 
   @NotNull
   public static String buildPattern(FileType fileType) {
-    final StringBuilder result = new StringBuilder();
-    final List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(fileType);
-    for (FileNameMatcher matcher : associations) {
-      if (result.length() != 0) result.append(",");
-      result.append(matcher.getPresentableString());
-    }
+    List<FileNameMatcher> associations = FileTypeManager.getInstance().getAssociations(fileType);
+    String result = associations
+            .stream()
+            .map(matcher -> matcher.getPresentableString())
+            .sorted()
+            .collect(Collectors.joining(","));
     if (associations.size() > 1) {
-      result.insert(0, "{").append("}");
+      return "{" + result + "}";
     }
-    return result.toString();
+    return result;
   }
 
   private static boolean equalIndents(CommonCodeStyleSettings.IndentOptions commonIndentOptions,

@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Allows registering activities that are run during project loading. Methods of StartupManager are typically
  * called from {@link com.intellij.openapi.components.ProjectComponent#projectOpened()}.
+ *
+ * @see StartupActivity
  */
 public abstract class StartupManager {
   /**
@@ -20,7 +22,13 @@ public abstract class StartupManager {
     return ServiceManager.getService(project, StartupManager.class);
   }
 
-  public abstract void registerPreStartupActivity(@NotNull Runnable runnable);
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
+  public void registerPreStartupActivity(@NotNull Runnable runnable) {
+    registerStartupActivity(runnable);
+  }
 
   /**
    * Registers an activity that is performed during project load while the "Loading Project"
@@ -32,12 +40,31 @@ public abstract class StartupManager {
 
   /**
    * Registers an activity that is performed during project load after the "Loading Project"
-   * progress bar is displayed. You may access the PSI structures from the activity.
+   * progress bar is displayed. You may access the PSI structures from the activity.</p>
+   *
+   * Consider to use {@link #registerPostStartupDumbAwareActivity} if possible.
    *
    * @param runnable the activity to execute.
    * @see StartupActivity#POST_STARTUP_ACTIVITY
    */
   public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
+
+  /**
+   * Registers an {@link com.intellij.openapi.project.DumbAware} activity that is performed during project load, after the "Loading Project"
+   * progress bar is displayed, in a pooled thread.
+   *
+   * @param runnable the activity to execute.
+   * @see StartupActivity#POST_STARTUP_ACTIVITY
+   */
+  public abstract void registerPostStartupDumbAwareActivity(@NotNull Runnable runnable);
+
+  /**
+   * Registers activity that is executed after project loaded.
+   * The runnable will be executed in current thread if project is already opened.</p>
+   *
+   * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity.
+   */
+  public abstract void runAfterOpened(@NotNull Runnable runnable);
 
   public abstract boolean postStartupActivityPassed();
 

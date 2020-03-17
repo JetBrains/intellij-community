@@ -27,7 +27,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public final class PositionPanel extends EditorBasedWidget
+public class PositionPanel extends EditorBasedWidget
   implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
              CaretListener, SelectionListener, BulkAwareDocumentListener.Simple, PropertyChangeListener {
 

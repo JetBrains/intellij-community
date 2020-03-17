@@ -32,7 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiJavaDirectoryImpl");
+  private static final Logger LOG = Logger.getInstance(PsiJavaDirectoryImpl.class);
 
   public PsiJavaDirectoryImpl(final PsiManagerImpl manager, final VirtualFile file) {
     super(manager, file);

@@ -35,7 +35,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   private volatile Throwable myCancellationCause;
 
   @Override
-  public void stop() {
+  public final void stop() {
     synchronized (getLock()) {
       super.stop();
       cancel();
@@ -55,20 +55,32 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void cancel() {
-    if (isCanceled()) return;
-
-    myTraceableDisposable.kill("Daemon Progress Canceled");
-    super.cancel();
-    Disposer.dispose(this);
+    boolean changed = false;
+    synchronized (getLock()) {
+      if (!isCanceled()) {
+        myTraceableDisposable.kill("Daemon Progress Canceled");
+        super.cancel();
+        changed = true;
+      }
+    }
+    if (changed) {
+      Disposer.dispose(this);
+    }
   }
 
-  public void cancel(@NotNull Throwable cause) {
-    if (isCanceled()) return;
-
-    myCancellationCause = cause;
-    myTraceableDisposable.killExceptionally(cause);
-    super.cancel();
-    Disposer.dispose(this);
+  public final void cancel(@NotNull Throwable cause) {
+    boolean changed = false;
+    synchronized (getLock()) {
+      if (!isCanceled()) {
+        myCancellationCause = cause;
+        myTraceableDisposable.killExceptionally(cause);
+        super.cancel();
+        changed = true;
+      }
+    }
+    if (changed) {
+      Disposer.dispose(this);
+    }
   }
 
   // called when canceled
@@ -95,7 +107,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   }
 
   @Override
-  public void start() {
+  public final void start() {
     assert !isCanceled() : "canceled";
     assert !isRunning() : "running";
     super.start();
@@ -121,7 +133,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     return super.toString() + (debug ? "; "+myTraceableDisposable.getStackTrace()+"\n;" : "");
   }
 
-  boolean isDisposed() {
+  final boolean isDisposed() {
     return myDisposed;
   }
 }

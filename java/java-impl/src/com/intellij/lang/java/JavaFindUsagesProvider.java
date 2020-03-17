@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class JavaFindUsagesProvider implements FindUsagesProvider {
-  public static final String DEFAULT_PACKAGE_NAME = UsageViewBundle.message("default.package.presentable.name");
-
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
@@ -112,6 +110,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     if (element instanceof PsiJavaModule) {
       return LangBundle.message("java.terms.module");
+    }
+    if (element instanceof PsiRecordComponent) {
+      return LangBundle.message("java.terms.record.component");
     }
 
     final String name = TypePresentationService.getService().getTypePresentableName(element.getClass());
@@ -324,6 +325,10 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (name.length() > 0) {
       return name;
     }
-    return DEFAULT_PACKAGE_NAME;
+    return getDefaultPackageName();
+  }
+
+  public static String getDefaultPackageName() {
+    return UsageViewBundle.message("default.package.presentable.name");
   }
 }

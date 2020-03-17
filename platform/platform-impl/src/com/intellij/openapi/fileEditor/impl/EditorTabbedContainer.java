@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockContainer;
@@ -179,7 +180,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   void setIconAt(final int index, final Icon icon) {
-    myTabs.getTabAt(index).setIcon(icon);
+    myTabs.getTabAt(index).setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null);
   }
 
   public void setTitleAt(final int index, final String text) {
@@ -253,7 +254,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     tab = new TabInfo(component)
       .setText(EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow))
       .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
-      .setIcon(icon)
+      .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)
       .setDragOutDelegate(myDragOutDelegate);
@@ -603,12 +604,13 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private static final class EditorTabs extends SingleHeightTabs {
+  private static final class EditorTabs extends SingleHeightTabs implements ComponentWithMnemonics {
     @NotNull
     private final EditorWindow myWindow;
 
     private EditorTabs(Project project, @NotNull Disposable parentDisposable, @NotNull EditorWindow window) {
-      super(project, ActionManager.getInstance(), IdeFocusManager.getInstance(project), parentDisposable);
+      super(project, parentDisposable);
+
       myWindow = window;
       IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.insets(0, 8, 0, 8)));

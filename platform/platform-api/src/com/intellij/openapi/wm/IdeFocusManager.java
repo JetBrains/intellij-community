@@ -7,11 +7,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * @return suitable component to focus
    */
   @Nullable
-  public abstract JComponent getFocusTargetFor(@NotNull final JComponent comp);
+  public abstract JComponent getFocusTargetFor(@NotNull JComponent comp);
 
   /**
    * Executes given runnable after all focus activities are finished.
@@ -71,7 +70,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
    */
   @Nullable
-  public abstract Component getFocusedDescendantFor(final Component comp);
+  public abstract Component getFocusedDescendantFor(@NotNull Component comp);
 
   /**
    * @deprecated use {@link #typeAheadUntil(ActionCallback, String)} instead
@@ -121,16 +120,20 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable);
 
   /**
-   * Returns last focused component for the given {@code IdeFrame}.
+   * Returns last focused component for the given IDE {@code Window}.
+   * Only IDE window (that's implementing {@link IdeFrame}).
    */
   @Nullable
-  public abstract Component getLastFocusedFor(@Nullable IdeFrame frame);
+  public abstract Component getLastFocusedFor(@Nullable Window frame);
 
   /**
    * Returns last focused {@code IdeFrame}.
    */
   @Nullable
   public abstract IdeFrame getLastFocusedFrame();
+
+  @Nullable
+  public abstract Window getLastFocusedIdeWindow();
 
   /**
    * Put the container window to front. May not execute if the app is inactive or under some other conditions. This
@@ -144,7 +147,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
       return getGlobalInstance();
     }
     else {
-      return ServiceManager.getService(project, IdeFocusManager.class);
+      return project.getService(IdeFocusManager.class);
     }
   }
 
@@ -167,18 +170,16 @@ public abstract class IdeFocusManager implements FocusRequestor {
   }
 
   @NotNull
-  public static IdeFocusManager findInstanceByComponent(@NotNull Component c) {
-    final IdeFocusManager instance = findByComponent(c);
-    return instance != null ? instance : findInstanceByContext(null);
+  public static IdeFocusManager findInstanceByComponent(@NotNull Component component) {
+    IdeFocusManager instance = findByComponent(component);
+    return instance == null ? findInstanceByContext(null) : instance;
   }
 
   @Nullable
-  private static IdeFocusManager findByComponent(Component c) {
-    final Component parent = UIUtil.findUltimateParent(c);
-    if (parent instanceof IdeFrame) {
-      return getInstanceSafe(((IdeFrame)parent).getProject());
-    }
-    return null;
+  private static IdeFocusManager findByComponent(@Nullable Component component) {
+    if (component == null) return null;
+    Component parent = ComponentUtil.findUltimateParent(component);
+    return parent instanceof IdeFrame ? getInstanceSafe(((IdeFrame)parent).getProject()) : null;
   }
 
 
@@ -218,7 +219,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
     Application app = ApplicationManager.getApplication();
     if (app != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-      focusManager = app.getComponent(IdeFocusManager.class);
+      focusManager = app.getService(IdeFocusManager.class);
     }
 
     if (focusManager == null) {

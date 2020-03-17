@@ -26,12 +26,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Supplier;
 
 /**
  * @author: db
  */
 public class Mappings {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");
+  private final static Logger LOG = Logger.getInstance(Mappings.class);
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
@@ -122,7 +123,7 @@ public class Mappings {
 
   private void createImplementation() throws IOException {
     if (!myIsDelta) {
-      myContext = new DependencyContext(myRootDir);
+      myContext = new DependencyContext(myRootDir, myRelativizer);
       myDebugS = myContext.getLogger(LOG);
     }
 
@@ -346,13 +347,7 @@ public class Mappings {
     }
 
     TIntHashSet propagateMethodAccess(final MethodRepr m, final int className) {
-      return propagateMemberAccess(false, member -> {
-        if (member instanceof MethodRepr) {
-          final MethodRepr memberMethod = (MethodRepr)member;
-          return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
-        }
-        return false;
-      }, className);
+      return propagateMemberAccess(false, member -> m.equals(member), className);
     }
 
     MethodRepr.Predicate lessSpecific(final MethodRepr than) {
@@ -857,11 +852,6 @@ public class Mappings {
         this.rootClass = rootClass.name;
       }
 
-      public InheritanceConstraint(final int rootClass) {
-        super(ClassRepr.getPackageName(myContext.getValue(rootClass)));
-        this.rootClass = rootClass;
-      }
-
       @Override
       public boolean checkResidence(final int residence) {
         final Boolean inheritorOf = isInheritorOf(residence, rootClass, null);
@@ -1256,7 +1246,7 @@ public class Mappings {
       assert myPresent != null;
       assert myAffectedFiles != null;
 
-      Ref<ClassRepr> oldItRef = null;
+      final Supplier<ClassRepr> oldClassRepr = lazy(() -> getClassReprByName(null, it.name));
       for (final MethodRepr m : added) {
         debug("Method: ", m.name);
         if (!m.isPrivate() && (it.isInterface() || it.isAbstract() || m.isAbstract())) {
@@ -1264,48 +1254,38 @@ public class Mappings {
           myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
         }
 
-        TIntHashSet propagated = null;
+        final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateMethodAccess(m, it.name));
 
         if (!m.isPrivate()) {
-          if (oldItRef == null) {
-            oldItRef = new Ref<>(getClassReprByName(null, it.name)); // lazy init
-          }
-          final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m), null)) {
+          final ClassRepr oldRepr = oldClassRepr.get();
+          if (oldRepr == null || !myPresent.hasOverriddenMethods(oldRepr, MethodRepr.equalByJavaRules(m), null)) {
             if (m.myArgumentTypes.length > 0) {
-              if (m.name != myInitName) {
-                // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
-                propagated = myFuture.propagateMethodAccess(m, it.name);
-              }
               debug("Conservative case on overriding methods, affecting method usages");
-              myFuture.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
+              myFuture.affectMethodUsages(m, m.name == myInitName? null : propagated.get(), m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
         }
 
         if (!m.isPrivate()) {
-          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(m, it);
-          final MethodRepr.Predicate overrides = MethodRepr.equalByJavaRules(m);
-
-          if (propagated == null) {
-            propagated = myFuture.propagateMethodAccess(m, it.name);
-          }
-
           if (m.isStatic()) {
-            myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+            myFuture.affectStaticMemberOnDemandUsages(it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
           }
 
           final Collection<MethodRepr> lessSpecific = it.findMethods(myFuture.lessSpecific(m));
-
+          final Collection<MethodRepr> removed = diff.methods().removed();
           for (final MethodRepr mm : lessSpecific) {
-            if (!mm.equals(m)) {
+            if (!mm.equals(m) && !removed.contains(mm))  {
               debug("Found less specific method, affecting method usages");
-              myFuture.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myFuture.affectMethodUsages(mm, propagated.get(), mm.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
           debug("Processing affected by specificity methods");
+          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(m, it);
+          final MethodRepr.Predicate overrides = MethodRepr.equalByJavaRules(m);
+
           for (final Pair<MethodRepr, ClassRepr> pair : affectedMethods) {
             final MethodRepr method = pair.first;
             final ClassRepr methodClass = pair.second;
@@ -1343,13 +1323,11 @@ public class Mappings {
                   addAll(state.myDependants, deps);
                 }
 
-                myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, methodClass.name), state.myAffectedUsages,
-                                             state.myDependants);
+                myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, methodClass.name), state.myAffectedUsages, state.myDependants);
               }
 
               debug("Affecting method usages for that found");
-              myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, it.name), state.myAffectedUsages,
-                                           state.myDependants);
+              myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
@@ -1385,6 +1363,7 @@ public class Mappings {
         return;
       }
       assert myFuture != null;
+      assert myPresent != null;
       assert myAffectedFiles != null;
       assert myCompiledFiles != null;
 
@@ -1392,23 +1371,23 @@ public class Mappings {
       for (final MethodRepr m : removed) {
         debug("Method ", m.name);
 
-        final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myFuture.findOverriddenMethods(m, it);
-        final TIntHashSet propagated = myFuture.propagateMethodAccess(m, it.name);
+        final Collection<Pair<MethodRepr, ClassRepr>> overriddenMethods = myFuture.findOverriddenMethods(m, it);
+        final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateMethodAccess(m, it.name));
 
         if (!m.isPrivate() && m.isStatic()) {
           debug("The method was static --- affecting static method import usages");
-          myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+          myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
         }
 
-        if (overridenMethods.size() == 0) {
+        if (overriddenMethods.size() == 0) {
           debug("No overridden methods found, affecting method usages");
-          myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+          myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
         else {
           boolean clear = true;
 
           loop:
-          for (final Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
+          for (final Pair<MethodRepr, ClassRepr> overriden : overriddenMethods) {
             final MethodRepr mm = overriden.first;
 
             if (mm == MOCK_METHOD || !mm.myType.equals(m.myType) || !isEmpty(mm.signature) || !isEmpty(m.signature) || m.isMoreAccessibleThan(mm)) {
@@ -1419,7 +1398,7 @@ public class Mappings {
 
           if (!clear) {
             debug("No clearly overridden methods found, affecting method usages");
-            myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+            myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
           }
         }
 
@@ -1438,14 +1417,14 @@ public class Mappings {
         }
 
         if (!m.isAbstract() && !m.isStatic()) {
-          propagated.forEach(p -> {
+          propagated.get().forEach(p -> {
             if (p != it.name) {
               final ClassRepr s = myFuture.classReprByName(p);
 
               if (s != null) {
                 final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myFuture.findOverriddenMethods(m, s);
 
-                overridenInS.addAll(overridenMethods);
+                overridenInS.addAll(overriddenMethods);
 
                 boolean allAbstract = true;
                 boolean visited = false;
@@ -1518,7 +1497,7 @@ public class Mappings {
           }
         }
         else if (d.base() != Difference.NONE || throwsChanged) {
-          final TIntHashSet propagated = myFuture.propagateMethodAccess(m, it.name);
+          final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateMethodAccess(m, it.name));
 
           boolean affected = false;
           boolean constrained = false;
@@ -1527,7 +1506,7 @@ public class Mappings {
 
           if (d.packageLocalOn()) {
             debug("Method became package-private, affecting method usages outside the package");
-            myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+            myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
 
             for (final UsageRepr.Usage usage : usages) {
               state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
@@ -1541,7 +1520,7 @@ public class Mappings {
           if ((d.base() & Difference.TYPE) != 0 || (d.base() & Difference.SIGNATURE) != 0 || throwsChanged) {
             if (!affected) {
               debug("Return type, throws list or signature changed --- affecting method usages");
-              myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+              myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
 
               final List<Pair<MethodRepr, ClassRepr>> overridingMethods = new LinkedList<>();
 
@@ -1574,7 +1553,7 @@ public class Mappings {
 
               if (!affected) {
                 debug("Added {static | private | synthetic | bridge} specifier or removed static specifier --- affecting method usages");
-                myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+                myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
                 affected = true;
               }
@@ -1585,13 +1564,13 @@ public class Mappings {
 
                 if (!m.isPrivate()) {
                   debug("Added static modifier --- affecting static member on-demand import usages");
-                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
                 }
               }
               else if ((d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
                 if (!m.isPrivate()) {
                   debug("Removed static modifier --- affecting static method import usages");
-                  myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+                  myFuture.affectStaticMemberImportUsages(m.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
                 }
               }
             }
@@ -1607,7 +1586,7 @@ public class Mappings {
                 if (!constrained) {
                   debug("Added public or package-private method became protected --- affect method usages with protected constraint");
                   if (!affected) {
-                    myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+                    myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
                     state.myAffectedUsages.addAll(usages);
                     affected = true;
                   }
@@ -1638,7 +1617,7 @@ public class Mappings {
             }
 
             if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
-              myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+              myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
               state.myAffectedUsages.addAll(usages);
               if (constrained) {
                 // remove any constraints so that all usages of this method are recompiled
@@ -1832,12 +1811,12 @@ public class Mappings {
         }
 
         if (d.base() != Difference.NONE) {
-          final TIntHashSet propagated = myFuture.propagateFieldAccess(field.name, it.name);
+          final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateFieldAccess(field.name, it.name));
 
           if ((d.base() & Difference.TYPE) != 0 || (d.base() & Difference.SIGNATURE) != 0) {
             debug("Type or signature changed --- affecting field usages");
             myFuture.affectFieldUsages(
-              field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
+              field, propagated.get(), field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
             );
           }
           else if ((d.base() & Difference.ACCESS) != 0) {
@@ -1847,16 +1826,16 @@ public class Mappings {
                 (d.addedModifiers() & Opcodes.ACC_VOLATILE) != 0) {
               debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
               myFuture.affectFieldUsages(
-                field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
+                field, propagated.get(), field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
               );
               if (!field.isPrivate()) {
                 if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0) {
                   debug("Added static modifier --- affecting static member on-demand import usages");
-                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated, state.myAffectedUsages, state.myDependants);
+                  myFuture.affectStaticMemberOnDemandUsages(it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
                 }
                 else if ((d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
                   debug("Removed static modifier --- affecting static field import usages");
-                  myFuture.affectStaticMemberImportUsages(field.name, it.name, propagated, state.myAffectedUsages, state.myDependants);
+                  myFuture.affectStaticMemberImportUsages(field.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
                 }
               }
             }
@@ -1865,13 +1844,13 @@ public class Mappings {
 
               if ((d.addedModifiers() & Opcodes.ACC_FINAL) != 0) {
                 debug("Added final modifier --- affecting field assign usages");
-                myFuture.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, state.myDependants);
+                myFuture.affectFieldUsages(field, propagated.get(), field.createAssignUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
               }
 
               if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) != 0) {
                 debug("Removed public modifier, affecting field usages with appropriate constraint");
-                myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+                myFuture.affectFieldUsages(field, propagated.get(), field.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
 
                 for (final UsageRepr.Usage usage : usages) {
@@ -1885,7 +1864,7 @@ public class Mappings {
               }
               else if ((d.removedModifiers() & Opcodes.ACC_PROTECTED) != 0 && d.accessRestricted()) {
                 debug("Removed protected modifier and the field became less accessible, affecting field usages with package constraint");
-                myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+                myFuture.affectFieldUsages(field, propagated.get(), field.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
 
                 for (final UsageRepr.Usage usage : usages) {
@@ -1912,7 +1891,7 @@ public class Mappings {
             }
             if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
               final Set<UsageRepr.Usage> usages = new THashSet<>();
-              myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+              myFuture.affectFieldUsages(field, propagated.get(), field.createUsage(myContext, it.name), usages, state.myDependants);
               state.myAffectedUsages.addAll(usages);
               // remove any constraints to ensure all field usages are recompiled
               for (UsageRepr.Usage usage : usages) {
@@ -2177,7 +2156,7 @@ public class Mappings {
       debug("End of removed classes processing.");
     }
 
-    private void processAddedClasses(final DiffState state, File srcFile) {
+    private void processAddedClasses(DiffState state) {
       final Collection<ClassRepr> addedClasses = state.myClassDiff.added();
       if (addedClasses.isEmpty()) {
         return;
@@ -2407,7 +2386,7 @@ public class Mappings {
             }
 
             processRemovedClases(state, fileName);
-            processAddedClasses(state, fileName);
+            processAddedClasses(state);
 
             if (!myEasyMode) {
               calculateAffectedFiles(state);
@@ -2579,7 +2558,6 @@ public class Mappings {
         }
       }
     }
-
   }
 
   public void differentiateOnRebuild(final Mappings delta) {
@@ -3155,6 +3133,16 @@ public class Mappings {
       stream.print("End Of ");
       stream.println(info[i]);
     }
+  }
+
+  private static <T> Supplier<T> lazy(Supplier<T> calculation) {
+    return new Supplier<T>() {
+      Ref<T> calculated;
+      @Override
+      public T get() {
+        return (calculated != null? calculated : (calculated = new Ref<>(calculation.get()))).get();
+      }
+    };
   }
 
   public void toStream(File outputRoot) {

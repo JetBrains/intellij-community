@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
-@ApiStatus.Experimental
 public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
   private final Map<Key, Value> myNewData;
   private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;

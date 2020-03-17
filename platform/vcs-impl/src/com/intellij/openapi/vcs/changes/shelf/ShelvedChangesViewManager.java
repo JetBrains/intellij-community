@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -108,7 +107,6 @@ public class ShelvedChangesViewManager implements Disposable {
     DataKey.create("ShelveChangesManager.ShelvedDeletedChangeListData");
   public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
-  private ShelfToolWindowPanel myShelfToolWindowPanel;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
     return project.getComponent(ShelvedChangesViewManager.class);
@@ -120,7 +118,7 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     project.getMessageBus().connect().subscribe(ShelveChangesManager.SHELF_TOPIC, e -> scheduleContentUpdate());
-    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> scheduleContentUpdate());
+    StartupManager.getInstance(project).registerPostStartupDumbAwareActivity(() -> scheduleContentUpdate());
   }
 
   private void scheduleContentUpdate() {
@@ -144,7 +142,6 @@ public class ShelvedChangesViewManager implements Disposable {
     else {
       if (myContent == null) {
         ShelfToolWindowPanel panel = new ShelfToolWindowPanel(myProject);
-        myShelfToolWindowPanel = panel;
         myContent = new MyShelfContent(panel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContent.setDisposer(panel);
@@ -281,18 +278,17 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @Override
   public void dispose() {
-    myShelfToolWindowPanel = null;
     myUpdateQueue.cancelAllUpdates();
   }
 
   public void closeEditorPreview() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myShelfToolWindowPanel == null) {
+    if (myContent == null) {
       return;
     }
 
-    ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
+    ChangesViewPreview diffPreview = myContent.myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).closeEditorPreview();
     }
@@ -301,14 +297,11 @@ public class ShelvedChangesViewManager implements Disposable {
   public void openEditorPreview() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myShelfToolWindowPanel == null) {
+    if (myContent == null) {
       return;
     }
 
-    if (!VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN)
-      return;
-
-    ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
+    ChangesViewPreview diffPreview = myContent.myPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).openEditorPreview(false);
     }
@@ -467,7 +460,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     ListSelection<ShelvedWrapper> wrappers = ListSelection.createAt(VcsTreeModelData.selected(tree).userObjects(ShelvedWrapper.class), 0);
 
-    if (wrappers.getList().size() < 2) {
+    if (wrappers.getList().size() == 1) {
       // return all changes for selected changelist
       ShelvedChangeList changeList = getFirstItem(getSelectedLists(tree, it -> true));
       if (changeList != null) {
@@ -701,11 +694,10 @@ public class ShelvedChangesViewManager implements Disposable {
       MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject, myTree);
       Disposer.register(this, changeProcessor);
 
-      boolean horizontal = Registry.is("show.diff.preview.as.editor.tab");
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, horizontal);
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
 
       myRootPanel = new JPanel(new BorderLayout());
-      myRootPanel.add(toolbar.getComponent(), horizontal ? BorderLayout.NORTH : BorderLayout.WEST);
+      myRootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       if (Registry.is("show.diff.preview.as.editor.tab")) {
         myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree){
@@ -729,8 +721,8 @@ public class ShelvedChangesViewManager implements Disposable {
           }
 
           @Override
-          protected void doRefresh(boolean fromModelRefresh) {
-            changeProcessor.refresh(fromModelRefresh);
+          protected void doRefresh() {
+            changeProcessor.refresh(false);
             closeEditorPreviewIfEmpty();
           }
 
@@ -740,7 +732,7 @@ public class ShelvedChangesViewManager implements Disposable {
           }
         };
 
-        myRootPanel.add(pane, BorderLayout.CENTER);
+        myRootPanel.add(pane);
       } else {
         PreviewDiffSplitterComponent previewDiffSplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
           myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN);

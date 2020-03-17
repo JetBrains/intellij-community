@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
@@ -18,6 +19,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -27,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -93,7 +96,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     myErrorLabel.setEnabled(enableError);
     myErrorLabel.setVisible(false);
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
-    myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
+    myErrorLabel.setBorder(JBUI.Borders.empty(10, 15, 15, 15));
     myErrorLabel.setBackground(LightColors.RED);
     add(BorderLayout.SOUTH, RelativeFont.HUGE.install(myErrorLabel));
     add(BorderLayout.CENTER, myCardPanel);
@@ -202,9 +205,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   private boolean isPopupOverEditor(Component component) {
-    Window editor = UIUtil.getWindow(this);
+    Window editor = ComponentUtil.getWindow(this);
     if (editor != null) {
-      Window popup = UIUtil.getWindow(component);
+      Window popup = ComponentUtil.getWindow(component);
       // light-weight popup is located on the layered pane of the same window
       if (popup == editor) {
         return true;
@@ -282,8 +285,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   private JComponent createDefaultContent(Configurable configurable) {
     JComponent content = new JPanel(new BorderLayout());
-    content.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    String key = configurable == null ? null : ConfigurableVisitor.ByID.getID(configurable) + ".settings.description";
+    content.setBorder(JBUI.Borders.empty(10));
+    String key = configurable == null ? null : ConfigurableVisitor.getId(configurable) + ".settings.description";
     String description = key == null ? null : getString(configurable, key);
     if (description == null) {
       description = "Select configuration element in the tree to edit its settings";
@@ -301,7 +304,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         panel.add(Box.createVerticalStrut(10));
         for (Configurable current : composite.getConfigurables()) {
           LinkLabel label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
-          label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
+          label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
           panel.add(label);
         }
       }
@@ -315,7 +318,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     JBIterable<Configurable> it = JBIterable.of(configurable).append(
       JBIterable.of(configurable instanceof Configurable.Composite ? ((Configurable.Composite)configurable).getConfigurables() : null));
     ResourceBundle bundle = ConfigurableExtensionPointUtil.getBundle(key, it, null);
-    return bundle != null ? bundle.getString(key) : null;
+    return bundle != null ? BundleBase.message(bundle, key) : null;
   }
 
   static ConfigurationException apply(Configurable configurable) {
@@ -329,5 +332,15 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       }
     }
     return null;
+  }
+
+  @Nullable
+  Configurable getConfigurable() {
+    return myConfigurable;
+  }
+
+  void reload() {
+    myCardPanel.removeAll();
+    myConfigurable = null;
   }
 }

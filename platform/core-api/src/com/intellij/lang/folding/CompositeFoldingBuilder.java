@@ -6,15 +6,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Used by LanguageFolding class if more than one FoldingBuilder were specified
@@ -49,19 +47,22 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered
+    // for the language
     return node.getText();
   }
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
-    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered
+    // for the language
     return node.getText();
   }
 
   @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered
+    // for the language
     return false;
   }
 
@@ -122,10 +123,26 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
             foldingDescriptor.getGroup(),
             foldingDescriptor.getDependencies(),
             foldingDescriptor.isNonExpandable(),
-            foldingDescriptor.getCachedPlaceholderText(),
+            choosePlaceholderText(foldingDescriptor),
             foldingDescriptor.isCollapsedByDefault());
       myFoldingDescriptor = foldingDescriptor;
       myBuilder = builder;
+    }
+
+    private static String choosePlaceholderText(@NotNull FoldingDescriptor foldingDescriptor) {
+      String cachedText = foldingDescriptor.getCachedPlaceholderText();
+      // Some folding descriptors override the getPlaceholderText() method. If they don't, the default implementation
+      // in CompositeFoldingBuilder will return the element text. In this case, we'll need to ensure that the
+      // getPlaceholderText() will be delegate to the folding builder, which we achieve by not storing any cached text.
+      String textFromGetText = foldingDescriptor.getPlaceholderText();
+      boolean placeholderTextIsFallback = Objects.equals(textFromGetText, foldingDescriptor.getElement().getText());
+      if (cachedText == null && placeholderTextIsFallback) {
+        return null;
+      }
+      if (!placeholderTextIsFallback) {
+        return textFromGetText;
+      }
+      return cachedText;
     }
 
     @NotNull

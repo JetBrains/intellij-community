@@ -73,4 +73,6 @@ public interface PsiKeyword extends PsiJavaToken {
 
   String VAR = "var";
   String YIELD = "yield";
+
+  String RECORD = "record";
 }

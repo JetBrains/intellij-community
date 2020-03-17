@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -38,9 +37,6 @@ public class TriggerAdditionOrDeletion {
   private final Collection<FilePath> myDeleted;
   private final Set<FilePath> myAffected;
   private final Project myProject;
-  private final boolean mySilentAddDelete;
-  private final ProjectLevelVcsManager myVcsManager;
-  private final AbstractVcsHelper myVcsHelper;
   private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
@@ -49,11 +45,8 @@ public class TriggerAdditionOrDeletion {
 
   public TriggerAdditionOrDeletion(final Project project) {
     myProject = project;
-    mySilentAddDelete = Registry.is("vcs.add.remove.silent");
     myExisting = new HashSet<>();
     myDeleted = new HashSet<>();
-    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myVcsHelper = AbstractVcsHelper.getInstance(myProject);
     myAffected = new HashSet<>();
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
   }
@@ -88,7 +81,6 @@ public class TriggerAdditionOrDeletion {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeeded(vcs, filePaths, VcsConfiguration.StandardConfirmation.REMOVE);
         myAffected.addAll(filePaths);
        localChangesProvider.scheduleMissingFileForDeletion(filePaths);
       }
@@ -104,7 +96,6 @@ public class TriggerAdditionOrDeletion {
           myAffected.addAll(filePaths);
           continue;
         }
-        askUserIfNeeded(vcs, filePaths, VcsConfiguration.StandardConfirmation.ADD);
         myAffected.addAll(filePaths);
         final List<VirtualFile> virtualFiles = new ArrayList<>();
         ContainerUtil.process(filePaths, path -> {
@@ -209,34 +200,6 @@ public class TriggerAdditionOrDeletion {
           }
           myPreparedAddition.put(vcs, toBeAdded);
         }
-      }
-    }
-  }
-
-  private void askUserIfNeeded(final AbstractVcs vcs, @NotNull  final List<? extends FilePath> filePaths, @NotNull VcsConfiguration.StandardConfirmation type) {
-    if (mySilentAddDelete) return;
-    final VcsShowConfirmationOption confirmationOption = myVcsManager.getStandardConfirmation(type, vcs);
-    if (VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY.equals(confirmationOption.getValue())) {
-      filePaths.clear();
-    }
-    else if (VcsShowConfirmationOption.Value.SHOW_CONFIRMATION.equals(confirmationOption.getValue())) {
-      String operation = type == VcsConfiguration.StandardConfirmation.ADD ? "addition" : "deletion";
-      String preposition = type == VcsConfiguration.StandardConfirmation.ADD ? " to " : " from ";
-      final Collection<FilePath> files = myVcsHelper.selectFilePathsToProcess(filePaths, "Select files to " +
-                                                                                         StringUtil.decapitalize(type.getId()) +
-                                                                                         preposition +
-                                                                                         vcs.getDisplayName(), null,
-                                                                              "Schedule for " + operation,
-                                                                              "Do you want to schedule the following file for " +
-                                                                              operation +
-                                                                              preposition +
-                                                                              vcs.getDisplayName() +
-                                                                              "\n{0}", confirmationOption);
-      if (files == null) {
-        filePaths.clear();
-      }
-      else {
-        filePaths.retainAll(files);
       }
     }
   }

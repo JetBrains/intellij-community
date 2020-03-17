@@ -31,7 +31,7 @@ import java.util.Arrays;
  * Do NOT add code that assumes that table has same number of rows as model. It isn't true!
  */
 public class BaseTableView extends JBTable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.table.BaseTableView");
+  private static final Logger LOG = Logger.getInstance(BaseTableView.class);
 
   public BaseTableView(final TableModel model) {
     super(model);

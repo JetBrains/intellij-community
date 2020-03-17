@@ -364,7 +364,7 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   private static void logUncaughtException(Thread t, Throwable e) {
     if (!(e instanceof ControlFlowException)) {
-      LOG.error("Uncaught exception in JavaFX " + t, e);
+      LOG.info("Uncaught exception in JavaFX " + t, e);
     }
   }
 

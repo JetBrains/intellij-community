@@ -175,6 +175,16 @@ public class FunctionalInterfaceSuggesterTest extends LightJavaCodeInsightFixtur
                       "java.util.function.ObjIntConsumer<Foo>");
   }
 
+  public void testMethodReferenceWithTypeArgs() {
+    Collection<? extends PsiType> suggestedTypes = suggestTypes("class Foo { " +
+                                                                "public static <T> T fromInt(Integer i) {\n" +
+                                                                "        return null;\n" +
+                                                                "    }}", "Foo::<String>fromInt");
+    checkWithExpected(suggestedTypes, "java.util.function.Function<java.lang.Integer,java.lang.String>",
+                      "java.util.function.IntConsumer",
+                      "java.util.function.IntFunction<java.lang.String>");
+  }
+
   public void testMethodReferenceOfInstance() {
     myFixture.addClass("@FunctionalInterface\n" +
                        "public interface MyFunc {\n" +

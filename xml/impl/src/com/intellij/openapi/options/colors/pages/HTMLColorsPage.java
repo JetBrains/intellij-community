@@ -41,6 +41,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.name"), XmlHighlighterColors.HTML_ATTRIBUTE_NAME),
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.attribute.value"), XmlHighlighterColors.HTML_ATTRIBUTE_VALUE),
     new AttributesDescriptor(OptionsBundle.message("options.html.attribute.descriptor.entity.reference"), XmlHighlighterColors.HTML_ENTITY_REFERENCE),
+    new AttributesDescriptor(OptionsBundle.message("options.any.color.descriptor.injected.language.fragment"), XmlHighlighterColors.HTML_INJECTED_LANGUAGE_FRAGMENT),
   };
   private static final String FULL_PRODUCT_NAME = ApplicationNamesInfo.getInstance().getFullProductName();
 

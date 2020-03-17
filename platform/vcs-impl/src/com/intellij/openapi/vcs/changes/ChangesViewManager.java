@@ -80,7 +80,7 @@ public class ChangesViewManager implements ChangesViewEx,
                                            PersistentStateComponent<ChangesViewManager.State>,
                                            Disposable {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
+  private static final Logger LOG = Logger.getInstance(ChangesViewManager.class);
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final Project myProject;
@@ -101,6 +101,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public ChangesViewManager(@NotNull Project project) {
     myProject = project;
+    ChangesViewModifier.KEY.addExtensionPointListener(project, () -> refreshImmediately(), this);
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -328,7 +329,7 @@ public class ChangesViewManager implements ChangesViewEx,
       myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
       registerShortcuts(this);
 
-      isToolbarHorizontalSetting.addListener(new RegistryValueListener.Adapter() {
+      isToolbarHorizontalSetting.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           boolean isToolbarHorizontal = value.asBoolean() && commitWorkflowManager.isNonModal();
@@ -386,8 +387,8 @@ public class ChangesViewManager implements ChangesViewEx,
           }
 
           @Override
-          protected void doRefresh(boolean fromModelRefresh) {
-            changeProcessor.refresh(fromModelRefresh);
+          protected void doRefresh() {
+            changeProcessor.refresh(false);
 
             closeEditorPreviewIfEmpty();
           }
@@ -412,14 +413,14 @@ public class ChangesViewManager implements ChangesViewEx,
       setContent(simplePanel(mainPanel).addToBottom(myProgressLabel));
 
       setCommitSplitOrientation();
-      isCommitSplitHorizontal.addListener(new RegistryValueListener.Adapter() {
+      isCommitSplitHorizontal.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           setCommitSplitOrientation();
         }
       }, this);
 
-      isToggleCommitUi().addListener(new RegistryValueListener.Adapter() {
+      isToggleCommitUi().addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           if (myCommitWorkflowHandler == null) return;
@@ -446,7 +447,7 @@ public class ChangesViewManager implements ChangesViewEx,
           refreshChangesViewNodeAsync(file);
         }
       });
-      ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
+      busConnection.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
 
       scheduleRefresh();
       myDiffPreview.updatePreview(false);

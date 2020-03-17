@@ -27,7 +27,6 @@ import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuic
 import com.jetbrains.python.inspections.quickfix.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,12 +34,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexey.Ivanov
  */
 public class PyStatementEffectInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.statement.effect");
-  }
 
   @NotNull
   @Override

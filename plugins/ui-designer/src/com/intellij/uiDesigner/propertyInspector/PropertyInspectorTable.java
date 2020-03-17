@@ -65,7 +65,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class PropertyInspectorTable extends Table implements DataProvider{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable");
+  private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 
   public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
 
@@ -1028,8 +1028,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       };
 
-      myExpandIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
-      myCollapseIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
+      myExpandIcon = UIDesignerIcons.ExpandNode;
+      myCollapseIcon = UIDesignerIcons.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
         myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
       }

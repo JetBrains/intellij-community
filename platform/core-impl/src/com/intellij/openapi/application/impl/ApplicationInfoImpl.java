@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -10,15 +10,13 @@ import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
@@ -100,8 +98,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private String[] myEssentialPluginsIds;
-  private String myFUStatisticsSettingsUrl;
+  private List<PluginId> myEssentialPluginsIds;
   private String myEventLogSettingsUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
@@ -176,7 +173,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_WINDOWS_URL = "win";
   private static final String ATTRIBUTE_MAC_URL = "mac";
   private static final String ELEMENT_STATISTICS = "statistics";
-  private static final String ATTRIBUTE_FU_STATISTICS_SETTINGS = "fus-settings";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
@@ -205,7 +201,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
     }
     catch (Exception e) {
-      //this class can be loaded before MainImpl so fix the prefix manually 
+      //this class can be loaded before MainImpl so fix the prefix manually
       PlatformUtils.setDefaultPrefixForCE();
       try {
         loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
@@ -217,7 +213,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       throw new RuntimeException("Cannot load resource: " + getApplicationInfoPath(), e);
     }
   }
-  
+
   @Override
   public Calendar getBuildDate() {
     return myBuildDate;
@@ -274,6 +270,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myPatchVersion;
   }
 
+  @NotNull
   @Override
   public String getFullVersion() {
     String result;
@@ -292,6 +289,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     return result;
   }
 
+  @NotNull
   @Override
   public String getStrictVersion() {
     return myMajorVersion + "." + myMinorVersion + "." + StringUtil.notNullize(myMicroVersion, "0") + "." + StringUtil.notNullize(myPatchVersion, "0");
@@ -558,10 +556,6 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   public String getCopyrightStart() {
     return myCopyrightStart;
-  }
-
-  public String getFUStatisticsSettingsUrl() {
-    return myFUStatisticsSettingsUrl;
   }
 
   public String getEventLogSettingsUrl() {
@@ -878,9 +872,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
         myPluginsDownloadUrl = downloadUrl;
       }
 
-      if (!getBuild().isSnapshot()) {
-        myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
-      }
+      myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
     }
 
     final String pluginsHost = System.getProperty(IDEA_PLUGINS_HOST_PROPERTY);
@@ -901,19 +893,26 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
     }
 
     List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
-    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, element -> {
-      String id = element.getTextTrim();
-      return StringUtil.isNotEmpty(id) ? id : null;
-    });
-    myEssentialPluginsIds = ArrayUtilRt.toStringArray(essentialPluginsIds);
+    if (essentialPluginsElements.isEmpty()) {
+      myEssentialPluginsIds = Collections.emptyList();
+    }
+    else {
+      List<PluginId> essentialPluginsIds = new ArrayList<>(essentialPluginsElements.size());
+      for (Element element : essentialPluginsElements) {
+        String id = element.getTextTrim();
+        if (!id.isEmpty()) {
+          essentialPluginsIds.add(PluginId.getId(id));
+        }
+      }
+      essentialPluginsIds.sort(null);
+      myEssentialPluginsIds = Collections.unmodifiableList(essentialPluginsIds);
+    }
 
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
-      myFUStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_FU_STATISTICS_SETTINGS);
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
       myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/%s/lion-v3-assistant.xml";
     }
 
@@ -953,7 +952,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
   private static String getApplicationInfoPath() {
     return IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
   }
-  
+
   @NotNull
   private static List<Element> getChildren(Element parentNode, String name) {
     return parentNode.getChildren(name, parentNode.getNamespace());
@@ -1000,11 +999,17 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
-    return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
+    return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || isEssentialPlugin(PluginId.getId(pluginId));
   }
 
-  public List<String> getEssentialPluginsIds() {
-    return ContainerUtil.immutableList(myEssentialPluginsIds);
+  @Override
+  public boolean isEssentialPlugin(@NotNull PluginId pluginId) {
+    return PluginManagerCore.CORE_ID == pluginId || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
+  }
+
+  @NotNull
+  public List<PluginId> getEssentialPluginsIds() {
+    return myEssentialPluginsIds;
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {

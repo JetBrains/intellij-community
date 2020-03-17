@@ -16,14 +16,16 @@
 
 package com.intellij.facet;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
+@ApiStatus.NonExtendable
 public abstract class ProjectWideFacetListenersRegistry {
 
   public static ProjectWideFacetListenersRegistry getInstance(Project project) {

@@ -2,7 +2,7 @@
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.IndexNotReadyException;

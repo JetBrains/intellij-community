@@ -85,8 +85,9 @@ internal fun <T> retry(maxRetries: Int = 20,
       return action()
     }
     catch (e: Exception) {
+      log("$number attempt of $maxRetries has failed with ${e.message}")
       if (number < maxRetries && doRetry(e)) {
-        log("$number attempt of $maxRetries has failed with ${e.message}. Retrying in ${secondsBeforeRetry}s..")
+        log("Retrying in ${secondsBeforeRetry}s..")
         TimeUnit.SECONDS.sleep(secondsBeforeRetry)
       }
       else throw e

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.StackFrameProxyImpl");
+  private static final Logger LOG = Logger.getInstance(StackFrameProxyImpl.class);
   private static final int FRAMES_BATCH_MAX = 10;
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final int myFrameFromBottomIndex; // 1-based

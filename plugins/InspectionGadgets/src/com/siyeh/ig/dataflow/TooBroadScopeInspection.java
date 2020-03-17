@@ -53,12 +53,6 @@ public class TooBroadScopeInspection extends BaseInspection {
    */
   public boolean m_onlyLookAtBlocks = false;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.broad.scope.display.name");
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull

@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.java.parser;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Condition;
@@ -115,7 +115,7 @@ public class JShellParser extends JavaParser {
         }
 
         if (!builder.eof()) {
-          builder.mark().error(JavaErrorMessages.message("unexpected.token"));
+          builder.mark().error(JavaErrorBundle.message("unexpected.token"));
           while (!builder.eof()) {
             builder.advanceLexer();
           }

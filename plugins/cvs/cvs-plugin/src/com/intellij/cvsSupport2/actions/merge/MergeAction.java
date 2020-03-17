@@ -20,7 +20,7 @@ import java.util.Arrays;
 
 
 public class MergeAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.merge.MergeAction");
+  private static final Logger LOG = Logger.getInstance(MergeAction.class);
   private final CvsActionVisibility myVisibility = new CvsActionVisibility();
 
   public MergeAction() {

@@ -26,7 +26,7 @@ import javax.swing.event.DocumentEvent;
  * @author yole
  */
 public class CreateFormAction extends AbstractCreateFormAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.CreateFormAction");
+  private static final Logger LOG = Logger.getInstance(CreateFormAction.class);
 
   private String myLastClassName = null;
   private String myLastLayoutManager = null;

@@ -150,12 +150,6 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.same.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
@@ -384,11 +378,6 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       return myGlobal.getGroupDisplayName();
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-      return myGlobal.getDisplayName();
-    }
 
     @Override
     @NotNull

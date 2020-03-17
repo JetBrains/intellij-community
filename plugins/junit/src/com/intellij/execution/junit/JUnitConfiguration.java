@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -45,7 +46,6 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySupport implements InputRedirectAware {
-  public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
@@ -152,7 +152,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return TestObject.fromString(myData.TEST_OBJECT, this, env);
+    TestObject testObject = TestObject.fromString(myData.TEST_OBJECT, this, env);
+    DumbService dumbService = DumbService.getInstance(getProject());
+    if (dumbService.isDumb() && !DumbService.isDumbAware(testObject)) {
+      throw new ExecutionException("Running tests is disabled during index update");
+    }
+    return testObject;
   }
 
   @Override
@@ -752,7 +757,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
           if (moduleName.length() > 0) {
             return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);
           }
-          return DEFAULT_PACKAGE_NAME;
+          return getDefaultPackageName();
         }
         if (moduleName.length() > 0) {
           return ExecutionBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
@@ -861,4 +866,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
   }
 
+  public static String getDefaultPackageName() {
+    return ExecutionBundle.message("default.package.presentable.name");
+  }
 }

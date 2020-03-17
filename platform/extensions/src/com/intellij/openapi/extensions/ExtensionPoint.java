@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -36,7 +36,7 @@ public interface ExtensionPoint<T> {
   void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
 
   /**
-   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions(ExtensionPointName, List, Disposable)}
+   * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
    * to register extension as first or to completely replace existing extensions in tests.
    */
   @TestOnly
@@ -105,12 +105,24 @@ public interface ExtensionPoint<T> {
   boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
   /**
+   * Unregisters extensions for which the specified predicate returns false and collects the callables for listener invocation into the given list
+   * so that listeners can be called later.
+   */
+  boolean unregisterExtensions(
+    @NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
+    boolean stopAfterFirstMatch,
+    List<Runnable> listenerCallbacks
+  );
+
+  /**
    * @deprecated use {@link #addExtensionPointListener(ExtensionPointListener, boolean, Disposable)}
    */
   @Deprecated
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+
+  void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 

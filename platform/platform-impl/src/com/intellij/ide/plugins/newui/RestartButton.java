@@ -2,10 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -29,8 +26,7 @@ public class RestartButton extends InstallButton {
       assert settings instanceof SettingsDialog : settings;
       ((SettingsDialog)settings).applyAndClose(false /* will be saved on app exit */);
 
-      Application application = ApplicationManager.getApplication();
-      TransactionGuard.submitTransaction(application, () -> ((ApplicationImpl)application).exit(true, false, true));
+      ApplicationManager.getApplication().exit(true, false, true);
     });
   }
 

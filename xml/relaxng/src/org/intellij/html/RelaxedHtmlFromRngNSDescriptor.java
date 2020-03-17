@@ -37,7 +37,7 @@ import static com.intellij.xml.util.HtmlUtil.SVG_NAMESPACE;
  * @author Eugene.Kudelevsky
  */
 public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements RelaxedHtmlNSDescriptor {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.html.RelaxedHtmlFromRngNSDescriptor");
+  private static final Logger LOG = Logger.getInstance(RelaxedHtmlFromRngNSDescriptor.class);
 
   @Override
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {

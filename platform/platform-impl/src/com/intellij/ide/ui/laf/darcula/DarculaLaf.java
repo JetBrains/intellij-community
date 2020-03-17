@@ -9,8 +9,8 @@ import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
@@ -42,6 +42,8 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
+  private static final Logger LOG = Logger.getInstance(DarculaLaf.class);
+
   private static final Object SYSTEM = new Object();
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
@@ -92,36 +94,23 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected static void log(Exception e) {
-    // everything is gonna be alright
-    e.printStackTrace();
+    LOG.error(e.getMessage());
   }
 
   @Override
   public UIDefaults getDefaults() {
     try {
-      final UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
-      final UIDefaults defaults = base.getDefaults();
-      if (SystemInfo.isLinux) {
-        if (!Registry.is("darcula.use.native.fonts.on.linux", true)) {
-          Font font = findFont("DejaVu Sans");
-          if (font != null) {
-            for (Object key : defaults.keySet()) {
-              if (key instanceof String && ((String)key).endsWith(".font")) {
-                defaults.put(key, new FontUIResource(font.deriveFont(13f)));
-              }
-            }
-          }
-        }
-        else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
-          for (Object key : defaults.keySet()) {
-            if (key instanceof String && ((String)key).endsWith(".font")) {
-              final Font font = defaults.getFont(key);
-              if (font != null) {
-                defaults.put(key, new FontUIResource("Dialog", font.getStyle(), font.getSize()));
-              }
-            }
-          }
-        }
+      UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
+      UIDefaults defaults = base.getDefaults();
+
+      if (SystemInfo.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
+        defaults.entrySet().stream().
+          filter(e -> StringUtil.endsWith(e.getKey().toString(), ".font")).
+          forEach(e -> {
+            Font font = (Font)e.getValue();
+            Font uiFont = new FontUIResource("Dialog", font.getStyle(), font.getSize());
+            defaults.put(e.getKey(), uiFont);
+          });
       }
 
       LafManagerImpl.initInputMapDefaults(defaults);
@@ -175,15 +164,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     return new DarculaMetalTheme();
   }
 
-  private static Font findFont(String name) {
-    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
-      if (font.getName().equals(name)) {
-        return font;
-      }
-    }
-    return null;
-  }
-
   private static void patchComboBox(UIDefaults metalDefaults, UIDefaults defaults) {
     defaults.remove("ComboBox.ancestorInputMap");
     defaults.remove("ComboBox.actionMap");
@@ -221,7 +201,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     callInit("initComponentDefaults", defaults);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   protected void initIdeaDefaults(UIDefaults defaults) {
     loadDefaults(defaults);
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[]{
@@ -295,7 +274,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       }
 
       HashMap<String, Object> darculaGlobalSettings = new HashMap<>();
-      final String prefix = getPrefix() + ".";
+      String prefix = getPrefix();
+      prefix = prefix.substring(prefix.lastIndexOf("/") + 1) + ".";
+
       for (String key : properties.stringPropertyNames()) {
         if (key.startsWith(prefix)) {
           Object value = parseValue(key, properties.getProperty(key));
@@ -336,13 +317,13 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
 
     if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, DarculaLaf.class, true);
+      Icon icon = IconLoader.findIcon(value, getClass(), true);
       if (icon != null) {
         return icon;
       }
     }
 
-    return UITheme.parseValue(key, value);
+    return UITheme.parseValue(key, value, getClass().getClassLoader());
   }
 
   @Override
@@ -461,6 +442,17 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
+  @Override
+  public Icon getDisabledIcon(JComponent component, Icon icon) {
+    if (icon == null) return null;
+
+    Icon disabledIcon = super.getDisabledIcon(component, icon);
+    if (disabledIcon != null) {
+      return disabledIcon;
+    }
+
+    return IconLoader.getDisabledIcon(icon);
+  }
 
   @Override
   public boolean getSupportsWindowDecorations() {

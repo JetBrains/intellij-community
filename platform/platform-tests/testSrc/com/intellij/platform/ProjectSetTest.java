@@ -101,7 +101,7 @@ public class ProjectSetTest extends LightPlatformTestCase {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     Project project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
     assertNotNull(project);
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true);
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project);
   }
 
   @Override

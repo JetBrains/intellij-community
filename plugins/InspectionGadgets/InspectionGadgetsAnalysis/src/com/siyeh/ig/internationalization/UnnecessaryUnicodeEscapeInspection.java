@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +17,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +31,6 @@ import java.nio.charset.CodingErrorAction;
  * @author Bas Leijdekkers
  */
 public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.unicode.escape.display.name");
-  }
 
   @NotNull
   @Override
@@ -76,7 +70,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
       else if (c == '\t') {
         return "Replace with tab character";
       }
-      return "Replace with '" + c + "'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", c);
     }
 
     @NotNull
@@ -99,7 +93,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
         return;

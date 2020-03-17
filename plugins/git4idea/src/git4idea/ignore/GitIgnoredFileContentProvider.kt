@@ -140,4 +140,10 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
 
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"
+
+  /**
+   * Disable creating a new .idea/.gitignore for [com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl].
+   * This ignore file will be generated automatically by [GitIgnoreInStoreDirGenerator]
+   */
+  override fun canCreateIgnoreFileInStateStoreDir() = false
 }

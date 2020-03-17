@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -487,6 +487,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final Map<String, List<String>> dependencies = new THashMap<>();
     for (InspectionToolWrapper toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
+      if (toolWrapper instanceof LocalInspectionToolWrapper &&
+          ((LocalInspectionToolWrapper)toolWrapper).isDynamicGroup() &&
+          //some settings were read for the tool, so it must be initialized,
+          //otherwise no dynamic tools are expected
+          toolWrapper.isInitialized()) {
+        for (LocalInspectionToolWrapper wrapper : ((DynamicGroupTool)toolWrapper.getTool()).getChildren()) {
+          addTool(project, wrapper, dependencies);
+        }
+      }
     }
     myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
       @Override
@@ -542,7 +551,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
       }
       else {
-        key = HighlightDisplayKey.register(shortName, computable);
+        key = HighlightDisplayKey.register(shortName, computable, shortName);
       }
     }
 
@@ -556,7 +565,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
+    boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
     Element element = myUninitializedSettings.remove(shortName);
     try {
@@ -589,6 +598,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void removeTool(@NotNull InspectionToolWrapper inspectionTool) {
     String shortName = inspectionTool.getShortName();
+    removeTool(shortName);
+  }
+
+  public void removeTool(@NotNull String shortName) {
     myTools.remove(shortName);
     HighlightDisplayKey.unregister(shortName);
   }

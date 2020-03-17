@@ -3,22 +3,16 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -52,8 +46,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 
 public class RenameDialog extends RefactoringDialog {
-  private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-
   private SuggestedNameInfo mySuggestedNameInfo;
   private JLabel myNameLabel;
   private NameSuggestionsField myNameSuggestionsField;
@@ -78,7 +70,7 @@ public class RenameDialog extends RefactoringDialog {
     myPsiElement = psiElement;
     myNameSuggestionContext = nameSuggestionContext;
     myEditor = editor;
-    setTitle(REFACTORING_NAME);
+    setTitle(getRefactoringName());
 
     createNewNameComponent();
     init();
@@ -173,13 +165,7 @@ public class RenameDialog extends RefactoringDialog {
       result.add(initialName);
     }
     result.add(UsageViewUtil.getShortName(myPsiElement));
-    for(NameSuggestionProvider provider: NameSuggestionProvider.EP_NAME.getExtensionList()) {
-      SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);
-      if (info != null) {
-        mySuggestedNameInfo = info;
-        if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) break;
-      }
-    }
+    mySuggestedNameInfo = NameSuggestionProvider.suggestNames(myPsiElement, myNameSuggestionContext, result);
     return ArrayUtilRt.toStringArray(result);
   }
 
@@ -376,5 +362,9 @@ public class RenameDialog extends RefactoringDialog {
 
   public JCheckBox getCbSearchInComments() {
     return myCbSearchInComments;
+  }
+
+  private static String getRefactoringName() {
+    return RefactoringBundle.message("rename.title");
   }
 }

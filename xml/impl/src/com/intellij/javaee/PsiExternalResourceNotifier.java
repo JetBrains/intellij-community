@@ -2,35 +2,17 @@
 package com.intellij.javaee;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.impl.PsiManagerEx;
+import org.jetbrains.annotations.NotNull;
 
-public final class PsiExternalResourceNotifier {
-  private final PsiManagerEx myPsiManager;
-  private final DaemonCodeAnalyzer myDaemonCodeAnalyzer;
-
-  public PsiExternalResourceNotifier(Project project) {
-    myPsiManager = PsiManagerEx.getInstanceEx(project);
-
-    ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
-    myDaemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    final ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
-    externalResourceManager.addExternalResourceListener(myExternalResourceListener);
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        externalResourceManager.removeExternalResourceListener(myExternalResourceListener);
+final class PsiExternalResourceNotifier {
+  PsiExternalResourceNotifier(@NotNull Project project) {
+    project.getMessageBus().connect().subscribe(ExternalResourceListener.TOPIC, () -> {
+      if (!project.isDisposed()) {
+        PsiManagerEx.getInstanceEx(project).beforeChange(true);
+        DaemonCodeAnalyzer.getInstance(project).restart();
       }
     });
-  }
-
-  private final class MyExternalResourceListener implements ExternalResourceListener {
-    @Override
-    public void externalResourceChanged() {
-      myPsiManager.beforeChange(true);
-      myDaemonCodeAnalyzer.restart();
-    }
   }
 }

@@ -38,7 +38,7 @@ import java.util.List;
  * @author yole
  */
 public class GenerateMainAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.GenerateMainAction");
+  private static final Logger LOG = Logger.getInstance(GenerateMainAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

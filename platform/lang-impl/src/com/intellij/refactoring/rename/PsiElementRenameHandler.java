@@ -3,7 +3,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -39,9 +39,9 @@ import java.util.Arrays;
  * @author Jeka, dsl
  */
 public class PsiElementRenameHandler implements RenameHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.PsiElementRenameHandler");
+  private static final Logger LOG = Logger.getInstance(PsiElementRenameHandler.class);
+  private static final ExtensionPointName<Condition<? super PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
 
-  public static final ExtensionPointName<Condition<? super PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
   public static final DataKey<String> DEFAULT_NAME = DataKey.create("DEFAULT_NAME");
 
   @Override
@@ -97,7 +97,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     if (checkInProject && nameSuggestionContext != null &&
         nameSuggestionContext.isPhysical() &&
-        (contextFile == null || !ScratchUtil.isScratch(contextFile)) &&
+        (contextFile == null || contextFile.getFileType() != ScratchFileType.INSTANCE) &&
         !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
       final String message = "Selected element is used from non-project files. These usages won't be renamed. Proceed anyway?";
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);

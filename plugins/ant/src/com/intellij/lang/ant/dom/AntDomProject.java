@@ -49,7 +49,7 @@ import java.util.*;
  */
 @DefinesXml
 public abstract class AntDomProject extends AntDomNamedElement implements PropertiesProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomProject");
+  private static final Logger LOG = Logger.getInstance(AntDomProject.class);
 
   @NonNls public static final String DEFAULT_ENVIRONMENT_PREFIX = "env.";
 

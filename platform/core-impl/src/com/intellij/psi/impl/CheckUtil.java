@@ -50,7 +50,7 @@ public class CheckUtil {
   }
 
   public static void checkDelete(@NotNull final VirtualFile file) throws IncorrectOperationException {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (FileTypeRegistry.getInstance().isFileIgnored(file)) {

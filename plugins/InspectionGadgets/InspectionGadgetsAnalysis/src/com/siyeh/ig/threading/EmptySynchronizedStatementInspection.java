@@ -29,13 +29,6 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "empty.synchronized.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "empty.synchronized.statement.problem.descriptor");

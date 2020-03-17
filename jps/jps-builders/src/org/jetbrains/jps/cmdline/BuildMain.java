@@ -59,7 +59,7 @@ public class BuildMain {
   private static final Logger LOG;
   static {
     LogSetup.initLoggers();
-    LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
+    LOG = Logger.getInstance(BuildMain.class);
   }
 
   private static final int HOST_ARG = 0;
@@ -161,10 +161,10 @@ public class BuildMain {
               fsState.clearAll();
             }
 
-            // preloading target configurations
+            // preloading target configurations and pre-calculating target dirty state
             final BuildTargetsState targetsState = pd.getTargetsState();
             for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-              targetsState.getTargetConfiguration(target);
+              targetsState.getTargetConfiguration(target).isTargetDirty(pd);
             }
 
             //noinspection ResultOfMethodCallIgnored

@@ -47,12 +47,6 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
   public boolean ignoreJavaDoc = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("abstract.method.overrides.abstract.method.display.name");
-  }
-
-  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new AbstractMethodOverridesAbstractMethodFix();
   }

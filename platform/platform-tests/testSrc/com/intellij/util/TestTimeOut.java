@@ -24,11 +24,14 @@ public class TestTimeOut {
   }
 
   public boolean timedOut(Object workProgress) {
-    if (System.currentTimeMillis() > timeOutMs) {
+    if (isTimedOut()) {
       System.err.println("Timed out. Stopped at "+workProgress);
       return true;
     }
     return false;
   }
 
+  public boolean isTimedOut() {
+    return System.currentTimeMillis() > timeOutMs;
+  }
 }

@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL;
@@ -434,7 +433,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (callee == null) {
       return null;
     }
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final ResolveResult[] resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false);
 
     for (PsiElement element : PyUtil.filterTopPriorityResults(resolveResults)) {
@@ -556,7 +555,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       if (target.isQualified()) {
         if (pyClass != null && scopeOwner instanceof PyFunction) {
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
           boolean isInstanceAttribute;
           if (context.maySwitchToAST(target)) {
@@ -1410,7 +1409,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (expression instanceof PyReferenceExpression) {
       final List<PsiElement> results;
       if (context.maySwitchToAST(expression)) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
         results = PyUtil.multiResolveTopPriority(expression, resolveContext);
       }
       else {
@@ -1442,17 +1441,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             continue;
           }
         }
-        if (isBuiltinPathLike(element)) {
-          // see https://github.com/python/typeshed/commit/41561f11c7b06368aebe512acf69d8010662266d
-          // or comment in typeshed/stdlib/3/builtins.pyi near _PathLike class
-          final QualifiedName osPathLikeQName = QualifiedName.fromComponents("os", PyNames.PATH_LIKE);
-          final PsiElement osPathLike =
-            PyResolveImportUtil.resolveTopLevelMember(osPathLikeQName, PyResolveImportUtil.fromFoothold(element));
-          if (osPathLike != null) {
-            elements.add(Pair.create(null, osPathLike));
-            continue;
-          }
-        }
         if (element != null) {
           elements.add(Pair.create(null, element));
         }
@@ -1472,12 +1460,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, pyFile, context);
     }
     return Collections.singletonList(expression);
-  }
-
-  private static boolean isBuiltinPathLike(@Nullable PsiElement element) {
-    return element instanceof PyClass &&
-           PyBuiltinCache.getInstance(element).isBuiltin(element) &&
-           ("_" + PyNames.PATH_LIKE).equals(((PyClass)element).getName());
   }
 
   @NotNull

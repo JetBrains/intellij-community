@@ -47,13 +47,6 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.touppercase.tolowercase.without.locale.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "string.touppercase.tolowercase.without.locale.problem.descriptor");

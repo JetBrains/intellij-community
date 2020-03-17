@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
 @Deprecated
 public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
+  private static final Logger LOG = Logger.getInstance(BuildoutFacet.class);
   @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
   @NonNls public static final String SCRIPT_SUFFIX = "-script";
   private static final String BUILDOUT_LIB_NAME = "Buildout Eggs";

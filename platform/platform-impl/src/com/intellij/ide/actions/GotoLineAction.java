@@ -19,8 +19,9 @@ public class GotoLineAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    assert project != null;
+    Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
       GotoLineNumberDialog dialog = new EditorGotoLineNumberDialog(project, editor);
       dialog.show();
@@ -40,7 +41,7 @@ public class GotoLineAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {

@@ -2,15 +2,15 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
+import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 import java.nio.file.Files
 
-fun main(args: Array<String>) {
+fun main() {
   val homePath = PathManager.getHomePath()
   val home = File(homePath)
-  val project = JpsSerializationManager.getInstance().loadModel(homePath, null).project
+  val project = jpsProject(homePath)
 
   val optimizer = ImageSizeOptimizer(home)
   project.modules.forEach { module ->

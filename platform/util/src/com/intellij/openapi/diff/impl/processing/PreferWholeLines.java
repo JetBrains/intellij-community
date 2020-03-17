@@ -8,7 +8,7 @@ import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.text.StringUtil;
 
 class PreferWholeLines implements DiffCorrection {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.PreferWholeLines");
+  private static final Logger LOG = Logger.getInstance(PreferWholeLines.class);
   public static final DiffCorrection INSTANCE = new PreferWholeLines();
 
   @Override

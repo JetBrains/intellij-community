@@ -34,12 +34,6 @@ public class AssignmentToCatchBlockParameterInspection extends BaseAssignmentToP
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.catch.block.parameter.problem.descriptor");
   }

@@ -222,8 +222,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
   }
 
   private fun isEdgeVisibleInRow(edge: GraphEdge, visibleRowIndex: Int): Boolean {
-    val normalEdge = asNormalEdge(edge) ?:
-                     return false // e.d. edge is special. See addSpecialEdges
+    val normalEdge = asNormalEdge(edge) ?: return false // e.d. edge is special. See addSpecialEdges
     return isEdgeVisibleInRow(normalEdge, visibleRowIndex)
   }
 

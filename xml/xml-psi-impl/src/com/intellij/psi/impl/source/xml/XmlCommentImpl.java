@@ -36,6 +36,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
     super(XML_COMMENT);
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return XML_COMMENT;

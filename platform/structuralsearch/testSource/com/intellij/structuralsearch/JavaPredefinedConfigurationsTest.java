@@ -241,6 +241,25 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "   int z(int i) {" +
            "     return i;" +
            "   }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.switches")),
+           "class X {{" +
+           "  int i = switch (1) {" +
+           "            default -> {}" +
+           "          }" +
+           "  switch (2) {" +
+           "    case 1,2:" +
+           "      break;" +
+           "    default:" +
+           "  }" +
+           "}}",
+           "switch (1) {" +
+           "            default -> {}" +
+           "          }",
+           "switch (2) {" +
+           "    case 1,2:" +
+           "      break;" +
+           "    default:" +
+           "  }");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }

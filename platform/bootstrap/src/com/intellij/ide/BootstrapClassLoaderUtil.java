@@ -7,21 +7,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -29,7 +26,7 @@ import java.util.regex.Pattern;
 /**
  * @author max
  */
-public class BootstrapClassLoaderUtil {
+public final class BootstrapClassLoaderUtil {
   public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
 
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
@@ -46,10 +43,10 @@ public class BootstrapClassLoaderUtil {
   @NotNull
   public static ClassLoader initClassLoader() throws MalformedURLException {
     List<String> jarOrder = loadJarOrder();
-    
+
     Collection<URL> classpath = new LinkedHashSet<>();
     addParentClasspath(classpath, false);
-    addIDEALibraries(classpath, jarOrder);
+    addIdeaLibraries(classpath, jarOrder);
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
 
@@ -69,7 +66,7 @@ public class BootstrapClassLoaderUtil {
       .logJarAccess(Boolean.getBoolean("idea.log.classpath.info"))
       .autoAssignUrlsWithProtectionDomain()
       .useCache();
-    if (Boolean.valueOf(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
+    if (Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true"))) {
       builder.allowBootstrapResources();
     }
 
@@ -77,7 +74,7 @@ public class BootstrapClassLoaderUtil {
 
     if (installMarketplace) {
       try {
-        List<BytecodeTransformer> transformers = new SmartList<>();
+        List<BytecodeTransformer> transformers = new ArrayList<>();
         UrlClassLoader spiLoader = UrlClassLoader.build().urls(mpBoot.toURI().toURL()).parent(BootstrapClassLoaderUtil.class.getClassLoader()).get();
         for (BytecodeTransformer transformer : ServiceLoader.load(BytecodeTransformer.class, spiLoader)) {
           transformers.add(transformer);
@@ -97,31 +94,14 @@ public class BootstrapClassLoaderUtil {
     return builder.get();
   }
 
-  /**
-   * A version of PathManager.getSystemPath() with no dependencies on external classes (to avoid classloading)
-   */
-  private static String getSystemPath() {
-    String systemPath = System.getProperty(PathManager.PROPERTY_SYSTEM_PATH);
-    if (systemPath != null) {
-      if (systemPath.length() >= 3 && systemPath.startsWith("\"") && systemPath.endsWith("\"")) {
-        systemPath = systemPath.substring(1, systemPath.length() - 1);
-      }
-      if (systemPath.startsWith("~/") || systemPath.startsWith("~\\")) {
-        systemPath = System.getProperty("user.home") + systemPath.substring(1);
+  private static void addParentClasspath(@NotNull Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
+    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+      if (!ext) {
+        // ManagementFactory.getRuntimeMXBean().getClassPath() = System.getProperty("java.class.path"), but 100 times faster
+        parseClassPathString(System.getProperty("java.class.path"), classpath);
       }
     }
-    else{
-      String pathSelector = System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR);
-      if (pathSelector != null) {
-        systemPath = PathManager.getDefaultSystemPathFor(pathSelector);
-      }
-    }
-    return systemPath;
-  }
-
-
-  private static void addParentClasspath(Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
-    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
+    else {
       String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
       if (ext && extDirs.length == 0) return;
 
@@ -141,7 +121,7 @@ public class BootstrapClassLoaderUtil {
         for (URL url : urls) {
           String path = urlToPath(url);
           if (path.startsWith(libPath)) {
-            // We need to add these paths in the order specified in order.txt, so don't add them at this stage
+            // we need to add these paths in the order specified in order.txt, so don't add them at this stage
             continue;
           }
 
@@ -159,10 +139,6 @@ public class BootstrapClassLoaderUtil {
         }
       }
     }
-    else if (!ext) {
-      // ManagementFactory.getRuntimeMXBean().getClassPath() = System.getProperty("java.class.path"), but 100 times faster
-      parseClassPathString(System.getProperty("java.class.path"), classpath);
-    }
   }
 
   private static String urlToPath(URL url) throws MalformedURLException {
@@ -174,7 +150,7 @@ public class BootstrapClassLoaderUtil {
     }
   }
 
-  private static void addIDEALibraries(@NotNull Collection<? super URL> classpath, 
+  private static void addIdeaLibraries(@NotNull Collection<? super URL> classpath,
                                        @NotNull Collection<String> jarOrder) throws MalformedURLException {
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
@@ -182,7 +158,10 @@ public class BootstrapClassLoaderUtil {
     URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURI().toURL();
     File libFolder = new File(PathManager.getLibPath());
     for (String jarName : jarOrder) {
-      if (StringUtil.isEmptyOrSpaces(jarName)) continue;
+      if (jarName == null || jarName.isEmpty()) {
+        continue;
+      }
+
       File jarFile = new File(libFolder, jarName);
       if (jarFile.exists()) {
         classpath.add(jarFile.toURI().toURL());
@@ -198,13 +177,12 @@ public class BootstrapClassLoaderUtil {
   @NotNull
   private static List<String> loadJarOrder() {
     try {
-      try (BufferedReader stream = new BufferedReader(
-        new InputStreamReader(BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE), StandardCharsets.UTF_8))) {
+      try (BufferedReader stream = new BufferedReader(new InputStreamReader(BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE), StandardCharsets.UTF_8))) {
         return FileUtilRt.loadLines(stream);
       }
     }
     catch (Exception ignored) {
-      //skip, we can load the app 
+      // skip, we can load the app
     }
     return Collections.emptyList();
   }
@@ -228,21 +206,23 @@ public class BootstrapClassLoaderUtil {
   }
 
   private static void parseClassPathString(String pathString, Collection<? super URL> classpath) {
-    if (pathString != null && !pathString.isEmpty()) {
-      try {
-        String libPath = PathManager.getLibPath();
-        StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
-        while (tokenizer.hasMoreTokens()) {
-          String pathItem = tokenizer.nextToken();
-          if (!pathItem.startsWith(libPath)) {
-            // We need to add paths from lib directory in the order specified in order.txt, so don't add them at this stage
-            classpath.add(new File(pathItem).toURI().toURL());
-          }
+    if (pathString == null || pathString.isEmpty()) {
+      return;
+    }
+
+    try {
+      String libPath = PathManager.getLibPath();
+      StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
+      while (tokenizer.hasMoreTokens()) {
+        String pathItem = tokenizer.nextToken();
+        if (!pathItem.startsWith(libPath)) {
+          // we need to add paths from lib directory in the order specified in order.txt, so don't add them at this stage
+          classpath.add(new File(pathItem).toURI().toURL());
         }
       }
-      catch (MalformedURLException e) {
-        getLogger().error(e);
-      }
+    }
+    catch (MalformedURLException e) {
+      getLogger().error(e);
     }
   }
 

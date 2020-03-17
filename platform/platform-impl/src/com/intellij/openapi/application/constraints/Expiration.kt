@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.ObjectUtils
 import kotlinx.coroutines.*
 
 /**
@@ -146,6 +147,7 @@ internal fun Disposable.cancelJobOnDisposal(job: Job,
 
   if (!tryRegisterDisposable(this, childRef)) {
     Disposer.dispose(childRef)  // runs disposableBlock()
+    ObjectUtils.reachabilityFence(child)
     return AutoCloseable { }
   }
   else {

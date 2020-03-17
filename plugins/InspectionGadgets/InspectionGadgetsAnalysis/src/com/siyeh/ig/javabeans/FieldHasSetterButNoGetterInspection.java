@@ -29,13 +29,6 @@ public class FieldHasSetterButNoGetterInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "field.has.setter.but.no.getter.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.has.setter.but.no.getter.problem.descriptor");

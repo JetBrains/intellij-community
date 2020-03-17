@@ -28,7 +28,7 @@ public class NSTLibTest extends TestCase {
       // small check that loaded library can create native objects
       final ID test = lib.createTouchBar("test", (uid) -> ID.NIL, null);
       assertNotNull("Failed to create native touchbar object, result is null", test);
-      assertFalse("Failed to create native touchbar object, result is ID.NIL", test == ID.NIL);
+      assertNotSame("Failed to create native touchbar object, result is ID.NIL", ID.NIL, test);
       if (test != ID.NIL)
         lib.releaseTouchBar(test);
     } catch (RuntimeException e) {

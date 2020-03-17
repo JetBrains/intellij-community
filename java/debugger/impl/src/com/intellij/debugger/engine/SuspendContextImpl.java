@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author lex
  */
 public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendContextImpl");
+  private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
 
   private final DebugProcessImpl myDebugProcess;
   private final int mySuspendPolicy;

@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.extensions" />
-    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" exported="" name="intellij-coverage" level="project" />
     <orderEntry type="library" exported="" name="intellij-test-discovery" level="project" />

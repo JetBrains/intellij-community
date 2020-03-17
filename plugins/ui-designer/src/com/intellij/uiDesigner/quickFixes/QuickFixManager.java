@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public abstract class QuickFixManager <T extends JComponent>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.quickFixes.QuickFixManager");
+  private static final Logger LOG = Logger.getInstance(QuickFixManager.class);
 
   private GuiEditor myEditor;
   /** Component on which hint will be shown */

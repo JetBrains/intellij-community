@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements PsiTypeCastExpression, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeCastExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiTypeCastExpressionImpl.class);
 
   public PsiTypeCastExpressionImpl() {
     super(TYPE_CAST_EXPRESSION);

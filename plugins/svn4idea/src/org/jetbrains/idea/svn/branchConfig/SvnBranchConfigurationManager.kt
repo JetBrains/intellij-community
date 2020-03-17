@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.branchConfig
 
@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -65,8 +65,7 @@ class SvnBranchConfigurationManager(private val myProject: Project,
     svnBranchConfigManager.updateForRoot(vcsRoot, InfoStorage(configuration, InfoReliability.setByUser), true)
 
     SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration)
-    syncPublisher<VcsConfigurationChangeListener.Notification>(myProject, VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(
-      myProject, vcsRoot)
+    syncPublisher(myProject, BRANCHES_CHANGED).execute(myProject, vcsRoot)
   }
 
   override fun getState(): ConfigurationBean = ConfigurationBean().apply {

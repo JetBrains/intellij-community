@@ -57,8 +57,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private static final Logger LOG = Logger.getInstance(PyActiveSdkConfigurable.class);
 
-  private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
-
   @NotNull
   private final Project myProject;
 
@@ -116,7 +114,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final ComboBox<Object> result = new ComboBox<Object>() {
       @Override
       public void setSelectedItem(Object item) {
-        if (SHOW_ALL.equals(item)) {
+        if (getShowAll().equals(item)) {
           onShowAllSelected.run();
         }
         else if (!PySdkListCellRenderer.SEPARATOR.equals(item)) {
@@ -327,7 +325,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     }
 
     items.add(PySdkListCellRenderer.SEPARATOR);
-    items.add(SHOW_ALL);
+    items.add(getShowAll());
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
     final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
@@ -353,10 +351,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         myProjectSdksModel.addSdk(sdk);
         try {
           myProjectSdksModel.apply(null, true);
-          if (myModule != null) {
-            // the event is required to be fired explicitly here because SDK for the module is updated above
-            PySdkExtKt.fireActivePythonSdkChanged(myModule, sdk);
-          }
         }
         catch (ConfigurationException e) {
           LOG.error(e);
@@ -364,5 +358,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         updateSdkListAndSelect(sdk);
       }
     }
+  }
+
+  private static String getShowAll() {
+    return PyBundle.message("active.sdk.dialog.show.all.item");
   }
 }

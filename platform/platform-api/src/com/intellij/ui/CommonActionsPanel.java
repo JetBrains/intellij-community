@@ -24,7 +24,6 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class CommonActionsPanel extends JPanel {
-  private final boolean myDecorateButtons;
   private final ActionToolbarPosition myPosition;
   private final ActionToolbar myToolbar;
 
@@ -45,23 +44,22 @@ public class CommonActionsPanel extends JPanel {
     }
 
     MyActionButton createButton(final Listener listener, String name, Icon icon) {
-      return new MyActionButton(this, listener, name == null ? StringUtil.capitalize(StringUtil.toLowerCase(name())) : name, icon);
+      String buttonName = name == null ? StringUtil.capitalize(StringUtil.toLowerCase(name())) : name;
+      switch (this) {
+        case ADD: return new AddButton(listener, buttonName, icon);
+        case REMOVE: return new RemoveButton(listener, buttonName, icon);
+        case EDIT: return new EditButton(listener, buttonName, icon);
+        case UP: return new UpButton(listener, buttonName, icon);
+        case DOWN: return new DownButton(listener, buttonName, icon);
+      }
+      throw new IllegalStateException("can't reach this");
     }
 
     public String getText() {
       return StringUtil.capitalize(StringUtil.toLowerCase(name()));
     }
-
-    public void performAction(Listener listener) {
-      switch (this) {
-        case ADD: listener.doAdd(); break;
-        case EDIT: listener.doEdit(); break;
-        case REMOVE: listener.doRemove(); break;
-        case UP: listener.doUp(); break;
-        case DOWN: listener.doDown(); break;
-      }
-    }
   }
+
   public interface Listener {
     default void doAdd() {
     }
@@ -124,7 +122,6 @@ public class CommonActionsPanel extends JPanel {
           toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());
         }
     }
-    myDecorateButtons = false;
 
     final ActionManagerEx mgr = (ActionManagerEx)ActionManager.getInstance();
     myToolbar = mgr.createActionToolbar("ToolbarDecorator",
@@ -166,14 +163,12 @@ public class CommonActionsPanel extends JPanel {
             shortcut = customShortCut;
           }
         }
-        if (button instanceof MyActionButton
-            && ((MyActionButton)button).isAddButton()
-            && UIUtil.isDialogRootPane(pane)) {
+        if (button instanceof AddButton && UIUtil.isDialogRootPane(pane)) {
           button.registerCustomShortcutSet(shortcut, pane);
         } else {
           button.registerCustomShortcutSet(shortcut, button.getContextComponent());
         }
-        if (button instanceof MyActionButton && ((MyActionButton)button).isRemoveButton()) {
+        if (button instanceof RemoveButton) {
           registerDeleteHook((MyActionButton)button);
         }
       }
@@ -237,19 +232,14 @@ public class CommonActionsPanel extends JPanel {
     return myPosition;
   }
 
-  static class MyActionButton extends AnActionButton implements DumbAware {
+  static abstract class MyActionButton extends AnActionButton implements DumbAware {
     private final Buttons myButton;
-    private final Listener myListener;
+    protected final Listener myListener;
 
     MyActionButton(Buttons button, Listener listener, String name, Icon icon) {
       super(name, name, icon);
       myButton = button;
       myListener = listener;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myButton.performAction(myListener);
     }
 
     @Override
@@ -264,36 +254,17 @@ public class CommonActionsPanel extends JPanel {
 
       final JComponent c = getContextComponent();
       if (c instanceof JTable || c instanceof JList) {
-        if (myButton == Buttons.EDIT) {
-          InputEvent inputEvent = e.getInputEvent();
-          if (inputEvent instanceof KeyEvent &&
-              c instanceof JTable &&
-              ((JTable)c).isEditing() &&
-              !(inputEvent.getComponent() instanceof ActionButtonComponent) // action button active in any case in the toolbar
-            ) {
-            e.getPresentation().setEnabled(false);
-            return;
-          }
-        }
-
         final ListSelectionModel model = c instanceof JTable ? ((JTable)c).getSelectionModel()
                                                              : ((JList)c).getSelectionModel();
         final int size = c instanceof JTable ? ((JTable)c).getRowCount()
                                              : ((JList)c).getModel().getSize();
         final int min = model.getMinSelectionIndex();
         final int max = model.getMaxSelectionIndex();
-
-        if ((myButton == Buttons.UP && min < 1)
-            || (myButton == Buttons.DOWN && max == size - 1)
-            || (myButton != Buttons.ADD && size == 0)
-            || (myButton == Buttons.EDIT && (min != max || min == -1))) {
-          e.getPresentation().setEnabled(false);
-        }
-        else {
-          e.getPresentation().setEnabled(isEnabled());
-        }
+        e.getPresentation().setEnabled(isEnabled() && isEnabled(size, min, max));
       }
     }
+
+    protected abstract boolean isEnabled(int size, int min, int max);
 
     //@Override
     //public boolean isEnabled() {
@@ -303,13 +274,105 @@ public class CommonActionsPanel extends JPanel {
     //  }
     //  return super.isEnabled();
     //}
+  }
 
-    boolean isAddButton() {
-      return myButton == Buttons.ADD;
+  static class AddButton extends MyActionButton {
+    AddButton(Listener listener, String name, Icon icon) {
+      super(Buttons.ADD, listener, name, icon);
     }
 
-    boolean isRemoveButton() {
-      return myButton == Buttons.REMOVE;
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return true;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doAdd();
+    }
+  }
+
+  static class RemoveButton extends MyActionButton {
+    RemoveButton(Listener listener, String name, Icon icon) {
+      super(Buttons.REMOVE, listener, name, icon);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doRemove();
+    }
+  }
+
+  static class EditButton extends MyActionButton {
+    EditButton(Listener listener, String name, Icon icon) {
+      super(Buttons.EDIT, listener, name, icon);
+    }
+
+    @Override
+    public void updateButton(@NotNull AnActionEvent e) {
+      final JComponent c = getContextComponent();
+      if (c == null || !c.isShowing() || !c.isEnabled()) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+
+      InputEvent inputEvent = e.getInputEvent();
+      if (inputEvent instanceof KeyEvent &&
+          c instanceof JTable &&
+          ((JTable)c).isEditing() &&
+          !(inputEvent.getComponent() instanceof ActionButtonComponent) // action button active in any case in the toolbar
+      ) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      super.updateButton(e);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0 && min == max && min >= 0;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doEdit();
+    }
+  }
+
+  static class UpButton extends MyActionButton {
+    UpButton(Listener listener, String name, Icon icon) {
+      super(Buttons.UP, listener, name, icon);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0 && min >= 1;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doUp();
+    }
+  }
+
+  static class DownButton extends MyActionButton {
+    DownButton(Listener listener, String name, Icon icon) {
+      super(Buttons.DOWN, listener, name, icon);
+    }
+
+    @Override
+    protected boolean isEnabled(int size, int min, int max) {
+      return size > 0 && max < size-1;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myListener.doDown();
     }
   }
 

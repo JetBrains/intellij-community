@@ -33,4 +33,8 @@ public interface IgnoredFileContentProvider {
   default boolean supportIgnoreFileNotInVcsRoot() {
     return true;
   }
+
+  default boolean canCreateIgnoreFileInStateStoreDir() {
+    return true;
+  }
 }

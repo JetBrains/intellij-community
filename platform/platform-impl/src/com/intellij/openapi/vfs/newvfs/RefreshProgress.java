@@ -34,7 +34,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
   @Override
   public void start() {
     super.start();
-    updateIndicators(true);
+    scheduleUiUpdate();
 
     myStartedTime = System.currentTimeMillis();
   }
@@ -42,7 +42,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
   @Override
   public void stop() {
     super.stop();
-    updateIndicators(false);
+    scheduleUiUpdate();
 
     long finishedTime = System.currentTimeMillis();
     long duration = finishedTime - myStartedTime;
@@ -63,10 +63,10 @@ final class RefreshProgress extends ProgressIndicatorBase {
     }
   }
 
-  private void updateIndicators(boolean start) {
+  private void scheduleUiUpdate() {
     // wrapping in invokeLater here reduces a number of events posted to EDT in case of multiple IDE frames
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
+      if (ApplicationManager.getApplication().isDisposed()) {
         return;
       }
 
@@ -86,7 +86,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
           continue;
         }
 
-        if (start) {
+        if (isRunning()) {
           statusBar.startRefreshIndication(myMessage);
         }
         else {

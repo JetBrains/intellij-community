@@ -157,7 +157,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    return ElementManipulators.getManipulator(myElement).handleContentChange(
+    return ElementManipulators.handleContentChange(
       myElement,
       getRangeInElement(),
       newElementName

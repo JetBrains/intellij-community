@@ -19,14 +19,13 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.*;
 
 
-public class GotoInstruction extends Instruction implements JumpInstruction {
+public class GotoInstruction extends Instruction {
   private ControlFlow.ControlFlowOffset myOffset;
 
   public GotoInstruction(ControlFlow.ControlFlowOffset myOffset) {
     this.myOffset = myOffset;
   }
 
-  @Override
   public int getOffset() {
     return myOffset.getInstructionOffset();
   }
@@ -41,7 +40,6 @@ public class GotoInstruction extends Instruction implements JumpInstruction {
     return "GOTO: " + getOffset();
   }
 
-  @Override
   public void setOffset(final int offset) {
     myOffset = new ControlFlow.FixedOffset(offset);
   }

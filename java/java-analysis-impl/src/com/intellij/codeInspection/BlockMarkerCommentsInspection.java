@@ -61,7 +61,7 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitComment(final PsiComment element) {
+      public void visitComment(@NotNull final PsiComment element) {
         final IElementType tokenType = element.getTokenType();
         if (!(tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT))) {
           return;
@@ -92,12 +92,5 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
         }
       }
     };
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Block marker comment";
   }
 }

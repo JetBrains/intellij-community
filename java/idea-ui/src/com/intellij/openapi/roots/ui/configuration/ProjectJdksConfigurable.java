@@ -36,6 +36,7 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -48,11 +49,11 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   private final ProjectSdksModel myProjectJdksModel;
   private final Project myProject;
 
-  public ProjectJdksConfigurable(Project project) {
+  public ProjectJdksConfigurable(@NotNull Project project) {
     this(project, ProjectStructureConfigurable.getInstance(project).getProjectJdksModel());
   }
 
-  public ProjectJdksConfigurable(Project project, ProjectSdksModel sdksModel) {
+  public ProjectJdksConfigurable(@NotNull Project project, @NotNull ProjectSdksModel sdksModel) {
     myProject = project;
     myProjectJdksModel = sdksModel;
     initTree();

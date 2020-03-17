@@ -101,7 +101,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }, project);
 
     if (!myProject.isDefault()) {
-      StartupManager.getInstance(project).registerStartupActivity(() -> myStartupActivityPerformed = true);
+      StartupManager.getInstance(project).registerStartupActivity(() -> {
+        myStartupActivityPerformed = true;
+      });
     }
 
     connection.subscribe(BatchUpdateListener.TOPIC, new BatchUpdateListener() {
@@ -206,6 +208,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   @NotNull
   private Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+
     Set<String> recursivePaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     Set<String> flatPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
@@ -231,7 +234,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         recursivePaths.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
       }
     }
-
 
     List<String> recursiveUrls = ContainerUtil.map(recursivePaths, VfsUtilCore::pathToUrl);
     Set<String> excludedUrls = new THashSet<>();
@@ -341,7 +343,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   public void dispose() {
     myCollectWatchRootsFuture.cancel(false);
     myExecutor.shutdownNow();
-    assertListenersAreDisposed();
   }
 
   private class AppListener implements ApplicationListener {

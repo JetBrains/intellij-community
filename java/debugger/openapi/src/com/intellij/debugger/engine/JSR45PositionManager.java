@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * @author Eugene Zhuravlev
  */
 public abstract class JSR45PositionManager<Scope> implements PositionManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JSR45PositionManager");
+  private static final Logger LOG = Logger.getInstance(JSR45PositionManager.class);
   protected final DebugProcess      myDebugProcess;
   protected final Scope myScope;
   private final String myStratumId;

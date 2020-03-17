@@ -23,7 +23,7 @@ import com.intellij.usageView.UsageInfo;
  * @author ven
  */
 public class MethodCallUsageInfo extends UsageInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.MethodCallUsageInfo");
+  private static final Logger LOG = Logger.getInstance(MethodCallUsageInfo.class);
   private final boolean myToChangeArguments;
   private final boolean myToCatchExceptions;
   private final PsiMethod myReferencedMethod;

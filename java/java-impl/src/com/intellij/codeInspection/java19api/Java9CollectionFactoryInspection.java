@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -45,7 +44,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
+public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher UNMODIFIABLE_SET = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableSet").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_MAP = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableMap").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_LIST = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableList").parameterCount(1);

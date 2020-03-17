@@ -46,12 +46,6 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
     ignorableAnnotations.writeSettings(node, "ignorableAnnotations");
   }
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("interface.never.implemented.display.name");
-  }
-
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {

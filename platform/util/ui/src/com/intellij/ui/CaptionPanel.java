@@ -4,7 +4,6 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,19 +18,13 @@ public class CaptionPanel extends JPanel {
   public static final Color CNT_ACTIVE_BORDER_COLOR = new JBColor(
     () -> StartupUiUtil.isUnderDarcula() ? JBColor.border() : CNT_ACTIVE_COLOR);
 
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
-   * to be removed in 2019.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  @Deprecated public static final Color BND_ACTIVE_COLOR = new JBColor(() -> JBUI.CurrentTheme.Popup.borderColor(true));
-
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;
   private JComponent mySettingComponent;
 
   public CaptionPanel() {
     setLayout(new BorderLayout());
+    setBackground(null);
   }
 
   @Override
@@ -39,8 +32,7 @@ public class CaptionPanel extends JPanel {
     super.paintComponent(g);
 
     Graphics2D g2d = (Graphics2D) g;
-
-    g2d.setPaint(JBUI.CurrentTheme.Popup.headerBackground(myActive));
+    g2d.setColor(isBackgroundSet() ? getBackground() : JBUI.CurrentTheme.Popup.headerBackground(myActive));
     g2d.fillRect(0, 0, getWidth(), getHeight());
   }
 
@@ -81,17 +73,7 @@ public class CaptionPanel extends JPanel {
     return c != null && c != myButtonComponent;
   }
 
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
-   * to be removed in 2019.1
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  public static Color getBorderColor(boolean isActive) {
-    return JBUI.CurrentTheme.Popup.borderColor(isActive);
-  }
-
   protected boolean containsSettingsControls() {
-    return mySettingComponent != null;
+    return mySettingComponent != null || myButtonComponent != null;
   }
 }

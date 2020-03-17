@@ -66,6 +66,26 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-34374
+  public void testFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
+    doTest();
+  }
+
+  // PY-34374
+  public void testFieldsOrderInInheritanceKwOnlyDefaultBase() {
+    doTest();
+  }
+
+  // PY-34374
+  public void testFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
+    doTest();
+  }
+
+  // PY-34374
+  public void testFieldsOrderInInheritanceKwOnlyDefaultDerived() {
+    doTest();
+  }
+
   // PY-27398
   public void testComparisonForOrdered() {
     doTest();
@@ -276,10 +296,15 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-40018
+  public void testInheritingDefaultArgumentThroughEmptyDataclass() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON37,
+      LanguageLevel.getLatest(),
       () -> {
         myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
         super.doTest();

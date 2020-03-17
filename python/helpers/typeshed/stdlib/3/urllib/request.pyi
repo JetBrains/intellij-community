@@ -15,13 +15,9 @@ import os
 _T = TypeVar('_T')
 _UrlopenRet = Any
 
-class _HTTPResponse(HTTPResponse):
-    url: str
-    msg: str  # type: ignore
-
 def urlopen(
     url: Union[str, Request], data: Optional[bytes] = ...,
-    timeout: float = ..., *, cafile: Optional[str] = ...,
+    timeout: Optional[float] = ..., *, cafile: Optional[str] = ...,
     capath: Optional[str] = ..., cadefault: bool = ...,
     context: Optional[ssl.SSLContext] = ...
 ) -> _UrlopenRet: ...
@@ -71,7 +67,7 @@ class OpenerDirector:
     addheaders: List[Tuple[str, str]]
     def add_handler(self, handler: BaseHandler) -> None: ...
     def open(self, url: Union[str, Request], data: Optional[bytes] = ...,
-             timeout: float = ...) -> _UrlopenRet: ...
+             timeout: Optional[float] = ...) -> _UrlopenRet: ...
     def error(self, proto: str, *args: Any) -> _UrlopenRet: ...
 
 

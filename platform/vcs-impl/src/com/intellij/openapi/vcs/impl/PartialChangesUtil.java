@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -103,7 +102,7 @@ public class PartialChangesUtil {
     };
 
     if (executeOnEDT && !ApplicationManager.getApplication().isDispatchThread()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(task);
+      ApplicationManager.getApplication().invokeAndWait(task);
     }
     else {
       task.run();

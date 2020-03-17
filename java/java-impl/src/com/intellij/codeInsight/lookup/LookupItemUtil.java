@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 public class LookupItemUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
+  private static final Logger LOG = Logger.getInstance(LookupItemUtil.class);
 
   /**
    * @deprecated use {@link LookupElementBuilder}
@@ -65,9 +65,6 @@ public class LookupItemUtil {
     }
     else if (object instanceof String) {
       s = (String)object;
-    }
-    else if (object instanceof Template) {
-      s = ((Template)object).getKey();
     }
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();

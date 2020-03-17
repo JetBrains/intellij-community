@@ -24,7 +24,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.add.directory.confirmation.add.directory"/>
+              <text resource-bundle="messages/CvsBundle" key="label.add.directory.confirmation.add.directory"/>
             </properties>
           </component>
           <component id="8a6b8" class="javax.swing.JLabel">
@@ -33,7 +33,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text resource-bundle="com/intellij/cvsSupport2/CvsBundle" key="label.add.directory.confirmation.to.cvs"/>
+              <text resource-bundle="messages/CvsBundle" key="label.add.directory.confirmation.to.cvs"/>
             </properties>
           </component>
           <component id="e24e8" class="com.intellij.util.ui.FileLabel" binding="myFileLabel">

@@ -38,8 +38,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import static com.intellij.ide.actions.RecentLocationsAction.EMPTY_FILE_TEXT;
-
 class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem> {
   @NotNull private final Project myProject;
   @NotNull private final SpeedSearch mySpeedSearch;
@@ -130,9 +128,9 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     editor.setBackgroundColor(getBackgroundColor(colorsScheme, selected));
     editor.setBorder(JBUI.Borders.empty(0, 4, 6, 0));
 
-    if (EMPTY_FILE_TEXT.equals(editor.getDocument().getText())) {
+    if (RecentLocationsAction.getEmptyFileText().equals(editor.getDocument().getText())) {
       editor.getMarkupModel().addRangeHighlighter(0,
-                                                  EMPTY_FILE_TEXT.length(),
+                                                  RecentLocationsAction.getEmptyFileText().length(),
                                                   HighlighterLayer.SYNTAX,
                                                   createEmptyTextForegroundTextAttributes(colorsScheme),
                                                   HighlighterTargetArea.EXACT_RANGE);

@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.ProductivityFeaturesRegistry");
+  private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistry.class);
   private final Map<String, FeatureDescriptor> myFeatures = new HashMap<>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
   private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<>();

@@ -49,7 +49,7 @@ import java.util.stream.Stream;
  * @author ven
  */
 public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineConstantFieldProcessor");
+  private static final Logger LOG = Logger.getInstance(InlineConstantFieldProcessor.class);
   private PsiField myField;
   private final PsiReferenceExpression myRefExpr;
   private final boolean myInlineThisOnly;

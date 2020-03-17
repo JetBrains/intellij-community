@@ -567,7 +567,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       assertFalse(sourceFolderManager.isDisposed());
     }
     finally {
-      application.invokeAndWait(() -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, true));
+      application.invokeAndWait(() -> ProjectManagerEx.getInstanceEx().forceCloseProject(project));
     }
     assertTrue(project.isDisposed());
     assertTrue(sourceFolderManager.isDisposed());
@@ -580,7 +580,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       new GradleBuildScriptBuilderEx()
         .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
-        .withKotlinPlugin("1.3.0")
+        .withKotlinPlugin("1.3.50")
         .addPostfix("idea {")
         .addPostfix("  module {")
         .addPostfix("    settings {")
@@ -608,7 +608,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       new GradleBuildScriptBuilderEx()
         .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
         .withJavaPlugin()
-        .withKotlinPlugin("1.3.0")
+        .withKotlinPlugin("1.3.50")
         .addPostfix("idea {")
         .addPostfix("  module {")
         .addPostfix("    settings {")

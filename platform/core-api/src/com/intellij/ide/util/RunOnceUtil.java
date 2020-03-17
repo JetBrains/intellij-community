@@ -9,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Konstantin Bulenkov
  */
-public class RunOnceUtil {
-
+public final class RunOnceUtil {
   /**
    * Perform the task if it was not performed before for the given project.
    *

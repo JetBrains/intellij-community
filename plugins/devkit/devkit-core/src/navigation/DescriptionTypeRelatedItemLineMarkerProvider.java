@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,15 +49,14 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
   private final Option myDescriptionOption = new Option("devkit.description", "Description", DevkitIcons.Gutter.DescriptionFile);
   private final Option myBeforeAfterOption = new Option("devkit.beforeAfter", "Before/After templates", DevkitIcons.Gutter.Diff);
 
-  @NotNull
   @Override
-  public Option[] getOptions() {
+  public Option @NotNull [] getOptions() {
     return new Option[]{myDescriptionOption, myBeforeAfterOption};
   }
 
   @Override
   public String getName() {
-    return "Description / Before|After Templates";
+    return "Description / Before|After templates";
   }
 
   @Override

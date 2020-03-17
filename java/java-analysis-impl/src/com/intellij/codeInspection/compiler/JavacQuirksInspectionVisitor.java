@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.compiler;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -37,11 +37,9 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
 
   private final ProblemsHolder myHolder;
   private final LanguageLevel myLanguageLevel;
-  private final JavaSdkVersion mySdkVersion;
 
   public JavacQuirksInspectionVisitor(ProblemsHolder holder) {
     myHolder = holder;
-    mySdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(myHolder.getFile());
     myLanguageLevel = PsiUtil.getLanguageLevel(myHolder.getFile());
   }
 
@@ -92,9 +90,9 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     if (JavaSdkVersion.JDK_1_6.equals(JavaVersionService.getInstance().getJavaSdkVersion(assignment)) &&
         PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
-      String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
-                                                 JavaHighlightUtil.formatType(lType),
-                                                 JavaHighlightUtil.formatType(rExpression.getType()));
+      String message = JavaErrorBundle.message("binary.operator.not.applicable", operatorText,
+                                               JavaHighlightUtil.formatType(lType),
+                                               JavaHighlightUtil.formatType(rExpression.getType()));
 
       myHolder.registerProblem(assignment, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceAssignmentOperatorWithAssignmentFix(operationSign.getText()));
@@ -153,43 +151,6 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
                                        new MyAddExplicitTypeArgumentsFix());
               break;
             }
-          }
-        }
-      }
-    }
-  }
-
-  @Override
-  public void visitIdentifier(PsiIdentifier identifier) {
-    super.visitIdentifier(identifier);
-    if ("_".equals(identifier.getText()) &&
-        mySdkVersion != null &&
-        mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8) &&
-        myLanguageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
-      String message = JavaErrorMessages.message("underscore.identifier.warn");
-      myHolder.registerProblem(identifier, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-    }
-    if ("var".equals(identifier.getText()) &&
-        identifier.getParent() instanceof PsiClass &&
-        myLanguageLevel.isLessThan(LanguageLevel.JDK_10)) {
-      String message = JavaErrorMessages.message("var.identifier.warn");
-      myHolder.registerProblem(identifier, message);
-    }
-  }
-
-  @Override
-  public void visitKeyword(PsiKeyword keyword) {
-    super.visitKeyword(keyword);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
-      @PsiModifier.ModifierConstant String modifier = keyword.getText();
-      if (PsiKeyword.STATIC.equals(modifier) || PsiKeyword.TRANSITIVE.equals(modifier)) {
-        PsiElement parent = keyword.getParent();
-        if (parent instanceof PsiModifierList) {
-          PsiElement grand = parent.getParent();
-          if (grand instanceof PsiRequiresStatement && PsiJavaModule.JAVA_BASE.equals(((PsiRequiresStatement)grand).getModuleName())) {
-            String message = JavaErrorMessages.message("module.unwanted.modifier");
-            LocalQuickFix fix = QuickFixFactory.getInstance().createModifierListFix((PsiModifierList)parent, modifier, false, false);
-            myHolder.registerProblem(keyword, message, fix);
           }
         }
       }

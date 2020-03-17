@@ -3,7 +3,7 @@ package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyProvider;
-import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -81,6 +81,6 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
 
   @Override
   public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
-    ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyBrowserBase.METHOD_TYPE);
+    ((MethodHierarchyBrowser) hierarchyBrowser).changeView(MethodHierarchyBrowserBase.getMethodType());
   }
 }

@@ -35,7 +35,7 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
 
   @NotNull
   @Override
-  default String getPresentation() {
+  default String getDisplayText() {
     if (getBefore() != null && getAfter() != null) {
       return DateFormatUtil.formatBetweenDates(getAfter().getTime(), getBefore().getTime());
     }

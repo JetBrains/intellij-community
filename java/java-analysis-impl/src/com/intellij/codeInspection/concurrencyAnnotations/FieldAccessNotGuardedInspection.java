@@ -23,13 +23,6 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unguarded field access";
-  }
-
-  @Override
   @NotNull
   public String getShortName() {
     return "FieldAccessNotGuarded";

@@ -20,8 +20,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.PyBundle;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,13 +34,6 @@ public class PyUnusedLocalInspection extends PyInspection {
   public boolean ignoreLambdaParameters = true;
   public boolean ignoreLoopIterationVariables = true;
   public boolean ignoreVariablesStartingWithUnderscore = true;
-
-  @Override
-  @NotNull
-  @Nls
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.unused");
-  }
 
   @Override
   @NotNull

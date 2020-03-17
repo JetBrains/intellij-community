@@ -30,7 +30,7 @@ typealias ProtocolAndSubclassElements = Pair<PyTypedElement, List<RatedResolveRe
 
 fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
   val subclassAsInstance = subclass.toInstance()
-  val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
+  val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
   val result = mutableListOf<Pair<PyTypedElement, List<RatedResolveResult>?>>()
 
   protocol.toInstance().visitMembers(

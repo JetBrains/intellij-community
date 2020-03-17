@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SystemBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder");
+  private static final Logger LOG = Logger.getInstance(SystemBuilder.class);
 
   private final PsiManager myManager;
   private final Map<PsiElement, Boolean> myMethodCache;

@@ -39,7 +39,7 @@ public class RollbackUtil {
    * Finds the most appropriate name for the "Rollback" operation for the given VCSs.
    * That is: iterates through the all {@link RollbackEnvironment#getRollbackOperationName() RollbackEnvironments} and picks
    * the operation name if it is equal to all given VCSs.
-   * Otherwise picks the {@link DefaultRollbackEnvironment#ROLLBACK_OPERATION_NAME default name}.
+   * Otherwise picks the {@link DefaultRollbackEnvironment#getRollbackOperationText() default name}.
    * @param vcses affected VCSs.
    * @return name for the "rollback" operation to be used in the UI.
    */
@@ -54,11 +54,11 @@ public class RollbackUtil {
         }
         else if (!operationName.equals(rollbackEnvironment.getRollbackOperationName())) {
           // if there are different names, use default
-          return DefaultRollbackEnvironment.ROLLBACK_OPERATION_NAME;
+          return DefaultRollbackEnvironment.getRollbackOperationText();
         }
       }
     }
-    return operationName != null ? operationName : DefaultRollbackEnvironment.ROLLBACK_OPERATION_NAME;
+    return operationName != null ? operationName : DefaultRollbackEnvironment.getRollbackOperationText();
   }
 
   /**

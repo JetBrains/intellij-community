@@ -21,11 +21,12 @@ import org.jetbrains.annotations.NotNull;
 public class ModuleProblemDescriptorImpl extends CommonProblemDescriptorImpl implements ModuleProblemDescriptor {
   private final Module myModule;
 
-  public ModuleProblemDescriptorImpl(QuickFix[] fixes, @NotNull String descriptionTemplate, Module module) {
+  public ModuleProblemDescriptorImpl(QuickFix[] fixes, @NotNull String descriptionTemplate, @NotNull Module module) {
     super(fixes, descriptionTemplate);
     myModule = module;
   }
 
+  @NotNull
   @Override
   public Module getModule() {
     return myModule;

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.javadoc;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +31,7 @@ class ExceptionTagInfo extends ClassReferenceTagInfo {
 
     PsiClass throwable = JavaPsiFacade.getInstance(value.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, value.getResolveScope());
     if (throwable != null && !exceptionClass.equals(throwable) && !exceptionClass.isInheritor(throwable, true)) {
-      return JavaErrorMessages.message("javadoc.exception.tag.class.is.not.throwable", exceptionClass.getQualifiedName());
+      return JavaErrorBundle.message("javadoc.exception.tag.class.is.not.throwable", exceptionClass.getQualifiedName());
     }
 
     PsiClass runtimeException = JavaPsiFacade.getInstance(value.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, value.getResolveScope());
@@ -54,6 +54,6 @@ class ExceptionTagInfo extends ClassReferenceTagInfo {
       }
     }
 
-    return JavaErrorMessages.message("javadoc.exception.tag.exception.is.not.thrown", exceptionClass.getName(), method.getName());
+    return JavaErrorBundle.message("javadoc.exception.tag.exception.is.not.thrown", exceptionClass.getName(), method.getName());
   }
 }

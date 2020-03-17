@@ -14,7 +14,7 @@ public interface ExternalDocumentationProvider {
 
   /**
    * Quick check for existence of external documentation for specified element. Called from action update, so must be fast.
-   * If not implemented, update check is performed by calling {@link DocumentationProvider#getUrlFor(com.intellij.psi.PsiElement, com.intellij.psi.PsiElement)}.
+   * If not implemented, update check is performed by calling {@link DocumentationProvider#getUrlFor(PsiElement, PsiElement)}.
    *
    * @deprecated existing implementations fall back to checking for existing url
    * @param element the element to check for existence of documentation

@@ -2,25 +2,31 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.DisposableWrapper;
+import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
-public abstract class InspectionToolsSupplier {
-  protected final Collection<Listener> myListeners = new SmartList<>();
+public abstract class InspectionToolsSupplier implements Disposable {
+  protected final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
   @NotNull
   public abstract List<InspectionToolWrapper> createTools();
 
   public void addListener(@NotNull Listener listener, @Nullable Disposable parentDisposable) {
-    myListeners.add(listener);
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, () -> myListeners.remove(listener));
+      myListeners.add(listener, parentDisposable);
     }
+    else {
+      myListeners.add(listener);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    myListeners.clear();
   }
 
   public interface Listener {

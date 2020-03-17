@@ -4,27 +4,30 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.*;
+import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
+import com.intellij.util.indexing.snapshot.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -45,6 +48,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
   private final TIntObjectHashMap<Map<Key, Value>> myInMemoryKeysAndValues = new TIntObjectHashMap<>();
 
+  @SuppressWarnings("rawtypes")
+  private final PersistentSubIndexerRetriever mySubIndexerRetriever;
   private final SnapshotInputMappingIndex<Key, Value, Input> mySnapshotInputMappings;
   private final boolean myUpdateMappings;
   private final boolean mySingleEntryIndex;
@@ -74,27 +79,48 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
                                 @NotNull IndexStorage<Key, Value> storage,
                                 @Nullable ForwardIndex forwardIndexMap,
                                 @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                @Nullable SnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappings,
+                                @Nullable SnapshotInputMappings<Key, Value, Input> snapshotInputMappings,
                                 @Nullable ReadWriteLock lock) {
     super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
     if (myIndexId instanceof ID) {
       SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     }
+    if (storage instanceof MemoryIndexStorage && snapshotInputMappings != null) {
+      VfsAwareIndexStorage<Key, Value> backendStorage = ((MemoryIndexStorage<Key, Value>)storage).getBackendStorage();
+      if (backendStorage instanceof SnapshotSingleValueIndexStorage) {
+        LOG.assertTrue(forwardIndexMap instanceof IntForwardIndex);
+        ((SnapshotSingleValueIndexStorage<Key, Value, Input>)backendStorage).init(snapshotInputMappings, ((IntForwardIndex)forwardIndexMap));
+      }
+    }
+    //TODO make it works with snapshot mappings enabled
+    if (myIndexer instanceof CompositeDataIndexer && InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED && snapshotInputMappings == null) {
+      try {
+        //noinspection unchecked,rawtypes,ConstantConditions
+        mySubIndexerRetriever = new PersistentSubIndexerRetriever((ID)myIndexId,
+                                                                  extension.getVersion(),
+                                                                  (CompositeDataIndexer) myIndexer);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } else {
+      mySubIndexerRetriever = null;
+    }
     mySnapshotInputMappings = IndexImporterMappingIndex.wrap(snapshotInputMappings, extension);
-    myUpdateMappings = snapshotInputMappings instanceof UpdatableSnapshotInputMappingIndex;
+    myUpdateMappings = mySnapshotInputMappings instanceof UpdatableSnapshotInputMappingIndex;
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
     installMemoryModeListener();
   }
 
-  private static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
+  static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
     return indexExtension instanceof FileBasedIndexExtension &&
            ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
-           IdIndex.ourSnapshotMappingsEnabled;
+           FileBasedIndex.ourSnapshotMappingsEnabled;
   }
 
   @NotNull
   @Override
-  protected InputData<Key, Value> mapInput(@Nullable Input content) {
+  protected InputData<Key, Value> mapInput(int inputId, @Nullable Input content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
     if (mySnapshotInputMappings != null && content != null) {
@@ -110,7 +136,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         throw new RuntimeException(e);
       }
     }
-    data = super.mapInput(content);
+    data = super.mapInput(inputId, content);
     if (!containsSnapshotData && !UpdatableSnapshotInputMappingIndex.ignoreMappingIndexUpdate(content)) {
       try {
         return ((UpdatableSnapshotInputMappingIndex<Key, Value, Input>)mySnapshotInputMappings).putData(content, data);
@@ -157,8 +183,16 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+    if (mySubIndexerRetriever != null) {
+      try {
+        mySubIndexerRetriever.setIndexedState(fileId, file);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override
@@ -167,8 +201,23 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  public boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
-    return IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
+  public boolean isIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
+    if (!IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId)) {
+      return false;
+    }
+    if (mySubIndexerRetriever == null) return true;
+    if (!(file instanceof FileContent)) {
+      if (((CompositeDataIndexer)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
+        return false;
+      }
+    }
+    try {
+      return mySubIndexerRetriever.isIndexed(fileId, file);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return false;
+    }
   }
 
   @Override
@@ -185,26 +234,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
       try {
         removeTransientDataForInMemoryKeys(inputId, keyValueMap);
-
         InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
-        if (builder instanceof CollectionInputDataDiffBuilder<?, ?>) {
-          Collection<Key> keyCollectionFromDisk = ((CollectionInputDataDiffBuilder<Key, Value>)builder).getSeq();
-          if (keyCollectionFromDisk != null) {
-            removeTransientDataForKeys(inputId, keyCollectionFromDisk);
-          }
-        } else {
-          Set<Key> diskKeySet = new THashSet<>();
-
-          builder.differentiateWithoutExternalModification(
-            Collections.emptyMap(),
-            (key, value, inputId1) -> {
-            },
-            (key, value, inputId1) -> {},
-            (key, inputId1) -> diskKeySet.add(key)
-          );
-          removeTransientDataForKeys(inputId, diskKeySet);
-        }
-      } catch (Throwable throwable) {
+        removeTransientDataForKeys(inputId, getKeys(builder));
+      } catch (StorageException | IOException throwable) {
         throw new RuntimeException(throwable);
       }
     } finally {
@@ -269,12 +301,14 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   @NotNull
   @Override
   public Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
-    try {
-      return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    return ConcurrencyUtil.withLock(getReadLock(), () -> {
+      try {
+        return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
+    });
   }
 
   @Nullable
@@ -314,7 +348,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
-      TransactionGuard.getInstance().submitTransactionLater(application, action);
+      ApplicationManager.getApplication().invokeLater(action);
     } else {
       action.run();
     }
@@ -331,6 +365,14 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         LOG.error(e);
       }
     }
+    if (mySubIndexerRetriever != null) {
+      try {
+        mySubIndexerRetriever.clear();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Override
@@ -338,6 +380,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     super.doFlush();
     if (mySnapshotInputMappings != null && myUpdateMappings) {
       ((UpdatableSnapshotInputMappingIndex<Key, Value, Input>)mySnapshotInputMappings).flush();
+    }
+    if (mySubIndexerRetriever != null) {
+      mySubIndexerRetriever.flush();
     }
   }
 
@@ -348,6 +393,14 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     if (mySnapshotInputMappings != null) {
       try {
         mySnapshotInputMappings.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    if (mySubIndexerRetriever != null) {
+      try {
+        mySubIndexerRetriever.close();
       }
       catch (IOException e) {
         LOG.error(e);
@@ -368,7 +421,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     if (!shouldCreateForwardIndex(indexExtension)) return null;
     if (indexExtension instanceof SingleEntryFileBasedIndexExtension<?>) return new EmptyForwardIndex(); // indexStorage and forwardIndex are same here
     File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)indexExtension.getName());
-    return new PersistentMapBasedForwardIndex(indexStorageFile, false);
+    return new PersistentMapBasedForwardIndex(indexStorageFile.toPath(), false, false);
   }
 
   private static boolean shouldCreateForwardIndex(@NotNull IndexExtension<?, ?, ?> indexExtension) {
@@ -397,5 +450,23 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         }
       });
     }
+  }
+
+  private static <Key> Collection<Key> getKeys(InputDataDiffBuilder<Key, ?> builder) throws StorageException {
+    if (builder instanceof CollectionInputDataDiffBuilder<?, ?>) {
+      return ((CollectionInputDataDiffBuilder<Key, ?>)builder).getSeq();
+    }
+    else if (builder instanceof MapInputDataDiffBuilder<?, ?>) {
+      return ((MapInputDataDiffBuilder<Key, ?>)builder).getMap().keySet();
+    }
+
+    Set<Key> keys = new THashSet<>();
+    builder.differentiate(
+      Collections.emptyMap(),
+      (key, value, inputId) -> { },
+      (key, value, inputId) -> {},
+      (key, inputId) -> keys.add(key)
+    );
+    return keys;
   }
 }

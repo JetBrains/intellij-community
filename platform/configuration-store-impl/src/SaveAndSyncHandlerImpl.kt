@@ -7,10 +7,10 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.debug
@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger
 private const val LISTEN_DELAY = 15
 
 internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
-  private val refreshDelayAlarm = SingleAlarm(Runnable { this.doScheduledRefresh() }, delay = 300, parentDisposable = this)
+  private val refreshDelayAlarm = SingleAlarm(Runnable { doScheduledRefresh() }, delay = 300, parentDisposable = this)
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
   @Volatile
@@ -55,7 +55,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
   private val saveAlarm = pooledThreadSingleAlarm(delay = 300, parentDisposable = this) {
     val app = ApplicationManager.getApplication()
-    if (app != null && !app.isDisposedOrDisposeInProgress && blockSaveOnFrameDeactivationCount.get() == 0) {
+    if (app != null && !app.isDisposed && blockSaveOnFrameDeactivationCount.get() == 0) {
       processTasks()
     }
   }
@@ -73,6 +73,10 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
 
       if (task.onlyProject?.isDisposed == true) {
         continue
+      }
+
+      if (blockSaveOnFrameDeactivationCount.get() > 0 || ProgressManager.getInstance().hasModalProgressIndicator()) {
+        return
       }
 
       LOG.runAndLogException {
@@ -99,9 +103,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
     val settings = GeneralSettings.getInstance()
     val idleListener = Runnable {
       if (settings.isAutoSaveIfInactive && canSyncOrSave()) {
-        submitTransaction {
-          (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-        }
+        (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
       }
     }
 
@@ -131,7 +133,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
         }
 
         // for web development it is crucially important to save documents on frame deactivation as early as possible
-        FileDocumentManager.getInstance().saveAllDocuments()
+        (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
 
         if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
           // do not cancel if there is already request - opposite to scheduleSave,
@@ -206,7 +208,7 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
     }
 
     var isSavedSuccessfully = true
-    runInSaveOnFrameDeactivationDisabledMode {
+    runInAutoSaveDisabledMode {
       edtPoolDispatcherManager.processTasks()
 
       ProgressManager.getInstance().run(object : Task.Modal(componentManager as? Project, "Saving " + (if (componentManager is Application) "Application" else "Project"), /* canBeCancelled = */ false) {
@@ -259,12 +261,10 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
   }
 
   private fun doScheduledRefresh() {
-    submitTransaction {
-      if (canSyncOrSave()) {
-        refreshOpenFiles()
-      }
-      maybeRefresh(ModalityState.NON_MODAL)
+    if (canSyncOrSave()) {
+      refreshOpenFiles()
     }
+    maybeRefresh(ModalityState.NON_MODAL)
   }
 
   override fun maybeRefresh(modalityState: ModalityState) {
@@ -295,6 +295,15 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
     }
   }
 
+  override fun disableAutoSave(): AccessToken {
+    blockSaveOnFrameDeactivation()
+    return object : AccessToken() {
+      override fun finish() {
+        unblockSaveOnFrameDeactivation()
+      }
+    }
+  }
+
   override fun blockSaveOnFrameDeactivation() {
     LOG.debug("save blocked")
     blockSaveOnFrameDeactivationCount.incrementAndGet()
@@ -313,10 +322,6 @@ internal class SaveAndSyncHandlerImpl : BaseSaveAndSyncHandler(), Disposable {
   override fun unblockSyncOnFrameActivation() {
     blockSyncOnFrameActivationCount.decrementAndGet()
     LOG.debug("sync unblocked")
-  }
-
-  private inline fun submitTransaction(crossinline handler: () -> Unit) {
-    TransactionGuard.submitTransaction(this, Runnable { handler() })
   }
 }
 

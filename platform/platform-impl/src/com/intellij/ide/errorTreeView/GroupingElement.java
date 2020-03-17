@@ -45,6 +45,10 @@ public class GroupingElement extends ErrorTreeElement {
     return myFile;
   }
 
+  public boolean isRenderWithBoldFont() {
+    return true;
+  }
+
   @Nullable
   @Override
   public Icon getIcon() {

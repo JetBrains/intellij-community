@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ public interface OverrideImplementsAnnotationsHandler {
   /**
    * Returns annotations which should be copied from a source to an implementation (by default, no annotations are copied).
    */
+  @Contract(pure = true)
   default String[] getAnnotations(@NotNull PsiFile file) {
     return getAnnotations(file.getProject());
   }
@@ -33,6 +35,7 @@ public interface OverrideImplementsAnnotationsHandler {
    * @deprecated Use {@link #getAnnotations(PsiFile)}
    */
   @Deprecated
+  @Contract(pure = true)
   String[] getAnnotations(Project project);
 
   /**
@@ -40,6 +43,7 @@ public interface OverrideImplementsAnnotationsHandler {
    */
   @Deprecated
   @NotNull
+  @Contract(pure = true)
   default String[] annotationsToRemove(Project project, @NotNull String fqName) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }

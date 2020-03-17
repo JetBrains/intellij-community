@@ -43,12 +43,6 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return MavenDomBundle.message("inspection.property.in.parent.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "MavenPropertyInParent";
   }

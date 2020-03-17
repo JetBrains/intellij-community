@@ -12,6 +12,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -24,6 +25,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -37,6 +41,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
@@ -233,10 +238,22 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
         }
       }
     };
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appWillBeClosed(boolean isRestart) {
+        ProgressManager.getInstance().run(new Task.Modal(null, "Maven Server Shutdown", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            shutdown(true);
+          }
+        });
+      }
+    });
   }
   @Override
   public void dispose() {
-    shutdown(false);
   }
 
   @Override
@@ -777,7 +794,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
 
     @NotNull
     @Override
-    public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
       ProcessHandler processHandler = startProcess();
       return new DefaultExecutionResult(processHandler);
     }

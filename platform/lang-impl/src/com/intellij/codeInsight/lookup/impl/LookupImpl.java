@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
@@ -72,7 +71,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
+  private static final Logger LOG = Logger.getInstance(LookupImpl.class);
   private static final Key<Font> CUSTOM_FONT_KEY = Key.create("CustomLookupElementFont");
 
   private final LookupOffsets myOffsets;
@@ -173,11 +172,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void setArranger(LookupArranger arranger) {
     myArranger = arranger;
-  }
-
-  @Override
-  public FocusDegree getFocusDegree() {
-    return convertToFocusDegree(myLookupFocusDegree);
   }
 
   @Override
@@ -623,80 +617,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public static void insertLookupString(final Project project,
                                         Editor editor, LookupElement item,
                                         PrefixMatcher matcher, String itemPattern, final int prefixLength) {
-    final String lookupString = getCaseCorrectedLookupString(item, matcher, itemPattern);
+    final String lookupString = LookupUtil.getCaseCorrectedLookupString(item, matcher, itemPattern);
 
     final Editor hostEditor = editor;
     hostEditor.getCaretModel().runForEachCaret(__ -> {
       EditorModificationUtil.deleteSelectedText(hostEditor);
       final int caretOffset = hostEditor.getCaretModel().getOffset();
 
-      int offset = insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+      int offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
       hostEditor.getCaretModel().moveToOffset(offset);
       hostEditor.getSelectionModel().removeSelection();
     });
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-  }
-
-  private static int insertLookupInDocumentWindowIfNeeded(Project project,
-                                                          Editor editor, int caretOffset,
-                                                          int prefix,
-                                                          String lookupString) {
-    DocumentWindow document = getInjectedDocument(project, editor, caretOffset);
-    if (document == null) return insertLookupInDocument(caretOffset, editor.getDocument(), prefix, lookupString);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    int offset = document.hostToInjected(caretOffset);
-    int lookupStart = Math.min(offset, Math.max(offset - prefix, 0));
-    int diff = -1;
-    if (file != null) {
-      List<TextRange> ranges = InjectedLanguageManager.getInstance(project)
-        .intersectWithAllEditableFragments(file, TextRange.create(lookupStart, offset));
-      if (!ranges.isEmpty()) {
-        diff = ranges.get(0).getStartOffset() - lookupStart;
-        if (ranges.size() == 1 && diff == 0) diff = -1;
-      }
-    }
-    if (diff == -1) return insertLookupInDocument(caretOffset, editor.getDocument(), prefix, lookupString);
-    return document.injectedToHost(
-      insertLookupInDocument(offset, document, prefix - diff, diff == 0 ? lookupString : lookupString.substring(diff))
-    );
-  }
-
-  private static int insertLookupInDocument(int caretOffset, Document document, int prefix, String lookupString) {
-    int lookupStart = Math.min(caretOffset, Math.max(caretOffset - prefix, 0));
-    int len = document.getTextLength();
-    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
-                   "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
-    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
-    document.replaceString(lookupStart, caretOffset, lookupString);
-    return lookupStart + lookupString.length();
-  }
-
-  private static String getCaseCorrectedLookupString(LookupElement item, PrefixMatcher prefixMatcher, String prefix) {
-    String lookupString = item.getLookupString();
-    if (item.isCaseSensitive()) {
-      return lookupString;
-    }
-
-    final int length = prefix.length();
-    if (length == 0 || !prefixMatcher.prefixMatches(prefix)) return lookupString;
-    boolean isAllLower = true;
-    boolean isAllUpper = true;
-    boolean sameCase = true;
-    for (int i = 0; i < length && (isAllLower || isAllUpper || sameCase); i++) {
-      final char c = prefix.charAt(i);
-      boolean isLower = Character.isLowerCase(c);
-      boolean isUpper = Character.isUpperCase(c);
-      // do not take this kind of symbols into account ('_', '@', etc.)
-      if (!isLower && !isUpper) continue;
-      isAllLower = isAllLower && isLower;
-      isAllUpper = isAllUpper && isUpper;
-      sameCase = sameCase && i < lookupString.length() && isLower == Character.isLowerCase(lookupString.charAt(i));
-    }
-    if (sameCase) return lookupString;
-    if (isAllLower) return StringUtil.toLowerCase(lookupString);
-    if (isAllUpper) return StringUtil.toUpperCase(lookupString);
-    return lookupString;
   }
 
   @Override
@@ -1150,6 +1083,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     hideLookup(true);
   }
 
+  @Override
   public void hideLookup(boolean explicitly) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -1319,20 +1253,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         return LookupFocusDegree.UNFOCUSED;
       default:
         throw new IllegalStateException("Unknown focusDegree " + focusDegree);
-    }
-  }
-
-  @NotNull
-  private static FocusDegree convertToFocusDegree(@NotNull LookupFocusDegree lookupFocusDegree) {
-    switch (lookupFocusDegree) {
-      case FOCUSED:
-        return FocusDegree.FOCUSED;
-      case SEMI_FOCUSED:
-        return FocusDegree.SEMI_FOCUSED;
-      case UNFOCUSED:
-        return FocusDegree.UNFOCUSED;
-      default:
-        throw new IllegalStateException("Unknown lookupFocusDegree " + lookupFocusDegree);
     }
   }
 

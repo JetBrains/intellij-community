@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgInitAlreadyUnderHgDialog;
@@ -94,15 +94,15 @@ public class HgInit extends DumbAwareAction {
   public static boolean createRepository(@NotNull Project project, @NotNull final VirtualFile selectedRoot) {
     HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
     if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
-      VcsNotifier.getInstance(project).notifySuccess(HgVcsMessages.message("hg4idea.init.created.notification.title"),
-                                                     HgVcsMessages.message("hg4idea.init.created.notification.description",
-                                                                           selectedRoot.getPresentableUrl()));
+      VcsNotifier.getInstance(project).notifySuccess(HgBundle.message("hg4idea.init.created.notification.title"),
+                                                     HgBundle.message("hg4idea.init.created.notification.description",
+                                                                      selectedRoot.getPresentableUrl()));
       return true;
     }
     else {
       new HgCommandResultNotifier(project.isDefault() ? null : project)
-        .notifyError(result, HgVcsMessages.message("hg4idea.init.error.title"), HgVcsMessages.message("hg4idea.init.error.description",
-                                                                                                      selectedRoot.getPresentableUrl()));
+        .notifyError(result, HgBundle.message("hg4idea.init.error.title"), HgBundle.message("hg4idea.init.error.description",
+                                                                                            selectedRoot.getPresentableUrl()));
       return false;
     }
   }

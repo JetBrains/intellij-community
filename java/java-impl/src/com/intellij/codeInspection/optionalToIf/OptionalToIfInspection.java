@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
@@ -185,13 +186,19 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
       String code = generateCode(context, operations);
       if (code == null) return;
       code = context.addInitializer(code);
+      PsiStatement firstStatement = chainStatement;
       PsiStatement[] statements = addStatements(factory, chainStatement, code);
+      if (statements.length > 0) firstStatement = statements[0];
       List<Instruction> instructions = createInstructions(statements);
       if (instructions != null) {
         code = Simplifier.simplify(instructions);
         Arrays.stream(statements).forEach(PsiStatement::delete);
-        addStatements(factory, chainStatement, code);
+        statements = addStatements(factory, chainStatement, code);
+        firstStatement = statements.length > 0 ? statements[0] : chainStatement;
       }
+      CommentTracker tracker = new CommentTracker();
+      tracker.grabComments(chainStatement);
+      tracker.insertCommentsBefore(firstStatement);
       chainStatement.delete();
     }
   }

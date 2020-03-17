@@ -28,7 +28,8 @@ class ObjectNavigatorOnAuxFiles(
   private val auxOffsets: ByteBuffer,
   private val aux: ByteBuffer,
   classStore: ClassStore,
-  instanceCount: Long
+  instanceCount: Long,
+  private val idSize: Int
 ) : ObjectNavigator(classStore, instanceCount) {
 
   override fun getClass() = currentClass!!
@@ -40,24 +41,32 @@ class ObjectNavigatorOnAuxFiles(
     return if (classId == 0) classStore.classClass else classStore[classId]
   }
 
+  private var softWeakReferenceIndex: Int = -1
   private var currentObjectId = 0L
   private var arraySize = 0
   private var currentClass: ClassDefinition? = null
   private val references = TLongArrayList()
+  private var softWeakReferenceId = 0L
+
+  private enum class ReferenceType { Strong, Weak, Soft }
+
+  private var referenceType = ReferenceType.Strong
+  private var extraData = 0
 
   override val id: Long
     get() = currentObjectId
 
-  override fun createRootsIterator(): Iterator<Long> {
-    return object : Iterator<Long> {
+  override fun createRootsIterator(): Iterator<RootObject> {
+    return object : Iterator<RootObject> {
       val internalIterator = roots.iterator()
       override fun hasNext(): Boolean {
         return internalIterator.hasNext()
       }
 
-      override fun next(): Long {
+      override fun next(): RootObject {
         internalIterator.advance()
-        return internalIterator.key()
+        val key = internalIterator.key()
+        return RootObject(key, roots[key])
       }
     }
   }
@@ -79,6 +88,10 @@ class ObjectNavigatorOnAuxFiles(
     aux.position(auxOffsets.int)
     currentObjectId = id
     references.resetQuick()
+    softWeakReferenceId = 0L
+    softWeakReferenceIndex = -1
+    referenceType = ReferenceType.Strong
+    extraData = 0
 
     if (id == 0L) {
       currentClass = null
@@ -106,6 +119,10 @@ class ObjectNavigatorOnAuxFiles(
       return
     }
     preloadInstance(classDefinition, referenceResolution)
+  }
+
+  override fun getExtraData(): Int {
+    return extraData
   }
 
   private fun preloadPrimitiveArray() {
@@ -145,19 +162,29 @@ class ObjectNavigatorOnAuxFiles(
     }
 
     var c = classDefinition
-    var isSoftOrWeakReference = false
+    var isSoftReference = false
+    var isWeakReference = false
     val includeSoftWeakReferences = referenceResolution == ReferenceResolution.ALL_REFERENCES
     do {
-      isSoftOrWeakReference =
-        isSoftOrWeakReference || classStore.isSoftOrWeakReferenceClass(c)
+      isSoftReference = isSoftReference || classStore.softReferenceClass == c
+      isWeakReference = isWeakReference || classStore.weakReferenceClass == c
       val fields = c.refInstanceFields
       fields.forEach {
         val reference = aux.readId()
-        if (!isSoftOrWeakReference || it.name != "referent" || includeSoftWeakReferences) {
+        if (!(isSoftReference || isWeakReference) || it.name != "referent") {
           references.add(reference.toLong())
         }
         else {
-          references.add(0L)
+          softWeakReferenceId = reference.toLong()
+          softWeakReferenceIndex = references.size() // current index in references list
+          referenceType = if (isSoftReference) ReferenceType.Soft else ReferenceType.Weak
+          // Soft/weak reference
+          if (includeSoftWeakReferences) {
+            references.add(reference.toLong())
+          }
+          else {
+            references.add(0L)
+          }
         }
       }
       val superClassId = c.superClassId
@@ -167,15 +194,40 @@ class ObjectNavigatorOnAuxFiles(
       c = classStore[superClassId]
     }
     while (true)
+
+    if (isExtraDataPresent(classDefinition)) {
+      preloadExtraData()
+    }
+  }
+
+  private val directByteBufferClass = classStore.getClassIfExists("java.nio.DirectByteBuffer")
+
+  private fun isExtraDataPresent(classDefinition: ClassDefinition): Boolean = classDefinition == directByteBufferClass
+
+  private fun preloadExtraData() {
+    extraData = aux.readNonNegativeLEB128Int()
+  }
+
+  override fun getSoftReferenceId(): Long {
+    return if (referenceType == ReferenceType.Soft) softWeakReferenceId else 0
+  }
+
+  override fun getWeakReferenceId(): Long {
+    return if (referenceType == ReferenceType.Weak) softWeakReferenceId else 0
+  }
+
+  override fun getSoftWeakReferenceIndex(): Int {
+    return softWeakReferenceIndex
   }
 
   override fun getObjectSize(): Int {
-    val localClass = currentClass ?: return REFERENCE_SIZE // size of null value
+    val localClass = currentClass ?: return idSize // size of null value
 
     return when {
-      localClass.isPrimitiveArray() -> localClass.instanceSize + Type.getType(localClass.name).size * arraySize
-      localClass.isArray() -> localClass.instanceSize + REFERENCE_SIZE * arraySize
-      else -> localClass.instanceSize
+      localClass.isPrimitiveArray() ->
+        localClass.instanceSize + Type.getType(localClass.name).size * arraySize + ClassDefinition.ARRAY_PREAMBLE_SIZE
+      localClass.isArray() -> localClass.instanceSize + idSize * arraySize + ClassDefinition.ARRAY_PREAMBLE_SIZE
+      else -> localClass.instanceSize + ClassDefinition.OBJECT_PREAMBLE_SIZE
     }
   }
 
@@ -227,10 +279,6 @@ class ObjectNavigatorOnAuxFiles(
       shift += 7
     }
     return v
-  }
-
-  companion object {
-    private const val REFERENCE_SIZE = 4
   }
 }
 

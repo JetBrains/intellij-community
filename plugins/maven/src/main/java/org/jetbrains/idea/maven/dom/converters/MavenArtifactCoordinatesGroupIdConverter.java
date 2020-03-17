@@ -8,14 +8,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.onlinecompletion.OfflineSearchService;
-import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoordinatesConverter implements MavenSmartConverter<String> {
   @Override
@@ -38,7 +36,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
   }
 
   @Override
-  protected Set<String> doGetVariants(MavenId id, OfflineSearchService searchService) {
+  protected Set<String> doGetVariants(MavenId id, DependencySearchService searchService) {
     return Collections.emptySet();
   }
 
@@ -50,13 +48,6 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
 
   @Override
   public Collection<String> getSmartVariants(ConvertContext convertContext) {
-    String artifactId = MavenArtifactCoordinatesHelper.getId(convertContext).getArtifactId();
-    if (!StringUtil.isEmptyOrSpaces(artifactId)) {
-      OfflineSearchService searchService = MavenProjectIndicesManager.getInstance(convertContext.getProject()).getOfflineSearchService();
-
-      return searchService.findByTemplate(artifactId, SearchParameters.DEFAULT)
-        .stream().filter(p -> artifactId.equals(p.getArtifactId())).map(p -> p.getGroupId()).collect(Collectors.toSet());
-    }
     return Collections.emptySet();
   }
 

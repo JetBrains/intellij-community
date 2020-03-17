@@ -14,10 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskRepositorySubtype;
-import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -25,7 +22,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -191,9 +187,8 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Servers";
+    return TaskBundle.message("configurable.TaskRepositoriesConfigurable.display.name");
   }
 
   @Override

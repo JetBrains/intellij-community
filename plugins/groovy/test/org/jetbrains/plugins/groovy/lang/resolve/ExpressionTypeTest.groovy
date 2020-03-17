@@ -36,4 +36,31 @@ class B {}
     expressionTypeTest 'new A()++', 'A'
     expressionTypeTest '++new A()', 'B'
   }
+
+  @Test
+  void 'this inside anonymous definition'() {
+    typingTest '''
+class Test {
+    void main2() {
+        new A(th<caret>is){}
+    }
+}
+
+class A{}
+''', "Test"
+  }
+
+  @Test
+  void 'super inside anonymous definition'() {
+    typingTest '''
+class Test extends C {
+    void main2() {
+        new A(su<caret>per.equals("")){}
+    }
+}
+class C {}
+class B {}
+class A extends B {}
+''', "C"
+  }
 }

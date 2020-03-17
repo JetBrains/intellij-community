@@ -25,6 +25,8 @@ import java.util.Map;
  * @author nik
  */
 public abstract class JpsElementContainerEx implements JpsElementContainer {
+  protected abstract Object getDataLock();
+
   protected abstract Map<JpsElementChildRole<?>, JpsElement> getElementsMap();
 
   protected abstract void applyChanges(JpsElementContainerEx modified);

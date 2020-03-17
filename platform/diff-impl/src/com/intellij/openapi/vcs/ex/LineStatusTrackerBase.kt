@@ -407,7 +407,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
 
   companion object {
-    @JvmStatic protected val LOG: Logger = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker")
+    @JvmStatic protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
 
     @JvmStatic protected val Block.start: Int get() = range.start2
     @JvmStatic protected val Block.end: Int get() = range.end2
@@ -421,4 +421,8 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
 
   @TestOnly
   fun getDocumentTrackerInTestMode(): DocumentTracker = documentTracker
+
+  override fun toString(): String {
+    return "${javaClass.name}(file=${virtualFile?.path}, isReleased=$isReleased)@${Integer.toHexString(hashCode())}"
+  }
 }

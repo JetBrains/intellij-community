@@ -26,7 +26,7 @@ import java.io.IOException;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class AbstractStorage implements Disposable, Forceable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
+  protected static final Logger LOG = Logger.getInstance(Storage.class);
 
   @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
   @NonNls public static final String DATA_EXTENSION = ".storageData";

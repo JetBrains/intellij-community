@@ -3,10 +3,7 @@ package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.util.GithubNotifications
 
@@ -16,15 +13,11 @@ import org.jetbrains.plugins.github.util.GithubNotifications
  * TODO: auto-detection
  */
 @State(name = "GithubDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-internal class GithubProjectDefaultAccountHolder(private val project: Project,
-                                                 private val accountManager: GithubAccountManager) : PersistentStateComponent<AccountState> {
+internal class GithubProjectDefaultAccountHolder(private val project: Project) : PersistentStateComponent<AccountState> {
   var account: GithubAccount? = null
 
   init {
-    ApplicationManager.getApplication()
-      .messageBus
-      .connect(project)
-      .subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
+    ApplicationManager.getApplication().messageBus.connect(project).subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
         override fun accountRemoved(removedAccount: GithubAccount) {
           if (account == removedAccount) account = null
         }
@@ -40,7 +33,7 @@ internal class GithubProjectDefaultAccountHolder(private val project: Project,
   }
 
   private fun findAccountById(id: String): GithubAccount? {
-    val account = accountManager.accounts.find { it.id == id }
+    val account = service<GithubAccountManager>().accounts.find { it.id == id }
     if (account == null) runInEdt {
       GithubNotifications.showWarning(project, "Missing Default GitHub Account", "",
                                       GithubNotifications.getConfigureAction(project))

@@ -6,8 +6,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
+import com.intellij.psi.impl.source.xml.XmlDocumentImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -17,11 +20,14 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -124,6 +130,16 @@ public abstract class XmlExtension {
   @Nullable
   public XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
     return element.getNSDescriptor(namespace, strict);
+  }
+
+  @NotNull
+  public XmlNSDescriptor wrapNSDescriptor(@NotNull XmlTag element, @NotNull String namespacePrefix, @NotNull XmlNSDescriptor descriptor) {
+    if (element instanceof HtmlTag && !(descriptor instanceof HtmlNSDescriptorImpl)) {
+      XmlNSDescriptor result = doIfNotNull(descriptor.getDescriptorFile(),
+                                           file -> XmlDocumentImpl.getCachedHtmlNsDescriptor(file, namespacePrefix));
+      return ObjectUtils.notNull(result, () -> new HtmlNSDescriptorImpl(descriptor));
+    }
+    return descriptor;
   }
 
   @Nullable

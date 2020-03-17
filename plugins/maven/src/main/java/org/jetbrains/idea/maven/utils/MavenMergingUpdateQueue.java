@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ProjectTopics;
@@ -21,8 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MavenMergingUpdateQueue extends MergingUpdateQueue {
-
+public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
   private static final Logger LOG = Logger.getInstance(MavenMergingUpdateQueue.class);
 
   private final AtomicInteger mySuspendCounter = new AtomicInteger(0);

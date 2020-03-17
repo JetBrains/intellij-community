@@ -24,6 +24,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -40,8 +42,12 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.JBEmptyBorder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author anna
@@ -92,23 +98,17 @@ public class ShowByteCodeAction extends AnAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) && isMarkedForCompilation(project, virtualFile)) {
-          myErrorMessage = "Unable to show bytecode for '" + psiElementTitle + "'. Class file does not exist or is out-of-date.";
-          myErrorTitle = "Class File Out-Of-Date";
+        if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) && 
+            isMarkedForCompilation(project, virtualFile)) {
+          myErrorTitle = "Class File May Be Out-of-Date";
         }
-        else {
-          myByteCode = ReadAction.compute(() -> ByteCodeViewerManager.getByteCode(psiElement));
-        }
+        myByteCode = ReadAction.compute(() -> ByteCodeViewerManager.getByteCode(psiElement));
       }
 
       @Override
       public void onSuccess() {
         if (project.isDisposed()) return;
 
-        if (myErrorMessage != null && myTitle != null) {
-          Messages.showWarningDialog(project, myErrorMessage, myErrorTitle);
-          return;
-        }
         final PsiElement targetElement = element.getElement();
         if (targetElement == null) return;
 
@@ -128,6 +128,18 @@ public class ShowByteCodeAction extends AnAction {
             popup.cancel();
             return false;
           };
+
+
+          if (myErrorTitle != null) {
+            JLabel errorLabel = new JLabel(myErrorTitle);
+            Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.NOTIFICATION_BACKGROUND);
+            if (color != null) {
+              errorLabel.setBorder(new JBEmptyBorder(2));
+              errorLabel.setBackground(color);
+              errorLabel.setOpaque(true);
+            }
+            component.add(errorLabel, BorderLayout.NORTH);
+          }
 
           final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getEditorComponent())
             .setProject(project)

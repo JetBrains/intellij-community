@@ -442,7 +442,7 @@ public class EditorImplTest extends AbstractEditorTest {
       FoldRegion region = model.createFoldRegion(0, 3, "...", null, true);
       assertNotNull(region);
       assertTrue(region.isValid());
-      region.setExpanded(false);
+      assertFalse(region.isExpanded());
       regionRef.set(region);
     });
     runFoldingOperation(() -> model.removeFoldRegion(regionRef.get()));
@@ -570,5 +570,20 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("<selection>some<caret></selection> text");
     mouse().right().clickAt(0, 6);
     checkResultByText("some t<caret>ext");
+  }
+
+  public void testDragStartingBeyondSelectedLineEnd() {
+    initText("<selection>line1</selection>\nline2");
+    setEditorVisibleSize(100, 100);
+    mouse().pressAt(0, 10).dragTo(1, 10).release();
+    checkResultByText("line1<selection>\nline2</selection>");
+  }
+
+  public void testSizeUpdateAfterMovingFragmentWithFolding() {
+    initText("line\nline\nline\nline\nlong line");
+    getEditor().getSettings().setAdditionalColumnsCount(0);
+    addCollapsedFoldRegion(19, 25, "...");
+    runWriteCommand(() -> ((EditorEx)getEditor()).getDocument().moveText(19, 25, 0));
+    assertEquals(80, getEditor().getContentComponent().getPreferredSize().width);
   }
 }

@@ -30,6 +30,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
   @Deprecated
+  @Nullable
   default BaseComponent getComponent(@NotNull String name) {
     return null;
   }
@@ -83,13 +84,18 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   MessageBus getMessageBus();
 
   /**
-   * Result is valid only in scope of a read action.
-   * (see https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock)
-   * Checking outside of a read action is meaningless, because application/project/module can be disposed at any moment.
+   * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)
+   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectImpl#dispose()} was called but not completed yet)
+   * <br>
+   * The result is only valid inside read action because the application/project/module can be disposed at any moment.
+   * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)
    */
   boolean isDisposed();
 
-  @ApiStatus.Experimental
+  /**
+   * @deprecated Use {@link #isDisposed()} instead
+   */
+  @Deprecated
   default boolean isDisposedOrDisposeInProgress() {
     return isDisposed();
   }
@@ -110,20 +116,28 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
+  /**
+   * @deprecated Use {@link #getServiceIfCreated(Class)} or {@link #getService(Class)}.
+   */
+  @Deprecated
+  default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    if (createIfNeeded) {
+      return getService(serviceClass);
+    }
+    else {
+      return getServiceIfCreated(serviceClass);
+    }
+  }
+
   default <T> T getService(@NotNull Class<T> serviceClass) {
-    return getService(serviceClass, true);
+    // default impl to keep backward compatibility
+    //noinspection unchecked
+    return (T)getPicoContainer().getComponentInstance(serviceClass.getName());
   }
 
   @Nullable
   default <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
-    return getService(serviceClass, false);
-  }
-
-  @ApiStatus.Internal
-  default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    // default impl to keep backward compatibility
-    //noinspection unchecked
-    return (T)getPicoContainer().getComponentInstance(serviceClass.getName());
+    return getService(serviceClass);
   }
 
   @NotNull

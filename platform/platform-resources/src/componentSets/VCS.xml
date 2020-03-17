@@ -1,9 +1,4 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.vcs.commit.VetoSavingCommittingDocumentsAdapter</implementation-class>
-    </component>
-  </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>
@@ -22,10 +17,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vcs.changes.ChangeListManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.changes.ChangeListManagerImpl</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
@@ -51,14 +42,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.CommittedChangesCache</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier</implementation-class>
-      <headless-implementation-class/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator</implementation-class>
-      <headless-implementation-class/>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>

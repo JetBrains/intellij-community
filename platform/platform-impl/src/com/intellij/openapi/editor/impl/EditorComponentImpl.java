@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
@@ -238,6 +239,11 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
+
+    Project project = myEditor.getProject();
+    if (project != null) {
+      EditorsSplitters.stopOpenFilesActivity(project);
+    }
   }
 
   public void repaintEditorComponent() {

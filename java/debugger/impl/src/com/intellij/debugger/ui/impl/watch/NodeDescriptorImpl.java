@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class NodeDescriptorImpl implements NodeDescriptor {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl");
+  protected static final Logger LOG = Logger.getInstance(NodeDescriptorImpl.class);
 
   public static final String UNKNOWN_VALUE_MESSAGE = "";
   public boolean myIsExpanded = false;

@@ -100,13 +100,6 @@ public final class SystemProperties {
     return defaultValue;
   }
 
-  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static String getJavaVendor() {
-    return SystemInfo.JAVA_VENDOR;
-  }
-
   public static boolean is(String key) {
     return getBooleanProperty(key, false);
   }

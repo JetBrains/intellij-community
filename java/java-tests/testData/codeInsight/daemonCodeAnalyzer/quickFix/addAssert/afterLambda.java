@@ -3,8 +3,12 @@ class A{
   void test(){
     Object container = null;
     Runnable r = () -> {
-        assert container != null;
-        container == null ? container.toString() : "";
+        if (container == null) {
+            assert container != null;
+            container.toString();
+        } else {
+            "";
+        }
     };
   }
 }

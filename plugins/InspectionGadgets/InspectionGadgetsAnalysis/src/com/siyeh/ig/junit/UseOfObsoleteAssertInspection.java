@@ -35,12 +35,6 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("usage.of.obsolete.assert.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     String name = (String)infos[0];
     return InspectionGadgetsBundle.message("use.of.obsolete.assert.problem.descriptor", name);
@@ -173,7 +167,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
       final boolean[] proceed = new boolean[]{true};
       methodCallExpression.getContainingFile().accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (proceed[0]) {
             super.visitElement(element);
           }

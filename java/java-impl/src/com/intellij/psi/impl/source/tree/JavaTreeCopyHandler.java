@@ -33,7 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.Map;
 
 public class JavaTreeCopyHandler implements TreeCopyHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaTreeCopyHandler");
+  private static final Logger LOG = Logger.getInstance(JavaTreeCopyHandler.class);
 
   private static final Key<Boolean> ALREADY_ESCAPED = new Key<>("ALREADY_ESCAPED");
   private static final Key<Boolean> ESCAPEMENT_ENGAGED = new Key<>("ESCAPEMENT_ENGAGED");

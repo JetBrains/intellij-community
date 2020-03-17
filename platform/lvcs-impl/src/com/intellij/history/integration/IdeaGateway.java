@@ -158,7 +158,7 @@ public class IdeaGateway {
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
     return isVersioned(f) && !f.isDirectory() &&
-           (areContentChangesVersioned(f.getName()) || ScratchFileService.findRootType(f) != null);
+           (areContentChangesVersioned(f.getName()) || ScratchFileService.isInScratchRoot(f));
   }
 
   public boolean areContentChangesVersioned(@NotNull String fileName) {

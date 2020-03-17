@@ -53,6 +53,7 @@ import java.util.*;
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
+  @ApiStatus.Internal
   ExtensionPointName<GradleProjectResolverExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.projectResolve");
 
   void setProjectResolverContext(@NotNull ProjectResolverContext projectResolverContext);
@@ -62,12 +63,19 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @Nullable
   GradleProjectResolverExtension getNext();
 
+  /**
+   * @deprecated is not used anymore
+   */
   @NotNull
-  ProjectData createProject();
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  default ProjectData createProject() {
+    throw new UnsupportedOperationException();
+  }
 
   void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject);
 
-  @NotNull
+  @Nullable
   DataNode<ModuleData> createModule(@NotNull IdeaModule gradleModule, @NotNull DataNode<ProjectData> projectDataNode);
 
   /**
@@ -106,7 +114,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   default void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {}
 
   @NotNull
-  Set<Class> getExtraProjectModelClasses();
+  Set<Class<?>> getExtraProjectModelClasses();
 
   /**
    * Allows to request gradle tooling models after "sync" tasks are run
@@ -144,13 +152,13 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @return classes to be available for gradle
    */
   @NotNull
-  Set<Class> getToolingExtensionsClasses();
+  Set<Class<?>> getToolingExtensionsClasses();
 
   /**
    * add target types to be used in the polymorphic containers
    * @return
    */
-  default Set<Class> getTargetTypes() {
+  default Set<Class<?>> getTargetTypes() {
     return Collections.emptySet();
   }
 

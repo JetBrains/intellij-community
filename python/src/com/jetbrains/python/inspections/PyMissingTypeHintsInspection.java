@@ -14,10 +14,10 @@ import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.inspections.quickfix.PyQuickFixUtil;
-import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,17 +35,19 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new PyElementVisitor() {
+    return new PyInspectionVisitor(holder, session) {
       @Override
       public void visitPyFunction(PyFunction function) {
-        if (!(function.getTypeComment() != null || typeAnnotationsExist(function))) {
+        if (function.getTypeComment() == null &&
+            !typeAnnotationsExist(function) &&
+            PyiUtil.getOverloads(function, getResolveContext().getTypeEvalContext()).isEmpty()) {
           boolean flag = shouldRegisterProblem(function);
           if (flag) {
             ASTNode nameNode = function.getNameNode();
             if (nameNode != null) {
-              holder.registerProblem(nameNode.getPsi(),
-                                     "Type hinting is missing for function definition",
-                                     new AddTypeHintsQuickFix(function.getName()));
+              registerProblem(nameNode.getPsi(),
+                              "Type hinting is missing for function definition",
+                              new AddTypeHintsQuickFix(function.getName()));
             }
           }
         }

@@ -52,6 +52,6 @@ public class CloudRunConfigurationUtil {
   private static String generateRunConfigurationName(@NotNull RemoteServer<?> account, Module module) {
     String accountName = account.getName();
     String moduleName = module.getName();
-    return CloudBundle.getText("run.configuration.name", accountName, moduleName);
+    return CloudBundle.message("run.configuration.name", accountName, moduleName);
   }
 }

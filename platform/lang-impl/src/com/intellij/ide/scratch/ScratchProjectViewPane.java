@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -144,8 +144,9 @@ public class ScratchProjectViewPane extends ProjectViewPane {
         VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
         vFile = BackedVirtualFile.getOriginFileIfBacked(vFile);
         if (vFile == null || !vFile.isValid()) return false;
+        if (!vFile.isInLocalFileSystem()) return false;
 
-        return ScratchUtil.isScratch(vFile);
+        return ScratchFileService.getInstance().getRootType(vFile) != null;
       }
 
       @Override
@@ -212,7 +213,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  private static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {
+  private static AbstractTreeNode<?> createRootNode(@NotNull Project project, @NotNull RootType rootType, @NotNull ViewSettings settings) {
     if (rootType.isHidden()) return null;
     MyRootNode node = new MyRootNode(project, rootType, settings);
     return node.isEmpty() ? null : node;
@@ -221,14 +222,15 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
     @NotNull
     @Override
-    public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
-                                               @NotNull Collection<AbstractTreeNode> children,
+    public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                               @NotNull Collection<AbstractTreeNode<?>> children,
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
       if (project == null || !isScratchesMergedIntoProjectTab()) return children;
-      if (children.isEmpty() && JBIterable.from(RootType.getAllRootTypes()).filterMap(
-        o -> createRootNode(project, o, settings)).isEmpty()) return children;
-      ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
+      if (children.isEmpty() && JBIterable.from(RootType.getAllRootTypes()).filterMap(o -> createRootNode(project, o, settings)).isEmpty()) {
+        return children;
+      }
+      List<AbstractTreeNode<?>> list = new ArrayList<>(children.size() + 1);
       list.addAll(children);
       list.add(createRootNode(project, settings));
       return list;
@@ -236,7 +238,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Nullable
     @Override
-    public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+    public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
       if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
         AbstractTreeNode single = JBIterable.from(selected).single();
         if (single instanceof MyRootNode) {
@@ -267,7 +269,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
   }
 
-  private static class MyProjectNode extends ProjectViewNode<String> {
+  private static final class MyProjectNode extends ProjectViewNode<String> {
     MyProjectNode(Project project, ViewSettings settings) {
       super(project, ScratchesNamedScope.NAME, settings);
     }
@@ -279,8 +281,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode> getChildren() {
-      List<AbstractTreeNode> list = new ArrayList<>();
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+      List<AbstractTreeNode<?>> list = new ArrayList<>();
       for (RootType rootType : RootType.getAllRootTypes()) {
         ContainerUtil.addIfNotNull(list, createRootNode(getProject(), rootType, getSettings()));
       }
@@ -303,7 +305,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   private static class MyRootNode extends ProjectViewNode<RootType> implements PsiFileSystemItemFilter {
-
     MyRootNode(Project project, @NotNull RootType type, ViewSettings settings) {
       super(project, type, settings);
     }
@@ -315,7 +316,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return getValue().containsFile(file);
+      return ScratchFileService.getInstance().getRootType(file) == getValue();
     }
 
     @Nullable
@@ -332,7 +333,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode> getChildren() {
+    public Collection<? extends AbstractTreeNode<?>> getChildren() {
       //noinspection ConstantConditions
       return getDirectoryChildrenImpl(getProject(), getDirectory(), getSettings(), this);
     }
@@ -371,11 +372,11 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
 
     @NotNull
-    static Collection<AbstractTreeNode> getDirectoryChildrenImpl(@NotNull Project project,
+    static Collection<AbstractTreeNode<?>> getDirectoryChildrenImpl(@NotNull Project project,
                                                                  @Nullable PsiDirectory directory,
                                                                  @NotNull ViewSettings settings,
                                                                  @NotNull PsiFileSystemItemFilter filter) {
-      final List<AbstractTreeNode> result = new ArrayList<>();
+      final List<AbstractTreeNode<?>> result = new ArrayList<>();
       PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
         @Override
         public boolean execute(@NotNull PsiFileSystemItem element) {
@@ -385,7 +386,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
           else if (element instanceof PsiDirectory) {
             result.add(new PsiDirectoryNode(project, (PsiDirectory)element, settings, filter) {
               @Override
-              public Collection<AbstractTreeNode> getChildrenImpl() {
+              public Collection<AbstractTreeNode<?>> getChildrenImpl() {
                 //noinspection ConstantConditions
                 return getDirectoryChildrenImpl(getProject(), getValue(), getSettings(), getFilter());
               }

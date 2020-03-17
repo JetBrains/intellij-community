@@ -247,7 +247,7 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
 
         val projectManager = serviceIfCreated<ProjectManager>() ?: return
         for (project in projectManager.openProjects) {
-          if (project.isDisposedOrDisposeInProgress) {
+          if (project.isDisposed) {
             continue
           }
 
@@ -264,7 +264,7 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
     }
 
     AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
-      if (project.isDisposedOrDisposeInProgress || !virtualFile.isValid) {
+      if (project.isDisposed || !virtualFile.isValid) {
         return@execute
       }
 

@@ -43,12 +43,4 @@ public class HgRepositoryLocation implements RepositoryLocation {
   public String getKey() {
     return myUrl;
   }
-
-  @Override
-  public void onBeforeBatch() {
-  }
-
-  @Override
-  public void onAfterBatch() {
-  }
 }

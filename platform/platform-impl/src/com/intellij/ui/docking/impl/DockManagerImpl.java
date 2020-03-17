@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -345,7 +345,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     return null;
   }
 
-
   private DockContainerFactory getFactory(String type) {
     assert myFactories.containsKey(type) : "No factory for content type=" + type;
     return myFactories.get(type);
@@ -379,15 +378,18 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   @NotNull
-  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file, @NotNull FileEditorManagerImpl fileEditorManager) {
+  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file,
+                                                                            @NotNull FileEditorManagerImpl fileEditorManager) {
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
     register(container);
 
-    final DockWindow window = createWindowFor(null, container);
+    DockWindow window = createWindowFor(null, container);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      window.show(true);
+    }
 
-    window.show(true);
-    final EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
-    final Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
+    EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
+    Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
     container.add(EditorTabbedContainer.createDockableEditor(myProject, null, file, new Presentation(file.getName()), editorWindow), null);
 
     SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
@@ -395,9 +397,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
   }
 
   private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
-    String windowId = id != null ? id : String.valueOf(myWindowIdCounter++);
+    String windowId = id != null ? id : Integer.toString(myWindowIdCounter++);
     DockWindow window = new DockWindow(windowId, myProject, container, container instanceof DockContainer.Dialog);
-    window.setDimensionKey("dock-window-" + windowId);
     myWindows.put(container, window);
     return window;
   }
@@ -412,17 +413,20 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final NonOpaquePanel myUiContainer;
     private final NonOpaquePanel myDockContentUiContainer;
 
-    private DockWindow(String id, @NotNull Project project, DockContainer container, boolean dialog) {
-      super(project, null, dialog);
+    private DockWindow(String id, @NotNull Project project, DockContainer container, boolean isDialog) {
+      super(project, "dock-window-" + id, isDialog);
+
       myId = id;
       myContainer = container;
       setProject(project);
 
-      if (!(container instanceof DockContainer.Dialog)) {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !(container instanceof DockContainer.Dialog)) {
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        Window frame = getFrame();
-        if (statusBar != null && frame instanceof IdeFrame) {
-          setStatusBar(statusBar.createChild((IdeFrame)frame));
+        if (statusBar != null) {
+          Window frame = getFrame();
+          if (frame instanceof IdeFrame) {
+            setStatusBar(statusBar.createChild((IdeFrame)frame));
+          }
         }
       }
 
@@ -436,12 +440,13 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       center.add(myDockContentUiContainer, BorderLayout.CENTER);
 
       myUiContainer.add(center, BorderLayout.CENTER);
-      if (myStatusBar != null) {
-        myUiContainer.add(myStatusBar.getComponent(), BorderLayout.SOUTH);
+      StatusBar statusBar = getStatusBar();
+      if (statusBar != null) {
+        myUiContainer.add(statusBar.getComponent(), BorderLayout.SOUTH);
       }
 
       setComponent(myUiContainer);
-      addDisposable(container);
+      Disposer.register(this, container);
 
       IdeEventQueue.getInstance().addPostprocessor(this, this);
 
@@ -468,7 +473,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     private void updateNorthPanel() {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
       myNorthPanel.setVisible(UISettings.getInstance().getShowNavigationBar()
                               && !(myContainer instanceof DockContainer.Dialog)
                               && !UISettings.getInstance().getPresentationMode());
@@ -529,8 +537,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       return false;
     }
 
+    @NotNull
     @Override
-    protected JFrame createJFrame(IdeFrame parent) {
+    protected JFrame createJFrame(@NotNull IdeFrame parent) {
       JFrame frame = super.createJFrame(parent);
       installListeners(frame);
 
@@ -538,14 +547,14 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     @Override
-    protected JDialog createJDialog(IdeFrame parent) {
+    @NotNull
+    protected JDialog createJDialog(@NotNull IdeFrame parent) {
       JDialog frame = super.createJDialog(parent);
       installListeners(frame);
-
       return frame;
     }
 
-    private void installListeners(Window frame) {
+    private void installListeners(@NotNull Window frame) {
       frame.addWindowListener(new WindowAdapter() {
         @Override
         public void windowClosing(WindowEvent e) {
@@ -557,7 +566,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       Disposer.register(myContainer, connector);
     }
   }
-
 
   @Override
   public Element getState() {

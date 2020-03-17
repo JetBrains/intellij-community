@@ -12,7 +12,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class FileManagerImpl implements FileManager {
   private static final Key<Boolean> IN_COMA = Key.create("IN_COMA");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
+  private static final Logger LOG = Logger.getInstance(FileManagerImpl.class);
   private final Key<FileViewProvider> myPsiHardRefKey = Key.create("HARD_REFERENCE_TO_PSI"); //non-static!
 
   private final PsiManagerImpl myManager;
@@ -59,8 +62,7 @@ public final class FileManagerImpl implements FileManager {
     myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
 
-    Disposer.register(manager.getProject(), this);
-    LowMemoryWatcher.register(this::processQueue, this);
+    LowMemoryWatcher.register(this::processQueue, manager);
 
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
@@ -142,7 +144,6 @@ public final class FileManagerImpl implements FileManager {
     myManager.propertyChanged(event);
   }
 
-  @Override
   public void dispose() {
     myConnection.disconnect();
     clearViewProviders();

@@ -19,13 +19,6 @@ public class InstanceGuardedByStaticInspection extends AbstractBaseJavaLocalInsp
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Instance member guarded by static field";
-  }
-
-  @Override
   @NotNull
   public String getShortName() {
     return "InstanceGuardedByStatic";

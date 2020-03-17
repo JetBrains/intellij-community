@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
@@ -191,13 +192,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     Set<AbstractVcs> affectedVcses = new HashSet<>();
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
     for (LocalChangeList list : changeLists) {
-      //noinspection unchecked
-      affectedVcses.addAll((Set)ChangesUtil.getAffectedVcses(list.getChanges(), project));
+      affectedVcses.addAll(ChangesUtil.getAffectedVcses(list.getChanges(), project));
     }
     if (showVcsCommit) {
       List<VirtualFile> unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles();
-      //noinspection unchecked
-      affectedVcses.addAll((Set)ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, project));
+      affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, project));
     }
 
 
@@ -312,6 +311,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     showDetailsIfSaved();
+
+    LaterInvocator.markTransparent(ModalityState.stateForComponent(getComponent()));
   }
 
   @NotNull
@@ -589,6 +590,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myCommitMessageArea.getEditorField();
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return mySplitter;

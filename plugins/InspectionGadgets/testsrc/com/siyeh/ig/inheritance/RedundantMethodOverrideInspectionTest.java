@@ -16,6 +16,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.util.RecursionManager;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 /**
@@ -28,4 +29,9 @@ public class RedundantMethodOverrideInspectionTest extends LightJavaInspectionTe
   }
 
   public void testRedundantMethodOverride() { doTest(); }
+
+  public void testMutualRecursion() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+    doTest();
+  }
 }

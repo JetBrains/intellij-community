@@ -23,13 +23,6 @@ public class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalIns
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Explicit type can be replaced with <>";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;

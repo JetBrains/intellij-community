@@ -32,7 +32,7 @@ public class SmartEnterUtil {
   }
 
   public static void plainEnter(@NotNull final Editor editor) {
-    getEnterHandler().execute(editor, ((EditorEx) editor).getDataContext());
+    getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), ((EditorEx) editor).getDataContext());
   }
 
   private SmartEnterUtil() {

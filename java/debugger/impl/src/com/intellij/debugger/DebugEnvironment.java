@@ -47,6 +47,10 @@ public interface DebugEnvironment {
 
   RemoteConnection getRemoteConnection();
 
+  default RemoteConnection getLocalConnection() {
+    return getRemoteConnection();
+  }
+
   long getPollTimeout();
 
   String getSessionName();

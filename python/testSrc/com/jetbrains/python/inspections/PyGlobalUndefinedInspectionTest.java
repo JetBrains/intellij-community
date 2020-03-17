@@ -43,11 +43,6 @@ public class PyGlobalUndefinedInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-37755
-  public void testSameNameMiddleTrueNegative() {
-    doTest();
-  }
-
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Dennis.Ushakov
  */
 public class PyPushDownHandler extends PyClassRefactoringHandler {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
-
   @Override
   protected void doRefactorImpl(@NotNull final Project project,
                                 @NotNull final PyClass classUnderRefactoring,
@@ -66,11 +64,15 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
 
   @Override
   protected String getTitle() {
-    return REFACTORING_NAME;
+    return getRefactoringName();
   }
 
   @Override
   protected String getHelpId() {
     return "members.push.down";
+  }
+
+  public static String getRefactoringName() {
+    return RefactoringBundle.message("push.members.down.title");
   }
 }

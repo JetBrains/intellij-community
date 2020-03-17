@@ -56,9 +56,48 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "}");
   }
 
+  public void testReturn() {
+    doMemberTest("\n" +
+                 "  boolean b(int x) {\n" +
+                 "    if (x > 20) return true;\n" +
+                 "    /*'if' statement can be simplified*/if/**/ (x > 0) return true;\n" +
+                 "    return false;\n" +
+                 "}\n");
+  }
+
+  public void testReturnIgnoreChain() {
+    doMemberTest("\n" +
+                 "  boolean b(int x) {\n" +
+                 "    if (x > 20) return true;\n" +
+                 "    if (x > 0) return true;\n" +
+                 "    return false;\n" +
+                 "}\n");
+  }
+
+  public void testReturnElseIf() {
+    doMemberTest("\n" +
+                 "  boolean b(int x) {\n" +
+                 "    if (x > 20) return true;\n" +
+                 "    else /*'if' statement can be simplified*/if/**/ (x > 0) return true;\n" +
+                 "    else return false;\n" +
+                 "}\n");
+  }
+
+  public void testReturnElseIfIgnoreChain() {
+    doMemberTest("\n" +
+                 "  boolean b(int x) {\n" +
+                 "    if (x > 20) return true;\n" +
+                 "    else if (x > 0) return true;\n" +
+                 "    else return false;\n" +
+                 "}\n");
+  }
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new TrivialIfInspection();
+    TrivialIfInspection inspection = new TrivialIfInspection();
+    if (getTestName(false).endsWith("IgnoreChain")) {
+      inspection.ignoreChainedIf = true;
+    }
+    return inspection;
   }
 }

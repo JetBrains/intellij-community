@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
@@ -342,8 +343,7 @@ class AccessibleGutterLine extends JPanel {
         Rectangle pBounds = getParent().getBounds();
         int x = pBounds.x + bounds.x + bounds.width / 2;
         int y = pBounds.y + bounds.y + bounds.height / 2;
-        MouseEvent e = new MouseEvent(myGutter, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0, x, y, 0, false, MouseEvent.BUTTON1);
-        myGutter.tooltipAvailable(myAccessible.getAccessibleTooltipText(), e, null);
+        myGutter.showToolTip(myAccessible.getAccessibleTooltipText(), new Point(x, y), Balloon.Position.atRight);
       }
     }
 

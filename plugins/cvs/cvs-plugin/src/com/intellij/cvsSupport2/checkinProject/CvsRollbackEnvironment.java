@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class CvsRollbackEnvironment extends DefaultRollbackEnvironment {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.checkinProject.CvsRollbackEnvironment");
+  private static final Logger LOG = Logger.getInstance(CvsRollbackEnvironment.class);
   private final Project myProject;
 
   public CvsRollbackEnvironment(final Project project) {

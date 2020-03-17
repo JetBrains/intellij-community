@@ -44,13 +44,6 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "mismatched.read.write.array.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final boolean written = ((Boolean)infos[0]).booleanValue();
     if (written) {

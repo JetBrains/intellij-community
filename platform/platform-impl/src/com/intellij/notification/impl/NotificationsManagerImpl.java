@@ -7,6 +7,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.notification.*;
@@ -90,7 +91,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   @Override
-  public void expire(@NotNull final Notification notification) {
+  public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
   }
 
@@ -224,55 +225,60 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private static Balloon notifyByBalloon(@NotNull final Notification notification,
                                          @NotNull final NotificationDisplayType displayType,
                                          @Nullable final Project project) {
-    if (isDummyEnvironment()) return null;
+    if (isDummyEnvironment()) {
+      return null;
+    }
 
     Window window = findWindowForBalloon(project);
-    if (window instanceof IdeFrame) {
-      BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
-      if (layout == null) return null;
+    if (!(window instanceof IdeFrame)) {
+      return null;
+    }
 
-      Ref<BalloonLayoutData> layoutDataRef = new Ref<>();
-      if (project == null || project.isDefault()) {
+    BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
+    if (layout == null) {
+      return null;
+    }
+
+    Ref<BalloonLayoutData> layoutDataRef = new Ref<>();
+    if (project == null || project.isDefault()) {
+      BalloonLayoutData layoutData = new BalloonLayoutData();
+      layoutData.groupId = "";
+      layoutData.welcomeScreen = layout instanceof WelcomeBalloonLayoutImpl;
+      layoutData.type = notification.getType();
+      layoutDataRef.set(layoutData);
+    }
+    else {
+      BalloonLayoutData.MergeInfo mergeData = ((BalloonLayoutImpl)layout).preMerge(notification);
+      if (mergeData != null) {
         BalloonLayoutData layoutData = new BalloonLayoutData();
-        layoutData.groupId = "";
-        layoutData.welcomeScreen = layout instanceof WelcomeBalloonLayoutImpl;
-        layoutData.type = notification.getType();
+        layoutData.mergeData = mergeData;
         layoutDataRef.set(layoutData);
       }
-      else {
-        BalloonLayoutData.MergeInfo mergeData = ((BalloonLayoutImpl)layout).preMerge(notification);
-        if (mergeData != null) {
-          BalloonLayoutData layoutData = new BalloonLayoutData();
-          layoutData.mergeData = mergeData;
-          layoutDataRef.set(layoutData);
-        }
-      }
-      final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef,
-                                            project != null ? project : ApplicationManager.getApplication());
-
-      if (notification.isExpired()) {
-        return null;
-      }
-
-      layout.add(balloon, layoutDataRef.get());
-      if (balloon.isDisposed()) {
-        return null;
-      }
-
-      if (layoutDataRef.get() != null) {
-        layoutDataRef.get().project = project;
-      }
-      ((BalloonImpl)balloon).startFadeoutTimer(0);
-      if (displayType == NotificationDisplayType.BALLOON || ProjectManager.getInstance().getOpenProjects().length == 0) {
-        frameActivateBalloonListener(balloon, () -> {
-          if (!balloon.isDisposed()) {
-            ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
-          }
-        });
-      }
-      return balloon;
     }
-    return null;
+    final Balloon balloon = createBalloon((IdeFrame)window, notification, false, false, layoutDataRef,
+                                          project != null ? project : ApplicationManager.getApplication());
+
+    if (notification.isExpired()) {
+      return null;
+    }
+
+    layout.add(balloon, layoutDataRef.get());
+    if (balloon.isDisposed()) {
+      return null;
+    }
+
+    if (layoutDataRef.get() != null) {
+      layoutDataRef.get().project = project;
+    }
+    ((BalloonImpl)balloon).startFadeoutTimer(0);
+    if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0) {
+      frameActivateBalloonListener(balloon, () -> {
+        if (!balloon.isDisposed()) {
+          ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
+        }
+      });
+    }
+    return balloon;
   }
 
   public static void frameActivateBalloonListener(@NotNull Balloon balloon, @NotNull Runnable callback) {
@@ -305,6 +311,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         if (wrapper == null || !wrapper.isModalProgress()) break;
         frame = frame.getOwner();
       }
+    }
+    if (frame == null && project == null) {
+      frame = WindowManager.getInstance().findVisibleFrame();
     }
     return frame;
   }
@@ -984,12 +993,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static boolean isDummyEnvironment() {
-    final Application application = ApplicationManager.getApplication();
-    return application.isUnitTestMode() || application.isCommandLine();
+    Application app = ApplicationManager.getApplication();
+    return app.isUnitTestMode() || app.isCommandLine();
   }
 
-  public static class ProjectNotificationsComponent {
-    public ProjectNotificationsComponent(@NotNull final Project project) {
+  static final class ProjectNotificationsComponent {
+    ProjectNotificationsComponent(@NotNull Project project) {
       if (isDummyEnvironment()) {
         return;
       }

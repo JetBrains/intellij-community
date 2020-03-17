@@ -35,7 +35,7 @@ import java.util.Map;
  * @author yole
  */
 public class CoreJavaDirectoryService extends JavaDirectoryService {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaDirectoryService");
+  private static final Logger LOG = Logger.getInstance(CoreJavaDirectoryService.class);
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
@@ -119,6 +119,12 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   @NotNull
   @Override
   public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 

@@ -157,6 +157,16 @@ public class BaselinePanel extends NonOpaquePanel {
     add(component, null);
   }
 
+  public void removeButtons() {
+    List<Component> buttons = new ArrayList<>(myButtonComponents);
+    myButtonComponents.clear();
+    myButtonEnableStates = null;
+
+    for (Component button : buttons) {
+      remove(button);
+    }
+  }
+
   public void setProgressComponent(@Nullable ListPluginComponent pluginComponent, @NotNull JComponent progressComponent) {
     assert myProgressComponent == null;
     myProgressComponent = progressComponent;

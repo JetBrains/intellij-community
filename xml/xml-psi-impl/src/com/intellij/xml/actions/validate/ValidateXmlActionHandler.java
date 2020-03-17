@@ -41,7 +41,7 @@ import java.util.Map;
  * @author Mike
  */
 public class ValidateXmlActionHandler implements ValidateXmlHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.ValidateXmlAction");
+  private static final Logger LOG = Logger.getInstance(ValidateXmlActionHandler.class);
 
   private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;

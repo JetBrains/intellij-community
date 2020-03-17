@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -24,13 +24,14 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
     return null;
   }
 
+  @NotNull
   @Override
   public CommittedChangesFilterKey getKey() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void setFilterBase(final List<? extends CommittedChangeList> changeLists) {
+  public void setFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     setFilterBaseImpl(changeLists, true);
   }
 
@@ -54,7 +55,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   }
 
   @Override
-  public void addChangeListener(final ChangeListener listener) {
+  public void addChangeListener(@NotNull ChangeListener listener) {
     // not used
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.addChangeListener(listener);
@@ -62,7 +63,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   }
 
   @Override
-  public void removeChangeListener(final ChangeListener listener) {
+  public void removeChangeListener(@NotNull ChangeListener listener) {
     // not used
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.removeChangeListener(listener);
@@ -77,7 +78,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
   }
 
   @Override
-  public void appendFilterBase(final List<? extends CommittedChangeList> changeLists) {
+  public void appendFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     List<CommittedChangeList> list = new ArrayList<>(changeLists);
     for (final ChangeListFilteringStrategy delegate : myDelegates.values()) {
       delegate.appendFilterBase(list);
@@ -87,7 +88,7 @@ public class CompositeChangeListFilteringStrategy implements ChangeListFiltering
 
   @Override
   @NotNull
-  public List<CommittedChangeList> filterChangeLists(final List<? extends CommittedChangeList> changeLists) {
+  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     return setFilterBaseImpl(changeLists, false);
   }
 

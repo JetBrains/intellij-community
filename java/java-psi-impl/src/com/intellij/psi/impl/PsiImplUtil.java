@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PsiImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
+  private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
 
   private PsiImplUtil() { }
 

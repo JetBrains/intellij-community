@@ -65,7 +65,7 @@ import java.util.*;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl");
+  private static final Logger LOG = Logger.getInstance(ClasspathPanelImpl.class);
   private final JBTable myEntryTable;
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
@@ -175,7 +175,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
+    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.getExportColumnName());
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
     myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space
 

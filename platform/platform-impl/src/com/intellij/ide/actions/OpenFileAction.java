@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -78,11 +79,6 @@ public class OpenFileAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public boolean startInTransaction() {
-    return true;
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       e.getPresentation().setIcon(AllIcons.Actions.Menu_open);
@@ -93,7 +89,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     if (file.isDirectory()) {
       Project openedProject;
       if (ProjectAttachProcessor.canAttachToProject()) {
-        openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project), -1);
+        openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project));
       }
       else {
         openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
@@ -127,11 +123,13 @@ public class OpenFileAction extends AnAction implements DumbAware {
     FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
     if (type == null) return;
 
-    if (project != null) {
+    if (project != null && !project.isDefault()) {
       openFile(file, project);
     }
     else {
-      PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask(), -1);
+      if (!LightEditUtil.openFile(file)) {
+        PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask());
+      }
     }
   }
 

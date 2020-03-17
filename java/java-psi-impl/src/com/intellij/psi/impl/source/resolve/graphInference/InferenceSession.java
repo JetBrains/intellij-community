@@ -401,7 +401,7 @@ public class InferenceSession {
         if (parameterType == null) continue;
         if (!isPertinentToApplicability(arg, parentMethod)) {
           ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
-          if (arg instanceof PsiLambdaExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
+          if (arg instanceof PsiFunctionalExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
             ignoredConstraints.add(compatibilityConstraint);
             continue;
           }
@@ -448,7 +448,7 @@ public class InferenceSession {
   
   public static boolean ignoreLambdaConstraintTree(PsiExpression arg) {
     for (PsiElement expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
-      if (PsiTreeUtil.getParentOfType(expr, PsiLambdaExpression.class) == arg) {
+      if (PsiTreeUtil.getParentOfType(expr, PsiFunctionalExpression.class, false) == arg) {
         return true;
       }
     }
@@ -595,7 +595,7 @@ public class InferenceSession {
 
   public InferenceVariable[] initBounds(PsiElement context,
                                         final PsiSubstitutor siteSubstitutor,
-                                        PsiTypeParameter... typeParameters) {
+                                        @NotNull PsiTypeParameter... typeParameters) {
     List<InferenceVariable> result = new ArrayList<>(typeParameters.length);
     for (PsiTypeParameter parameter : typeParameters) {
       String name = parameter.getName();

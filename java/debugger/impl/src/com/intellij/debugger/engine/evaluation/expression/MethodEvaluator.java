@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MethodEvaluator implements Evaluator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.MethodEvaluator");
+  private static final Logger LOG = Logger.getInstance(MethodEvaluator.class);
   private final JVMName myClassName;
   private final JVMName myMethodSignature;
   private final String myMethodName;

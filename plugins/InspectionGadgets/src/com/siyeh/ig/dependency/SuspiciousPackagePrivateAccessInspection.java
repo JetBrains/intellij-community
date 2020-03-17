@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,7 +12,7 @@ import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -45,11 +45,11 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
+public final class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
   private static final Key<SuspiciousPackagePrivateAccessInspection> INSPECTION_KEY = Key.create("SuspiciousPackagePrivateAccess");
   @XCollection
   public List<ModulesSet> MODULES_SETS_LOADED_TOGETHER = new ArrayList<>();
-  private final AtomicClearableLazyValue<Map<String, ModulesSet>> myModuleSetByModuleName = AtomicClearableLazyValue.create(() -> {
+  private final ClearableLazyValue<Map<String, ModulesSet>> myModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
     Map<String, ModulesSet> result = new HashMap<>();
     for (ModulesSet modulesSet : MODULES_SETS_LOADED_TOGETHER) {
       for (String module : modulesSet.modules) {

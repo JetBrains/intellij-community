@@ -24,13 +24,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class XBreakpointClassGroup extends XBreakpointGroup {
-  private static final String DEFAULT_PACKAGE_NAME = DebuggerBundle.message("default.package.name");
-
   private final String myPackageName;
   private final String myClassName;
 
   public XBreakpointClassGroup(@Nullable String packageName, String className) {
-    myPackageName = packageName != null ? packageName : DEFAULT_PACKAGE_NAME;
+    myPackageName = packageName != null ? packageName : getDefaultPackageName();
     myClassName = className;
   }
 
@@ -53,5 +51,9 @@ public class XBreakpointClassGroup extends XBreakpointGroup {
   @NotNull
   public String getClassName() {
     return myClassName;
+  }
+
+  private static String getDefaultPackageName() {
+    return DebuggerBundle.message("default.package.name");
   }
 }

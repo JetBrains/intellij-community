@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.google.common.collect.Lists;
@@ -6,7 +6,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -69,16 +69,12 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
-/**
- * @author max
- */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class InspectionApplication implements CommandLineInspectionProgressReporter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionApplication");
+public final class InspectionApplication implements CommandLineInspectionProgressReporter {
+  static final Logger LOG = Logger.getInstance(InspectionApplication.class);
 
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
   public String myProjectPath;
@@ -114,8 +110,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
       reportError("Profile to inspect with is not defined");
       printHelp();
     }
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() + "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
+
     ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
     try {
       execute();
@@ -212,7 +207,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
           reportMessage(0, "modified file" + file.getPath());
         }
         try {
-          runAnalysisOnScope(projectPath, 
+          runAnalysisOnScope(projectPath,
                              parentDisposable, project, myInspectionProfile,
                              new AnalysisScope(project, files));
         }
@@ -254,7 +249,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
     return context;
   }
 
-  private void runAnalysisOnScope(Path projectPath, 
+  private void runAnalysisOnScope(Path projectPath,
                                   @NotNull Disposable parentDisposable,
                                   Project project,
                                   InspectionProfileImpl inspectionProfile, AnalysisScope scope)
@@ -305,10 +300,10 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
   }
 
   private void runAnalysis(Project project,
-                           Path projectPath, 
+                           Path projectPath,
                            InspectionProfileImpl inspectionProfile,
-                           AnalysisScope scope, 
-                           InspectionsReportConverter reportConverter, 
+                           AnalysisScope scope,
+                           InspectionsReportConverter reportConverter,
                            Path resultsDataPath) throws IOException {
     GlobalInspectionContextImpl context = createGlobalInspectionContext(project);
     if (myAnalyzeChanges) {
@@ -509,7 +504,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
         gracefulExit();
         return;
       }
-      context.launchInspectionsOffline(scope, resultsDataPath.toString(), myRunGlobalToolsOnly, inspectionsResults);
+      context.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
       reportMessage(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
       if (!myErrorCodeRequired) {
         closeProject(project);
@@ -582,10 +577,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
 
   private static void closeProject(@NotNull Project project) {
     if (!project.isDisposed()) {
-      // see PlatformTestUtil.forceCloseProjectWithoutSaving about why we don't dispose as part of forceCloseProject
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
-      // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     }
   }
 
@@ -662,12 +654,9 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
 
   @Nullable
   private static InspectionsReportConverter getReportConverter(@Nullable final String outputFormat) {
-    for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
-      if (converter.getFormatName().equals(outputFormat)) {
-        return converter;
-      }
-    }
-    return null;
+    return InspectionsReportConverter.EP_NAME.getExtensionList().stream()
+      .filter(converter -> converter.getFormatName().equals(outputFormat))
+      .findFirst().orElse(null);
   }
 
   private ConversionListener createConversionListener() {
@@ -702,10 +691,8 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
 
   @Nullable
   private static String getPrefix(final String text) {
-    //noinspection HardCodedStringLiteral
     int idx = text.indexOf(" in ");
     if (idx == -1) {
-      //noinspection HardCodedStringLiteral
       idx = text.indexOf(" of ");
     }
 
@@ -749,6 +736,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
       if (name != null) {
         xmlWriter.addAttribute(PROFILE, name);
       }
+      List<String> inspectionsWithoutDescriptions = new ArrayList<>(1);
       for (Map.Entry<String, Set<InspectionToolWrapper>> entry : map.entrySet()) {
         xmlWriter.startNode("group");
         String groupName = entry.getKey();
@@ -766,13 +754,17 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
             xmlWriter.setValue(description);
           }
           else {
-            LOG.error(shortName + " descriptionUrl==" + toolWrapper);
+            inspectionsWithoutDescriptions.add(shortName);
           }
           xmlWriter.endNode();
         }
         xmlWriter.endNode();
       }
       xmlWriter.endNode();
+
+      if (!inspectionsWithoutDescriptions.isEmpty()) {
+        LOG.error("Descriptions are missed for tools: " + StringUtil.join(inspectionsWithoutDescriptions, ", "));
+      }
     }
   }
 

@@ -15,7 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -124,7 +124,7 @@ public class FindInProjectUtil {
         DefaultSearchScopeProviders.ChangeLists changeListsScopeProvider =
           SearchScopeProvider.EP_NAME.findExtension(DefaultSearchScopeProviders.ChangeLists.class);
         if (changeListsScopeProvider != null) {
-          SearchScope changeListScope = ContainerUtil.find(changeListsScopeProvider.getSearchScopes(project),
+          SearchScope changeListScope = ContainerUtil.find(changeListsScopeProvider.getSearchScopes(project, dataContext),
                                                            scope -> scope.getDisplayName().equals(changeListName));
           if (changeListScope != null) {
             model.setCustomScope(true);
@@ -237,52 +237,55 @@ public class FindInProjectUtil {
     findUsages(findModel, project, processPresentation, Collections.emptySet(), consumer);
   }
 
-  public static void findUsages(@NotNull FindModel findModel,
+  public static void findUsages(@NotNull final FindModel findModel,
                                 @NotNull final Project project,
-                                @NotNull FindUsagesProcessPresentation processPresentation,
-                                @NotNull Set<? extends VirtualFile> filesToStart,
+                                @NotNull final FindUsagesProcessPresentation processPresentation,
+                                @NotNull final Set<? extends VirtualFile> filesToStart,
                                 @NotNull final Processor<? super UsageInfo> consumer) {
-    new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
+    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
+    if (ProgressManager.getGlobalProgressIndicator() == null) {
+      ProgressManager.getInstance().runProcess(runnable, new EmptyProgressIndicator());
+    }
+    else {
+      runnable.run();
+    }
   }
 
-  // returns number of hits
-  static int processUsagesInFile(@NotNull final PsiFile psiFile,
-                                 @NotNull final VirtualFile virtualFile,
-                                 @NotNull final FindModel findModel,
-                                 @NotNull final Processor<? super UsageInfo> consumer) {
+  static boolean processUsagesInFile(@NotNull final PsiFile psiFile,
+                                     @NotNull final VirtualFile virtualFile,
+                                     @NotNull final FindModel findModel,
+                                     @NotNull final Processor<? super UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
-      if (!ReadAction.compute(() -> consumer.process(new UsageInfo(psiFile)))) {
-        throw new ProcessCanceledException();
-      }
-      return 1;
+      return ReadAction.compute(() -> consumer.process(new UsageInfo(psiFile)));
     }
-    if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
+    if (virtualFile.getFileType().isBinary()) return true; // do not decompile .class files
     final Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
-    if (document == null) return 0;
-    final int[] offset = {0};
-    int count = 0;
-    int found;
-    ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
+    if (document == null) return true;
+    final int[] offsetRef = {0};
+    ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
+    if (current == null) throw new IllegalStateException("must find usages under progress");
+    ProgressIndicator indicator = ProgressWrapper.unwrapAll(current);
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
+    int before;
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
-      found = ReadAction.compute(() -> {
-        if (!psiFile.isValid()) return 0;
-        return addToUsages(document, findModel, psiFile, offset, USAGES_PER_READ_ACTION, consumer);
-      });
-      count += found;
+      before = offsetRef[0];
+      boolean success = ReadAction.compute(() ->
+                                             !psiFile.isValid() ||
+                                             processSomeOccurrencesInFile(document, findModel, psiFile, offsetRef, consumer));
+      if (!success) {
+        return false;
+      }
     }
-    while (found != 0);
-    return count;
+    while (offsetRef[0] != before);
+    return true;
   }
 
-  private static int addToUsages(@NotNull Document document,
-                                 @NotNull FindModel findModel,
-                                 @NotNull final PsiFile psiFile,
-                                 @NotNull int[] offsetRef,
-                                 int maxUsages,
-                                 @NotNull Processor<? super UsageInfo> consumer) {
-    int count = 0;
+  private static boolean processSomeOccurrencesInFile(@NotNull Document document,
+                                                      @NotNull FindModel findModel,
+                                                      @NotNull final PsiFile psiFile,
+                                                      @NotNull int[] offsetRef,
+                                                      @NotNull Processor<? super UsageInfo> consumer) {
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
     int offset = offsetRef[0];
@@ -290,6 +293,7 @@ public class FindInProjectUtil {
     Project project = psiFile.getProject();
 
     FindManager findManager = FindManager.getInstance(project);
+    int count = 0;
     while (offset < textLength) {
       FindResult result = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
       if (!result.isStringFound()) break;
@@ -307,17 +311,17 @@ public class FindInProjectUtil {
         if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) continue;
       }
       UsageInfo info = new FindResultUsageInfo(findManager, psiFile, prevOffset, findModel, result);
-      if (!consumer.process(info)){
-        throw new ProcessCanceledException();
+      if (!consumer.process(info)) {
+        return false;
       }
       count++;
 
-      if (maxUsages > 0 && count >= maxUsages) {
+      if (count >= USAGES_PER_READ_ACTION) {
         break;
       }
     }
     offsetRef[0] = offset;
-    return count;
+    return true;
   }
 
   @NotNull

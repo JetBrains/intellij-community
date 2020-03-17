@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,20 +45,18 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    doPerformAction(e.getProject());
+    submit(e.getProject());
   }
 
-  public static void doPerformAction(@Nullable Project project) {
-    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
+  public static void submit(@Nullable Project project) {
+    submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription(project));
   }
 
-  public static void doPerformAction(@Nullable Project project, @NotNull String description) {
-    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
+  public static void submit(@Nullable Project project, @NotNull String description) {
+    submit(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
   }
 
-  static void doPerformActionImpl(@Nullable Project project,
-                                  @NotNull String urlTemplate,
-                                  @NotNull String description) {
+  static void submit(@Nullable Project project, @NotNull String urlTemplate, @NotNull String description) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
     LicensingFacade la = LicensingFacade.getInstance();
@@ -71,17 +69,14 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     BrowserUtil.browse(url, project);
   }
 
-  /**
-   * @deprecated use {@link #getDescription(Project)} instead
-   */
+  /** @deprecated use {@link #getDescription(Project)} instead */
   @Deprecated
-  @NotNull
-  public static String getDescription() {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static @NotNull String getDescription() {
     return getDescription(null);
   }
 
-  @NotNull
-  public static String getDescription(@Nullable Project project) {
+  public static @NotNull String getDescription(@Nullable Project project) {
     StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));

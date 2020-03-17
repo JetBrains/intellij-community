@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ public class XMLCatalogConfigurable implements Configurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "XML Catalog";
+    return XmlBundle.message("configurable.XMLCatalogConfigurable.display.name");
   }
 
   @Override

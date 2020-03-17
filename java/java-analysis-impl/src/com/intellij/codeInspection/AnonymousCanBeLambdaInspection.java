@@ -46,13 +46,6 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Anonymous type can be replaced with lambda";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;

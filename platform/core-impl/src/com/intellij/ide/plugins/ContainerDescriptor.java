@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ServiceDescriptor;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import gnu.trove.THashMap;
@@ -23,7 +24,7 @@ public final class ContainerDescriptor {
   @Nullable
   List<ListenerDescriptor> listeners;
   @Nullable
-  List<Element> extensionsPoints;
+  List<ExtensionPointImpl<?>> extensionPoints;
 
   transient THashMap<String, List<Element>> extensions;
 
@@ -43,8 +44,8 @@ public final class ContainerDescriptor {
   }
 
   @Nullable
-  public List<Element> getExtensionPoints() {
-    return extensionsPoints;
+  public List<ExtensionPointImpl<?>> getExtensionPoints() {
+    return extensionPoints;
   }
 
   void addService(@NotNull ServiceDescriptor serviceDescriptor) {
@@ -70,7 +71,7 @@ public final class ContainerDescriptor {
   void merge(@NotNull ContainerDescriptor another) {
     components = concatOrNull(components, another.components);
     services = concatOrNull(services, another.services);
-    extensionsPoints = concatOrNull(extensionsPoints, another.extensionsPoints);
+    extensionPoints = concatOrNull(extensionPoints, another.extensionPoints);
 
     listeners = concatOrNull(listeners, another.listeners);
   }

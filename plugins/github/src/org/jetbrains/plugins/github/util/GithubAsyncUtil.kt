@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -8,10 +9,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.plugins.github.util.GithubAsyncUtil.extractError
+import org.jetbrains.plugins.github.util.GithubAsyncUtil.isCancellation
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
+import java.util.function.Supplier
 
 object GithubAsyncUtil {
 
@@ -58,6 +63,20 @@ object GithubAsyncUtil {
            || error is InterruptedException
            || error.cause?.let(::isCancellation) ?: false
   }
+
+  fun extractError(error: Throwable): Throwable {
+    return when (error) {
+      is CompletionException -> extractError(error.cause!!)
+      is ExecutionException -> extractError(error.cause!!)
+      else -> error
+    }
+  }
+}
+
+fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
+                                     task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> {
+  return CompletableFuture.supplyAsync(Supplier { runProcess(Computable { task(progressIndicator) }, progressIndicator) },
+                                       ProcessIOExecutorService.INSTANCE)
 }
 
 fun <T> ProgressManager.submitBackgroundTask(project: Project?,
@@ -89,13 +108,32 @@ fun <T> CompletableFuture<T>.handleOnEdt(parentDisposable: Disposable, handler: 
   })
 
   return handleAsync(BiFunction<T?, Throwable?, Unit> { result: T?, error: Throwable? ->
-    handlerReference.get()?.invoke(result, error)
+    handlerReference.get()?.invoke(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 }
 
-fun <T> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> =
-  handleAsync(BiFunction<T?, Throwable?, Unit> { result: T?, error: Throwable? ->
-    handler(result, error)
+fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> R): CompletableFuture<R> =
+  handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
+    handler(result, error?.let { extractError(it) })
+  }, EDT_EXECUTOR)
+
+fun <T, R> CompletableFuture<T>.successAsync(executor: Executor, handler: (T) -> R): CompletableFuture<R> =
+  handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
+    result?.let { handler(it) } ?: throw error?.let { extractError(it) } ?: IllegalStateException()
+  }, executor)
+
+fun <T, R> CompletableFuture<T>.successOnEdt(handler: (T) -> R): CompletableFuture<R> =
+  successAsync(EDT_EXECUTOR, handler)
+
+fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> T): CompletableFuture<T> =
+  handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
+    if (result != null) return@BiFunction result
+    if (error != null) {
+      val actualError = extractError(error)
+      if (isCancellation(actualError)) throw ProcessCanceledException()
+      return@BiFunction handler(actualError)
+    }
+    throw IllegalStateException()
   }, EDT_EXECUTOR)
 
 val EDT_EXECUTOR = Executor { runnable -> runInEdt { runnable.run() } }

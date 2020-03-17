@@ -111,7 +111,7 @@ final class ObjectTree {
     return newNode;
   }
 
-  final void executeAll(@NotNull Disposable object, boolean processUnregistered) {
+  final void executeAll(@NotNull Disposable object, boolean processUnregistered, boolean onlyChildren) {
     ObjectNode node;
     synchronized (treeLock) {
       node = getNode(object);
@@ -120,6 +120,7 @@ final class ObjectTree {
     if (needTrace) {
       ourTopmostDisposeTrace.set(ThrowableInterner.intern(new Throwable()));
     }
+
     try {
       if (node == null) {
         if (processUnregistered) {
@@ -130,8 +131,8 @@ final class ObjectTree {
       else {
         ObjectNode parent = node.getParent();
         List<Throwable> exceptions = new SmartList<>();
-        node.execute(exceptions);
-        if (parent != null) {
+        node.execute(exceptions, onlyChildren);
+        if (parent != null && !onlyChildren) {
           synchronized (treeLock) {
             parent.removeChild(node);
           }
@@ -235,7 +236,7 @@ final class ObjectTree {
 
   @NotNull
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
+    return Logger.getInstance(ObjectTree.class);
   }
 
   void rememberDisposedTrace(@NotNull Disposable object) {
@@ -243,6 +244,10 @@ final class ObjectTree {
       Throwable trace = ourTopmostDisposeTrace.get();
       myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
     }
+  }
+
+  void clearDisposedObjectTraces() {
+    myDisposedObjects.clear();
   }
 
   @Nullable

@@ -37,13 +37,6 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
     return new LocalMissingPackageInfoInspection(this);
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("missing.package.info.display.name");
-  }
-
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,

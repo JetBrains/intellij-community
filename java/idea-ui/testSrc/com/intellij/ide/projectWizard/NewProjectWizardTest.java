@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.execution.RunManager;
@@ -27,9 +27,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("unchecked")
 public class NewProjectWizardTest extends NewProjectWizardTestCase {
-
   public void testCreateProject() throws Exception {
     Project project = createProject(step -> {
       if (step instanceof ProjectTypeStep) {
@@ -58,7 +56,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testDefaultLanguageLevel() throws Exception {
     final Sdk defaultSdk = ProjectJdkTable.getInstance().findJdk(DEFAULT_SDK);
-    setProjectSdk(myProjectManager.getDefaultProject(), defaultSdk);
+    setProjectSdk(ProjectManager.getInstance().getDefaultProject(), defaultSdk);
 
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(defaultSdk);
     assertNotNull(version);
@@ -118,7 +116,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     try {
       LanguageLevelProjectExtension.getInstance(defaultProject).setLanguageLevel(languageLevel);
       LanguageLevelProjectExtension.getInstance(defaultProject).setDefault(detect);
-      @SuppressWarnings("unchecked") Project project = createProject(EmptyConsumer.getInstance());
+      Project project = createProject(EmptyConsumer.getInstance());
       assertEquals(languageLevel, LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       return project;
     }

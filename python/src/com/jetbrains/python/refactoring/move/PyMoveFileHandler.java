@@ -240,7 +240,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
             if (usageFile.getUserData(ORIGINAL_FILE_LOCATION) != null) {
               // Leave relative imports as they are after #updateRelativeImportsInModule
               final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(usageFile.getProject(), usageFile);
-              final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+              final PyResolveContext resolveContext = PyResolveContext.implicitContext().withTypeEvalContext(typeEvalContext);
               if (ContainerUtil.getFirstItem(PyUtil.multiResolveTopPriority(usageElement, resolveContext)) == movedElement) {
                 continue;
               }

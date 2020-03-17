@@ -28,7 +28,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
   */
 public class GuessTypeParameters {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters");
+  private static final Logger LOG = Logger.getInstance(GuessTypeParameters.class);
 
   private final Project myProject;
   private final PsiManager myManager;

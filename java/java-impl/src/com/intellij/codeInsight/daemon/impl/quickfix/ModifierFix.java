@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix");
+  private static final Logger LOG = Logger.getInstance(ModifierFix.class);
 
   @PsiModifier.ModifierConstant private final String myModifier;
   private final boolean myShouldHave;

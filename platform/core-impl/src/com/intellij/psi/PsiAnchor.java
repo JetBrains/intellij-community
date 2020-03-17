@@ -37,7 +37,7 @@ import java.util.Set;
  * @author db
  */
 public abstract class PsiAnchor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiAnchor");
+  private static final Logger LOG = Logger.getInstance(PsiAnchor.class);
   @Nullable
   public abstract PsiElement retrieve();
   public abstract PsiFile getFile();

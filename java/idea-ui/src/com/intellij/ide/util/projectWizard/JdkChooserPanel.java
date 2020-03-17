@@ -43,6 +43,10 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+/**
+ * @deprecated use {@link SdkPopupFactory} instead
+ */
+@Deprecated
 public class JdkChooserPanel extends JPanel {
   private final @Nullable Project myProject;
   private final DefaultListModel<Sdk> myListModel;
@@ -102,10 +106,12 @@ public class JdkChooserPanel extends JPanel {
     myAllowedJdkTypes = allowedJdkTypes;
   }
 
+  @Nullable
   public Sdk getChosenJdk() {
     return myCurrentJdk;
   }
 
+  @NotNull
   public Object[] getAllJdks() {
     return myListModel.toArray();
   }
@@ -207,7 +213,7 @@ public class JdkChooserPanel extends JPanel {
           }
           updateListModel(allJdks, knownJdks);
           myLoadingDecorator.stopLoading();
-          myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+          myList.getEmptyText().setText(StatusText.getDefaultEmptyText());
         }, ModalityState.any());
       });
     } else {
@@ -279,6 +285,7 @@ public class JdkChooserPanel extends JPanel {
     myList.addListSelectionListener(listener);
   }
 
+  @Nullable
   private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
     jdkChooserPanel.fillList(null, null);
@@ -302,7 +309,12 @@ public class JdkChooserPanel extends JPanel {
     return dialog.showAndGet() ? jdkChooserPanel.getChosenJdk() : null;
   }
 
-  public static Sdk chooseAndSetJDK(final Project project) {
+  /**
+   * @deprecated Use {@link com.intellij.openapi.roots.ui.configuration.SdkPopupFactory}
+   */
+  @Nullable
+  @Deprecated
+  public static Sdk chooseAndSetJDK(@NotNull final Project project) {
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
     String path = jdk != null ? jdk.getHomePath() : null;

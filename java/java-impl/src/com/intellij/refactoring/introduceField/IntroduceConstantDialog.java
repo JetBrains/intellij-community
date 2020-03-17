@@ -55,7 +55,7 @@ import java.util.Set;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 class IntroduceConstantDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceConstantDialog");
+  private static final Logger LOG = Logger.getInstance(IntroduceConstantDialog.class);
   @NonNls private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
   @NonNls protected static final String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
 
@@ -111,7 +111,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myTypeSelectorManager = typeSelectorManager;
     myDestinationClass = null;
 
-    setTitle(IntroduceConstantHandler.REFACTORING_NAME);
+    setTitle(IntroduceConstantHandler.getRefactoringNameText());
     myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     myVPanel = new JavaVisibilityPanel(false, true);
     myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
@@ -421,7 +421,8 @@ class IntroduceConstantDialog extends DialogWrapper {
     if (!targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myParentClass.getQualifiedName())) {
       newClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
-        if (Messages.showOkCancelDialog(myProject, RefactoringBundle.message("class.does.not.exist.in.the.project"), IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != Messages.OK) {
+        if (Messages.showOkCancelDialog(myProject, RefactoringBundle.message("class.does.not.exist.in.the.project"),
+                                        IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
           return;
         }
         myDestinationClass = new BaseExpressionToFieldHandler.TargetDestination(targetClassName, myParentClass);
@@ -442,10 +443,10 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-              IntroduceFieldHandler.REFACTORING_NAME,
-              errorString,
-              HelpID.INTRODUCE_FIELD,
-              myProject);
+        IntroduceFieldHandler.getRefactoringNameText(),
+        errorString,
+        HelpID.INTRODUCE_FIELD,
+        myProject);
       return;
     }
     if (newClass != null) {
@@ -453,10 +454,10 @@ class IntroduceConstantDialog extends DialogWrapper {
 
       if (oldField != null) {
         int answer = Messages.showYesNoDialog(
-                myProject,
-                RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName()),
-                IntroduceFieldHandler.REFACTORING_NAME,
-                Messages.getWarningIcon()
+          myProject,
+          RefactoringBundle.message("field.exists", fieldName, oldField.getContainingClass().getQualifiedName()),
+          IntroduceFieldHandler.getRefactoringNameText(),
+          Messages.getWarningIcon()
         );
         if (answer != Messages.YES) {
           return;

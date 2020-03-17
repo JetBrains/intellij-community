@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.rename;
 
@@ -35,7 +21,6 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -46,7 +31,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -58,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class RenameUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameUtil");
+  private static final Logger LOG = Logger.getInstance(RenameUtil.class);
 
   private RenameUtil() {
   }
@@ -106,7 +91,7 @@ public class RenameUtil {
       if (stringToSearch.length() > 0) {
         final String stringToReplace = getStringToReplace(element, newName, false, processor);
         UsageInfoFactory factory = new NonCodeUsageInfoFactory(searchForInComments, stringToReplace);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(searchForInComments, searchScope, stringToSearch, result, factory);
+        TextOccurrencesUtilBase.addUsagesInStringsAndComments(searchForInComments, searchScope, stringToSearch, result, factory);
       }
     }
 
@@ -140,7 +125,7 @@ public class RenameUtil {
       }
     };
     if (searchScope instanceof GlobalSearchScope) {
-      TextOccurrencesUtil.addTextOccurrences(element, stringToSearch, (GlobalSearchScope)searchScope, result, factory);
+      TextOccurrencesUtilBase.addTextOccurrences(element, stringToSearch, (GlobalSearchScope)searchScope, result, factory);
     }
   }
 
@@ -227,64 +212,11 @@ public class RenameUtil {
 
   public static void doRenameGenericNamedElement(@NotNull PsiElement namedElement, String newName, UsageInfo[] usages,
                                                  @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
-    PsiWritableMetaData writableMetaData = null;
-    if (namedElement instanceof PsiMetaOwner) {
-      final PsiMetaData metaData = ((PsiMetaOwner)namedElement).getMetaData();
-      if (metaData instanceof PsiWritableMetaData) {
-        writableMetaData = (PsiWritableMetaData)metaData;
-      }
-    }
-    if (writableMetaData == null && !(namedElement instanceof PsiNamedElement)) {
-      LOG.error("Unknown element type:" + namedElement);
-    }
-
-    boolean hasBindables = false;
-    for (UsageInfo usage : usages) {
-      if (!(usage.getReference() instanceof BindablePsiReference)) {
-        rename(usage, newName);
-      } else {
-        hasBindables = true;
-      }
-    }
-
-    if (writableMetaData != null) {
-      writableMetaData.setName(newName);
-    }
-    else {
-      PsiElement namedElementAfterRename = ((PsiNamedElement)namedElement).setName(newName);
-      if (namedElementAfterRename != null) namedElement = namedElementAfterRename;
-    }
-
-    if (hasBindables) {
-      for (UsageInfo usage : usages) {
-        final PsiReference ref = usage.getReference();
-        if (ref instanceof BindablePsiReference) {
-          boolean fallback = true;
-          if (!(ref instanceof FragmentaryPsiReference
-                && ((FragmentaryPsiReference)ref).isFragmentOnlyRename())) {
-            try {
-              ref.bindToElement(namedElement);
-              fallback = false;
-            }
-            catch (IncorrectOperationException ignored) {
-            }
-          }
-          if (fallback) {//fall back to old scheme
-            ref.handleElementRename(newName);
-          }
-        }
-      }
-    }
-    if (listener != null) {
-      listener.elementRenamed(namedElement);
-    }
+    RenameUtilBase.doRenameGenericNamedElement(namedElement, newName, usages, listener);
   }
 
   public static void rename(UsageInfo info, String newName) throws IncorrectOperationException {
-    if (info.getElement() == null) return;
-    PsiReference ref = info.getReference();
-    if (ref == null) return;
-    ref.handleElementRename(newName);
+    RenameUtilBase.rename(info, newName);
   }
 
   @Nullable
@@ -389,7 +321,7 @@ public class RenameUtil {
     final Language fileLanguage = file == null ? null : file.getLanguage();
     Language language = fileLanguage == null ? elementLanguage : fileLanguage.isKindOf(elementLanguage) ? fileLanguage : elementLanguage;
 
-    return LanguageNamesValidation.INSTANCE.forLanguage(language).isIdentifier(newName.trim(), project);
+    return LanguageNamesValidation.isIdentifier(language, newName.trim(), project);
   }
 
   private static class UsageOffset implements Comparable<UsageOffset> {

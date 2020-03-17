@@ -79,7 +79,7 @@ public abstract class XPathInspection extends LocalInspectionTool implements Cus
     }
 
     @Override
-    public void visitElement(PsiElement psiElement) {
+    public void visitElement(@NotNull PsiElement psiElement) {
       super.visitElement(psiElement);
 
       if (myProblems != null) {

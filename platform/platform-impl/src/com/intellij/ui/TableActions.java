@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTable;
+import javax.swing.*;
 
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -17,6 +18,7 @@ public abstract class TableActions extends SwingActionDelegate {
     super(actionId);
   }
 
+  @Nullable
   @Override
   protected JTable getComponent(AnActionEvent event) {
     JTable table = tryCast(super.getComponent(event), JTable.class);

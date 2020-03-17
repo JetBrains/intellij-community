@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownLazyElementType extends ILazyParseableElementType {
+  private static final Logger LOG = Logger.getInstance(MarkdownLazyElementType.class);
   public MarkdownLazyElementType(@NotNull @NonNls String debugName) {
     super(debugName, MarkdownLanguage.INSTANCE);
   }
@@ -28,6 +30,7 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
 
     MarkdownFlavourDescriptor flavour = psi.getContainingFile().getUserData(MarkdownParserManager.FLAVOUR_DESCRIPTION);
     if (flavour == null) {
+      LOG.error("Markdown flavour doesn't set for " + psi.getContainingFile());
       flavour = MarkdownParserManager.FLAVOUR;
     }
 

@@ -21,22 +21,26 @@ import com.intellij.diagnostic.hprof.histogram.HistogramEntry
 class ClassNomination(private val histogram: Histogram,
                       private val classLimitPerCategory: Int) {
 
-  fun nominateClasses(): Set<HistogramEntry> {
+  fun nominateClasses(): List<HistogramEntry> {
     val resultClasses = HashSet<HistogramEntry>()
+
     val entries = histogram.entries
     val histogramByInstances = entries.sortedByDescending { it.totalInstances }
     val interestingClasses = histogramByInstances.filter { isInterestingClass(it.classDefinition.name) }
 
     histogramByInstances.take(classLimitPerCategory).forEach { resultClasses.add(it) }
-    interestingClasses.take(classLimitPerCategory).forEach {
-      resultClasses.add(it)
-    }
+    interestingClasses.take(classLimitPerCategory).forEach { resultClasses.add(it) }
 
     val histogramByBytes = entries.sortedByDescending { it.totalBytes }
     val interestingClassesByBytes = interestingClasses.sortedByDescending { it.totalBytes }
+
     histogramByBytes.take(classLimitPerCategory).forEach { resultClasses.add(it) }
     interestingClassesByBytes.take(classLimitPerCategory).forEach { resultClasses.add(it) }
-    return resultClasses
+
+    // Always include DirectByteBuffers
+    entries.find { it.classDefinition.name == "java.nio.DirectByteBuffer" }?.let { resultClasses.add(it) }
+
+    return ArrayList(resultClasses).sortedByDescending { it.totalBytes }
   }
 
   private fun isInterestingClass(name: String): Boolean {

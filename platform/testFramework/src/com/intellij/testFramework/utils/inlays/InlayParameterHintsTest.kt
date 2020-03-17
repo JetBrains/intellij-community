@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.utils.inlays
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
@@ -51,7 +49,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   fun checkParameterHints() = checkInlays(inlayPresenter, inlayFilter)
 
   fun checkInlays(inlayPresenter: (Inlay<*>) -> String, inlayFilter: (Inlay<*>) -> Boolean) {
-    val file = myFixture.file
+    val file = myFixture.file!!
     val document = myFixture.getDocument(file)
     val originalText = document.text
     val expectedInlaysAndCaret = extractInlaysAndCaretInfo(document)
@@ -67,7 +65,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
                                        originalText: String,
                                        inlayPresenter: (Inlay<*>) -> String,
                                        inlayFilter: (Inlay<*>) -> Boolean) {
-    val file = myFixture.file
+    val file = myFixture.file!!
     val document = myFixture.getDocument(file)
     val actual: List<InlayInfo> = getActualInlays(inlayPresenter, inlayFilter)
 
@@ -75,7 +73,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 
     if (expectedInlaysAndCaret.inlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
       val entries: MutableList<Pair<Int, String>> = mutableListOf()
-      actual.forEach { entries.add(Pair(it.offset, buildString { 
+      actual.forEach { entries.add(Pair(it.offset, buildString {
         append("<")
         append((if (it.highlighted) "H" else "h"))
         append((if (it.current) "INT" else "int"))
@@ -85,10 +83,10 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
       }))}
       if (expectedInlaysAndCaret.caretOffset != null) {
         val actualCaretOffset = myFixture.editor.caretModel.offset
-        val actualInlaysBeforeCaret = myFixture.editor.caretModel.visualPosition.column - 
+        val actualInlaysBeforeCaret = myFixture.editor.caretModel.visualPosition.column -
                                       myFixture.editor.offsetToVisualPosition(actualCaretOffset).column
         val first = entries.indexOfFirst { it.first == actualCaretOffset }
-        val insertIndex = if (first == -1) -entries.binarySearch { it.first - actualCaretOffset } - 1 
+        val insertIndex = if (first == -1) -entries.binarySearch { it.first - actualCaretOffset } - 1
                               else first + actualInlaysBeforeCaret
         entries.add(insertIndex, Pair(actualCaretOffset, "<caret>"))
       }
@@ -103,13 +101,13 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     if (expectedInlaysAndCaret.caretOffset != null) {
       assertEquals("Unexpected caret offset", expectedInlaysAndCaret.caretOffset, myFixture.editor.caretModel.offset)
       val position = myFixture.editor.offsetToVisualPosition(expectedInlaysAndCaret.caretOffset)
-      assertEquals("Unexpected caret visual position", 
+      assertEquals("Unexpected caret visual position",
                    VisualPosition(position.line, position.column + expectedInlaysAndCaret.inlaysBeforeCaret),
                    myFixture.editor.caretModel.visualPosition)
       val selectionModel = myFixture.editor.selectionModel
       if (expectedInlaysAndCaret.selection == null) assertFalse(selectionModel.hasSelection())
-      else assertEquals("Unexpected selection", 
-                        expectedInlaysAndCaret.selection, 
+      else assertEquals("Unexpected selection",
+                        expectedInlaysAndCaret.selection,
                         TextRange(selectionModel.selectionStart, selectionModel.selectionEnd))
     }
   }
@@ -184,7 +182,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 
 }
 
-class CaretAndInlaysInfo (val caretOffset: Int?, val inlaysBeforeCaret: Int, val selection: TextRange?, 
+class CaretAndInlaysInfo (val caretOffset: Int?, val inlaysBeforeCaret: Int, val selection: TextRange?,
                           val inlays: List<InlayInfo>)
 
 data class InlayInfo (val offset: Int, val text: String, val highlighted: Boolean, val current: Boolean)

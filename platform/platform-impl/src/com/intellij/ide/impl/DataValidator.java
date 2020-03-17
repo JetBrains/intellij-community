@@ -22,7 +22,7 @@ public abstract class DataValidator<T> {
   public static final ExtensionPointName<KeyedLazyInstanceEP<DataValidator>> EP_NAME =
     ExtensionPointName.create("com.intellij.dataValidator");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
+  private static final Logger LOG = Logger.getInstance(DataValidator.class);
 
   private static final Map<String, DataValidator<?>> ourValidators = new HashMap<>();
   private static final DataValidator<VirtualFile> VIRTUAL_FILE_VALIDATOR = new DataValidator<VirtualFile>() {

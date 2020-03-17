@@ -24,7 +24,7 @@ import java.util.concurrent.Future;
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public abstract class ConnectionOnProcess implements IConnection {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ConnectionOnProcess");
+  private static final Logger LOG = Logger.getInstance(ConnectionOnProcess.class);
 
   protected InputStream myInputStream;
   protected OutputStream myOutputStream;

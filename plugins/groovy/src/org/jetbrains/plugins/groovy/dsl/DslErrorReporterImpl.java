@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.HyperlinkEvent;
 
 public class DslErrorReporterImpl extends DslErrorReporter {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
+  private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
   private final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Groovy DSL errors", NotificationDisplayType.BALLOON, true);
 
   public DslErrorReporterImpl() {

@@ -135,6 +135,19 @@ class Test {
     )
   }
 
+  void "test tabs indent"() {
+    doTest(
+      """\
+class Test {
+		void m() {
+		|
+		|  int v;
+		}
+}
+"""
+    )
+  }
+
   void testCodeConstructStartLine() {
     myFixture.configureByText("${getTestName(false)}.java", """\
 class C {

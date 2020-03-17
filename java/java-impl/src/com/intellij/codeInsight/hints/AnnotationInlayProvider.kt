@@ -12,9 +12,8 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
@@ -22,11 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
-import com.intellij.util.ui.JBUI
-import java.awt.GridLayout
-import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JPanel
 import kotlin.reflect.KMutableProperty0
 
 class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Settings> {
@@ -73,7 +68,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                   val column = offset - startOffset
                   val shifted = factory.inset(presentation, left = column * width)
 
-                  sink.addBlockElement(offset, false, true, 0, shifted)
+                  sink.addBlockElement(offset, false, true, BlockInlayPriority.ANNOTATIONS, shifted)
                 }
                 else -> {
                   sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1))

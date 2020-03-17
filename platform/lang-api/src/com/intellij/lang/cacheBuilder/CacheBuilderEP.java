@@ -26,7 +26,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * @author yole
  */
 public class CacheBuilderEP extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.cacheBuilder.CacheBuilderEP");
+  private static final Logger LOG = Logger.getInstance(CacheBuilderEP.class);
 
   public static final ExtensionPointName<CacheBuilderEP> EP_NAME = new ExtensionPointName<>("com.intellij.cacheBuilder");
 

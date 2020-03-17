@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.hierarchy.type;
 
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;

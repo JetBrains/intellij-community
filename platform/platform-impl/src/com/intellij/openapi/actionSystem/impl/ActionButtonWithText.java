@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.*;
@@ -57,7 +58,7 @@ public class ActionButtonWithText extends ActionButton {
       }
     });
     updateMnemonic(0, myPresentation.getMnemonic());
-    UIUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
+    ComponentUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
   }
 
   @Override
@@ -176,7 +177,7 @@ public class ActionButtonWithText extends ActionButton {
     }
     ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
-    look.paintIconAt(g, icon, iconRect.x, iconRect.y);
+    look.paintIcon(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
     g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());

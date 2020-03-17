@@ -62,6 +62,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       }
       return null;
     });
+    JsonWidgetSuppressor.EXTENSION_POINT_NAME.addExtensionPointListener(this::update, project);
   }
 
   @Nullable

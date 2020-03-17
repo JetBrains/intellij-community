@@ -10,10 +10,18 @@ import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
 interface BaseBuilder {
-  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
+  fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
+
+  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    withButtonGroup(null, buttonGroup, body)
+  }
 
   fun buttonGroup(init: () -> Unit) {
-    withButtonGroup(ButtonGroup(), init)
+    buttonGroup(null, init)
+  }
+
+  fun buttonGroup(title:String? = null, init: () -> Unit) {
+    withButtonGroup(title, ButtonGroup(), init)
   }
 }
 
@@ -33,18 +41,22 @@ interface RowBuilder : BaseBuilder {
     return createChildRow(label?.let { Label(it) }, isSeparated = separated).apply(init)
   }
 
-  fun titledRow(title: String, init: Row.() -> Unit): Row {
-    return createChildRow(isSeparated = true, title = title).apply(init)
-  }
+  fun titledRow(title: String, init: Row.() -> Unit): Row
 
   /**
-   * Creates row with hideable decorator
+   * Creates row with a huge gap after it, that can be used to group related components.
+   * Think of [titledRow] without a title and additional indent.
+   */
+  fun blockRow(init: Row.() -> Unit): Row
+
+  /**
+   * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
   fun hideableRow(title: String, init: Row.() -> Unit): Row
 
   /**
-   * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
+   * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
    */
   fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
@@ -116,7 +128,7 @@ abstract class Row : Cell(), RowBuilder {
   /**
    * Shares cell between components.
    *
-   * @param isFullWidth If true, the cell occupies the full width of the enclosing component.
+   * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)

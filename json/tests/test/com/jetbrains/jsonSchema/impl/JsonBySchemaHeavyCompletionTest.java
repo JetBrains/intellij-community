@@ -138,6 +138,7 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
       Assert.assertTrue(idx > 0);
       PsiElement element = schema.findElementAt(idx);
       element = element instanceof JsonStringLiteral ? element : PsiTreeUtil.getParentOfType(element, JsonStringLiteral.class);
+      Assert.assertNotNull(element);
       Assert.assertTrue(element instanceof JsonStringLiteral);
 
       final PsiFile dummy = PsiFileFactory.getInstance(getProject()).createFileFromText("test.json", JsonFileType.INSTANCE,

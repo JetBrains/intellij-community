@@ -24,7 +24,7 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
 import com.intellij.vcs.log.util.*
@@ -151,7 +151,7 @@ class DeepComparator(private val project: Project,
   }
 
   private fun notifyUnhighlight() {
-    if (ui is AbstractVcsLogUi) {
+    if (ui is VcsLogUiEx) {
       val balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(HIGHLIGHTING_CANCELLED, null, MessageType.INFO.popupBackground, null)
         .setFadeoutTime(5000)

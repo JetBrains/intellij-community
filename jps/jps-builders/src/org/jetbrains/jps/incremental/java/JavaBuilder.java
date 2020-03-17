@@ -55,8 +55,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -76,7 +75,7 @@ import static com.intellij.openapi.util.Pair.pair;
  * @author Eugene Zhuravlev
  */
 public class JavaBuilder extends ModuleLevelBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
+  private static final Logger LOG = Logger.getInstance(JavaBuilder.class);
   private static final String JAVA_EXTENSION = "java";
 
   private static final String USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path";
@@ -93,7 +92,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
 
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
-    "-target", "--release"
+    "-target", "--release",
+    "--boot-class-path", "-bootclasspath",
+    "--class-path", "-classpath", "-cp",
+    "-processorpath", "-sourcepath",
+    "-d",
+    "--module-path", "-p", "--module-source-path"
   );
   private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
     "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
@@ -761,7 +765,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final List<String> compilationOptions = new ArrayList<>();
     final List<String> vmOptions = new ArrayList<>();
     final JpsProject project = context.getProjectDescriptor().getProject();
-    final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getCurrentCompilerOptions();
+    final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
       compilationOptions.add("-g");
     }
@@ -808,6 +812,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (FILTERED_OPTIONS.contains(userOption)) {
           skip = true;
           targetOptionFound = "-target".equals(userOption);
+          notifyOptionIgnored(context, userOption, chunk);
           continue;
         }
         if (skip) {
@@ -826,6 +831,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
               appender.accept(compilationOptions, userOption);
             }
           }
+          else {
+            notifyOptionIgnored(context, userOption, chunk);
+          }
         }
       }
     }
@@ -837,6 +845,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile);
 
     return pair(vmOptions, compilationOptions);
+  }
+
+  private static void notifyOptionIgnored(CompileContext context, String option, ModuleChunk chunk) {
+    context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.JPS_INFO,
+      "User-specified option \"" + option + "\" is ignored for \"" + chunk.getPresentableShortName() + "\". This compilation parameter is set automatically according to project settings."
+    ));
   }
 
   public static void addCompilationOptions(List<? super String> options,
@@ -924,7 +938,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static void addCrossCompilationOptions(int compilerSdkVersion, List<? super String> options, CompileContext context, ModuleChunk chunk) {
-    final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+    final JpsJavaCompilerConfiguration compilerConfiguration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(
       context.getProjectDescriptor().getProject()
     );
 

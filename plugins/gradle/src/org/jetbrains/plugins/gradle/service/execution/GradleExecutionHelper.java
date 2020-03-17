@@ -197,6 +197,8 @@ public class GradleExecutionHelper {
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener(gradleProgressListener,
+                                  OperationType.GENERIC,
+                                  OperationType.PROJECT_CONFIGURATION,
                                   OperationType.TASK,
                                   OperationType.TEST);
     operation.setStandardOutput(standardOutput);
@@ -509,7 +511,7 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class> toolingExtensionClasses) {
+  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class<?>> toolingExtensionClasses) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
     try {
       if (stream == null) {
@@ -697,7 +699,7 @@ public class GradleExecutionHelper {
   }
 
   @NotNull
-  public static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
+  public static String getToolingExtensionsJarPaths(@NotNull Set<Class<?>> toolingExtensionClasses) {
     final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
       String path = PathManager.getJarPathForClass(aClass);
       if (path != null) {

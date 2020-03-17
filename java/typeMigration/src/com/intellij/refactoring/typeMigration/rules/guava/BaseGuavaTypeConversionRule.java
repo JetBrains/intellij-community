@@ -24,6 +24,7 @@ import com.intellij.refactoring.typeMigration.inspections.GuavaConversionSetting
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,9 +65,11 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
   }
 
   @NotNull
+  @Contract(pure = true)
   public abstract String ruleFromClass();
 
   @NotNull
+  @Contract(pure = true)
   public abstract String ruleToClass();
 
   @NotNull

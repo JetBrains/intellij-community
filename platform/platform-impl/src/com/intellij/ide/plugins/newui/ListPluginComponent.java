@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Pair;
@@ -44,7 +45,7 @@ public class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   public IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
-  private boolean myUninstalledWithoutRestart;
+  private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
@@ -59,6 +60,7 @@ public class ListPluginComponent extends JPanel {
   private JLabel myDownloads;
   private JLabel myVersion;
   private JLabel myVendor;
+  private LicensePanel myLicensePanel;
   private LicensePanel myUpdateLicensePanel;
   private JPanel myErrorPanel;
   private JComponent myErrorComponent;
@@ -148,7 +150,8 @@ public class ListPluginComponent extends JPanel {
       else {
         myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
 
-        myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
+        myInstallButton
+          .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
         myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null, "Installed");
         ColorButton.setWidth72(myInstallButton);
       }
@@ -266,13 +269,8 @@ public class ListPluginComponent extends JPanel {
 
   private void createLicensePanel() {
     String productCode = myPlugin.getProductCode();
-    if (myMarketplace || productCode == null) {
-      return;
-    }
-
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (instance == null) {
-      setTagTooltip("No license in EAP build");
+    if (myMarketplace || productCode == null || instance == null) {
       return;
     }
 
@@ -280,10 +278,14 @@ public class ListPluginComponent extends JPanel {
 
     String stamp = instance.getConfirmationStamp(productCode);
     if (stamp == null) {
+      if (ApplicationManager.getApplication().isEAP()) {
+        setTagTooltip("The license is not required for EAP version");
+        return;
+      }
       licensePanel.setText("No license.", true, false);
     }
     else {
-      licensePanel.setTextFromStamp(stamp);
+      licensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
     }
     setTagTooltip(licensePanel.getMessage());
 
@@ -291,7 +293,19 @@ public class ListPluginComponent extends JPanel {
       licensePanel.setBorder(JBUI.Borders.emptyTop(3));
       //licensePanel.setLink("Manage licenses", () -> { XXX }, false);
       myLayout.addLineComponent(licensePanel);
+      myLicensePanel = licensePanel;
     }
+  }
+
+  public void setOnlyUpdateMode(@Nullable IdeaPluginDescriptor descriptor) {
+    myOnlyUpdateMode = true;
+
+    if (myEnableDisableButton != null) {
+      myLayout.removeButtonComponent(myEnableDisableButton);
+      myEnableDisableButton = null;
+    }
+
+    setUpdateDescriptor(descriptor);
   }
 
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
@@ -306,7 +320,8 @@ public class ListPluginComponent extends JPanel {
         myVersion.setText(myPlugin.getVersion());
       }
       if (myUpdateLicensePanel != null) {
-        myUpdateLicensePanel.setVisible(false);
+        myLayout.removeLineComponent(myUpdateLicensePanel);
+        myUpdateLicensePanel = null;
       }
       if (myUpdateButton != null) {
         myUpdateButton.setVisible(false);
@@ -323,21 +338,23 @@ public class ListPluginComponent extends JPanel {
         if (myUpdateLicensePanel == null) {
           myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
           myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));
+          myUpdateLicensePanel.setVisible(myErrorPanel == null);
           if (myEventHandler != null) {
             myEventHandler.addAll(myUpdateLicensePanel);
           }
         }
 
-        myUpdateLicensePanel.setText("Next plugin version is paid.\nThe 30-day trial is available.", true, false);
-        myUpdateLicensePanel.setLink("Buy plugin", () ->
-          BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + myUpdateDescriptor.getProductCode()), true);
+        myUpdateLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myUpdateLicensePanel.setVisible(true);
       }
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
-        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
+        myUpdateButton.addActionListener(
+          e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
       }
       else {
+        myUpdateButton.setEnabled(true);
         myUpdateButton.setVisible(true);
       }
       if (myAlignButton != null) {
@@ -348,9 +365,7 @@ public class ListPluginComponent extends JPanel {
     doLayout();
   }
 
-  public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
-                           @NotNull LinkListener<String> searchListener,
-                           @NotNull EventHandler eventHandler) {
+  public void setListeners(@NotNull EventHandler eventHandler) {
     myEventHandler = eventHandler;
     eventHandler.addAll(this);
   }
@@ -400,11 +415,8 @@ public class ListPluginComponent extends JPanel {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
-    if (myEnableDisableButton != null) {
-      myEnableDisableButton.setVisible(!errors);
-    }
     if (myAlignButton != null) {
-      myAlignButton.setVisible(errors || myRestartButton != null);
+      myAlignButton.setVisible(myRestartButton != null);
     }
 
     if (errors) {
@@ -429,6 +441,13 @@ public class ListPluginComponent extends JPanel {
       myLayout.removeLineComponent(myErrorPanel);
       myErrorPanel = null;
       myErrorComponent = null;
+    }
+
+    if (myLicensePanel != null) {
+      myLicensePanel.setVisible(!errors);
+    }
+    if (myUpdateLicensePanel != null) {
+      myUpdateLicensePanel.setVisible(!errors);
     }
   }
 
@@ -507,7 +526,6 @@ public class ListPluginComponent extends JPanel {
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
     myUninstalled = true;
-    myUninstalledWithoutRestart = !needRestartForUninstall;
     updateColors(mySelection);
     if (needRestartForUninstall) {
       enableRestart();
@@ -515,7 +533,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updatePlugin() {
-    if (!myMarketplace && myUpdateButton != null && myUpdateButton.isVisible()) {
+    if (!myMarketplace && myUpdateButton != null && myUpdateButton.isVisible() && myUpdateButton.isEnabled()) {
       myUpdateButton.doClick();
     }
   }
@@ -526,6 +544,18 @@ public class ListPluginComponent extends JPanel {
 
   public boolean isMarketplace() {
     return myMarketplace;
+  }
+
+  public boolean isRestartEnabled() {
+    return myRestartButton != null && myRestartButton.isVisible();
+  }
+
+  public boolean isUpdatedWithoutRestart() {
+    return myUpdateButton != null && myUpdateButton.isVisible() && !myUpdateButton.isEnabled();
+  }
+
+  public boolean underProgress() {
+    return myIndicator != null;
   }
 
   public void close() {
@@ -572,41 +602,35 @@ public class ListPluginComponent extends JPanel {
       return;
     }
 
-    boolean showUpdateAndState = true;
-    for (ListPluginComponent component : selection) {
-      if (myPluginModel.hasErrors(component.myPlugin)) {
-        showUpdateAndState = false;
+    JButton[] updateButtons = new JButton[size];
+
+    for (int i = 0; i < size; i++) {
+      JButton button = selection.get(i).myUpdateButton;
+      if (button == null || !button.isVisible() || !button.isEnabled()) {
+        updateButtons = null;
         break;
       }
+      updateButtons[i] = button;
     }
 
-    if (showUpdateAndState) {
-      JButton[] updateButtons = new JButton[size];
-
-      for (int i = 0; i < size; i++) {
-        JButton button = selection.get(i).myUpdateButton;
-        if (button == null || !button.isVisible()) {
-          updateButtons = null;
-          break;
-        }
-        updateButtons[i] = button;
+    if (updateButtons != null) {
+      group.add(new ButtonAnAction(updateButtons));
+      if (size > 1) {
+        return;
       }
-
-      if (updateButtons != null) {
-        group.add(new ButtonAnAction(updateButtons));
-        if (size > 1) {
-          return;
-        }
-      }
-
-      Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-      group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          myPluginModel.changeEnableDisable(result.second, result.first);
-        }
-      });
     }
+
+    if (myOnlyUpdateMode) {
+      return;
+    }
+
+    Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myPluginModel.changeEnableDisable(result.second, result.first);
+      }
+    });
 
     for (ListPluginComponent component : selection) {
       if (component.myUninstalled || component.myPlugin.isBundled()) {
@@ -668,7 +692,7 @@ public class ListPluginComponent extends JPanel {
     boolean update = true;
     for (ListPluginComponent component : selection) {
       JButton button = component.myUpdateButton;
-      if (button == null || !button.isVisible()) {
+      if (button == null || !button.isVisible() || !button.isEnabled()) {
         update = false;
         break;
       }
@@ -685,13 +709,10 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update) {
+      if (myOnlyUpdateMode) {
+        return;
+      }
       if (keyCode == KeyEvent.VK_SPACE) {
-        for (ListPluginComponent component : selection) {
-          if (myPluginModel.hasErrors(component.myPlugin)) {
-            return;
-          }
-        }
-
         if (selection.size() == 1) {
           myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
         }
@@ -852,9 +873,11 @@ public class ListPluginComponent extends JPanel {
       }
 
       for (JComponent component : myLineComponents) {
-        Dimension size = component.getPreferredSize();
-        result.width = Math.max(result.width, size.width);
-        result.height += size.height;
+        if (component.isVisible()) {
+          Dimension size = component.getPreferredSize();
+          result.width = Math.max(result.width, size.width);
+          result.height += size.height;
+        }
       }
 
       Dimension iconSize = myIconComponent.getPreferredSize();
@@ -913,9 +936,11 @@ public class ListPluginComponent extends JPanel {
       int lineWidth = width - x - insets.right;
 
       for (JComponent component : myLineComponents) {
-        int lineHeight = component.getPreferredSize().height;
-        component.setBounds(x, y, lineWidth, lineHeight);
-        y += lineHeight;
+        if (component.isVisible()) {
+          int lineHeight = component.getPreferredSize().height;
+          component.setBounds(x, y, lineWidth, lineHeight);
+          y += lineHeight;
+        }
       }
     }
 

@@ -54,7 +54,7 @@ public class ShuffleNamesAction extends AnAction {
     final ArrayList<String> split = new ArrayList<>(100);
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof LeafPsiElement) {
           String type = ((LeafPsiElement)element).getElementType().toString();
           String text = element.getText();

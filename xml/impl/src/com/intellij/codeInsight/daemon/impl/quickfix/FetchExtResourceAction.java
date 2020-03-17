@@ -55,7 +55,7 @@ import java.util.*;
  * @author mike
  */
 public class FetchExtResourceAction extends BaseExtResourceAction implements WatchedRootsProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.FetchDtdAction");
+  private static final Logger LOG = Logger.getInstance(FetchExtResourceAction.class);
   @NonNls private static final String HTML_MIME = "text/html";
   @NonNls private static final String HTTP_PROTOCOL = "http://";
   @NonNls private static final String HTTPS_PROTOCOL = "https://";

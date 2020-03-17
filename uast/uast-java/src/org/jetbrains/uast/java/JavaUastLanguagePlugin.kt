@@ -10,7 +10,6 @@ import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
-import org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
@@ -136,9 +135,8 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
     }
   }
 
-  override val analysisPlugin: UastAnalysisPlugin? by lazy {
-    UastAnalysisPlugin.byLanguage(JavaLanguage.INSTANCE)
-  }
+  override val analysisPlugin: UastAnalysisPlugin?
+    get() = UastAnalysisPlugin.byLanguage(JavaLanguage.INSTANCE)
 }
 
 internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {

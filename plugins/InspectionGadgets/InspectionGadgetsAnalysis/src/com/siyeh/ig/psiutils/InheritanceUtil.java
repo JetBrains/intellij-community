@@ -80,7 +80,6 @@ public class InheritanceUtil {
   }
 
   public static boolean hasImplementation(@NotNull PsiClass aClass) {
-    if (aClass.isInterface() && FunctionalExpressionSearch.search(aClass).findFirst() != null) return true;
     for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
       if (!provider.isApplicableTo(aClass)) {
         continue;
@@ -90,8 +89,10 @@ public class InheritanceUtil {
         return true;
       }
     }
-    return ClassInheritorsSearch.search(aClass).anyMatch(
-      inheritor -> !inheritor.isInterface() && !inheritor.isAnnotationType() && !inheritor.hasModifierProperty(PsiModifier.ABSTRACT));
+    return ClassInheritorsSearch.search(aClass).anyMatch(inheritor -> !inheritor.isInterface() &&
+                                                                      !inheritor.isAnnotationType() &&
+                                                                      !inheritor.hasModifierProperty(PsiModifier.ABSTRACT))
+           || aClass.isInterface() && FunctionalExpressionSearch.search(aClass).findFirst() != null;
   }
 
   public static boolean hasOneInheritor(final PsiClass aClass) {

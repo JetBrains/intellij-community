@@ -40,7 +40,6 @@ import java.util.List;
  */
 public class RedundantCastInspection extends GenericsInspectionToolBase {
   private final LocalQuickFix myQuickFixAction;
-  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
   public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
@@ -123,12 +122,6 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
         RemoveRedundantCastUtil.removeCast(cast);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
   }
 
   @Override

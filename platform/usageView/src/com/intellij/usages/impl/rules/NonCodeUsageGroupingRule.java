@@ -53,7 +53,6 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "CodeUsages";
     }
   }
@@ -90,7 +89,6 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "NonCodeUsages";
     }
   }
@@ -116,7 +114,6 @@ public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     public String toString() {
-      //noinspection HardCodedStringLiteral
       return "DynamicUsages";
     }
   }

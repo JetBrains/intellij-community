@@ -171,8 +171,8 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  public List<Class> getConfiguredClasses(@NotNull Project project) {
-    List<Class> result = new ArrayList<>();
+  public List<Class<?>> getConfiguredClasses(@NotNull Project project) {
+    List<Class<?>> result = new ArrayList<>();
     for(String className: myPropertyMap.keySet()) {
       try {
         result.add(Class.forName(className, true, LoaderFactory.getInstance(project).getProjectClassLoader()));
@@ -190,11 +190,11 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  public void removeClientPropertyClass(final Class selectedClass) {
+  public void removeClientPropertyClass(final Class<?> selectedClass) {
     myPropertyMap.remove(selectedClass.getName());
   }
 
-  public List<ClientProperty> getConfiguredProperties(Class componentClass) {
+  public List<ClientProperty> getConfiguredProperties(Class<?> componentClass) {
     List<ClientProperty> list = myPropertyMap.get(componentClass.getName());
     if (list == null) {
       return Collections.emptyList();

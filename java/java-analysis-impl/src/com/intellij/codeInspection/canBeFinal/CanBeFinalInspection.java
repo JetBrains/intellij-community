@@ -35,14 +35,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.canBeFinal.CanBeFinalInspection");
+  private static final Logger LOG = Logger.getInstance(CanBeFinalInspection.class);
 
   public boolean REPORT_CLASSES;
   public boolean REPORT_METHODS;
   public boolean REPORT_FIELDS = true;
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.can.be.final.display.name");
   @NonNls public static final String SHORT_NAME = "CanBeFinal";
-  @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox myReportClassesCheckbox;
@@ -218,12 +216,6 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
@@ -244,7 +236,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return QUICK_FIX_NAME;
+      return getQuickFixName();
     }
 
     @Override
@@ -273,4 +265,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
+  private static String getQuickFixName() {
+    return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
+  }
 }

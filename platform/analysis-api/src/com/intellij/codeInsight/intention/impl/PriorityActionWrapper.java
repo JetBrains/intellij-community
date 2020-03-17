@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -73,33 +72,10 @@ public abstract class PriorityActionWrapper extends LocalQuickFixAndIntentionAct
     return fix.getName();
   }
 
-  private static class HighPriorityLocalQuickFixWrapper extends PriorityActionWrapper implements HighPriorityAction {
-    protected HighPriorityLocalQuickFixWrapper(PsiElement element, @NotNull LocalQuickFixAndIntentionActionOnPsiElement fix) {
-      super(element, fix);
-    }
-  }
-
-  private static class NormalPriorityLocalQuickFixWrapper extends PriorityActionWrapper {
-    protected NormalPriorityLocalQuickFixWrapper(PsiElement element, @NotNull LocalQuickFixAndIntentionActionOnPsiElement fix) {
-      super(element, fix);
-    }
-  }
-
-
   private static class LowPriorityLocalQuickFixWrapper extends PriorityActionWrapper implements LowPriorityAction {
     protected LowPriorityLocalQuickFixWrapper(PsiElement element, @NotNull LocalQuickFixAndIntentionActionOnPsiElement fix) {
       super(element, fix);
     }
-  }
-
-  @NotNull
-  public static LocalQuickFixAndIntentionActionOnPsiElement highPriority(PsiElement element, @NotNull LocalQuickFixAndIntentionActionOnPsiElement fix) {
-    return new HighPriorityLocalQuickFixWrapper(element, fix);
-  }
-
-  @NotNull
-  public static LocalQuickFixAndIntentionActionOnPsiElement normalPriority(PsiElement element, @NotNull LocalQuickFixAndIntentionActionOnPsiElement fix) {
-    return new NormalPriorityLocalQuickFixWrapper(element, fix);
   }
 
   @NotNull

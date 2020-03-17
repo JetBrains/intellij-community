@@ -28,12 +28,6 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection extends BaseInspe
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("abstract.class.with.only.one.direct.inheritor.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("abstract.class.with.only.one.direct.inheritor.problem.descriptor");
   }

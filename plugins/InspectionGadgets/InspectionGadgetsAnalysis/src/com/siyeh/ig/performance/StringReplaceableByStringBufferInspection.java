@@ -39,13 +39,6 @@ public class StringReplaceableByStringBufferInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.replaceable.by.string.buffer.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "string.replaceable.by.string.buffer.problem.descriptor");

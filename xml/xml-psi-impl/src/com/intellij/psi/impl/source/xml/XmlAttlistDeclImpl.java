@@ -33,7 +33,7 @@ import java.util.List;
  * @author Mike
  */
 public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttlistDeclImpl");
+  private static final Logger LOG = Logger.getInstance(XmlAttlistDeclImpl.class);
 
   public XmlAttlistDeclImpl() {
     super(XmlElementType.XML_ATTLIST_DECL);

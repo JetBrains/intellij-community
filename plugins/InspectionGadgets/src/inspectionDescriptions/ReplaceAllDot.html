@@ -1,10 +1,10 @@
 <html>
 <body>
 Reports any calls to
-<b>java.lang.String.replaceAll()</b> with <b>"."</b>
-as the first argument. Calling <b>replaceAll(".", ...)</b> replaces
-all of the characters in a string with its second argument, which is rarely the desired functionality.
-More probably, <b>replaceAll("\.", ...)</b> was intended.
+<b>String.replaceAll()</b> or <b>String.split()</b> where the first argument is a single regex meta character argument.
+The regex meta characters are one of ".$|()[{^?*+\", and these have a special meaning in regular expressions.
+For example calling <b>"ab.cd".replaceAll(".", "-")</b> produces <b>"-----"</b>, because the dot matches any character.
+Most likely the escaped variant <b>"\\."</b> was intended instead.
 <!-- tooltip end -->
 <p>
 

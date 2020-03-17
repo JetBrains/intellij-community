@@ -541,7 +541,7 @@ class AA { static void fo<caret>o(Integer a) {} }
     doTest(true)
   }
 
-  void testAvoidInfiniteLoopForPlusAsignment() {
+  void testAvoidInfiniteLoopForPlusAssignment() {
     doTest(true)
   }
 }

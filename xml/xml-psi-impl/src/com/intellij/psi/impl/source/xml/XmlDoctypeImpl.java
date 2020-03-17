@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Mike
  */
 public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDoctypeImpl");
+  private static final Logger LOG = Logger.getInstance(XmlDoctypeImpl.class);
 
   public XmlDoctypeImpl() {
     super(XmlElementType.XML_DOCTYPE);

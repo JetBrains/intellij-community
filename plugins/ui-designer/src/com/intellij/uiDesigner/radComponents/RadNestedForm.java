@@ -22,7 +22,7 @@ import java.awt.*;
  * @author yole
  */
 public class RadNestedForm extends RadComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadNestedForm");
+  private static final Logger LOG = Logger.getInstance(RadNestedForm.class);
 
   private final String myFormFileName;
   private final RadRootContainer myRootContainer;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.structuralsearch.SSRBundle;
@@ -16,6 +15,7 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class SSBasedInspectionOptions {
   // for externalization
   final List<Configuration> myConfigurations;
 
-  public SSBasedInspectionOptions(final List<Configuration> configurations) {
+  SSBasedInspectionOptions(final List<Configuration> configurations) {
     myConfigurations = configurations;
     myTemplatesList  = new JBList<>(new MyListModel());
     myTemplatesList.setCellRenderer(new DefaultListCellRenderer() {
@@ -44,14 +44,6 @@ public class SSBasedInspectionOptions {
         return component;
       }
     });
-  }
-
-  void addTemplate(Configuration configuration, Project project) {
-    if (!ConfigurationManager.showSaveTemplateAsDialog(myConfigurations, configuration, project)) {
-      return;
-    }
-
-    configurationsChanged(project);
   }
 
   public void configurationsChanged(Project project) {
@@ -68,47 +60,46 @@ public class SSBasedInspectionOptions {
           @Override
           public void run(AnActionButton button) {
             final AnAction[] children = new AnAction[]{new AddTemplateAction(false), new AddTemplateAction(true)};
+            final RelativePoint point = button.getPreferredPopupPoint();
+            if (point == null) return;
             JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
                                                                 DataManager.getInstance().getDataContext(button.getContextComponent()),
                                                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-              .show(button.getPreferredPopupPoint());
+              .show(point);
           }
-        }).setEditAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
-          if (project != null && !DumbService.isDumb(project)) {
-            performEditAction(project);
+        })
+        .setEditAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
+            if (project != null) {
+              performEditAction(project);
+            }
           }
-        }
-      }).setEditActionUpdater(e -> {
-        final Project project = e.getProject();
-        return project != null && !DumbService.isDumb(project);
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
-          if (project == null) return;
-          for (Configuration configuration : myTemplatesList.getSelectedValuesList()) {
-            myConfigurations.remove(configuration);
+        })
+        .setRemoveAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
+            if (project == null) return;
+              for (Configuration configuration : myTemplatesList.getSelectedValuesList()) {
+                myConfigurations.remove(configuration);
+            }
+            configurationsChanged(project);
           }
-          configurationsChanged(project);
-        }
-      }).setRemoveActionUpdater(e -> {
-        final Project project = e.getProject();
-        return project != null && !DumbService.isDumb(project);
-      })
+        })
         .setMoveUpAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          performMoveUpDown(false);
-        }
-      }).setMoveDownAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          performMoveUpDown(true);
-        }
-      })
+          @Override
+          public void run(AnActionButton button) {
+            performMoveUpDown(false);
+          }
+        })
+        .setMoveDownAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            performMoveUpDown(true);
+          }
+        })
         .setPreferredSize(new Dimension(-1, 100))
         .createPanel()
     );
@@ -116,9 +107,7 @@ public class SSBasedInspectionOptions {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
         final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
-        if (project != null && !DumbService.isDumb(project)) {
-          performEditAction(project);
-        }
+        performEditAction(project);
         return true;
       }
     }.installOn(myTemplatesList);
@@ -193,6 +182,15 @@ public class SSBasedInspectionOptions {
       final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
       if (!dialog.showAndGet()) return;
       addTemplate(dialog.getConfiguration(), e.getProject());
+    }
+
+    void addTemplate(Configuration configuration, Project project) {
+      if (!ConfigurationManager.showSaveTemplateAsDialog(myConfigurations, configuration, project)) {
+        return;
+      }
+
+      ((MyListModel)myTemplatesList.getModel()).fireContentsChanged();
+      DaemonCodeAnalyzer.getInstance(project).restart();
     }
   }
 }

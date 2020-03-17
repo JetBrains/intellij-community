@@ -46,7 +46,6 @@ import java.util.List;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 /**
  * @author traff
@@ -72,6 +71,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testNameChanged() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nameChanged", "test_name_changed.py") {
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        PyUnitTestProcessRunner runner = super.createProcessRunner();
+        runner.setSkipExitCodeAssertion(true); //old runner is used
+        return runner;
+      }
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -143,12 +149,16 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         EdtTestUtil.runInEdtAndWait(() -> {
           final PythonConsoleView console = new PythonConsoleView(project, "test", sdk, true);
-          Disposer.register(myFixture.getModule(), console);
+
           console.getComponent(); //To init editor
 
           Arrays.stream(messages).forEach((s) -> console.print(s, ConsoleViewContentType.NORMAL_OUTPUT));
           console.flushDeferredText();
-          assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
+          try {
+            assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
+          }finally {
+            Disposer.dispose(console);
+          }
         });
       }
     });
@@ -209,6 +219,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     // We need to make sure setup.py is called using different runner
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "setup.py") {
 
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        PyUnitTestProcessRunner runner = super.createProcessRunner();
+        runner.setSkipExitCodeAssertion(true); //setup.py doesn't support exit codes now
+        return runner;
+      }
+
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
@@ -225,7 +243,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+        PythonTestConfigurationsModel.getPythonsUnittestName(),
         PyUnitTestConfiguration.class));
   }
 
@@ -237,7 +255,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         @NotNull
         @Override
         protected PyUnitTestFactory createFactory() {
-          return PyUnitTestFactory.INSTANCE;
+          return new PyUnitTestFactory();
         }
 
         @Override
@@ -448,42 +466,6 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     });
   }
 
-  @EnvTestTagsRequired(tags = "unittest2")
-  @Test
-  public void testUnitTest2() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/unittest2", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
-
-      @Override
-      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
-                                      @NotNull final String stdout,
-                                      @NotNull final String stderr,
-                                      @NotNull final String all, int exitCode) {
-        runner.getFormattedTestTree();
-        assertEquals("unittest2 produced wrong tree", "Test tree:\n" +
-                                                      "[root](-)\n" +
-                                                      ".test_test(-)\n" +
-                                                      "..SampleTest(-)\n" +
-                                                      "...test_sample(-)\n" +
-                                                      "....(i=0)(-)\n" +
-                                                      "....(i=1)(-)\n" +
-                                                      "....(i=2)(-)\n" +
-                                                      "....(i=3)(-)\n" +
-                                                      "....(i=4)(+)\n" +
-                                                      "....(i=5)(+)\n" +
-                                                      "....(i=6)(+)\n" +
-                                                      "....(i=7)(+)\n" +
-                                                      "....(i=8)(+)\n" +
-                                                      "....(i=9)(+)\n", runner.getFormattedTestTree());
-      }
-    });
-  }
-
 
   /**
    * Raising SkipTest on class setup should not lead to KeyError
@@ -682,7 +664,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // PY-24407
   @Test
   public void testWorkingDirectoryDependsOnRelativeImport() {
-    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
                                                                            PyUnitTestConfiguration.class) {
       @NotNull
       @Override
@@ -847,14 +829,15 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerOnDirectory() {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                                     PyUnitTestConfiguration.class));
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(
+        PythonTestConfigurationsModel.getPythonsUnittestName(),
+        PyUnitTestConfiguration.class));
   }
 
 
   @Test
   public void testConfigurationProducer() {
-    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class));
+    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(), PyUnitTestConfiguration.class));
   }
 
   /**
@@ -863,14 +846,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testConfigurationProducerObeysDefaultDir() {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.getPythonsUnittestName(),
                                                                  PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
         public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
           // Set default working directory to some random location before actual exection
-          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUnitTestFactory.INSTANCE);
+          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(new PyUnitTestFactory());
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
           super.runTestOn(sdkHome, existingSdk);
           templateConfiguration.setWorkingDirectory("");

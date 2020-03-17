@@ -27,13 +27,6 @@ public class ThrownExceptionsPerMethodInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "thrown.exceptions.per.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "MethodWithTooExceptionsDeclared";
   }

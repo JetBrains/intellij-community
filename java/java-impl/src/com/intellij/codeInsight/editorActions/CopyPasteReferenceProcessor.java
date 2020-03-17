@@ -50,7 +50,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
+  private static final Logger LOG = Logger.getInstance(CopyPasteReferenceProcessor.class);
   
   @NotNull
   @Override

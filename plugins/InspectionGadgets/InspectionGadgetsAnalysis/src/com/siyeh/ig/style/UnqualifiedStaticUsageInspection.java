@@ -49,13 +49,6 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unqualified.static.usage.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     if (infos[0] instanceof PsiMethodCallExpression) {
       return InspectionGadgetsBundle.message(

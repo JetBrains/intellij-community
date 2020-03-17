@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.*;
  * @author spleaner
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
+@NonNls
 public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
 

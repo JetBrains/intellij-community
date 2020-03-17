@@ -57,7 +57,7 @@ public class XDebuggerHistoryManagerTest extends HeavyPlatformTestCase {
     checkExpression(expressionsBySecondId.get(0), "10", null, null, EvaluationMode.EXPRESSION);
 
     List<XExpression> expressionsByThirdId = manager.getRecentExpressions("id3");
-    assertTrue(expressionsByThirdId == null || expressionsByThirdId.isEmpty());
+    assertTrue(expressionsByThirdId.isEmpty());
   }
 
   private static void checkExpression(@NotNull XExpression expression,

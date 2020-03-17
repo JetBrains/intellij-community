@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -229,6 +230,7 @@ public class FunctionalInterfaceSuggester {
         }
         else if (expression instanceof PsiMethodReferenceExpression) {
           List<PsiType> types = new ArrayList<>();
+          PsiType[] typeArguments = ((PsiMethodReferenceExpression)expression).getTypeParameters();
           for (JavaResolveResult result : ((PsiMethodReferenceExpression)expression).multiResolve(true)) {
             final PsiElement element = result.getElement();
             if (element instanceof PsiMethod) {
@@ -236,6 +238,16 @@ public class FunctionalInterfaceSuggester {
               int offset = hasOffset((PsiMethodReferenceExpression)expression, method) ? 1 : 0;
               final PsiParameter[] targetMethodParameters = method.getParameterList().getParameters();
               if (targetMethodParameters.length + offset == parameters.length) {
+                PsiSubstitutor partialSubstitutor = PsiSubstitutor.EMPTY;
+                if (typeArguments.length > 0) {
+                  PsiTypeParameter[] typeParameters = ((PsiMethod)element).getTypeParameters();
+                  if (typeParameters.length == typeArguments.length) {
+                    Map<PsiTypeParameter, PsiType> substitutorMap = ContainerUtil.newHashMap(Arrays.asList(typeParameters), 
+                                                                                             Arrays.asList(typeArguments));
+                    partialSubstitutor = PsiSubstitutor.createSubstitutor(substitutorMap);
+                  }
+                }
+
                 final PsiType[] left = new PsiType[parameters.length + 1];
                 final PsiType[] right = new PsiType[parameters.length + 1];
                 if (offset > 0) {
@@ -248,10 +260,10 @@ public class FunctionalInterfaceSuggester {
 
                 for (int i = 0; i < targetMethodParameters.length; i++) {
                   left[i + offset] = parameters[i + offset].getType();
-                  right[i + offset] = targetMethodParameters[i].getType();
+                  right[i + offset] = partialSubstitutor.substitute(targetMethodParameters[i].getType());
                 }
 
-                left[parameters.length] = method.isConstructor() ? qualifierType : method.getReturnType();
+                left[parameters.length] = method.isConstructor() ? qualifierType : partialSubstitutor.substitute(method.getReturnType());
                 right[parameters.length] = returnType;
 
                 final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(project)

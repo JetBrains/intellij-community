@@ -13,8 +13,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -40,7 +38,7 @@ import java.util.*;
  */
 @SuppressWarnings("deprecation")
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
+  private static final Logger LOG = Logger.getInstance(InjectedLanguageManagerImpl.class);
   @SuppressWarnings("RedundantStringConstructorCall")
   static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
@@ -56,29 +54,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     myDumbService = DumbService.getInstance(myProject);
     myDocManager = PsiDocumentManager.getInstance(project);
 
-    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
-      @Override
-      public void extensionAdded(@NotNull MultiHostInjector injector, @NotNull PluginDescriptor pluginDescriptor) {
-        clearInjectorCache();
-      }
+    MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(project).addExtensionPointListener(
+      this::clearInjectorCache, false, this);
 
-      @Override
-      public void extensionRemoved(@NotNull MultiHostInjector injector, @NotNull PluginDescriptor pluginDescriptor) {
-        clearInjectorCache();
-      }
-    }, false, this);
-
-    LanguageInjector.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjector>() {
-      @Override
-      public void extensionAdded(@NotNull LanguageInjector extension, @NotNull PluginDescriptor pluginDescriptor) {
-        clearInjectorCache();
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull LanguageInjector extension, @NotNull PluginDescriptor pluginDescriptor) {
-        clearInjectorCache();
-      }
-    }, this);
+    LanguageInjector.EXTENSION_POINT_NAME.addExtensionPointListener(this::clearInjectorCache, this);
 
     project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -227,7 +206,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     // gather text from (patched) leaves
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         String leafText = InjectedLanguageUtil.getUnescapedLeafText(element, false);
         if (leafText != null) {
           text.append(leafText);
@@ -392,10 +371,11 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @TestOnly
-  public static void checkInjectorsAreDisposed(@Nullable Project project) {
-    InjectedLanguageManagerImpl cachedManager =
-      project == null ? null : (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
-    if (cachedManager == null) return;
+  public static void checkInjectorsAreDisposed(@NotNull Project project) {
+    InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
+    if (cachedManager == null) {
+      return;
+    }
 
     try {
       ClassMapCachingNulls<MultiHostInjector> cached = cachedManager.cachedInjectors;

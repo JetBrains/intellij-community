@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactory {
+public class PyRunConfigurationFactoryImpl extends PyRunConfigurationFactoryEx {
   @Override
   public PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName) {
     RunnerAndConfigurationSettings settings = createRunConfiguration(module, PythonConfigurationType.getInstance().getFactory());

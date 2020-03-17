@@ -16,7 +16,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,7 +50,7 @@ public abstract class PyAnnotator extends PyElementVisitor {
   }
 
   protected void markError(PsiElement element, String message) {
-    getHolder().createErrorAnnotation(element, message);
+    getHolder().newAnnotation(HighlightSeverity.ERROR, message).range(element).create();
   }
 
   protected void addHighlightingAnnotation(@NotNull PsiElement target, @NotNull TextAttributesKey key) {
@@ -65,8 +64,8 @@ public abstract class PyAnnotator extends PyElementVisitor {
     // CodeInsightTestFixture#testHighlighting doesn't consider annotations with severity level < INFO
     final HighlightSeverity actualSeverity =
       myTestMode && severity.myVal < HighlightSeverity.INFORMATION.myVal ? HighlightSeverity.INFORMATION : severity;
-    final Annotation annotation = getHolder().createAnnotation(actualSeverity, target.getTextRange(), message);
-    annotation.setTextAttributes(key);
+    (message == null ? getHolder().newSilentAnnotation(actualSeverity) : getHolder().newAnnotation(actualSeverity, message))
+     .range(target).textAttributes(key).create();
   }
 
   protected void addHighlightingAnnotation(@NotNull ASTNode target, @NotNull TextAttributesKey key) {

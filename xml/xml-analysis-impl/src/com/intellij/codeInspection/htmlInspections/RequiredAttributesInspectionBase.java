@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +44,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.
 
 public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection");
+  protected static final Logger LOG = Logger.getInstance(RequiredAttributesInspectionBase.class);
   public String myAdditionalRequiredHtmlAttributes = "";
 
   private static String appendName(String toAppend, String text) {
@@ -61,12 +61,6 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
   @NotNull
   public String getGroupDisplayName() {
     return XmlInspectionGroupNames.HTML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.required.attributes.display.name");
   }
 
   @Override
@@ -123,7 +117,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           LocalQuickFix insertRequiredAttributeIntention = isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
-          final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
+          final String localizedMessage = XmlErrorBundle.message("element.doesnt.have.required.attribute", name, attrName);
           reportOneTagProblem(
             tag,
             attrName,

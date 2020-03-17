@@ -242,7 +242,12 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       ct.replaceAndRestoreComments(callExpression, returnValue);
     }
     else {
-      ct.deleteAndRestoreComments(callExpression);
+      if (parent instanceof PsiExpressionStatement) {
+        ct.deleteAndRestoreComments(callExpression);
+      }
+      else {
+        ct.deleteAndRestoreComments(parent);
+      }
     }
   }
   

@@ -242,7 +242,7 @@ public final class SearchScope {
   }
 
   private static void iterateRecursively(VirtualFile virtualFile, final Processor<? super VirtualFile> processor, boolean recursive) {
-    VfsUtilCore.visitChildrenRecursively(virtualFile, new VirtualFileVisitor(recursive ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
+    VfsUtilCore.visitChildrenRecursively(virtualFile, new VirtualFileVisitor<Void>(recursive ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {

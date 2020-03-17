@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.NameMapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -28,8 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
@@ -38,18 +38,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Stream;
 
 @State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
   public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
 
   private final Project myProject;
   private final Map<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
   private final BreakpointManager myBreakpointManager;
   private final List<NameMapper> myNameMappers = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new SmartList<>();
 
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
@@ -167,14 +165,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
   public void writeExternal(Element element) throws WriteExternalException {
     myBreakpointManager.writeExternal(element);
-  }
-
-  /**
-   * @deprecated to be removed with {@link DebuggerManager#registerPositionManagerFactory(Function)}
-   */
-  @Deprecated
-  public Stream<Function<DebugProcess, PositionManager>> getCustomPositionManagerFactories() {
-    return myCustomPositionManagerFactories.stream();
   }
 
   @Override
@@ -323,11 +313,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   public DebuggerStateManager getContextManager() {
     return myDebuggerStateManager;
-  }
-
-  @Override
-  public void registerPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
-    myCustomPositionManagerFactories.add(factory);
   }
 
   /**

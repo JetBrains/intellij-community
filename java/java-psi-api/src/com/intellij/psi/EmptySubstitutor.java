@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @see PsiSubstitutor#EMPTY
  */
-public class EmptySubstitutor implements PsiSubstitutor {
+public final class EmptySubstitutor implements PsiSubstitutor {
   private static final EmptySubstitutor INSTANCE = new EmptySubstitutor();
   
   public static EmptySubstitutor getInstance()  {

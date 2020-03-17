@@ -113,7 +113,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(java.lang.Object[])}
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newHashSet(Object[])}
    */
   @Deprecated
   @NotNull
@@ -241,7 +241,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#addIfNotNull(java.util.Collection, java.lang.Object)}
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#addIfNotNull(Collection, Object)}
    */
   @Deprecated
   public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
@@ -291,7 +291,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#getLastItem(java.util.List)}
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#getLastItem(List)}
    */
   @Deprecated
   @Contract(pure=true)

@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
@@ -26,13 +27,16 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
@@ -196,6 +200,21 @@ val Module.baseDir: VirtualFile?
 val Module.basePath: String?
   get() = baseDir?.path
 
+fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
+  val root = sdk.homePath?.let { PythonSdkUtil.getVirtualEnvRoot(it) }?.let { LocalFileSystem.getInstance().findFileByIoFile(it) } ?: return
+
+  val model = ModuleRootManager.getInstance(this).modifiableModel
+
+  val contentEntry = model.contentEntries.firstOrNull {
+    val contentFile = it.file
+    contentFile != null && VfsUtil.isAncestor(contentFile, root, true)
+  } ?: return
+  contentEntry.addExcludeFolder(root)
+
+  WriteAction.run<Throwable> {
+    model.commit()
+  }
+}
 
 private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null

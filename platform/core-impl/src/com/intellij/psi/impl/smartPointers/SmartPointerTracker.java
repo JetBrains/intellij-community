@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 class SmartPointerTracker {
-  private static final ReferenceQueue<SmartPsiElementPointerImpl> ourQueue = new ReferenceQueue<>();
+  private static final ReferenceQueue<SmartPsiElementPointerImpl<?>> ourQueue = new ReferenceQueue<>();
 
   private int nextAvailableIndex;
   private int size;
@@ -35,7 +35,7 @@ class SmartPointerTracker {
     LowMemoryWatcher.register(() -> processQueue(), ApplicationManager.getApplication());
   }
 
-  synchronized boolean addReference(@NotNull PointerReference reference, @NotNull SmartPsiElementPointerImpl pointer) {
+  synchronized boolean addReference(@NotNull PointerReference reference, @NotNull SmartPsiElementPointerImpl<?> pointer) {
     if (!isActual(reference.file, reference.key)) {
       // this pointer list has been removed by another thread; clients should get/create an up-to-date list and try adding to it
       return false;

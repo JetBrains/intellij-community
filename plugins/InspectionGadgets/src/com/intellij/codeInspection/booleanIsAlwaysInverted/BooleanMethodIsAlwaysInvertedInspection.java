@@ -47,12 +47,6 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("boolean.method.is.always.inverted.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DATA_FLOW_ISSUES;
   }

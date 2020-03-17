@@ -89,12 +89,6 @@ public class EmptyClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Object element = infos[0];
     if (element instanceof PsiAnonymousClass) {
@@ -161,7 +155,7 @@ public class EmptyClassInspection extends BaseInspection {
 
   private class EmptyClassVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (!(file instanceof PsiJavaFile)) {
         return;

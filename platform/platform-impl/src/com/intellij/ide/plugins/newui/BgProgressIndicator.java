@@ -2,11 +2,6 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -17,27 +12,15 @@ public class BgProgressIndicator extends AbstractProgressIndicatorExBase {
     setIndeterminate(false);
   }
 
+  public void removeStateDelegates() {
+    super.removeAllStateDelegates();
+  }
+
   @Override
   public void setText(String text) {
   }
 
   @Override
   public void setText2(String text) {
-  }
-
-  public void removeStateDelegate(@Nullable ProgressIndicatorEx delegate) {
-    List<ProgressIndicatorEx> stateDelegates =
-      ReflectionUtil.getField(AbstractProgressIndicatorExBase.class, this, List.class, "myStateDelegates");
-    synchronized (getLock()) {
-      if (stateDelegates == null) {
-        return;
-      }
-      if (delegate == null) {
-        stateDelegates.clear();
-      }
-      else {
-        stateDelegates.remove(delegate);
-      }
-    }
   }
 }

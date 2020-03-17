@@ -92,7 +92,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   @NotNull
   @Override
   public FileFilter createFileFilter() {
-    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
+    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
     final FileFilter baseFilter = BuilderRegistry.getInstance().getModuleBuilderFileFilter();
     return file -> baseFilter.accept(file) && !excludes.isExcluded(file);
   }

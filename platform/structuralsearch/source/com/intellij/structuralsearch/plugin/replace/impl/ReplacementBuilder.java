@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -101,7 +102,7 @@ public final class ReplacementBuilder {
           final PsiElement patternNode = elements[0].getParent();
           patternNode.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
-            public void visitElement(PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
               final String text = element.getText();
               if (StructuralSearchUtil.isTypedVariable(text)) {
                 final Collection<ParameterInfo> infos = findParameterization(Replacer.stripTypedVariableDecoration(text));

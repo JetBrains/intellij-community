@@ -33,13 +33,6 @@ public class FieldMayBeFinalInspection extends BaseInspection implements Cleanup
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "field.may.be.final.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.may.be.final.problem.descriptor");

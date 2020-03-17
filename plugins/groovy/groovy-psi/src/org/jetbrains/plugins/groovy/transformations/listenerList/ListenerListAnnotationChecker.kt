@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.transformations.listenerList
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiWildcardType
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
@@ -32,8 +33,8 @@ class ListenerListAnnotationChecker : CustomAnnotationChecker() {
     val field = parent?.variables?.singleOrNull() as? GrField ?: return true
 
     when (field.getListenerType()) {
-      null -> holder.createErrorAnnotation(annotation, "@ListenerList field must have a generic Collection type")
-      is PsiWildcardType -> holder.createErrorAnnotation(annotation, "@ListenerList field with generic wildcards not supported")
+      null -> holder.newAnnotation(HighlightSeverity.ERROR, "@ListenerList field must have a generic Collection type").range(annotation).create()
+      is PsiWildcardType -> holder.newAnnotation(HighlightSeverity.ERROR, "@ListenerList field with generic wildcards not supported").range(annotation).create()
     }
 
     return true

@@ -63,7 +63,7 @@ import java.util.*;
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.run.PythonCommandLineState");
+  private static final Logger LOG = Logger.getInstance(PythonCommandLineState.class);
 
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
@@ -128,7 +128,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     return execute(executor, (CommandLinePatcher[])null);
   }
 
@@ -295,11 +295,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   @NotNull
   public GeneralCommandLine generateCommandLine() {
-    SdkAdditionalData data = null;
-    if (myConfig.getSdk() != null) {
-      data = myConfig.getSdk().getSdkAdditionalData();
-    }
-    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), data, myConfig, isDebug(), myRunWithPty);
+    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig, isDebug(), myRunWithPty);
 
     buildCommandLineParameters(commandLine);
 
@@ -309,18 +305,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  public static GeneralCommandLine createPythonCommandLine(Project project,
-                                                           @Nullable SdkAdditionalData data,
-                                                           PythonRunParams config,
-                                                           boolean isDebug,
-                                                           boolean runWithPty) {
+  public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config, boolean isDebug, boolean runWithPty) {
     GeneralCommandLine commandLine = generalCommandLine(runWithPty);
 
     commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
     createStandardGroups(commandLine);
 
-    initEnvironment(project, data, commandLine, config, isDebug);
+    initEnvironment(project, commandLine, config, isDebug);
 
     setRunnerPath(project, commandLine, config);
 
@@ -348,11 +340,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_SCRIPT);
   }
 
-  protected static void initEnvironment(Project project,
-                                        SdkAdditionalData data,
-                                        GeneralCommandLine commandLine,
-                                        PythonRunParams runParams,
-                                        boolean isDebug) {
+  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams runParams, boolean isDebug) {
     Map<String, String> env = Maps.newHashMap();
 
     setupEncodingEnvs(env, commandLine.getCharset());
@@ -371,7 +359,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     buildPythonPath(project, commandLine, runParams, isDebug);
 
     for (PythonCommandLineEnvironmentProvider envProvider : PythonCommandLineEnvironmentProvider.EP_NAME.getExtensionList()) {
-      envProvider.extendEnvironment(project, data, commandLine, runParams);
+      envProvider.extendEnvironment(project, commandLine, runParams);
     }
   }
 

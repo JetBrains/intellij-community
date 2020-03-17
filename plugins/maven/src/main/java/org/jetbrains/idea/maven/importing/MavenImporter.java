@@ -26,6 +26,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -55,7 +56,7 @@ public abstract class MavenImporter {
   protected final String myPluginGroupID;
   protected final String myPluginArtifactID;
 
-  public MavenImporter(String pluginGroupID, String pluginArtifactID) {
+  public MavenImporter(@NonNls String pluginGroupID, @NonNls String pluginArtifactID) {
     myPluginGroupID = pluginGroupID;
     myPluginArtifactID = pluginArtifactID;
   }
@@ -205,27 +206,27 @@ public abstract class MavenImporter {
   }
 
   @Nullable
-  protected Element getConfig(MavenProject p, String path) {
+  protected Element getConfig(MavenProject p, @NonNls String path) {
     return MavenJDOMUtil.findChildByPath(getConfig(p), path);
   }
 
   @Nullable
-  protected String findConfigValue(MavenProject p, String path) {
+  protected String findConfigValue(MavenProject p, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getConfig(p), path);
   }
 
   @Nullable
-  protected String findConfigValue(MavenProject p, String path, String defaultValue) {
+  protected String findConfigValue(MavenProject p, @NonNls String path, @NonNls String defaultValue) {
     return MavenJDOMUtil.findChildValueByPath(getConfig(p), path, defaultValue);
   }
 
   @Nullable
-  protected Element getGoalConfig(MavenProject p, String goal) {
+  protected Element getGoalConfig(MavenProject p, @NonNls String goal) {
     return p.getPluginGoalConfiguration(myPluginGroupID, myPluginArtifactID, goal);
   }
 
   @Nullable
-  protected String findGoalConfigValue(MavenProject p, String goal, String path) {
+  protected String findGoalConfigValue(MavenProject p, @NonNls String goal, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getGoalConfig(p, goal), path);
   }
 

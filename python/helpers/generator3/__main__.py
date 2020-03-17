@@ -18,22 +18,8 @@ def _bootstrap_sys_path():
 
 
 def _setup_logging():
-    logging.addLevelName(logging.DEBUG - 1, 'TRACE')
-
-    class JsonFormatter(logging.Formatter):
-        def format(self, record):
-            s = super(JsonFormatter, self).format(record)
-            return json.dumps({
-                'type': 'log',
-                'level': record.levelname.lower(),
-                'message': s
-            })
-
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JsonFormatter())
-    root.addHandler(handler)
+    from generator3.util_methods import configure_logging
+    configure_logging(logging.DEBUG)
 
 
 def _enable_segfault_tracebacks():
@@ -43,6 +29,14 @@ def _enable_segfault_tracebacks():
         faulthandler.enable()
     except ImportError:
         pass
+
+
+def _configure_multiprocessing():
+    required_start_method = os.environ.get('GENERATOR3_MULTIPROCESSING_START_METHOD')
+    if required_start_method:
+        import multiprocessing
+        # Available only since Python 3.4
+        multiprocessing.set_start_method(required_start_method)
 
 
 def parse_args(gen_version):
@@ -169,4 +163,5 @@ if __name__ == "__main__":
     _bootstrap_sys_path()
     _setup_logging()
     _enable_segfault_tracebacks()
+    _configure_multiprocessing()
     main()

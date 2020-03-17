@@ -197,7 +197,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
 
       Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
-      StringBuffer buf = new StringBuffer();
+      StringBuilder buf = new StringBuilder();
       DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
@@ -220,11 +220,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   private QuickFixAction[] createQuickFixes(@NotNull InspectionToolWrapper toolWrapper) {
     return new QuickFixAction[]{new PermanentDeleteAction(toolWrapper), new CommentOutBin(toolWrapper), new MoveToEntries(toolWrapper)};
   }
-  private static final String DELETE_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix");
 
   class PermanentDeleteAction extends QuickFixAction {
     PermanentDeleteAction(@NotNull InspectionToolWrapper toolWrapper) {
-      super(DELETE_QUICK_FIX, AllIcons.Actions.Cancel, null, toolWrapper);
+      super(InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix"), AllIcons.Actions.Cancel, null, toolWrapper);
       copyShortcutFrom(ActionManager.getInstance().getAction("SafeDelete"));
     }
 
@@ -305,7 +304,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class CommentOutBin extends QuickFixAction {
     CommentOutBin(@NotNull InspectionToolWrapper toolWrapper) {
-      super(COMMENT_OUT_QUICK_FIX, null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+      super(InspectionsBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
             toolWrapper);
     }
 
@@ -339,7 +338,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
-  private static final String COMMENT_OUT_QUICK_FIX = InspectionsBundle.message("inspection.dead.code.comment.quickfix");
   private static class CommentOutFix implements QuickFix {
     private final RefElement myElement;
 
@@ -350,7 +348,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     @NotNull
     public String getFamilyName() {
-      return COMMENT_OUT_QUICK_FIX;
+      return InspectionsBundle.message("inspection.dead.code.comment.quickfix");
     }
 
     @Override
@@ -599,7 +597,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     @NotNull
     public String getFamilyName() {
-      return DELETE_QUICK_FIX;
+      return InspectionsBundle.message("inspection.dead.code.safe.delete.quickfix");
     }
 
 
@@ -671,7 +669,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
     css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
     css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
     SingleInspectionProfilePanel.readHTML(htmlView, SingleInspectionProfilePanel.toHTML(htmlView, text, false));

@@ -54,12 +54,6 @@ public class AutoBoxingInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("auto.boxing.display.name");
-  }
-
-  @Override
   public String getAlternativeID() {
     return "boxing";
   }

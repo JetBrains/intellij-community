@@ -2,10 +2,10 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.jdi.JNITypeParser;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,11 +28,7 @@ public interface ClassesByNameProvider {
 
     @Override
     public List<ReferenceType> get(@NotNull String s) {
-      String signature = VirtualMachineProxyImpl.JNITypeParserReflect.typeNameToSignature(s);
-      if (signature != null) {
-        return (List<ReferenceType>)myCache.get(signature);
-      }
-      return Collections.emptyList();
+      return (List<ReferenceType>)myCache.get(JNITypeParser.typeNameToSignature(s));
     }
   }
 }

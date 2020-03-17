@@ -27,7 +27,7 @@ class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   }
 
   @Override
-  void doUpdateSize() {
+  void doUpdate() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels <= 0) {
       throw new IllegalArgumentException("Positive width should be defined for an after-line-end element");

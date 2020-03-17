@@ -33,13 +33,6 @@ import org.jetbrains.annotations.Nullable;
 public class ManualArrayCopyInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "manual.array.copy.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

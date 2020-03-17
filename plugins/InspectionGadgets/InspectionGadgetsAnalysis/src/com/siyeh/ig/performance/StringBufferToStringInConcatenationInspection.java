@@ -33,12 +33,6 @@ public class StringBufferToStringInConcatenationInspection extends BaseInspectio
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.buffer.to.string.in.concatenation.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final String className = (String)infos[0];
     return InspectionGadgetsBundle.message("string.buffer.to.string.in.concatenation.problem.descriptor", className);

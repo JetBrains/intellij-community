@@ -226,7 +226,7 @@ public class PyPackageUtil {
 
     if (elementToAnalyze instanceof PyReferenceExpression) {
       final TypeEvalContext context = TypeEvalContext.deepCodeInsight(elementToAnalyze.getProject());
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
       return StreamEx
         .of(((PyReferenceExpression)elementToAnalyze).multiFollowAssignmentsChain(resolveContext))
@@ -337,7 +337,7 @@ public class PyPackageUtil {
       protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
         return languageContribution.isPackageManagementEnabled();
       }
-    }.withSshContribution(true).withVagrantContribution(true).withWebDeploymentContribution(true).check(sdk);
+    }.check(sdk);
   }
 
   /**

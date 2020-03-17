@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Annotators work in three steps:
  * <ol>
- * <li>{@link #collectInformation(PsiFile, Editor, boolean)} is called for the annotator to collect some data about a file needed for launching a tool</li>
+ * <li>{@link #collectInformation(PsiFile, Editor, boolean)} is called to collect some data about a file needed for launching a tool</li>
  * <li>collected data is passed to {@link #doAnnotate} which executes a tool and collect highlighting data</li>
  * <li>highlighting data is applied to a file by {@link #apply}</li>
  * </ol>
@@ -63,16 +63,17 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    *
    * @param file             a file to annotate
    * @param annotationResult annotations collected in {@link ExternalAnnotator#doAnnotate(InitialInfoType)}
-   * @param holder           a container which receives annotations
+   * @param holder           a container for receiving annotations
    */
   public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
 
   /**
-   * Return inspection which should run in batch mode.
-   * When inspection with short name is disabled, then annotator won't run in the editor via {@link com.intellij.codeInsight.daemon.impl.ExternalToolPass}.
+   * <p>Returns an inspection that should run in batch mode.</p>
+   *
+   * <p>When inspection with short name is disabled, then annotator won't run in the editor via {@link com.intellij.codeInsight.daemon.impl.ExternalToolPass}.
    * Implementing {@link com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection}
    * and extending {@link com.intellij.codeInspection.LocalInspectionTool} or {@link GlobalSimpleInspectionTool} would
-   * provide implementation for a batch tool which would run without read action, according to the {@link #doAnnotate(Object)} documentation.
+   * provide implementation for a batch tool that would run without read action, according to the {@link #doAnnotate(Object)} documentation.</p>
    */
   public String getPairedBatchInspectionShortName() {
     return null;

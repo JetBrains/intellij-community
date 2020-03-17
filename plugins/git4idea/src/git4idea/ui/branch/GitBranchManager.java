@@ -17,6 +17,7 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.BranchType;
 import com.intellij.dvcs.branch.DvcsBranchManager;
+import com.intellij.openapi.project.Project;
 import git4idea.branch.GitBranchType;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +28,8 @@ import static git4idea.log.GitRefManager.ORIGIN_MASTER;
 
 public class GitBranchManager extends DvcsBranchManager {
 
-  public GitBranchManager(@NotNull GitVcsSettings settings) {
-    super(settings.getFavoriteBranchSettings(), GitBranchType.values());
+  public GitBranchManager(@NotNull Project project, @NotNull GitVcsSettings settings) {
+    super(project, settings.getFavoriteBranchSettings(), GitBranchType.values());
   }
 
   @Nullable

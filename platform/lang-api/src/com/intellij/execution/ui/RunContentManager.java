@@ -7,11 +7,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,15 +17,12 @@ import java.util.List;
 
 /**
  * The manager of tabs in the Run/Debug toolwindows.
- *
- * @see com.intellij.execution.ExecutionManager#getContentManager()
  */
 public interface RunContentManager {
-  Topic<RunContentWithExecutorListener> TOPIC =
-    Topic.create("Run Content", RunContentWithExecutorListener.class);
+  Topic<RunContentWithExecutorListener> TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);
 
-  static RunContentManager getInstance(Project project) {
-    return ServiceManager.getService(project, RunContentManager.class);
+  static RunContentManager getInstance(@NotNull Project project) {
+    return project.getService(RunContentManager.class);
   }
 
   /**
@@ -37,12 +32,6 @@ public interface RunContentManager {
    */
   @Nullable
   RunContentDescriptor getSelectedContent();
-
-  /** @deprecated use other methods ({@link #getSelectedContent()}, {@link #getContentDescriptorToolWindowId} etc.) */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  RunContentDescriptor getSelectedContent(Executor executor);
 
   /**
    * Returns the list of content descriptors for all currently displayed run/debug configurations.

@@ -8,6 +8,7 @@ import com.intellij.credentialStore.keePass.DB_FILE_NAME
 import com.intellij.credentialStore.keePass.KeePassFileManager
 import com.intellij.credentialStore.keePass.MasterKeyFileStorage
 import com.intellij.credentialStore.keePass.getDefaultMasterPasswordFile
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
@@ -36,8 +37,8 @@ import javax.swing.JPanel
 import javax.swing.JRadioButton
 
 internal class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
-                                                                                                                                                         "Passwords",
-                                                                                                                                                         "reference.ide.settings.password.safe") {
+                                                                                                             IdeBundle.message("password.safe.configurable"),
+                                                                                                             "reference.ide.settings.password.safe") {
   private val settings = service<PasswordSafeSettings>()
 
   override fun getSettings() = settings

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.deadCode;
 
@@ -39,11 +25,11 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   @Override
-  public void compose(final StringBuffer buf, RefEntity refEntity) {
+  public void compose(@NotNull StringBuilder buf, RefEntity refEntity) {
     compose(buf, refEntity, true);
   }
 
-  public void compose(final StringBuffer buf, RefEntity refEntity, boolean toExternalHtml) {
+  public void compose(@NotNull StringBuilder buf, RefEntity refEntity, boolean toExternalHtml) {
     if (toExternalHtml) {
       genPageHeader(buf, refEntity);
     }
@@ -90,7 +76,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
+  public static void appendProblemSynopsis(final RefElement refElement, @NotNull StringBuilder buf) {
     refElement.accept(new RefJavaVisitor() {
       @Override public void visitField(@NotNull RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
@@ -210,7 +196,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   @Override
-  protected void appendAdditionalListItemInfo(StringBuffer buf, RefElement refElement) {
+  protected void appendAdditionalListItemInfo(@NotNull StringBuilder buf, RefElement refElement) {
     if (refElement instanceof RefImplicitConstructor) {
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
     }
@@ -304,7 +290,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     return count;
   }
 
-  private void appendClassInstantiations(StringBuffer buf, RefClass refClass) {
+  private void appendClassInstantiations(@NotNull StringBuilder buf, RefClass refClass) {
     if (!refClass.isInterface() && !refClass.isAbstract() && !refClass.isUtilityClass()) {
       boolean found = false;
 
@@ -328,7 +314,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  private void appendCallesList(RefElement element, StringBuffer buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
+  private void appendCallesList(RefElement element, @NotNull StringBuilder buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
     final Set<RefElement> possibleChildren = getPossibleChildren(element);
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){

@@ -18,27 +18,33 @@ import java.util.Map;
 /**
  * @author Eugene.Kudelevsky
  */
-public class SSBasedInspectionCompiledPatternsCache {
+class SSBasedInspectionCompiledPatternsCache {
 
   private static final Key<Map<Configuration, MatchContext>> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");
 
   @NotNull
-  static Map<Configuration, MatchContext> getCompiledOptions(@NotNull List<Configuration> configurations, @NotNull Project project) {
-    final Map<Configuration, MatchContext> cache = project.getUserData(COMPILED_OPTIONS_KEY);
+  static Map<Configuration, MatchContext> getCompiledOptions(@NotNull List<Configuration> configurations, @NotNull Matcher matcher) {
+    final Project project = matcher.getProject();
+    final Map<Configuration, MatchContext> cache = getCompiledOptions(configurations, matcher, project.getUserData(COMPILED_OPTIONS_KEY));
+    project.putUserData(COMPILED_OPTIONS_KEY, cache);
+    return cache;
+  }
+
+  static Map<Configuration, MatchContext> getCompiledOptions(@NotNull List<Configuration> configurations,
+                                                             @NotNull Matcher matcher,
+                                                             @Nullable Map<Configuration, MatchContext> cache) {
     if (areConfigurationsInCache(configurations, cache)) {
       return cache;
     }
-
     final Map<Configuration, MatchContext> newCache = new HashMap<>();
     if (cache != null) {
       newCache.putAll(cache);
       newCache.keySet().retainAll(configurations);
     }
     if (configurations.size() != newCache.size()) {
-      new Matcher(project).precompileOptions(configurations, newCache);
+      matcher.precompileOptions(configurations, newCache);
     }
-    project.putUserData(COMPILED_OPTIONS_KEY, Collections.unmodifiableMap(newCache));
-    return newCache;
+    return Collections.unmodifiableMap(newCache);
   }
 
   @Contract("_, null -> false")

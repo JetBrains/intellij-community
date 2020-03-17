@@ -106,25 +106,6 @@ fun GrIndexProperty.getArgumentListArgument(): Argument {
   }
 }
 
-fun GrIndexProperty.getArgumentListType(): PsiType? {
-  val argList = argumentList
-  if (argList.namedArguments.isNotEmpty()) return null
-  val expressions = argList.expressionArguments
-  expressions.singleOrNull()?.let { return it.type }
-  return tupleType(expressions, this)
-}
-
-fun GrIndexProperty.getArgumentTypes(rhs: Boolean): Array<PsiType>? {
-  val argumentListType = getArgumentListType() ?: return null
-  if (rhs) {
-    return arrayOf(argumentListType)
-  }
-  else {
-    val rType = (parent as? GrAssignmentExpression)?.type ?: return null
-    return arrayOf(argumentListType, rType)
-  }
-}
-
 @JvmOverloads
 fun GrIndexProperty.multiResolve(rhs: Boolean = true): Array<GroovyResolveResult> {
   return (if (rhs) rValueReference else lValueReference)?.multiResolve(false) ?: GroovyResolveResult.EMPTY_ARRAY

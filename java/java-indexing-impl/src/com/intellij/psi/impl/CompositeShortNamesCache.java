@@ -83,7 +83,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllClassNames(@NotNull Processor<String> processor) {
+  public boolean processAllClassNames(@NotNull Processor<? super String> processor) {
     CommonProcessors.UniqueProcessor<String> uniqueProcessor = new CommonProcessors.UniqueProcessor<>(processor);
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllClassNames(uniqueProcessor)) {
@@ -94,7 +94,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllClassNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllClassNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllClassNames(processor, scope, filter)) {
         return false;
@@ -104,7 +104,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllMethodNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllMethodNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllMethodNames(processor, scope, filter)) {
         return false;
@@ -114,7 +114,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllFieldNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllFieldNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     for (PsiShortNamesCache cache : myCaches) {
       if (!cache.processAllFieldNames(processor, scope, filter)) {
         return false;

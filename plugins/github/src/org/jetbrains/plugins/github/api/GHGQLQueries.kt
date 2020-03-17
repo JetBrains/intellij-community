@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.github.api
 
 object GHGQLQueries {
+  const val findOrganizationTeams = "findOrganizationTeams"
+  const val findRepositoryPermission = "findRepositoryPermission"
   const val issueSearch = "issueSearch"
   const val findPullRequest = "findPullRequest"
   const val pullRequestTimeline = "pullRequestTimeline"
   const val pullRequestReviewThreads = "pullRequestReviewThreads"
+  const val pullRequestCommits = "pullRequestCommits"
 }

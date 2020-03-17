@@ -46,7 +46,7 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
           for (PsiMethod method : equalsMethods) {
             if (!method.hasModifierProperty(PsiModifier.STATIC) &&
                 method.getParameterList().getParametersCount() == 1 &&
-                !TypeUtils.isJavaLangObject(method.getParameterList().getParameters()[0].getType())) {
+                !TypeUtils.isJavaLangObject(Objects.requireNonNull(method.getParameterList().getParameter(0)).getType())) {
               // After replacement may be linked to overloaded equals method
               // even if not, the code becomes more fragile, so let's not suggest the replacement if equals(SomeType) is defined.
               return;

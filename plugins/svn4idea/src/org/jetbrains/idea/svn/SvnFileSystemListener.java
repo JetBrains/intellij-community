@@ -794,10 +794,10 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     else {
       final String singleFilePrompt;
       if (addedVFiles.size() == 1 && addedVFiles.get(0).isDirectory()) {
-        singleFilePrompt = SvnBundle.getString("confirmation.text.add.dir");
+        singleFilePrompt = SvnBundle.message("confirmation.text.add.dir");
       }
       else {
-        singleFilePrompt = SvnBundle.getString("confirmation.text.add.file");
+        singleFilePrompt = SvnBundle.message("confirmation.text.add.file");
       }
       filesToProcess = vcsHelper.selectFilesToProcess(addedVFiles, SvnBundle.message("confirmation.title.add.multiple.files"),
                                                       null,
@@ -915,11 +915,11 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
       final String singleFilePrompt;
       if (deletedFiles.size() == 1 && deletedFiles.get(0).getFirst().isDirectory()) {
         singleFilePrompt = deletedFiles.get(0).getSecond().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ?
-                           SvnBundle.getString("confirmation.text.delete.dir.17") :
-                           SvnBundle.getString("confirmation.text.delete.dir");
+                           SvnBundle.message("confirmation.text.delete.dir.17") :
+                           SvnBundle.message("confirmation.text.delete.dir");
       }
       else {
-        singleFilePrompt = SvnBundle.getString("confirmation.text.delete.file");
+        singleFilePrompt = SvnBundle.message("confirmation.text.delete.file");
       }
       Collection<FilePath> files = vcsHelper
         .selectFilePathsToProcess(map(deletedFiles, Functions.pairFirst()), SvnBundle.message("confirmation.title.delete.multiple.files"),

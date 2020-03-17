@@ -61,6 +61,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,11 +121,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
+  private static final Logger LOG = Logger.getInstance(IntroduceVariableBase.class);
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
   @NonNls private static final String REFACTORING_ID = "refactoring.extractVariable";
 
-  protected static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
   private JavaVariableInplaceIntroducer myInplaceIntroducer;
 
@@ -432,23 +432,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
       tempExpr = elementFactory.createExpressionFromText(text, parent);
 
-      final boolean [] hasErrors = new boolean[1];
-      final JavaRecursiveElementWalkingVisitor errorsVisitor = new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(final PsiElement element) {
-          if (hasErrors[0]) {
-            return;
-          }
-          super.visitElement(element);
-        }
-
-        @Override
-        public void visitErrorElement(final PsiErrorElement element) {
-          hasErrors[0] = true;
-        }
-      };
-      tempExpr.accept(errorsVisitor);
-      if (hasErrors[0]) return null;
+      if (ErrorUtil.containsDeepError(tempExpr)) return null;
 
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
@@ -476,8 +460,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final String fakeInitializer = "intellijidearulezzz";
       final int[] refIdx = new int[1];
       final PsiElement toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker, refIdx);
-      toBeExpression.accept(errorsVisitor);
-      if (hasErrors[0]) return null;
+      if (ErrorUtil.containsDeepError(toBeExpression)) return null;
       if (literalExpression != null && toBeExpression instanceof PsiExpression) {
         PsiType type = ((PsiExpression)toBeExpression).getType();
         if (type != null && !type.equals(literalExpression.getType())) {
@@ -698,7 +681,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                                  editor, expr,
                                                                  allOccurrences,
                                                                  typeSelectorManager,
-                                                                 REFACTORING_NAME);
+                                                                 getRefactoringName());
           }
           else {
             myInplaceIntroducer = new JavaVariableInplaceIntroducer(project,
@@ -707,7 +690,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                                     editor, expr, cantChangeFinalModifier,
                                                                     allOccurrences,
                                                                     typeSelectorManager,
-                                                                    REFACTORING_NAME);
+                                                                    getRefactoringName());
           }
           if (myInplaceIntroducer.startInplaceIntroduceTemplate()) {
             return;
@@ -753,7 +736,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               project.getMessageBus()
                 .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, afterData);
             }
-          }, REFACTORING_NAME, null);
+          }, getRefactoringName(), null);
       }
     };
 
@@ -800,16 +783,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   @Contract("_, _, null -> null")
   protected PsiElement checkAnchorStatement(Project project, Editor editor, PsiElement anchorStatement) {
     if (anchorStatement == null) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
       showErrorMessage(project, editor, message);
       return null;
     }
-    if (checkAnchorBeforeThisOrSuper(project, editor, anchorStatement, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE)) return null;
+    if (checkAnchorBeforeThisOrSuper(project, editor, anchorStatement, getRefactoringName(), HelpID.INTRODUCE_VARIABLE)) return null;
 
     final PsiElement tempContainer = anchorStatement.getParent();
 
     if (!(tempContainer instanceof PsiCodeBlock) && !RefactoringUtil.isLoopOrIf(tempContainer) && !(tempContainer instanceof PsiLambdaExpression) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
       showErrorMessage(project, editor, message);
       return null;
     }
@@ -1234,5 +1217,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
       return occurrencesMap;
     }
+  }
+
+  protected static String getRefactoringName() {
+    return RefactoringBundle.message("introduce.variable.title");
   }
 }

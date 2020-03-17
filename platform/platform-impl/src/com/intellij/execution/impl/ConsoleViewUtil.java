@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;
@@ -42,18 +42,17 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class ConsoleViewUtil {
-
+public final class ConsoleViewUtil {
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
 
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
   @NotNull
-  public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
+  public static EditorEx setupConsoleEditor(Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(document);
-    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project, EditorKind.CONSOLE);
+    EditorEx editor = (EditorEx)editorFactory.createViewer(document, project, EditorKind.CONSOLE);
     setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);
     return editor;
   }
@@ -162,8 +161,8 @@ public class ConsoleViewUtil {
       });
     }
 
-    static final Map<Key, List<TextAttributesKey>> textAttributeKeys = ContainerUtil.newConcurrentMap();
-    static final Map<Key, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
+    static final Map<Key<?>, List<TextAttributesKey>> textAttributeKeys = ContainerUtil.newConcurrentMap();
+    static final Map<Key<?>, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
         for (TextAttributesKey key : textAttributeKeys.get(contentKey)) {
@@ -176,12 +175,12 @@ public class ConsoleViewUtil {
       }
     );
 
-    static final Map<List<TextAttributesKey>, Key> keys = ConcurrentFactoryMap.createMap(keys-> {
+    static final Map<List<TextAttributesKey>, Key<?>> keys = ConcurrentFactoryMap.createMap(keys-> {
         StringBuilder keyName = new StringBuilder("ConsoleViewUtil_");
         for (TextAttributesKey key : keys) {
           keyName.append("_").append(key.getExternalName());
         }
-        final Key newKey = new Key(keyName.toString());
+        Key<?> newKey = new Key<>(keyName.toString());
         textAttributeKeys.put(newKey, keys);
         ConsoleViewContentType contentType = new ConsoleViewContentType(keyName.toString(), HighlighterColors.TEXT) {
           @Override

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 class UpdatingChangeListBuilder implements ChangelistBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdatingChangeListBuilder");
+  private static final Logger LOG = Logger.getInstance(UpdatingChangeListBuilder.class);
   private final ChangeListUpdater myChangeListUpdater;
   private final FileHolderComposite myComposite;
   private final Getter<Boolean> myDisposedGetter;

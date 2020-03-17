@@ -24,28 +24,38 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class PythonHelpersLocator {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
+public final class PythonHelpersLocator {
+  private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
 
-  protected PythonHelpersLocator() {}
+  private PythonHelpersLocator() {}
 
   /**
    * @return the base directory under which various scripts, etc are stored.
    */
   @NotNull
   public static File getHelpersRoot() {
+    return getHelperRoot("intellij.python.helpers", "helpers");
+  }
+
+  @NotNull
+  public static File getHelpersProRoot() {
+    return getHelperRoot("intellij.python.helpers.pro", "helpers-pro");
+  }
+
+  @NotNull
+  private static File getHelperRoot(@NotNull String moduleName, @NotNull String dirName) {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
     final File pluginBaseDir = getPluginBaseDir(jarPath);
     if (pluginBaseDir != null) {
-      return new File(pluginBaseDir, "helpers");
+      return new File(pluginBaseDir, dirName);
     }
     else {
-      return new File(new File(jarPath).getParentFile(), "intellij.python.helpers");
+      return new File(new File(jarPath).getParentFile(), moduleName);
     }
   }
 
   @Nullable
-  protected static File getPluginBaseDir(@NonNls String jarPath) {
+  private static File getPluginBaseDir(@NonNls String jarPath) {
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);
 

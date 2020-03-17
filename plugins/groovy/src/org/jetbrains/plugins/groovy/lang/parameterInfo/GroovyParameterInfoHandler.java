@@ -10,7 +10,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import java.util.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,11 +50,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return true;
   }
 
-  private static final Set<Class> ourStopSearch = Collections.singleton(GrMethod.class);
+  private static final Set<Class<?>> ourStopSearch = Collections.singleton(GrMethod.class);
 
   @NotNull
   @Override
-  public Set<Class> getArgListStopSearchClasses() {
+  public Set<? extends Class<?>> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 
@@ -185,12 +184,6 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public void updateParameterInfo(@NotNull GroovyPsiElement place, @NotNull UpdateParameterInfoContext context) {
-    final PsiElement parameterOwner = context.getParameterOwner();
-    if (parameterOwner != place) {
-      context.removeHint();
-      return;
-    }
-
     int offset = context.getEditor().getCaretModel().getOffset();
     offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");
     final int currIndex = getCurrentParameterIndex(place, offset);
@@ -469,11 +462,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return GroovyTokenTypes.mRPAREN;
   }
 
-  private static final Set<Class> ALLOWED_PARAM_CLASSES = Collections.singleton(GroovyPsiElement.class);
+  private static final Set<Class<?>> ALLOWED_PARAM_CLASSES = Collections.singleton(GroovyPsiElement.class);
 
   @NotNull
   @Override
-  public Set<Class> getArgumentListAllowedParentClasses() {
+  public Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_PARAM_CLASSES;
   }
 

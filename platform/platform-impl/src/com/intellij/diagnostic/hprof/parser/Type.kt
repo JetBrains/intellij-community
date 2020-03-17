@@ -42,7 +42,7 @@ enum class Type(val typeId: Int, val size: Int, private val arrayName: String) {
     private val sNameTypeMap = HashMap<String, Type>()
 
     init {
-      for (type in Type.values()) {
+      for (type in values()) {
         sIdTypeMap[type.typeId] = type
         sNameTypeMap[type.arrayName] = type
       }

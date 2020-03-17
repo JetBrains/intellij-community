@@ -37,13 +37,6 @@ public class ClassNamePrefixedWithPackageNameInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.name.prefixed.with.package.name.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.prefixed.with.package.name.problem.descriptor");

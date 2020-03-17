@@ -4,6 +4,7 @@
 
 from typing import (Iterator, TypeVar, Iterable, overload, Any, Callable, Tuple,
                     Generic, Optional)
+import sys
 
 _T = TypeVar('_T')
 _S = TypeVar('_S')
@@ -19,7 +20,17 @@ def repeat(object: _T) -> Iterator[_T]: ...
 @overload
 def repeat(object: _T, times: int) -> Iterator[_T]: ...
 
-def accumulate(iterable: Iterable[_T], func: Callable[[_T, _T], _T] = ...) -> Iterator[_T]: ...
+if sys.version_info >= (3, 8):
+    @overload
+    def accumulate(iterable: Iterable[_T],
+                   func: Callable[[_T, _T], _T] = ...) -> Iterator[_T]: ...
+    @overload
+    def accumulate(iterable: Iterable[_T],
+                   func: Callable[[_S, _T], _S],
+                   initial: Optional[_S]) -> Iterator[_S]: ...
+else:
+    def accumulate(iterable: Iterable[_T],
+                   func: Callable[[_T, _T], _T] = ...) -> Iterator[_T]: ...
 
 class chain(Iterator[_T], Generic[_T]):
     def __init__(self, *iterables: Iterable[_T]) -> None: ...

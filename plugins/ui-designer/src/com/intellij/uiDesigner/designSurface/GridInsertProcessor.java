@@ -29,7 +29,7 @@ import java.awt.*;
  * @author yole
  */
 public class GridInsertProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertProcessor");
+  private static final Logger LOG = Logger.getInstance(GridInsertProcessor.class);
 
   private final GuiEditor myEditor;
 

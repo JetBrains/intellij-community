@@ -7,13 +7,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 public interface GrConstructorInvocation extends GrStatement, GrConstructorCall {
 
   @Override
   @NotNull
-  GroovyCallReference getConstructorReference();
+  GroovyConstructorReference getConstructorReference();
 
   boolean isSuperCall();
 

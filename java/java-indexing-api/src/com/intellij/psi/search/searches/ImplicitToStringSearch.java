@@ -4,6 +4,7 @@ package com.intellij.psi.search.searches;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ImplicitToStringSearch extends ExtensibleQueryFactory<PsiExpression, ImplicitToStringSearch.SearchParameters> {
@@ -31,7 +32,9 @@ public class ImplicitToStringSearch extends ExtensibleQueryFactory<PsiExpression
   }
 
   public static Query<PsiExpression> search(@NotNull PsiMethod targetMethod, @NotNull SearchScope scope) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(targetMethod, scope));
+    return INSTANCE.createUniqueResultsQuery(new SearchParameters(targetMethod, scope),
+                                             ContainerUtil.canonicalStrategy(),
+                                             SmartPointerManager::createPointer);
   }
 
   public static boolean isToStringMethod(@NotNull PsiElement element) {

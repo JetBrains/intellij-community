@@ -13,7 +13,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.psi.formatter.FormatterUtil.REFORMAT_BEFORE_COMMIT_COMMAND_NAME
+import com.intellij.psi.formatter.FormatterUtil.getReformatBeforeCommitCommandName
 
 open class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
@@ -38,7 +38,7 @@ open class ReformatBeforeCheckinHandler(
     }
 
     if (settings.REFORMAT_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      ReformatCodeProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), REFORMAT_BEFORE_COMMIT_COMMAND_NAME, saveAndContinue,
+      ReformatCodeProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), getReformatBeforeCommitCommandName(), saveAndContinue,
                             true).run()
     }
     else {

@@ -37,7 +37,7 @@ public class PathMacrosCollectorTest extends UsefulTestCase {
     root.addContent(new Text("$Revision 1.23$"));
     root.addContent(new Text("file://$root$/some/path/just$file$name.txt"));
 
-    final Set<String> macros = PathMacrosCollector.getMacroNames(root, null, new PathMacrosImpl());
+    final Set<String> macros = PathMacrosCollector.getMacroNames(root, null, new PathMacrosImpl(false));
     UsefulTestCase.assertSameElements(macros, "MACro1", "macro4", "mac_ro6", "macr.o7", "mac-ro8", "root");
   }
 
@@ -53,7 +53,7 @@ public class PathMacrosCollectorTest extends UsefulTestCase {
                                                                     public boolean recursePathMacros(@NotNull Attribute attribute) {
                                                                       return "value".equals(attribute.getName());
                                                                     }
-                                                                  }, new PathMacrosImpl());
+                                                                  }, new PathMacrosImpl(false));
     UsefulTestCase.assertSameElements(macros, "macro5", "MACRO", "root");
   }
 
@@ -64,7 +64,7 @@ public class PathMacrosCollectorTest extends UsefulTestCase {
     testTag.setAttribute("ignore", "$PATH$");
     root.addContent(testTag);
 
-    final Set<String> macros = PathMacrosCollector.getMacroNames(root, null, new PathMacrosImpl());
+    final Set<String> macros = PathMacrosCollector.getMacroNames(root, null, new PathMacrosImpl(false));
     assertEquals(2, macros.size());
     assertTrue(macros.contains("MACRO"));
     assertTrue(macros.contains("PATH"));
@@ -74,7 +74,7 @@ public class PathMacrosCollectorTest extends UsefulTestCase {
                                                                      public boolean skipPathMacros(@NotNull Attribute attribute) {
                                                                        return "ignore".equals(attribute.getName());
                                                                      }
-                                                                   }, new PathMacrosImpl());
+                                                                   }, new PathMacrosImpl(false));
 
     assertEquals(1, filtered.size());
     assertTrue(macros.contains("MACRO"));

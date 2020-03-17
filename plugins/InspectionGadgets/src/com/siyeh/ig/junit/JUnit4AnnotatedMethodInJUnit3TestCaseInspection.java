@@ -29,7 +29,6 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TestUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,13 +66,6 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     final String className = aClass.getName();
     fixes.add(new ConvertToJUnit4Fix(className));
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("junit4.test.method.in.class.extending.junit3.testcase.display.name");
   }
 
   @Override

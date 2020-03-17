@@ -27,7 +27,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -76,9 +75,8 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
   }
 
   @Override
-  @Nls
   public String getDisplayName() {
-    return "Advanced";
+    return IntelliLangBundle.message("configurable.AdvancedSettingsUI.display.name");
   }
 
   @Override

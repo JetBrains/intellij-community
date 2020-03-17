@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -37,5 +37,5 @@ public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConst
 
   @Override
   @NotNull
-  GroovyCallReference getConstructorReference();
+  GroovyConstructorReference getConstructorReference();
 }

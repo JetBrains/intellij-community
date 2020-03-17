@@ -1,17 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -19,9 +21,18 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcs.log.VcsCommitMetadata;
+import com.intellij.vcs.log.graph.DefaultColorGenerator;
+import com.intellij.vcs.log.graph.EdgePrintElement;
+import com.intellij.vcs.log.graph.NodePrintElement;
+import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
+import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel;
+import git4idea.history.GitCommitRequirements;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,35 +40,57 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.*;
+
+import static git4idea.history.GitLogUtil.readFullDetailsForHashes;
 
 /**
  * Interactive rebase editor. It allows reordering of the entries and changing commit status.
  */
 public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myRoot;
+  @NotNull private static final String DETAILS_PROPORTION = "Git.Interactive.Rebase.Details.Proportion";
+  @NotNull private static final String DIMENSION_KEY = "Git.Interactive.Rebase.Dialog";
+  private static final int DIALOG_HEIGHT = 450;
+  private static final int DIALOG_WIDTH = 800;
 
   @NotNull private final MyTableModel myTableModel;
   @NotNull private final JBTable myCommitsTable;
   @NotNull private final CopyProvider myCopyProvider;
+  @NotNull private final FullCommitDetailsListPanel myFullCommitDetailsListPanel;
 
   private boolean myModified;
 
-  protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntry> entries) {
+  protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntryWithDetails> entries) {
     super(project, true);
-    myProject = project;
-    myRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
     setOKButtonText(GitBundle.getString("rebase.editor.button"));
 
     myTableModel = new MyTableModel(entries);
     myTableModel.addTableModelListener(e -> validateFields());
     myTableModel.addTableModelListener(e -> myModified = true);
+
+    myFullCommitDetailsListPanel = new FullCommitDetailsListPanel(project, getDisposable(), ModalityState.stateForComponent(getWindow())) {
+      @NotNull
+      @Override
+      protected List<Change> loadChanges(@NotNull List<? extends VcsCommitMetadata> commits) throws VcsException {
+        List<Change> changes = new ArrayList<>();
+        readFullDetailsForHashes(
+          project,
+          gitRoot,
+          ContainerUtil.map(commits, commit -> commit.getId().asString()),
+          GitCommitRequirements.DEFAULT,
+          gitCommit -> changes.addAll(gitCommit.getChanges())
+        );
+        return CommittedChangesTreeBrowser.zipChanges(changes);
+      }
+    };
 
     myCommitsTable = new JBTable(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -66,11 +99,25 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value != null) {
+          setBorder(null);
           append(value.toString());
           SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
         }
       }
     });
+    myCommitsTable.getSelectionModel().addListSelectionListener(e -> {
+      if (e.getValueIsAdjusting()) {
+        return;
+      }
+      List<VcsCommitMetadata> selectedCommits = new ArrayList<>();
+      int[] selectedEntries = myCommitsTable.getSelectedRows();
+      for (int selectedEntry : selectedEntries) {
+        selectedCommits.add(myTableModel.myEntries.get(selectedEntry).getCommitDetails());
+      }
+      myFullCommitDetailsListPanel.commitsSelected(selectedCommits);
+    });
+    myCommitsTable.setTableHeader(null);
+
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
     actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.getKnownActionsArray()).withClickCount(1));
     actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.getKnownActionsArray()));
@@ -87,8 +134,23 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     installSpeedSearch();
     myCopyProvider = new MyCopyProvider();
 
+    TableColumn commitIconColor = myCommitsTable.getColumnModel().getColumn(MyTableModel.COMMIT_ICON_COLUMN);
+    MyCommitIconRenderer renderer = new MyCommitIconRenderer();
+    commitIconColor.setCellRenderer(new TableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        renderer.update(table, isSelected, hasFocus, row, column, row == table.getRowCount() - 1);
+        return renderer;
+      }
+    });
+
+    adjustColumnWidth(MyTableModel.COMMIT_ICON_COLUMN);
     adjustColumnWidth(MyTableModel.ACTION_COLUMN);
-    adjustColumnWidth(MyTableModel.HASH_COLUMN);
     init();
   }
 
@@ -112,15 +174,15 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     return myCommitsTable;
   }
 
-  private void adjustColumnWidth(int columnIndex) {
-    int contentWidth = myCommitsTable.getExpandedColumnWidth(columnIndex) + UIUtil.DEFAULT_HGAP;
-    TableColumn column = myCommitsTable.getColumnModel().getColumn(columnIndex);
+  private void adjustColumnWidth(int columnId) {
+    int contentWidth = myCommitsTable.getExpandedColumnWidth(columnId) + UIUtil.DEFAULT_HGAP;
+    TableColumn column = myCommitsTable.getColumnModel().getColumn(columnId);
     column.setMaxWidth(contentWidth);
     column.setPreferredWidth(contentWidth);
   }
 
   private void validateFields() {
-    final List<GitRebaseEntry> entries = myTableModel.myEntries;
+    final List<GitRebaseEntryWithDetails> entries = myTableModel.myEntries;
     if (entries.size() == 0) {
       setErrorText(GitBundle.getString("rebase.editor.invalid.entryset"), myCommitsTable);
       setOKActionEnabled(false);
@@ -144,13 +206,25 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @Override
   protected JComponent createCenterPanel() {
-    return ToolbarDecorator.createDecorator(myCommitsTable)
+    JBSplitter detailsSplitter = new OnePixelSplitter(DETAILS_PROPORTION, 0.5f);
+    JPanel tablePanel = ToolbarDecorator.createDecorator(myCommitsTable)
       .disableAddAction()
       .disableRemoveAction()
-      .addExtraAction(new MyDiffAction())
       .setMoveUpAction(new MoveUpDownActionListener(MoveDirection.UP))
       .setMoveDownAction(new MoveUpDownActionListener(MoveDirection.DOWN))
       .createPanel();
+    tablePanel.setBorder(JBUI.Borders.empty());
+    detailsSplitter.setFirstComponent(tablePanel);
+    detailsSplitter.setSecondComponent(myFullCommitDetailsListPanel);
+    BorderLayoutPanel centerPanel = new BorderLayoutPanel().addToCenter(detailsSplitter);
+    centerPanel.setPreferredSize(new JBDimension(DIALOG_WIDTH, DIALOG_HEIGHT));
+    return centerPanel;
+  }
+
+  @NotNull
+  @Override
+  protected DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
   }
 
   @NotNull
@@ -160,7 +234,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @Override
   protected String getDimensionServiceKey() {
-    return getClass().getName();
+    return DIMENSION_KEY;
   }
 
   @Override
@@ -169,7 +243,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   }
 
   @NotNull
-  public List<GitRebaseEntry> getEntries() {
+  public List<? extends GitRebaseEntry> getEntries() {
     return myTableModel.myEntries;
   }
 
@@ -182,34 +256,33 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     return null;
   }
 
+  private static class MyCommitIcon {
+    @NotNull static MyCommitIcon INSTANCE = new MyCommitIcon();
+  }
+
   private class MyTableModel extends AbstractTableModel implements EditableModel {
-    private static final int ACTION_COLUMN = 0;
-    private static final int HASH_COLUMN = 1;
+    private static final int COMMIT_ICON_COLUMN = 0;
+    private static final int ACTION_COLUMN = 1;
     private static final int SUBJECT_COLUMN = 2;
 
-    @NotNull private final List<GitRebaseEntry> myEntries;
+    @NotNull private final List<GitRebaseEntryWithDetails> myEntries;
     private int[] myLastEditableSelectedRows = new int[]{};
 
-    MyTableModel(@NotNull List<GitRebaseEntry> entries) {
+    MyTableModel(@NotNull List<GitRebaseEntryWithDetails> entries) {
       myEntries = entries;
     }
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      return columnIndex == ACTION_COLUMN ? GitRebaseEntry.Action.class : String.class;
-    }
-
-    @Override
-    public String getColumnName(int column) {
-      switch (column) {
+      switch (columnIndex) {
+        case COMMIT_ICON_COLUMN:
+          return MyCommitIcon.class;
         case ACTION_COLUMN:
-          return GitBundle.getString("rebase.editor.action.column");
-        case HASH_COLUMN:
-          return GitBundle.getString("rebase.editor.commit.column");
+          return GitRebaseEntry.Action.class;
         case SUBJECT_COLUMN:
-          return GitBundle.getString("rebase.editor.comment.column");
+          return String.class;
         default:
-          throw new IllegalArgumentException("Unsupported column index: " + column);
+          throw new IllegalArgumentException("Unsupported column index: " + columnIndex);
       }
     }
 
@@ -227,10 +300,10 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     public Object getValueAt(int rowIndex, int columnIndex) {
       GitRebaseEntry e = myEntries.get(rowIndex);
       switch (columnIndex) {
+        case COMMIT_ICON_COLUMN:
+          return MyCommitIcon.INSTANCE;
         case ACTION_COLUMN:
           return e.getAction();
-        case HASH_COLUMN:
-          return e.getCommit();
         case SUBJECT_COLUMN:
           return e.getSubject();
         default:
@@ -262,7 +335,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
-      GitRebaseEntry movingElement = myEntries.remove(oldIndex);
+      GitRebaseEntryWithDetails movingElement = myEntries.remove(oldIndex);
       myEntries.add(newIndex, movingElement);
       fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
     }
@@ -283,7 +356,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
         return null;
       }
       GitRebaseEntry e = myEntries.get(row);
-      return e.getCommit() + " " + e.getSubject();
+      return e.getSubject();
     }
 
     private void setSelection(@NotNull ContiguousIntIntervalTracker intervalBuilder) {
@@ -384,26 +457,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
   }
 
-  private class MyDiffAction extends ToolbarDecorator.ElementActionButton implements DumbAware {
-    MyDiffAction() {
-      super("View", "View commit contents", AllIcons.Actions.ListChanges);
-      registerCustomShortcutSet(CommonShortcuts.getDiff(), myCommitsTable);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      int row = myCommitsTable.getSelectedRow();
-      assert row >= 0 && row < myTableModel.getRowCount();
-      GitRebaseEntry entry = myTableModel.myEntries.get(row);
-      GitUtil.showSubmittedFiles(myProject, entry.getCommit(), myRoot, false, false);
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return super.isEnabled() && myCommitsTable.getSelectedRowCount() == 1;
-    }
-  }
-
   private class SetActionAction extends DumbAwareAction {
     private final GitRebaseEntry.Action myAction;
 
@@ -448,6 +501,115 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
         return lines;
       }
       return null;
+    }
+  }
+
+  private static class MyCommitIconRenderer extends SimpleColoredRenderer {
+    @NotNull static final EdgePrintElement UP_EDGE = getEdge(EdgePrintElement.Type.UP);
+    @NotNull static final EdgePrintElement DOWN_EDGE = getEdge(EdgePrintElement.Type.DOWN);
+    @NotNull static final NodePrintElement NODE = getNode();
+    @NotNull final SimpleGraphCellPainter myPainter;
+
+    private boolean myIsHead = false;
+
+    MyCommitIconRenderer() {
+      JBColor nodeColor = new DefaultColorGenerator().getColor(1);
+      myPainter = new SimpleGraphCellPainter(colorId -> nodeColor);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      drawCommitIcon((Graphics2D)g);
+    }
+
+    void update(JTable table, boolean isSelected, boolean hasFocus, int row, int column, boolean isHead) {
+      clear();
+      setPaintFocusBorder(false);
+      acquireState(table, isSelected, hasFocus, row, column);
+      getCellState().updateRenderer(this);
+      setBorder(null);
+      myIsHead = isHead;
+    }
+
+    private void drawCommitIcon(Graphics2D g2) {
+      List<PrintElement> elements = new ArrayList<>();
+      elements.add(UP_EDGE);
+      elements.add(NODE);
+      if (!myIsHead) {
+        elements.add(DOWN_EDGE);
+      }
+      myPainter.draw(g2, elements);
+    }
+
+    @NotNull
+    private static EdgePrintElement getEdge(EdgePrintElement.Type type) {
+      return new EdgePrintElement() {
+        @Override
+        public int getPositionInOtherRow() {
+          return 0;
+        }
+
+        @NotNull
+        @Override
+        public Type getType() {
+          return type;
+        }
+
+        @NotNull
+        @Override
+        public LineStyle getLineStyle() {
+          return LineStyle.SOLID;
+        }
+
+        @Override
+        public boolean hasArrow() {
+          return false;
+        }
+
+        @Override
+        public int getRowIndex() {
+          return 0;
+        }
+
+        @Override
+        public int getPositionInCurrentRow() {
+          return 0;
+        }
+
+        @Override
+        public int getColorId() { return 0; }
+
+        @Override
+        public boolean isSelected() {
+          return false;
+        }
+      };
+    }
+
+    @NotNull
+    private static NodePrintElement getNode() {
+      return new NodePrintElement() {
+        @Override
+        public int getRowIndex() {
+          return 0;
+        }
+
+        @Override
+        public int getPositionInCurrentRow() {
+          return 0;
+        }
+
+        @Override
+        public int getColorId() {
+          return 0;
+        }
+
+        @Override
+        public boolean isSelected() {
+          return false;
+        }
+      };
     }
   }
 }

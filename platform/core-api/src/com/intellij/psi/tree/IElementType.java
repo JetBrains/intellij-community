@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
  * @see com.intellij.lang.ASTNode#getElementType()
  */
 public class IElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
+  private static final Logger LOG = Logger.getInstance(IElementType.class);
 
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
@@ -43,7 +44,7 @@ public class IElementType {
   private static short size; // guarded by lock
   @NotNull
   private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @SuppressWarnings("RedundantStringConstructorCall")
+  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
   private static final Object lock = new String("registry lock");
 
   static {
@@ -73,6 +74,7 @@ public class IElementType {
   }
 
   private final short myIndex;
+  @NonNls
   @NotNull
   private final String myDebugName;
   @NotNull
@@ -84,7 +86,7 @@ public class IElementType {
    * @param debugName the name of the element type, used for debugging purposes.
    * @param language  the language with which the element type is associated.
    */
-  public IElementType(@NotNull String debugName, @Nullable Language language) {
+  public IElementType(@NonNls @NotNull String debugName, @Nullable Language language) {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
@@ -97,15 +99,14 @@ public class IElementType {
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  protected IElementType(@NotNull String debugName, @Nullable Language language, boolean register) {
+  protected IElementType(@NonNls @NotNull String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
       synchronized (lock) {
         myIndex = size++;
         if (myIndex >= MAX_INDEXED_TYPES) {
-          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(i->i!=null).collect(Collectors.groupingBy(ie -> ie.myLanguage));
+          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
           Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
           List<IElementType> types = max.getValue();
           LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
@@ -114,6 +115,7 @@ public class IElementType {
         IElementType[] newRegistry =
           myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
         newRegistry[myIndex] = this;
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourRegistry = newRegistry;
       }
     }

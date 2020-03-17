@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
+  private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
   private volatile String myText;
   private volatile double myFraction;
@@ -74,7 +74,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private static final Set<Class> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
 
   protected boolean isReuseable() {
     return false;

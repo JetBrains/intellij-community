@@ -1,19 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
-class ComboContentLayout extends ContentLayout {
-
+final class ComboContentLayout extends ContentLayout {
   ContentComboLabel myComboLabel;
 
   ComboContentLayout(ToolWindowContentUi ui) {
@@ -36,7 +34,7 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void layout() {
-    Rectangle bounds = myUi.getBounds();
+    Rectangle bounds = myUi.getTabComponent().getBounds();
     Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : JBUI.emptySize();
 
     int eachX = 0;
@@ -73,9 +71,6 @@ class ComboContentLayout extends ContentLayout {
   }
 
   @Override
-  public void paintChildren(Graphics g) { }
-
-  @Override
   public void update() {
     updateIdLabel(myIdLabel);
     myComboLabel.update();
@@ -83,17 +78,18 @@ class ComboContentLayout extends ContentLayout {
 
   @Override
   public void rebuild() {
-    myUi.removeAll();
+    myUi.getTabComponent().removeAll();
 
-    myUi.add(myIdLabel);
+    myUi.getTabComponent().add(myIdLabel);
     ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
 
-    myUi.add(myComboLabel);
+    myUi.getTabComponent().add(myComboLabel);
     ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);
   }
 
   boolean isToDrawCombo() {
-    return myUi.myManager.getContentCount() > 1;
+    ContentManager manager = myUi.getContentManager();
+    return manager != null && manager.getContentCount() > 1;
   }
 
   @Override
@@ -109,16 +105,6 @@ class ComboContentLayout extends ContentLayout {
     final int width = myComboLabel.getSize().width;
     listPopup.setMinimumSize(new Dimension(width, 0));
     listPopup.show(new RelativePoint(myComboLabel, new Point(0, myComboLabel.getHeight())));
-  }
-
-  @Override
-  public RelativeRectangle getRectangleFor(Content content) {
-    return null;
-  }
-
-  @Override
-  public Component getComponentFor(Content content) {
-    return null;
   }
 
   @Override

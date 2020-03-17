@@ -76,31 +76,37 @@ object ExecUtil {
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput =
-    CapturingProcessHandler(commandLine).runProcess()
+  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput {
+    return CapturingProcessHandler(commandLine).runProcess()
+  }
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput =
-    CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
+  fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput {
+    return CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
+  }
 
   @JvmStatic
-  fun execAndReadLine(commandLine: GeneralCommandLine): String? = try {
-    readFirstLine(commandLine.createProcess().inputStream,
+  fun execAndReadLine(commandLine: GeneralCommandLine): String? {
+    return try {
+      readFirstLine(commandLine.createProcess().inputStream,
         commandLine.charset)
-  }
-  catch (e: ExecutionException) {
-    Logger.getInstance(ExecUtil::class.java).debug(e)
-    null
+    }
+    catch (e: ExecutionException) {
+      Logger.getInstance(ExecUtil::class.java).debug(e)
+      null
+    }
   }
 
   @JvmStatic
-  fun readFirstLine(stream: InputStream, cs: Charset?): String? = try {
-    BufferedReader(if (cs == null) InputStreamReader(stream) else InputStreamReader(stream, cs)).use { it.readLine() }
-  }
-  catch (e: IOException) {
-    Logger.getInstance(ExecUtil::class.java).debug(e)
-    null
+  fun readFirstLine(stream: InputStream, cs: Charset?): String? {
+    return try {
+      BufferedReader(if (cs == null) InputStreamReader(stream) else InputStreamReader(stream, cs)).use { it.readLine() }
+    }
+    catch (e: IOException) {
+      Logger.getInstance(ExecUtil::class.java).debug(e)
+      null
+    }
   }
 
   /**
@@ -114,8 +120,9 @@ object ExecUtil {
    */
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
-  fun sudo(commandLine: GeneralCommandLine, prompt: String): Process =
-    sudoCommand(commandLine, prompt).createProcess()
+  fun sudo(commandLine: GeneralCommandLine, prompt: String): Process {
+    return sudoCommand(commandLine, prompt).createProcess()
+  }
 
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
@@ -251,6 +258,12 @@ object ExecUtil {
     }
   }
 
+  /**
+   * Wraps the commandline process with the OS specific utility
+   * to mark the process to run with low priority.
+   *
+   * NOTE. Windows implementation does not return the original process exit code!
+   */
   @JvmStatic
   fun setupLowPriorityExecution(commandLine: GeneralCommandLine) {
     if (canRunLowPriority()) {

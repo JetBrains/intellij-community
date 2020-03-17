@@ -46,7 +46,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
                                       LocalQuickFixProvider,
                                       EmptyResolveMessageProvider, BindablePsiReference {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
+  private static final Logger LOG = Logger.getInstance(FileReference.class);
 
   public static final FileReference[] EMPTY = new FileReference[0];
 
@@ -515,7 +515,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   protected PsiElement fixRefText(String name) {
-    return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), name);
+    return ElementManipulators.handleContentChange(getElement(), getRangeInElement(), name);
   }
 
   /* Happens when it's been moved to another folder */

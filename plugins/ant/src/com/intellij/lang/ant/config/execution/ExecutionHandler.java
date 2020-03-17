@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public final class ExecutionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.ExecutionHandler");
+  private static final Logger LOG = Logger.getInstance(ExecutionHandler.class);
 
   @NonNls public static final String PARSER_JAR = "xerces1.jar";
 

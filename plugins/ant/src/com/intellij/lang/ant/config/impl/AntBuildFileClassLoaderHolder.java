@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntBuildFileClassLoaderHolder");
+  private static final Logger LOG = Logger.getInstance(AntBuildFileClassLoaderHolder.class);
 
   public AntBuildFileClassLoaderHolder(AbstractProperty.AbstractPropertyContainer options) {
     super(options);

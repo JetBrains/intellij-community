@@ -42,11 +42,6 @@ import java.util.Arrays;
  * @author vlan
  */
 public class PyShadowingNamesInspection extends PyInspection {
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Shadowing names from outer scopes";
-  }
 
   @NotNull
   @Override

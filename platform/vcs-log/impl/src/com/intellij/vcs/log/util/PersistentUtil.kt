@@ -28,6 +28,7 @@ import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
 import com.intellij.vcs.log.util.PersistentUtil.deleteWithRenamingAllFilesStartingWith
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 
 object PersistentUtil {
   @JvmField
@@ -54,7 +55,7 @@ object PersistentUtil {
   fun <T> createPersistentEnumerator(keyDescriptor: KeyDescriptor<T>, storageId: StorageId): PersistentEnumeratorBase<T> {
     val storageFile = storageId.getStorageFile()
     return IOUtil.openCleanOrResetBroken({ PersistentBTreeEnumerator(storageFile, keyDescriptor, Page.PAGE_SIZE, null, storageId.version) },
-                                         storageFile)
+                                         storageFile.toFile())
   }
 
   internal fun deleteWithRenamingAllFilesStartingWith(baseFile: File): Boolean {
@@ -91,7 +92,7 @@ class StorageId(private val subdirName: String,
   }
 
   private fun getFileForMapIndexStorage(kind: String = ""): File {
-    return MapIndexStorage.getIndexStorageFile(getFile(kind))
+    return MapIndexStorage.getIndexStorageFile(getFile(kind).toPath()).toFile()
   }
 
   private fun iterateOverOtherFeatures(function: (BooleanArray) -> Unit) {
@@ -115,12 +116,12 @@ class StorageId(private val subdirName: String,
   }
 
   @JvmOverloads
-  fun getStorageFile(kind: String = ""): File {
+  fun getStorageFile(kind: String = ""): Path {
     val storageFile = getFile(kind)
     if (!storageFile.exists()) {
       IOUtil.deleteAllFilesStartingWith(File(subdir(), safeLogId))
     }
-    return storageFile
+    return storageFile.toPath()
   }
 
   // do not forget to change cleanupStorageFiles method when editing this one

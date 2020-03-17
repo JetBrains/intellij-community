@@ -67,13 +67,6 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inspection.suppression.annotation.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "inspection.suppression.annotation.problem.descriptor");
@@ -154,7 +147,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   private class SuppressionAnnotationVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitComment(PsiComment comment) {
+    public void visitComment(@NotNull PsiComment comment) {
       super.visitComment(comment);
       final IElementType tokenType = comment.getTokenType();
       if (!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)

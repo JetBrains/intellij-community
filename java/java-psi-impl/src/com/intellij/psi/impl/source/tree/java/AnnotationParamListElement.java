@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class AnnotationParamListElement extends CompositeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnnotationParamListElement");
+  private static final Logger LOG = Logger.getInstance(AnnotationParamListElement.class);
   private static final TokenSet NAME_VALUE_PAIR_BIT_SET = TokenSet.create(JavaElementType.NAME_VALUE_PAIR);
 
   public AnnotationParamListElement() {
@@ -102,7 +102,7 @@ public class AnnotationParamListElement extends CompositeElement {
     }
 
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
-    if (first == last && first.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
+    if (first.getElementType() == JavaElementType.NAME_VALUE_PAIR && last.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
       JavaSourceUtil.addSeparatingComma(this, first, NAME_VALUE_PAIR_BIT_SET);
     }
     return firstAdded;

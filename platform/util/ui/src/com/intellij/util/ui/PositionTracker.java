@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 public abstract class PositionTracker<T> implements Disposable, HierarchyBoundsListener, HierarchyListener, ComponentListener {
-
   private final Component myComponent;
   private Client<T> myClient;
 

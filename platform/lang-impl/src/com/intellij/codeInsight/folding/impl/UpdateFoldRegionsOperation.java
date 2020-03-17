@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
@@ -137,8 +136,6 @@ class UpdateFoldRegionsOperation implements Runnable {
                                                         descriptor.isNonExpandable());
       if (region == null) continue;
 
-      if (descriptor.isNonExpandable()) region.putUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
-
       PsiElement psi = descriptor.getElement().getPsi();
 
       if (psi == null || !psi.isValid() || !myFile.isValid()) {
@@ -155,14 +152,18 @@ class UpdateFoldRegionsOperation implements Runnable {
       info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
       newRegions.add(region);
 
-      boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(range, rangeToExpandStatusMap, 
-                                                                                    regionInfo.collapsedByDefault);
-      if (group == null) {
-        shouldExpand.put(region, expandStatus);
+      if (descriptor.isNonExpandable()) {
+        region.putUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
       }
       else {
-        final Boolean alreadyExpanded = groupExpand.get(group);
-        groupExpand.put(group, alreadyExpanded == null ? expandStatus : alreadyExpanded.booleanValue() || expandStatus);
+        boolean expandStatus = shouldExpandNewRegion(range, rangeToExpandStatusMap, regionInfo.collapsedByDefault);
+        if (group == null) {
+          shouldExpand.put(region, expandStatus);
+        }
+        else {
+          final Boolean alreadyExpanded = groupExpand.get(group);
+          groupExpand.put(group, alreadyExpanded == null ? expandStatus : alreadyExpanded.booleanValue() || expandStatus);
+        }
       }
     }
 
@@ -272,31 +273,16 @@ class UpdateFoldRegionsOperation implements Runnable {
         FoldingDescriptor descriptor = regionInfo.descriptor;
         TextRange range = descriptor.getRange();
         if (TextRange.areSegmentsEqual(region, range)) {
-          if (Registry.is("folding.check.collapse.state.before.placeholder.text")) {
-            if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
-              rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
-              return true;
-            }
-            else if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
-              return true;
-            }
-            else {
-              matchingInfo.set(regionInfo);
-              return false;
-            }
+          if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
+            rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
+            return true;
+          }
+          else if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
+            return true;
           }
           else {
-            if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
-              return true;
-            }
-            else if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
-              rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
-              return true;
-            }
-            else {
-              matchingInfo.set(regionInfo);
-              return false;
-            }
+            matchingInfo.set(regionInfo);
+            return false;
           }
         }
       }

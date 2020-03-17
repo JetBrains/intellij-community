@@ -22,7 +22,7 @@ import java.util.ArrayList;
  * There is no need to create a subclass (which is needed in the DialogWrapper), which can be nice for simple dialogs.
  */
 public class DialogBuilder implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
+  private static final Logger LOG = Logger.getInstance(DialogBuilder.class);
 
   @NonNls public static final String REQUEST_FOCUS_ENABLED = "requestFocusEnabled";
 

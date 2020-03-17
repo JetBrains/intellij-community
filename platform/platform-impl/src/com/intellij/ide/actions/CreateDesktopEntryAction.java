@@ -40,7 +40,7 @@ import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 public class CreateDesktopEntryAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateDesktopEntryAction");
+  private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
     return SystemInfo.isXWindow && !ExternalUpdateManager.isRoaming() && SystemInfo.hasXdgOpen();
@@ -128,7 +128,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
 
     String name = names.getFullProductNameWithEdition();
-    String comment = names.getMotto();
+    String comment = StringUtil.notNullize(names.getMotto(), name);
     String wmClass = AppUIUtil.getFrameClass();
     Map<String, String> vars = newHashMap(pair("$NAME$", name),
                                           pair("$SCRIPT$", execPath),

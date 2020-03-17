@@ -32,8 +32,8 @@ plugins {
 envs {
   String python27version = "2.7.16"
   String python36version = "3.6.8"
-  String python37version = "3.7.6"
-  String python38version = "3.8.1"
+  String python37version = "3.7.5"
+  String python38version = "3.8.0"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -96,9 +96,9 @@ envs {
 
   createPython("py27_django11_full",
                python27version,
-               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "unittest2", "teamcity-messages", "django-nose",
+               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages", "django-nose",
                 "untangle"] + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\nnpackaging\ntox\nunittest2\ntwisted\ndjango-nose\nuntangle\nmessages",
+               "python2.7\ndjango\nnose\npytest\nbehave\nnpackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py38_django22_full",

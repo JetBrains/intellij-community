@@ -54,7 +54,7 @@ public final class ScratchRootType extends RootType {
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
-    Icon icon = ObjectUtils.notNull(super.substituteIcon(project, file), AllIcons.FileTypes.Text);
+    Icon icon = ObjectUtils.chooseNotNull(super.substituteIcon(project, file), ScratchFileType.INSTANCE.getIcon());
     return LayeredIcon.create(icon, AllIcons.Actions.Scratch);
   }
 

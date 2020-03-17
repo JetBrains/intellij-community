@@ -2,7 +2,7 @@
 package com.jetbrains.python.hierarchy.treestructures;
 
 import com.google.common.collect.Lists;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
 import com.jetbrains.python.hierarchy.PyHierarchyNodeDescriptor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.TypeEvalContext;

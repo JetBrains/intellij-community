@@ -51,9 +51,11 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    return super.openProject(projectFile, projectToClose, forceOpenInNewFrame)?.also {
-      GradleUnlinkedProjectProcessor.enableNotifications(it)
+    val project = super.openProject(projectFile, projectToClose, forceOpenInNewFrame)
+    if (project != null) {
+      GradleUnlinkedProjectProcessor.enableNotifications(project)
     }
+    return project
   }
 
   private fun attachGradleProjectAndRefresh(settings: ExternalProjectSettings, project: Project) {
@@ -61,17 +63,14 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
       ExternalSystemUtil.ensureToolWindowInitialized(project, SYSTEM_ID)
     }
-    ExternalProjectsManagerImpl.disableProjectWatcherAutoUpdate(project)
     ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
     ExternalSystemUtil.refreshProject(externalProjectPath,
                                       ImportSpecBuilder(project, SYSTEM_ID)
                                         .usePreviewMode()
-                                        .use(MODAL_SYNC)
-                                        .build())
+                                        .use(MODAL_SYNC))
     ExternalSystemUtil.refreshProject(externalProjectPath,
                                       ImportSpecBuilder(project, SYSTEM_ID)
-                                        .callback(createFinalImportCallback(project, settings))
-                                        .build())
+                                        .callback(createFinalImportCallback(project, settings)))
   }
 
   fun setupGradleSettings(settings: GradleProjectSettings, projectDirectory: String, project: Project, projectSdk: Sdk? = null) {
@@ -88,7 +87,6 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
 
   private fun GradleProjectSettings.setupGradleProjectSettings(projectDirectory: String, project: Project, projectSdk: Sdk? = null) {
     externalProjectPath = projectDirectory
-    isUseAutoImport = false
     isUseQualifiedModuleNames = true
     distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE?.let(DistributionType::valueOf)
                        ?: DistributionType.DEFAULT_WRAPPED

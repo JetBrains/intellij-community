@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +127,11 @@ public class ConfigurableExtensionPointUtil {
     if (!withIdeSettings && project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
+
+    Project finalProject = project;
+    return new EpBasedConfigurableGroup(finalProject, () -> {
+      return getConfigurableGroup(getConfigurables(finalProject, withIdeSettings), finalProject);
+    });
   }
 
   /**
@@ -134,6 +139,7 @@ public class ConfigurableExtensionPointUtil {
    * @param project       a project used to create a project settings group or {@code null}
    * @return the root configurable group that represents a tree of settings
    */
+  @Nullable
   public static ConfigurableGroup getConfigurableGroup(@NotNull List<? extends Configurable> configurables, @Nullable Project project) {
     Map<String, List<Configurable>> map = groupConfigurables(configurables);
     Map<String, Node<SortedConfigurableGroup>> tree = new THashMap<>();
@@ -207,7 +213,7 @@ public class ConfigurableExtensionPointUtil {
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
-      bundle = OptionsBundle.getBundle();
+      bundle = OptionsBundle.INSTANCE.getResourceBundle();
       if ("root".equals(groupId)) {
         try {
           String value = bundle.getString("configurable.group.root.settings.display.name");
@@ -325,6 +331,7 @@ public class ConfigurableExtensionPointUtil {
       }
       return null;
     }
+
     List<Configurable> list = new ArrayList<>(node.myChildren.size());
     for (Iterator<Object> iterator = node.myChildren.iterator(); iterator.hasNext(); iterator.remove()) {
       Object child = iterator.next();
@@ -341,9 +348,11 @@ public class ConfigurableExtensionPointUtil {
         tree.remove(value.myValue.getId());
       }
     }
+
     if (node.myValue == null) {
       return list; // for group only
     }
+
     for (Configurable configurable : list) {
       node.myValue = node.myValue.addChild(configurable);
     }
@@ -397,10 +406,10 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @Nullable
-  public static ResourceBundle getBundle(@NotNull String resource,
+  public static ResourceBundle getBundle(@NonNls @NotNull String resource,
                                          @Nullable Iterable<? extends Configurable> configurables,
                                          @Nullable ResourceBundle alternative) {
-    ResourceBundle bundle = OptionsBundle.getBundle();
+    ResourceBundle bundle = OptionsBundle.INSTANCE.getResourceBundle();
     if (getString(bundle, resource) != null) {
       return bundle;
     }
@@ -421,7 +430,7 @@ public class ConfigurableExtensionPointUtil {
     return null;
   }
 
-  private static String getString(ResourceBundle bundle, String resource) {
+  private static String getString(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {
       // mimic CommonBundle.message(..) behavior
@@ -432,7 +441,7 @@ public class ConfigurableExtensionPointUtil {
     }
   }
 
-  private static int getInt(ResourceBundle bundle, String resource) {
+  private static int getInt(ResourceBundle bundle, @NonNls String resource) {
     try {
       String value = getString(bundle, resource);
       return value == null ? 0 : Integer.parseInt(value);

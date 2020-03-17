@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -22,9 +23,6 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -32,15 +30,19 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
 public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Queryable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiDirectoryImpl");
+  private static final Key<Boolean> UPDATE_ADDED_FILE_KEY = Key.create("UPDATE_ADDED_FILE_KEY");
+  private static final Logger LOG = Logger.getInstance(PsiDirectoryImpl.class);
 
   private final PsiManagerImpl myManager;
   private final VirtualFile myFile;
@@ -353,30 +355,33 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
-
-      DumbService.getInstance(getProject()).completeJustSubmittedTasks();
-
-      final PsiFile copyPsi = myManager.findFile(copyVFile);
-      if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
-      updateAddedFile(copyPsi);
-      return copyPsi;
+      if (UPDATE_ADDED_FILE_KEY.get(this, true)) {
+        DumbService.getInstance(getProject()).completeJustSubmittedTasks();
+        final PsiFile copyPsi = findCopy(copyVFile, vFile);
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi));
+        return copyPsi;
+      }
+      return findCopy(copyVFile, vFile);
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e);
     }
   }
 
-  private static void updateAddedFile(@NotNull PsiFile copyPsi) throws IncorrectOperationException {
-    final UpdateAddedFileProcessor processor = UpdateAddedFileProcessor.forElement(copyPsi);
-    if (processor != null) {
-      final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);
-      if (tree != null) {
-        ChangeUtil.encodeInformation(tree);
-      }
-      processor.update(copyPsi, null);
-      if (tree != null) {
-        ChangeUtil.decodeInformation(tree);
-      }
+  @NotNull
+  private PsiFile findCopy(VirtualFile copyVFile, VirtualFile vFile) {
+    final PsiFile copyPsi = myManager.findFile(copyVFile);
+    if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
+    return copyPsi;
+  }
+
+  public <T extends Throwable> void executeWithUpdatingAddedFilesDisabled(ThrowableRunnable<T> runnable) throws T {
+    try {
+      putUserData(UPDATE_ADDED_FILE_KEY, false);
+      runnable.run();
+    }
+    finally {
+      putUserData(UPDATE_ADDED_FILE_KEY,null);
     }
   }
 
@@ -432,7 +437,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);
-        updateAddedFile(newFile);
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(newFile));
         return newFile;
       }
       catch (IOException e) {
@@ -446,25 +451,19 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
-    if (element instanceof PsiDirectory) {
-      String name = ((PsiDirectory)element).getName();
-      checkName(name, getSubdirectories(), "dir.already.exists.error");
-    }
-    else if (element instanceof PsiFile) {
-      String name = ((PsiFile)element).getName();
-      checkName(name, getFiles(), "file.already.exists.error");
+    if (element instanceof PsiDirectory || element instanceof PsiFile) {
+      String name = ((PsiFileSystemItem)element).getName();
+      boolean caseSensitive = getVirtualFile().getFileSystem().isCaseSensitive();
+      VirtualFile existing = ContainerUtil.find(getVirtualFile().getChildren(),
+                                                item -> Comparing.strEqual(item.getName(), name, caseSensitive));
+      if (existing != null) {
+        throw new IncorrectOperationException(
+          VfsBundle.message(existing.isDirectory() ? "dir.already.exists.error" : "file.already.exists.error",
+                            existing.getPresentableUrl()));
+      }
     }
     else {
       throw new IncorrectOperationException(element.getClass().getName());
-    }
-  }
-
-  private void checkName(String name, PsiFileSystemItem[] items, String key) {
-    boolean caseSensitive = getVirtualFile().getFileSystem().isCaseSensitive();
-    for (PsiFileSystemItem item : items) {
-      if (Comparing.strEqual(item.getName(), name, caseSensitive)) {
-        throw new IncorrectOperationException(VfsBundle.message(key, item.getVirtualFile().getPresentableUrl()));
-      }
     }
   }
 

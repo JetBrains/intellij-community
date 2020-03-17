@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  * @author Vladimir Kondratyev
  */
 public final class BindingProperty extends Property<RadComponent, String> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.propertyInspector.properties.BindingProperty");
+  private static final Logger LOG = Logger.getInstance(BindingProperty.class);
 
   private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
     @Override

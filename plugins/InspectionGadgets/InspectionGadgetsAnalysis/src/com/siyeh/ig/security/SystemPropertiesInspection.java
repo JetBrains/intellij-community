@@ -32,13 +32,6 @@ public class SystemPropertiesInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "system.properties.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final boolean isGetSystemProperty =
       ((Boolean)infos[0]).booleanValue();

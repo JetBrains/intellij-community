@@ -505,7 +505,6 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
   public void testStopCollectingOutput() {
     myResultsViewer.selectAndNotify(myResultsViewer.getTestsRootNode());
-    myConsole.attachToProcess(null);
 
     myEventsProcessor.onStartTesting();
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));

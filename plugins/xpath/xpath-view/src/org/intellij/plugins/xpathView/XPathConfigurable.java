@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.intellij.plugins.xpathView.ui.ConfigUI;
@@ -27,9 +28,9 @@ public class XPathConfigurable implements SearchableConfigurable {
     private ConfigUI configUI;
 
     @Override
-    public String getDisplayName() {
-        return "XPath Viewer";
-    }
+  public String getDisplayName() {
+    return IdeBundle.message("configurable.XPathConfigurable.display.name");
+  }
 
   @Override
   @Nullable

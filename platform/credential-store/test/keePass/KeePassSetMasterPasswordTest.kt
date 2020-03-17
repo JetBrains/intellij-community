@@ -33,7 +33,7 @@ internal class KeePassSetMasterPasswordTest : BaseKeePassFileManagerTest() {
 
   @Test
   fun `protect using PGP - new database`() {
-    Assume.assumeTrue(!UsefulTestCase.IS_UNDER_TEAMCITY)
+    Assume.assumeTrue("not for Teamcity", !UsefulTestCase.IS_UNDER_TEAMCITY)
 
     TestKeePassFileManager(createStore(), masterPasswordRequestAnswer = "boo", masterKeyEncryptionSpec = EncryptionSpec(EncryptionType.PGP_KEY, "A769DF87"))
       .askAndSetMasterKey(event = null)

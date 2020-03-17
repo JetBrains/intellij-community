@@ -75,7 +75,7 @@ public class ShowAllAffectedGenericAction extends AnAction implements DumbAware 
     e.getPresentation().setEnabled(enabled);
   }
 
-  private static boolean canPresentNonLocal(Project project, VcsKey key, final VirtualFile file) {
+  private static boolean canPresentNonLocal(@NotNull Project project, @NotNull VcsKey key, @NotNull VirtualFile file) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(key.getName());
     if (vcs == null) return false;
     final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();

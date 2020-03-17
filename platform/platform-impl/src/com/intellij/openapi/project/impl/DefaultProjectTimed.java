@@ -1,21 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DefaultProjectTimed extends TimedReference<ProjectEx> {
   @NotNull
-  private final Disposable myParentDisposable;
+  private final DefaultProject myParentDisposable;
 
-  DefaultProjectTimed(@NotNull Disposable disposable) {
+  DefaultProjectTimed(@NotNull DefaultProject disposable) {
     super(disposable);
     myParentDisposable = disposable;
   }
@@ -49,13 +49,6 @@ public abstract class DefaultProjectTimed extends TimedReference<ProjectEx> {
         WriteCommandAction.runWriteCommandAction(null, () -> super.dispose());
       }
     };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      // to prevent deadlock, ensure correct lock ordering: app write lock->sync(Timed)
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
-      doDispose.run();
-    }
-    else {
-      TransactionGuard.submitTransaction(myParentDisposable, doDispose);
-    }
+    GuiUtils.invokeLaterIfNeeded(doDispose, ModalityState.NON_MODAL, myParentDisposable.getDisposed());
   }
 }

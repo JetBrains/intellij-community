@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class BuildDataManager implements StorageOwner {
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
+  private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";

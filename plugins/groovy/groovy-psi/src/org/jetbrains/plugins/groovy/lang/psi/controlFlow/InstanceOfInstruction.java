@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Objects;
 
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isThisRef;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral;
 
 /**
@@ -49,8 +50,11 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     if (element instanceof GrInstanceOfExpression) {
       GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
       final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
-      if (operand instanceof GrReferenceExpression && ((GrReferenceExpression)operand).getQualifier() == null && typeElement != null) {
-        return Pair.create(((GrInstanceOfExpression)element).getOperand(), typeElement.getType());
+      if (operand instanceof GrReferenceExpression) {
+        GrExpression qualifier = ((GrReferenceExpression)operand).getQualifier();
+        if ((qualifier == null || isThisRef(qualifier)) && typeElement != null) {
+          return Pair.create(((GrInstanceOfExpression)element).getOperand(), typeElement.getType());
+        }
       }
     }
     else if (element instanceof GrBinaryExpression && ControlFlowBuilderUtil.isInstanceOfBinary((GrBinaryExpression)element)) {

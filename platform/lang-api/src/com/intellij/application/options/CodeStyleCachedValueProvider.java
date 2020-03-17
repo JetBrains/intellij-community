@@ -90,15 +90,6 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     return instance;
   }
 
-  private void notifyCachedValueComputed(@NotNull PsiFile file) {
-    Project project = file.getProject();
-    if (!project.isDisposed()) {
-      final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-      settingsManager.fireCodeStyleSettingsChanged(file);
-    }
-    myComputation.reset();
-  }
-
   private static void logCached(@NotNull PsiFile file, @NotNull CodeStyleSettings settings) {
     LOG.debug(String.format(
       "File: %s (%s), cached: %s, tracker: %d", file.getName(), Integer.toHexString(file.hashCode()), settings,
@@ -114,9 +105,11 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private volatile @NotNull CodeStyleSettings         myCurrResult;
     private final @NotNull    CodeStyleSettingsManager  mySettingsManager;
     private final             SimpleModificationTracker myTracker  = new SimpleModificationTracker();
+    private final             Project                   myProject;
 
     private AsyncComputation() {
-      mySettingsManager = CodeStyleSettingsManager.getInstance(myFile.getProject());
+      myProject = myFile.getProject();
+      mySettingsManager = CodeStyleSettingsManager.getInstance(myProject);
       //noinspection deprecation
       myCurrResult = mySettingsManager.getCurrentSettings();
     }
@@ -124,7 +117,8 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private void start() {
       if (isRunOnBackground()) {
         ReadAction.nonBlocking(() -> computeSettings())
-          .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed(myFile))
+          .expireWith(myProject)
+          .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed())
           .submit(ourExecutorService);
       }
       else {
@@ -141,10 +135,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private void notifyOnEdt() {
       final Application application = ApplicationManager.getApplication();
       if (application.isDispatchThread()) {
-        notifyCachedValueComputed(myFile);
+        notifyCachedValueComputed();
       }
       else {
-        application.invokeLater(() -> notifyCachedValueComputed(myFile), ModalityState.any());
+        application.invokeLater(() -> notifyCachedValueComputed(), ModalityState.any());
       }
     }
 
@@ -193,6 +187,14 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
 
     void reset() {
       myIsActive.set(false);
+    }
+
+    private void notifyCachedValueComputed() {
+      if (!myProject.isDisposed()) {
+        final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
+        settingsManager.fireCodeStyleSettingsChanged(myFile);
+      }
+      myComputation.reset();
     }
   }
 }

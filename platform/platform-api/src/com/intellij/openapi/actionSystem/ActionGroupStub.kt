@@ -2,20 +2,24 @@
 package com.intellij.openapi.actionSystem
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 
 interface ActionStubBase {
   val id: String
+
+  @Deprecated(message = "Use plugin", replaceWith = ReplaceWith("plugin.pluginId"))
   val pluginId: PluginId?
+    get() = plugin.pluginId
+
+  val plugin: IdeaPluginDescriptor
   val iconPath: String?
 }
 
-class ActionGroupStub(
-  override val id: String,
-  val actionClass: String,
-  val classLoader: ClassLoader,
-  override val pluginId: PluginId
-) : DefaultActionGroup(), ActionStubBase {
+class ActionGroupStub(override val id: String, val actionClass: String, override val plugin: IdeaPluginDescriptor) : DefaultActionGroup(), ActionStubBase {
+  val classLoader: ClassLoader
+    get() = plugin.pluginClassLoader
+
   var popupDefinedInXml = false
 
   override var iconPath: String? = null
@@ -26,9 +30,7 @@ class ActionGroupStub(
     val children = getChildren(null, actionManager)
     if (children.isNotEmpty()) {
       target as? DefaultActionGroup
-      ?: throw PluginException(
-        "Action group class must extend DefaultActionGroup for the group to accept children: $actionClass",
-        pluginId)
+      ?: throw PluginException("Action group class must extend DefaultActionGroup for the group to accept children: $actionClass", plugin.pluginId)
       for (action in children) {
         target.addAction(action, Constraints.LAST, actionManager)
       }

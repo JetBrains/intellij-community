@@ -11,13 +11,18 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
@@ -721,43 +726,91 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
   return true
 }
 
+private val macOSKeymap = "com.intellij.plugins.macoskeymap"
+private val gnomeKeymap = "com.intellij.plugins.gnomekeymap"
+private val kdeKeymap = "com.intellij.plugins.kdekeymap"
+private val xwinKeymap = "com.intellij.plugins.xwinkeymap"
+private val eclipseKeymap = "com.intellij.plugins.eclipsekeymap"
+private val emacsKeymap = "com.intellij.plugins.emacskeymap"
+private val netbeansKeymap = "com.intellij.plugins.netbeanskeymap"
+private val resharperKeymap = "com.intellij.plugins.resharperkeymap"
+private val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
+private val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
+private val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
+
 internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
-  ApplicationManager.getApplication().invokeLater({
-    // TODO remove when PluginAdvertiser implements that
-    @Suppress("SpellCheckingInspection")
-    val pluginId = when (keymapName) {
-      "Mac OS X",
-      "Mac OS X 10.5+" -> "com.intellij.plugins.macoskeymap"
-      "Default for GNOME" -> "com.intellij.plugins.gnomekeymap"
-      "Default for KDE" -> "com.intellij.plugins.kdekeymap"
-      "Default for XWin" -> "com.intellij.plugins.xwinkeymap"
-      "Eclipse",
-      "Eclipse (Mac OS X)" -> "com.intellij.plugins.eclipsekeymap"
-      "Emacs" -> "com.intellij.plugins.emacskeymap"
-      "NetBeans 6.5" -> "com.intellij.plugins.netbeanskeymap"
-      "ReSharper",
-      "ReSharper OSX" -> "com.intellij.plugins.resharperkeymap"
-      "Sublime Text",
-      "Sublime Text (Mac OS X)" -> "com.intellij.plugins.sublimetextkeymap"
-      "Visual Studio" -> "com.intellij.plugins.visualstudiokeymap"
-      "Xcode" -> "com.intellij.plugins.xcodekeymap"
-      else -> null
-    }
-    val action: AnAction? = when (pluginId) {
-      null -> object : NotificationAction("Search for $keymapName Keymap plugin") {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          //TODO enableSearch("$keymapName /tag:Keymap")?.run()
-          ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PluginManagerConfigurable::class.java)
-        }
-      }
-      else -> object : NotificationAction("Install $keymapName Keymap") {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          PluginsAdvertiser.installAndEnablePlugins(setOf(pluginId)) {
-            notification.expire()
+  val connection = ApplicationManager.getApplication().messageBus.connect()
+  connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    override fun projectOpened(project: Project) {
+      connection.disconnect()
+      ApplicationManager.getApplication().invokeLater(
+        {
+          // TODO remove when PluginAdvertiser implements that
+          @Suppress("SpellCheckingInspection")
+          val pluginId = when (keymapName) {
+            "Mac OS X",
+            "Mac OS X 10.5+" -> macOSKeymap
+            "Default for GNOME" -> gnomeKeymap
+            "Default for KDE" -> kdeKeymap
+            "Default for XWin" -> xwinKeymap
+            "Eclipse",
+            "Eclipse (Mac OS X)" -> eclipseKeymap
+            "Emacs" -> emacsKeymap
+            "NetBeans 6.5" -> netbeansKeymap
+            "ReSharper",
+            "ReSharper OSX" -> resharperKeymap
+            "Sublime Text",
+            "Sublime Text (Mac OS X)" -> sublimeKeymap
+            "Visual Studio" -> visualStudioKeymap
+            "Xcode" -> xcodeKeymap
+            else -> null
           }
-        }
-      }
+          val action: AnAction? = when (pluginId) {
+            null -> object : NotificationAction("Search for $keymapName Keymap plugin") {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                //TODO enableSearch("$keymapName /tag:Keymap")?.run()
+                ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PluginManagerConfigurable::class.java)
+              }
+            }
+            else -> object : NotificationAction("Install $keymapName Keymap") {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                val connect = ApplicationManager.getApplication().messageBus.connect()
+                connect.subscribe(KeymapManagerListener.TOPIC, object: KeymapManagerListener {
+                  override fun keymapAdded(keymap: Keymap) {
+                    ApplicationManager.getApplication().invokeLater {
+                      if (keymap.name == keymapName) {
+                        connect.disconnect()
+                        KeymapManagerEx.getInstanceEx().activeKeymap = keymap
+                        val group = NotificationGroup("Keymap", NotificationDisplayType.BALLOON, true)
+                        val notificationManager = SingletonNotificationManager(group, NotificationType.INFORMATION)
+                        notificationManager.notify("Keymap $keymapName successfully activated", project)
+                      }
+                    }
+                  }
+                })
+
+                  PluginsAdvertiser.installAndEnable(project, getPluginIdWithDependencies(pluginId), false) {
+
+                  }
+                notification.expire()
+              }
+
+              fun toPluginIds(vararg ids: String) = ids.map { PluginId.getId(it) }.toSet()
+
+              private fun getPluginIdWithDependencies(pluginId: String): Set<PluginId> {
+                return when (pluginId) {
+                  gnomeKeymap -> toPluginIds(gnomeKeymap, xwinKeymap)
+                  kdeKeymap -> toPluginIds(kdeKeymap, xwinKeymap)
+                  resharperKeymap -> toPluginIds(resharperKeymap, visualStudioKeymap)
+                  xcodeKeymap -> toPluginIds(xcodeKeymap, macOSKeymap)
+                  else -> toPluginIds(pluginId)
+                }
+              }
+            }
+          }
+          NOTIFICATION_MANAGER.notify("Missing Keymap", message, action = action)
+        }, ModalityState.NON_MODAL)
     }
-    NOTIFICATION_MANAGER.notify("Missing Keymap", message, action = action)
-  }, ModalityState.NON_MODAL)
+  }
+  )
 }

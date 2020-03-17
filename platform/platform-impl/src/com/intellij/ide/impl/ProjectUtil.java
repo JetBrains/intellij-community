@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,10 +32,12 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.ui.FocusUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,10 +54,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
-/**
- * @author Eugene Belyaev
- */
-public class ProjectUtil {
+public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
   public static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
@@ -64,18 +64,24 @@ public class ProjectUtil {
 
   private ProjectUtil() { }
 
-  public static void updateLastProjectLocation(final String projectFilePath) {
+  public static void updateLastProjectLocation(@NotNull String projectFilePath) {
     File lastProjectLocation = new File(projectFilePath);
     if (lastProjectLocation.isFile()) {
-      lastProjectLocation = lastProjectLocation.getParentFile(); // for directory-based project storage
+      // for directory-based project storage
+      lastProjectLocation = lastProjectLocation.getParentFile();
     }
-    if (lastProjectLocation == null) { // the immediate parent of the ipr file
+
+    if (lastProjectLocation == null) {
+      // the immediate parent of the ipr file
       return;
     }
-    lastProjectLocation = lastProjectLocation.getParentFile(); // the candidate directory to be saved
+
+    // the candidate directory to be saved
+    lastProjectLocation = lastProjectLocation.getParentFile();
     if (lastProjectLocation == null) {
       return;
     }
+
     String path = lastProjectLocation.getPath();
     try {
       path = FileUtil.resolveShortWindowsName(path);
@@ -162,14 +168,14 @@ public class ProjectUtil {
       return null;
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!project.isDisposed()) {
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    StartupManager.getInstance(project).runAfterOpened(() -> {
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
         if (toolWindow != null) {
           toolWindow.activate(null);
         }
-      }
-    }, ModalityState.NON_MODAL);
+      }, ModalityState.NON_MODAL, project.getDisposed());
+    });
     return project;
   }
 
@@ -357,15 +363,23 @@ public class ProjectUtil {
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
     JFrame f = WindowManager.getInstance().getFrame(p);
     if (f != null) {
+      Component mostRecentFocusOwner = f.getMostRecentFocusOwner();
       if (executeIfAppInactive) {
         AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
         f.toFront();
         if (!SystemInfo.isMac && !f.isAutoRequestFocus()) {
-          IdeFocusManager.getInstance(p).requestFocus(f.getMostRecentFocusOwner(), true);
+          IdeFocusManager.getInstance(p).requestFocus(mostRecentFocusOwner, true);
         }
       }
       else {
-        IdeFocusManager.getInstance(p).requestFocusInProject(f.getMostRecentFocusOwner(), p);
+        if (mostRecentFocusOwner != null) {
+          IdeFocusManager.getInstance(p).requestFocusInProject(mostRecentFocusOwner, p);
+        } else {
+          Component defaultFocusComponentInPanel = FocusUtil.getDefaultComponentInPanel(f.getFocusCycleRootAncestor());
+          if (defaultFocusComponentInPanel != null) {
+            IdeFocusManager.getInstance(p).requestFocusInProject(defaultFocusComponentInPanel, p);
+          }
+        }
       }
     }
   }
@@ -399,21 +413,23 @@ public class ProjectUtil {
     }
 
     for (File file : list) {
-      if (file.exists()) {
-        LOG.debug(location + ": open file ", file);
-        String path = file.getAbsolutePath();
-        if (project != null) {
-          OpenFileAction.openFile(path, project);
-          result = project;
-        }
-        else {
-          CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
-          if (processor != null) {
-            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-            if (virtualFile != null && virtualFile.isValid()) {
-              Project opened = processor.openProjectAndFile(virtualFile, -1, false);
-              if (opened != null && result == null) result = opened;
-            }
+      if (!file.exists()) {
+        continue;
+      }
+
+      LOG.debug(location + ": open file ", file);
+      String path = file.getAbsolutePath();
+      if (project != null) {
+        OpenFileAction.openFile(path, project);
+        result = project;
+      }
+      else {
+        CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
+        if (processor != null) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+          if (virtualFile != null && virtualFile.isValid()) {
+              Project opened = processor.openProjectAndFile(virtualFile, -1, -1, false);
+            if (opened != null && result == null) result = opened;
           }
         }
       }

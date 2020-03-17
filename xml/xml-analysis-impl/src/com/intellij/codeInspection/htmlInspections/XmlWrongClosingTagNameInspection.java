@@ -2,13 +2,14 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class XmlWrongClosingTagNameInspection implements Annotator {
-
   @Override
   public void annotate(@NotNull final PsiElement psiElement, @NotNull final AnnotationHolder holder) {
     if (psiElement instanceof XmlToken) {
@@ -60,7 +60,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
           final PsiFile psiFile = psiElement.getContainingFile();
 
           if (psiFile != null && (HTMLLanguage.INSTANCE == psiFile.getViewProvider().getBaseLanguage() || HTMLLanguage.INSTANCE == parent.getLanguage())) {
-            final String message = XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing");
+            final String message = XmlErrorBundle.message("xml.parsing.closing.tag.matches.nothing");
 
             if (message.equals(((PsiErrorElement)parent).getErrorDescription()) &&
                 psiFile.getContext() == null
@@ -75,9 +75,9 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
   }
 
   private static void registerProblemStart(@NotNull final AnnotationHolder holder,
-                                      @NotNull final XmlTag tag,
-                                      @NotNull final XmlToken start,
-                                      @NotNull final XmlToken end) {
+                                           @NotNull final XmlTag tag,
+                                           @NotNull final XmlToken start,
+                                           @NotNull final XmlToken end) {
     PsiElement context = tag.getContainingFile().getContext();
     if (context != null) {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
@@ -95,9 +95,11 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    final Annotation annotation = holder.createErrorAnnotation(start, XmlErrorMessages.message("tag.has.wrong.closing.tag.name"));
-    annotation.registerFix(renameEndAction);
-    annotation.registerFix(renameStartAction);
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorBundle.message("tag.has.wrong.closing.tag.name"))
+      .range(start)
+      .withFix(renameEndAction)
+      .withFix(renameStartAction)
+      .create();
   }
 
   private static void registerProblemEnd(@NotNull final AnnotationHolder holder,
@@ -120,10 +122,12 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
     final RenameTagBeginOrEndIntentionAction renameEndAction = new RenameTagBeginOrEndIntentionAction(tagName, endTokenText, false);
     final RenameTagBeginOrEndIntentionAction renameStartAction = new RenameTagBeginOrEndIntentionAction(endTokenText, tagName, true);
 
-    final Annotation annotation = holder.createErrorAnnotation(end, XmlErrorMessages.message("wrong.closing.tag.name"));
-    annotation.registerFix(new RemoveExtraClosingTagIntentionAction());
-    annotation.registerFix(renameEndAction);
-    annotation.registerFix(renameStartAction);
+    holder.newAnnotation(HighlightSeverity.ERROR, XmlErrorBundle.message("wrong.closing.tag.name"))
+      .range(end)
+      .withFix(new RemoveExtraClosingTagIntentionAction())
+      .withFix(renameEndAction)
+      .withFix(renameStartAction)
+      .create();
   }
 
   @Nullable

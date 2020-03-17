@@ -1,13 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
@@ -54,7 +56,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 /**
  * @author lex
@@ -348,11 +349,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       // fill position managers
-      ((DebuggerManagerImpl)DebuggerManager.getInstance(getProject())).getCustomPositionManagerFactories()
-        .map(factory -> factory.fun(this))
-        .filter(Objects::nonNull)
-        .forEach(this::appendPositionManager);
-      Stream.of(PositionManagerFactory.EP_NAME.getExtensions(getProject()))
+      PositionManagerFactory.EP_NAME.extensions(getProject())
         .map(factory -> factory.createPositionManager(this))
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);

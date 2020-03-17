@@ -23,6 +23,7 @@ import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiManager;
@@ -298,7 +299,12 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA67584() { doTest5(false); }
   public void testIDEA113225() { doTest5(false); }
   public void testIDEA67518() { doTest5(false); }
-  public void testIDEA57252() { doTest5(false); }
+
+  public void testIDEA57252() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+    doTest5(false);
+  }
+
   public void testIDEA57274() { doTest7(false); }
   public void testIDEA67591() { doTest5(false); }
   public void testIDEA114894() { doTest5(false); }

@@ -22,11 +22,17 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
 
   val panel = DialogPanel(title, layout = null)
   builder.builder.build(panel, constraints)
+  initPanel(builder, panel)
+  return panel
+}
+
+@PublishedApi
+internal fun initPanel(builder: LayoutBuilder, panel: DialogPanel) {
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
   panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
+  panel.customValidationRequestors = builder.builder.customValidationRequestors
   panel.applyCallbacks = builder.builder.applyCallbacks
   panel.resetCallbacks = builder.builder.resetCallbacks
   panel.isModifiedCallbacks = builder.builder.isModifiedCallbacks
-  return panel
 }

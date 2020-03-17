@@ -31,6 +31,7 @@ public abstract class UndoManager {
   public static final Key<Document> ORIGINAL_DOCUMENT = new Key<>("ORIGINAL_DOCUMENT");
 
   public static UndoManager getInstance(@NotNull Project project) {
+    if (project.isDefault()) return getGlobalInstance();
     return project.getComponent(UndoManager.class);
   }
 

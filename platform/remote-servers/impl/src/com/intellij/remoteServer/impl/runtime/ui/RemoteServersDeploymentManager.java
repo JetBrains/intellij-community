@@ -18,6 +18,7 @@ import com.intellij.remoteServer.runtime.*;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,6 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class RemoteServersDeploymentManager {
   private static final int POLL_DEPLOYMENTS_DELAY = 2000;
@@ -37,7 +37,7 @@ public class RemoteServersDeploymentManager {
 
   private final Project myProject;
   private final ServersTreeNodeSelector myNodeSelector;
-  private final Set<RemoteServersServiceViewContributor> myContributors = ConcurrentHashMap.newKeySet();
+  private final Map<RemoteServersServiceViewContributor, Boolean> myContributors = ContainerUtil.createConcurrentWeakMap();
   private final Map<RemoteServer<?>, MessagePanel> myServerToContent = new HashMap<>();
 
   public RemoteServersDeploymentManager(@NotNull Project project) {
@@ -45,7 +45,7 @@ public class RemoteServersDeploymentManager {
     myNodeSelector = new ServersTreeNodeSelectorImpl(project);
     initListeners();
     RemoteServersView.getInstance(project)
-      .registerTreeNodeSelector(myNodeSelector, connection -> myContributors.stream()
+      .registerTreeNodeSelector(myNodeSelector, connection -> myContributors.keySet().stream()
         .anyMatch(contributor -> contributor.accept(connection.getServer())));
   }
 
@@ -120,7 +120,7 @@ public class RemoteServersDeploymentManager {
   }
 
   public void registerContributor(@NotNull RemoteServersServiceViewContributor contributor) {
-    if (myContributors.add(contributor)) {
+    if (myContributors.put(contributor, Boolean.TRUE) == null) {
       AppUIUtil.invokeOnEdt(() -> {
         for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
           if (contributor.accept(server)) {
@@ -161,7 +161,7 @@ public class RemoteServersDeploymentManager {
 
   @Nullable
   private RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
-    for (RemoteServersServiceViewContributor contributor : myContributors) {
+    for (RemoteServersServiceViewContributor contributor : myContributors.keySet()) {
       if (contributor.accept(server)) {
         return contributor;
       }

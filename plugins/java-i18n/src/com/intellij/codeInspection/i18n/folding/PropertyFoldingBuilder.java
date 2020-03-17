@@ -73,7 +73,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     } : new PsiRecursiveElementWalkingVisitor() {
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         ProgressManager.checkCanceled();
         ULiteralExpression uLiteralExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
         if (uLiteralExpression != null) {

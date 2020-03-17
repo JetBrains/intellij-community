@@ -45,7 +45,7 @@ import java.util.List;
  * @author mike
  */
 public class AddExceptionToCatchFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix");
+  private static final Logger LOG = Logger.getInstance(AddExceptionToCatchFix.class);
   private final boolean myUncaughtOnly;
 
   public AddExceptionToCatchFix(boolean uncaughtOnly) {

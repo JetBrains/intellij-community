@@ -15,46 +15,23 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+public class VcsBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.VcsBundle";
+  public static final VcsBundle INSTANCE = new VcsBundle();
 
-/**
- * @author lesya
- */
-public class VcsBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls protected static final String PATH_TO_BUNDLE = "messages.VcsBundle";
-
-  private VcsBundle() {
-  }
-
-  public static String getString(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) final String key) {
-    return getBundle().getString(key);
-  }
+  private VcsBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String messageOrDefault(@NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
-    return CommonBundle.messageOrDefault(getBundle(), key, defaultValue, params);
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  public static String getString(@PropertyKey(resourceBundle = BUNDLE) final String key) {
+    return message(key);
   }
 }

@@ -201,7 +201,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.editNewSchemeName(
-          SchemeManager.getDisplayName(currentScheme),
+          currentScheme.getDisplayName(),
           mySchemesPanel.supportsProjectSchemes() && getModel().isProjectScheme(currentScheme),
           newName ->  duplicateScheme(currentScheme, newName));
       }
@@ -407,7 +407,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
             ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
             ext), getSchemesPanel());
-      VirtualFileWrapper target = saver.save(exporter.getDefaultDir(project), exporter.getDefaultFileName(SchemeManager.getDisplayName(scheme)) + "." + ext);
+      VirtualFileWrapper target = saver.save(exporter.getDefaultDir(project), exporter.getDefaultFileName(scheme.getDisplayName()) + "." + ext);
       if (target != null) {
         VirtualFile targetFile = target.getVirtualFile(true);
         String message;

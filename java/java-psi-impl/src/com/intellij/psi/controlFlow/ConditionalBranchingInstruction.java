@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * Author: msk
  */
 public abstract class ConditionalBranchingInstruction extends BranchingInstruction {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ConditionalGoToInstruction");
+  protected static final Logger LOG = Logger.getInstance(ConditionalGoToInstruction.class);
   public final PsiExpression expression;
 
   ConditionalBranchingInstruction(int offset, @Nullable PsiExpression expression, @NotNull Role role) {

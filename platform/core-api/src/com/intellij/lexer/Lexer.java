@@ -15,6 +15,8 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
  * @see LexerBase for certain methods' implementation
  */
 public abstract class Lexer {
+  private static final Logger LOG = Logger.getInstance(Lexer.class);
+  private static final long LEXER_START_THRESHOLD = 500;
 
   /**
    * Prepare for lexing character data from {@code buffer} passed. Internal lexer state is supposed to be {@code initialState}. It is guaranteed
@@ -38,12 +42,28 @@ public abstract class Lexer {
    */
   public abstract void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState);
 
+  private void startMeasured(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    if (!LOG.isDebugEnabled()) {
+      start(buffer, startOffset, endOffset, initialState);
+      return;
+    }
+    long start = System.currentTimeMillis();
+    start(buffer, startOffset, endOffset, initialState);
+    long startDuration = System.currentTimeMillis() - start;
+    if (startDuration > LEXER_START_THRESHOLD) {
+      LOG.debug("Starting lexer took: ", startDuration,
+                "; at ", startOffset, " - ", endOffset, "; state: ", initialState,
+                "; text: ", StringUtil.shortenTextWithEllipsis(buffer.toString(), 1024, 500)
+      );
+    }
+  }
+
   public final void start(@NotNull CharSequence buf, int start, int end) {
-    start(buf, start, end, 0);
+    startMeasured(buf, start, end, 0);
   }
 
   public final void start(@NotNull CharSequence buf) {
-    start(buf, 0, buf.length(), 0);
+    startMeasured(buf, 0, buf.length(), 0);
   }
 
   @NotNull

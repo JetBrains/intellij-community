@@ -70,7 +70,8 @@ public class FileUtilRt {
   }
 
   protected interface SymlinkResolver {
-    @NotNull String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash);
+    @NotNull
+    String resolveSymlinksAndCanonicalize(@NotNull String path, char separatorChar, boolean removeLastSlash);
     boolean isSymlink(@NotNull CharSequence path);
   }
 
@@ -212,16 +213,16 @@ public class FileUtilRt {
    * what {@link File#getCanonicalPath()} will return), so if the path may contain symlinks,
    * consider using {@link com.intellij.openapi.util.io.FileUtil#toCanonicalPath(String, boolean)} instead.
    */
-  @Contract("null, _, _ -> null")
+  @Contract("null, _, _ -> null; !null,_,_->!null")
   public static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
     return toCanonicalPath(path, separatorChar, removeLastSlash, null);
   }
 
-  @Contract("null, _, _, _ -> null")
+  @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
   protected static String toCanonicalPath(@Nullable String path,
                                           final char separatorChar,
                                           final boolean removeLastSlash,
-                                          final @Nullable SymlinkResolver resolver) {
+                                          @Nullable SymlinkResolver resolver) {
     if (path == null || path.length() == 0) {
       return path;
     }
@@ -488,6 +489,7 @@ public class FileUtilRt {
     return relativePath.toString();
   }
 
+  @NotNull
   private static String ensureEnds(@NotNull String s, final char endsWith) {
     return StringUtilRt.endsWithChar(s, endsWith) ? s : s + endsWith;
   }
@@ -538,6 +540,7 @@ public class FileUtilRt {
   private static class FilesToDeleteHolder {
     private static final Queue<String> ourFilesToDelete = createFilesToDelete();
 
+    @NotNull
     private static Queue<String> createFilesToDelete() {
       final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<String>();
       Runtime.getRuntime().addShutdownHook(new Thread("FileUtil deleteOnExit") {
@@ -565,17 +568,17 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(File dir, @NotNull String prefix, @Nullable String suffix) throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix) throws IOException {
     return createTempFile(dir, prefix, suffix, true, true);
   }
 
   @NotNull
-  public static File createTempFile(File dir, @NotNull String prefix, @Nullable String suffix, boolean create) throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix, boolean create) throws IOException {
     return createTempFile(dir, prefix, suffix, create, true);
   }
 
   @NotNull
-  public static File createTempFile(File dir, @NotNull String prefix, @Nullable String suffix, boolean create, boolean deleteOnExit) throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix, boolean create, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(dir, prefix, suffix, false);
     if (deleteOnExit) {
       //noinspection SSBasedInspection
@@ -683,7 +686,7 @@ public class FileUtilRt {
   }
 
   @TestOnly
-  static void resetCanonicalTempPathCache(final String tempPath) {
+  static void resetCanonicalTempPathCache(@NotNull String tempPath) {
     ourCanonicalTempPathCache = tempPath;
   }
 
@@ -703,7 +706,6 @@ public class FileUtilRt {
 
   /** @deprecated not needed in 'util-rt'; use {@link com.intellij.openapi.util.io.FileUtil} or {@link File} methods; for removal in IDEA 2020 */
   @Deprecated
-  @SuppressWarnings("ALL")
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     try {
       File file = new File(path);
@@ -744,7 +746,7 @@ public class FileUtilRt {
   @NotNull
   public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
-    @SuppressWarnings("ImplicitDefaultCharsetUsage") Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+    Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
     try {
       return loadText(reader, (int)file.length());
     }
@@ -802,7 +804,7 @@ public class FileUtilRt {
   public static List<String> loadLines(@NotNull String path, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(path);
     try {
-      @SuppressWarnings("ImplicitDefaultCharsetUsage") BufferedReader reader =
+      BufferedReader reader =
         new BufferedReader(encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding));
       try {
         return loadLines(reader);
@@ -1093,6 +1095,7 @@ public class FileUtilRt {
     boolean charsEqual(char ch1, char ch2);
   }
 
+  @NotNull
   private static LoggerRt logger() {
     return LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilRt");
   }

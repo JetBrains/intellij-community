@@ -3,15 +3,20 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
+import com.intellij.util.containers.MultiMap
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @PublishedApi
-@JvmOverloads
-internal fun createLayoutBuilder(isUseMagic: Boolean = true /* preserved for API compatibility */): LayoutBuilder {
+internal fun createLayoutBuilder(): LayoutBuilder {
   return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@PublishedApi
+@Deprecated(message = "isUseMagic not used anymore")
+internal fun createLayoutBuilder(isUseMagic: Boolean) = createLayoutBuilder()
 
 interface LayoutBuilderImpl {
   val rootRow: Row
@@ -26,6 +31,9 @@ interface LayoutBuilderImpl {
 
   // Validators applied immediately on input
   val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
+
+  // Validation applicants for custom validation events
+  val customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit>
 
   val applyCallbacks: List<() -> Unit>
   val resetCallbacks: List<() -> Unit>

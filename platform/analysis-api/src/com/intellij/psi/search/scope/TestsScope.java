@@ -2,7 +2,6 @@
 package com.intellij.psi.search.scope;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Sergey Malenkov
  */
 public final class TestsScope extends NamedScope {
-  public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
+  public static final String NAME = "Tests";
   public static final TestsScope INSTANCE = new TestsScope();
 
   private TestsScope() {

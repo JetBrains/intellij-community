@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
+public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
   private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "CustomizeFeaturedPluginsStepPanel Pool", 4);
@@ -100,7 +100,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       List<IdeaPluginDescriptor> dependentDescriptors = new ArrayList<>(dependentPluginIds.size());
       boolean failedToFindDependencies = false;
       for (PluginId id : dependentPluginIds) {
-        if (PluginManagerCore.isModuleDependency(id) || myPluginGroups.findPlugin(id.getIdString()) != null) {
+        if (PluginManagerCore.isModuleDependency(id) || myPluginGroups.findPlugin(id) != null) {
           continue;
         }
         IdeaPluginDescriptor dependentDescriptor = pluginsFromRepository.get(id.getIdString());

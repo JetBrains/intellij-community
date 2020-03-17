@@ -15,9 +15,17 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public interface Scheme {
+  String EDITABLE_COPY_PREFIX = "_@user_";
+
   @NotNull
   String getName();
+
+  @NotNull
+  default String getDisplayName() {
+    return StringUtil.trimStart(getName(), EDITABLE_COPY_PREFIX);
+  }
 }

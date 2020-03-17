@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ public abstract class IntentionManager  {
    * @param project the project for which the instance is returned.
    * @return instance of the {@code IntentionManager} assigned for given project.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   public static IntentionManager getInstance(Project project) {
     return getInstance();

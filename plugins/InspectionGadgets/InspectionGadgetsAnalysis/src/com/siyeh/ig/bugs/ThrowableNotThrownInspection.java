@@ -36,12 +36,6 @@ public class ThrowableNotThrownInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("throwable.not.thrown.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (expression instanceof PsiMethodCallExpression) {

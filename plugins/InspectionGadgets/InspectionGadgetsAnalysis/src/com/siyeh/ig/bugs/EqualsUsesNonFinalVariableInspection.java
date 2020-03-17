@@ -35,13 +35,6 @@ public class EqualsUsesNonFinalVariableInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.final.field.in.equals.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.field.in.equals.problem.descriptor");

@@ -24,9 +24,6 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @see com.intellij.psi.stubs.BinaryFileStubBuilders#EXTENSION_POINT_NAME
- */
 public interface BinaryFileStubBuilder {
   boolean acceptsFile(@NotNull VirtualFile file);
 
@@ -34,4 +31,21 @@ public interface BinaryFileStubBuilder {
   Stub buildStubTree(@NotNull FileContent fileContent);
 
   int getStubVersion();
+
+  interface CompositeBinaryFileStubBuilder<SubBuilder> extends BinaryFileStubBuilder {
+    @Nullable
+    SubBuilder getSubBuilder(@NotNull FileContent fileContent);
+
+    @NotNull
+    String getSubBuilderVersion(@Nullable SubBuilder subBuilder);
+
+    @Nullable
+    Stub buildStubTree(@NotNull FileContent fileContent, @Nullable SubBuilder builder);
+
+    @Nullable
+    @Override
+    default Stub buildStubTree(@NotNull FileContent fileContent) {
+      return buildStubTree(fileContent, getSubBuilder(fileContent));
+    }
+  }
 }

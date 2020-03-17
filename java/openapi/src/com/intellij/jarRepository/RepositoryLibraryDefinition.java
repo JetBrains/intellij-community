@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 
-public class RepositoryLibraryDefinition extends AbstractExtensionPointBean {
+public final class RepositoryLibraryDefinition extends AbstractExtensionPointBean {
   public static final ExtensionPointName<RepositoryLibraryDefinition> EP_NAME = ExtensionPointName.create("com.intellij.repositoryLibrary");
 
   @Attribute("name")

@@ -47,7 +47,7 @@ import java.util.*;
  */
 public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
   private static final int ourOptimizeThreshold = Integer.parseInt(System.getProperty("groovyc.optimized.class.loading.threshold", "10"));
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.JpsGroovycRunner");
+  private static final Logger LOG = Logger.getInstance(JpsGroovycRunner.class);
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<ModuleChunk, GroovycContinuation>> CONTINUATIONS = Key.create("CONTINUATIONS");
   public static final String GROOVYC_IN_PROCESS = "groovyc.in.process";
@@ -428,7 +428,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   private Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<T, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<>();
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(
       context.getProjectDescriptor().getProject());
     for (T target : getTargets(chunk)) {
       String moduleOutputPath = finalOutputs.get(target);

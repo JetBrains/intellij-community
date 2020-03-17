@@ -16,9 +16,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Stands for emacs 'reverse-kill-line' action, i.e.
@@ -36,7 +38,7 @@ public class CutLineBackwardAction extends TextComponentEditorAction {
   static class Handler extends EditorWriteActionHandler {
     
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final Document document = editor.getDocument();
       int caretOffset = editor.getCaretModel().getOffset();
       if (caretOffset <= 0) {

@@ -15,12 +15,6 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.display.name");
-  }
-  
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType comparedType = (PsiType)infos[0];
     final PsiType comparisonType = (PsiType)infos[1];

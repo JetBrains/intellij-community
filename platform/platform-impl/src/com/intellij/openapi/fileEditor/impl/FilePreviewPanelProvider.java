@@ -86,7 +86,7 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
 
   @Override
   public boolean isModified(VirtualFile content, boolean beforeReuse) {
-    for (EditorWithProviderComposite composite : myEditorsSplitters.getEditorsComposites()) {
+    for (EditorWithProviderComposite composite : myEditorsSplitters.getEditorComposites()) {
       if (composite.isModified() && Comparing.equal(composite.getFile(), content)) return true;
     }
     return false;
@@ -118,7 +118,7 @@ public final class FilePreviewPanelProvider extends PreviewPanelProvider<Virtual
       return new EditorWindow(this) {
         @Override
         protected void onBeforeSetEditor(VirtualFile file) {
-          for (EditorWithProviderComposite composite : getEditorsComposites()) {
+          for (EditorWithProviderComposite composite : getEditorComposites()) {
             if (composite.isModified()) {
               //Estimation: no more than one file is modified at the same time
               PreviewManager.SERVICE.moveToStandardPlaceImpl(myProject, getId(), composite.getFile());

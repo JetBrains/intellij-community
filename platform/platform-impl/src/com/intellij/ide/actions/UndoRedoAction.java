@@ -88,7 +88,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     }
 
     Project project = getProject(editor, dataContext);
-    return project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
+    return project != null && !project.isDefault() ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
   }
 
   private static Project getProject(FileEditor editor, DataContext dataContext) {

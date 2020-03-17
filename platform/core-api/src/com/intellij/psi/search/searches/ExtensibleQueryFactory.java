@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
-import com.intellij.openapi.extensions.SmartExtensionPoint;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.QueryExecutor;
@@ -26,6 +23,20 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
     this("com.intellij");
   }
 
+  protected ExtensibleQueryFactory(@NotNull ExtensionPointName<QueryExecutor<Result, Parameters>> epName) {
+    myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
+      @NotNull
+      @Override
+      protected ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
+        return Extensions.getRootArea().getExtensionPoint(epName);
+      }
+    };
+  }
+
+  /**
+   * @deprecated Please specify extension point name explicitly
+   */
+  @Deprecated
   protected ExtensibleQueryFactory(@NonNls final String epNamespace) {
     myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
       @Override

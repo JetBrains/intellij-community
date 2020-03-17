@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
@@ -38,8 +39,8 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   private final Set<PsiParameter> myUsedParameters;
   private final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
 
-  private NullParameterConstraintChecker(Collection<PsiParameter> parameters) {
-    super(false, null);
+  private NullParameterConstraintChecker(Project project, Collection<PsiParameter> parameters) {
+    super(project);
     myPossiblyViolatedParameters = new THashSet<>(parameters);
     myParametersWithSuccessfulExecutionInNotNullState = new THashSet<>();
     myUsedParameters = new THashSet<>();
@@ -61,7 +62,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     }
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
-    NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters);
+    NullParameterConstraintChecker checker = new NullParameterConstraintChecker(method.getProject(), nullableParameters);
     checker.analyzeMethod(method.getBody(), new StandardInstructionVisitor());
 
     return checker.myPossiblyViolatedParameters
@@ -123,7 +124,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
         setVariableState(getFactory().getVarFactory().createVariableValue(parameter),
-                         new DfaVariableState(DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NULLABLE)));
+                         new DfaVariableState(DfaNullability.NULLABLE.asDfType()));
       }
     }
 

@@ -72,7 +72,7 @@ import java.util.List;
 import java.util.*;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements SafeWriteRequestor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
+  private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
 
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
 
@@ -276,13 +276,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!myUnsavedDocuments.isEmpty()) {
       myUnsavedDocuments.clear();
-      fireUnsavedDocumentsDropped();
+      myMultiCaster.unsavedDocumentsDropped();
     }
   }
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       final Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
@@ -470,7 +470,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private void removeFromUnsaved(@NotNull Document document) {
     myUnsavedDocuments.remove(document);
-    fireUnsavedDocumentsDropped();
+    myMultiCaster.unsavedDocumentDropped(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
@@ -680,11 +680,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
   }
 
-  public void contentsChanged(VFileContentChangeEvent event) {
+  public void contentsChanged(@NotNull VFileContentChangeEvent event) {
     VirtualFile virtualFile = event.getFile();
     Document document = getCachedDocument(virtualFile);
 
-    if (event.isFromSave()) return;
+    if (event.isFromSave()) {
+      return;
+    }
 
     if (document == null || isBinaryWithDecompiler(virtualFile)) {
       myMultiCaster.fileWithNoDocumentChanged(virtualFile); // This will generate PSI event at FileManagerImpl
@@ -770,10 +772,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       return true;
     }
     return false;
-  }
-
-  private void fireUnsavedDocumentsDropped() {
-    myMultiCaster.unsavedDocumentsDropped();
   }
 
   private boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {

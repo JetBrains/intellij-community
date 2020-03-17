@@ -2,8 +2,10 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+
 /**
- * @author nik
+ * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
+ * distribution of your product.
  */
 @CompileStatic
 abstract class ProductProperties {

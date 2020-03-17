@@ -7,15 +7,12 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -80,25 +77,17 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myProject = project;
     myTemporaryEntryPoints = new HashSet<>();
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
-    DEAD_CODE_EP_NAME.addExtensionPointListener(new ExtensionPointListener<EntryPoint>() {
-      @Override
-      public void extensionAdded(@NotNull EntryPoint extension, @NotNull PluginDescriptor pluginDescriptor) {
-        extensionRemoved(extension, pluginDescriptor);
+    DEAD_CODE_EP_NAME.addExtensionPointListener(() -> {
+      if (ADDITIONAL_ANNOS != null) {
+        ADDITIONAL_ANNOS = null;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          if (!project.isDisposed()) {
+            ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+          }
+        });
       }
-
-      @Override
-      public void extensionRemoved(@NotNull EntryPoint extension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (ADDITIONAL_ANNOS != null) {
-          ADDITIONAL_ANNOS = null;
-          UIUtil.invokeLaterIfNeeded(() -> {
-            if (!ApplicationManager.getApplication().isDisposed()) {
-              ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-            }
-          });
-        }
-        // annotations changed
-        DaemonCodeAnalyzer.getInstance(myProject).restart();
-      }
+      // annotations changed
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
     }, this);
   }
 
@@ -107,7 +96,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(@NotNull Element element) {
     Element entryPointsElement = element.getChild("entry_points");
     if (entryPointsElement != null) {

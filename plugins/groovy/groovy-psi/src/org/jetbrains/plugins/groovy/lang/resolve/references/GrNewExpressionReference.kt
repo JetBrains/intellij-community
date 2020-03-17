@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class GrNewExpressionReference(element: GrNewExpression) : GrConstructorReference<GrNewExpression>(element) {
 
-  override fun resolveClass(): GroovyResolveResult? = element.referenceElement?.advancedResolve()
+  override fun doResolveClass(): GroovyResolveResult? = element.referenceElement?.advancedResolve()
 
   override val arguments: Arguments? get() = element.getArguments()
 }

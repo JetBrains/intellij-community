@@ -87,8 +87,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
     }
   }
 
-  @Nullable
-  private PsiClass[] invokeDialog(Project project, ServiceCreator serviceCreator, PsiDirectory dir) {
+  private PsiClass @Nullable [] invokeDialog(Project project, ServiceCreator serviceCreator, PsiDirectory dir) {
     DialogWrapper dialog = new NewServiceDialog(project, serviceCreator, dir);
     dialog.show();
     return serviceCreator.getCreatedClasses();

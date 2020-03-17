@@ -49,7 +49,6 @@ import java.util.Set;
 public class TreeModelBuilder {
   private static final Logger LOG = Logger.getInstance(TreeModelBuilder.class);
 
-  public static final String SCANNING_PACKAGES_MESSAGE = AnalysisScopeBundle.message("package.dependencies.build.progress.text");
   private final ProjectFileIndex myFileIndex;
   private final Project myProject;
   private final boolean myShowModuleGroups;
@@ -83,10 +82,6 @@ public class TreeModelBuilder {
   private GeneralGroupNode myTestRoot;
   private GeneralGroupNode myLibsRoot;
 
-  public static final String PRODUCTION_NAME = AnalysisScopeBundle.message("package.dependencies.production.node.text");
-  public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
-  public static final String LIBRARY_NAME = AnalysisScopeBundle.message("package.dependencies.library.node.text");
-
   public TreeModelBuilder(@NotNull Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
     final boolean multiModuleProject = ModuleManager.getInstance(project).getModules().length > 1;
@@ -107,9 +102,9 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, AllIcons.Modules.SourceFolder, project);
-      myTestRoot = new GeneralGroupNode(TEST_NAME, AllIcons.Modules.TestSourceFolder, project);
-      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, AllIcons.Nodes.PpLibFolder, project);
+      mySourceRoot = new GeneralGroupNode(getProductionName(), AllIcons.Modules.SourceFolder, project);
+      myTestRoot = new GeneralGroupNode(getTestName(), AllIcons.Modules.TestSourceFolder, project);
+      myLibsRoot = new GeneralGroupNode(getLibraryName(), AllIcons.Nodes.PpLibFolder, project);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
@@ -234,7 +229,7 @@ public class TreeModelBuilder {
     myTotalFileCount++;
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, true, 0);
+      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), true, 0);
     }
   }
 
@@ -270,7 +265,7 @@ public class TreeModelBuilder {
   private PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(SCANNING_PACKAGES_MESSAGE, false, ((double)myScannedFileCount++) / myTotalFileCount);
+      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), false, ((double)myScannedFileCount++) / myTotalFileCount);
     }
 
     boolean isMarked = myMarker != null && myMarker.isMarked(file);
@@ -462,5 +457,21 @@ public class TreeModelBuilder {
         return myLibsRoot;
       }
     }
+  }
+
+  public static String getScanningPackagesMessage() {
+    return AnalysisScopeBundle.message("package.dependencies.build.progress.text");
+  }
+
+  public static String getProductionName() {
+    return AnalysisScopeBundle.message("package.dependencies.production.node.text");
+  }
+
+  public static String getTestName() {
+    return AnalysisScopeBundle.message("package.dependencies.test.node.text");
+  }
+
+  public static String getLibraryName() {
+    return AnalysisScopeBundle.message("package.dependencies.library.node.text");
   }
 }

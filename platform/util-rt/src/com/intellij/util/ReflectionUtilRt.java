@@ -11,26 +11,26 @@ import java.util.List;
 
 public class ReflectionUtilRt {
   @NotNull
-  public static List<Field> collectFields(@NotNull Class clazz) {
+  public static List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<Field>();
     collectFields(clazz, result);
     return result;
   }
 
-  private static void collectFields(Class clazz, List<? super Field> result) {
+  private static void collectFields(Class<?> clazz, List<? super Field> result) {
     result.addAll(Arrays.asList(clazz.getDeclaredFields()));
 
-    Class superClass = clazz.getSuperclass();
+    Class<?> superClass = clazz.getSuperclass();
     if (superClass != null) {
       collectFields(superClass, result);
     }
 
-    for (Class each : clazz.getInterfaces()) {
+    for (Class<?> each : clazz.getInterfaces()) {
       collectFields(each, result);
     }
   }
 
-  public static <T> T getField(@NotNull Class objectClass,
+  public static <T> T getField(@NotNull Class<?> objectClass,
                                @Nullable Object object,
                                @Nullable("null means any type") Class<T> fieldType,
                                @NotNull String fieldName) {
@@ -47,7 +47,7 @@ public class ReflectionUtilRt {
   }
 
   @Nullable
-  private static Field findField(Class clazz, String fieldName, @Nullable Class<?> fieldType) {
+  private static Field findField(Class<?> clazz, String fieldName, @Nullable Class<?> fieldType) {
     for (Field field : clazz.getDeclaredFields()) {
       if (fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType()))) {
         field.setAccessible(true);
@@ -55,13 +55,13 @@ public class ReflectionUtilRt {
       }
     }
 
-    Class superClass = clazz.getSuperclass();
+    Class<?> superClass = clazz.getSuperclass();
     if (superClass != null) {
       Field result = findField(superClass, fieldName, fieldType);
       if (result != null) return result;
     }
 
-    for (Class each : clazz.getInterfaces()) {
+    for (Class<?> each : clazz.getInterfaces()) {
       Field result = findField(each, fieldName, fieldType);
       if (result != null) return result;
     }

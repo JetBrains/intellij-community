@@ -41,7 +41,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -115,7 +115,7 @@ public final class BuildManager implements Disposable {
   private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
   private static final SimpleDateFormat USAGE_STAMP_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildManager");
+  private static final Logger LOG = Logger.getInstance(BuildManager.class);
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
@@ -134,7 +134,7 @@ public final class BuildManager implements Disposable {
   private final Map<TaskFuture<?>, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
-  private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
+  private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager(this);
   private final Executor myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "BuildManager RequestProcessor Pool");
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
@@ -142,6 +142,7 @@ public final class BuildManager implements Disposable {
     "BuildManager Auto-Make Trigger");
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private volatile int myFileChangeCounter;
+  private boolean myGeneratePortableCachesEnabled = false;
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
@@ -169,7 +170,7 @@ public final class BuildManager implements Disposable {
     @Override
     public void runTask() {
       if (shouldSaveDocuments()) {
-        TransactionGuard.getInstance().submitTransactionAndWait(() ->
+        ApplicationManager.getApplication().invokeAndWait(() ->
           ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false));
       }
     }
@@ -237,9 +238,9 @@ public final class BuildManager implements Disposable {
             myUnprocessedEvents.addAll(events);
           }
           myAutomakeTrigger.execute(() -> {
-            if (!application.isDisposedOrDisposeInProgress()) {
+            if (!application.isDisposed()) {
               ReadAction.run(()-> {
-                if (application.isDisposedOrDisposeInProgress()) return;
+                if (application.isDisposed()) return;
                 final List<VFileEvent> snapshot;
                 synchronized (myUnprocessedEvents) {
                   if (myUnprocessedEvents.isEmpty()) {
@@ -789,7 +790,7 @@ public final class BuildManager implements Disposable {
                   // ensure project model is saved on disk, so that automake sees the latest model state.
                   // For ordinary make all project, app settings and unsaved docs are always saved before build starts.
                   try {
-                    TransactionGuard.getInstance().submitTransactionAndWait(project::save);
+                    ApplicationManager.getApplication().invokeAndWait(project::save);
                   }
                   catch (Throwable e) {
                     LOG.info(e);
@@ -1155,9 +1156,10 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    if (Registry.is("compiler.build.portable.caches")) {
-      cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
-      cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
+    // portable caches
+    if (isGeneratePortableCachesEnabled()) {
+      //cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
+      //cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
       cmdLine.addParameter("-Dorg.jetbrains.jps.portable.caches=true");
     }
 
@@ -1409,6 +1411,15 @@ public final class BuildManager implements Disposable {
     }
   }
 
+  public boolean isGeneratePortableCachesEnabled() {
+    return myGeneratePortableCachesEnabled;
+  }
+
+  public void setGeneratePortableCachesEnabled(boolean generatePortableCachesEnabled) {
+    if (myGeneratePortableCachesEnabled != generatePortableCachesEnabled) clearState();
+    myGeneratePortableCachesEnabled = generatePortableCachesEnabled;
+  }
+
   private abstract class BuildManagerPeriodicTask implements Runnable {
     private final Alarm myAlarm;
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
@@ -1464,7 +1475,7 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private static class NotifyingMessageHandler extends DelegatingMessageHandler {
+  private static final class NotifyingMessageHandler extends DelegatingMessageHandler {
     private final Project myProject;
     private final BuilderMessageHandler myDelegateHandler;
     private final boolean myIsAutomake;
@@ -1538,47 +1549,47 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private class ProjectWatcher implements ProjectManagerListener {
-    private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
-
+  static final class BuildManagerStartupActivity implements StartupActivity.DumbAware {
     @Override
-    public void projectOpened(@NotNull final Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      final MessageBusConnection conn = project.getMessageBus().connect();
-      myConnections.put(project, conn);
-      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
+      MessageBusConnection connection = project.getMessageBus().connect();
+      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
-        public void rootsChanged(@NotNull final ModuleRootEvent event) {
-          final Object source = event.getSource();
+        public void rootsChanged(@NotNull ModuleRootEvent event) {
+          Object source = event.getSource();
           if (source instanceof Project) {
-            clearState((Project)source);
+            getInstance().clearState((Project)source);
           }
         }
       });
-      conn.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+      connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
         public void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
-          cancelAutoMakeTasks(env.getProject()); // make sure to cancel all automakes waiting in the build queue
+          getInstance().cancelAutoMakeTasks(env.getProject()); // make sure to cancel all automakes waiting in the build queue
         }
 
         @Override
         public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
           // make sure to cancel all automakes added to the build queue after processStaring and before this event
-          cancelAutoMakeTasks(env.getProject());
+          getInstance().cancelAutoMakeTasks(env.getProject());
         }
 
         @Override
         public void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
           // augmenting reaction to processTerminated(): in case any automakes were canceled before process start
-          scheduleAutoMake();
+          getInstance().scheduleAutoMake();
         }
 
         @Override
         public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-          scheduleAutoMake();
+          getInstance().scheduleAutoMake();
         }
       });
-      conn.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+      connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         private final Set<String> myRootsToRefresh = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
         @Override
@@ -1655,21 +1666,26 @@ public final class BuildManager implements Disposable {
           }
         }
       });
-      final String projectPath = getProjectPath(project);
+
+      String projectPath = getProjectPath(project);
       Disposer.register(project, () -> {
-        cancelPreloadedBuilds(projectPath);
-        myProjectDataMap.remove(projectPath);
+        getInstance().cancelPreloadedBuilds(projectPath);
+        getInstance().myProjectDataMap.remove(projectPath);
       });
-      StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-        runCommand(() -> {
-          final File projectSystemDir = getProjectSystemDirectory(project);
-          if (projectSystemDir != null) {
-            updateUsageFile(project, projectSystemDir);
-          }
-        });
-        scheduleAutoMake(); // run automake after project opened
+
+      getInstance().runCommand(() -> {
+        File projectSystemDir = getInstance().getProjectSystemDirectory(project);
+        if (projectSystemDir != null) {
+          updateUsageFile(project, projectSystemDir);
+        }
       });
+      // run automake after project opened
+      getInstance().scheduleAutoMake();
     }
+  }
+
+  private final class ProjectWatcher implements ProjectManagerListener {
+    private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override
     public void projectClosingBeforeSave(@NotNull Project project) {

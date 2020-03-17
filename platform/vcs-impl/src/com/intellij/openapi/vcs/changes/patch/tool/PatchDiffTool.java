@@ -31,6 +31,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.ui.components.panels.Wrapper;
@@ -121,8 +122,10 @@ public class PatchDiffTool implements FrameDiffTool {
       Document patchDocument = myEditor.getDocument();
       WriteAction.run(() -> patchDocument.setText(builder.getPatchContent().toString()));
 
-      myEditor.getGutterComponentEx()
-        .setLineNumberConvertor(builder.getLineConvertor1().createConvertor(), builder.getLineConvertor2().createConvertor());
+      myEditor.getGutter().setLineNumberConverter(
+        new LineNumberConverterAdapter(builder.getLineConvertor1().createConvertor()),
+        new LineNumberConverterAdapter(builder.getLineConvertor2().createConvertor())
+      );
 
       for (int line : builder.getSeparatorLines().toNativeArray()) {
         int offset = patchDocument.getLineStartOffset(line);

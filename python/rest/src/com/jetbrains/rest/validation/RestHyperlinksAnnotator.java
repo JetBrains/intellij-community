@@ -15,6 +15,7 @@
  */
 package com.jetbrains.rest.validation;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.jetbrains.rest.RestBundle;
 import com.jetbrains.rest.psi.RestReference;
 
@@ -31,6 +32,6 @@ public class RestHyperlinksAnnotator extends RestAnnotator {
       return;
 
     if (node.resolve() == null)
-      getHolder().createWarningAnnotation(node, RestBundle.message("ANN.unknown.target", node.getReferenceText()));
+      getHolder().newAnnotation(HighlightSeverity.WARNING, RestBundle.message("ANN.unknown.target", node.getReferenceText())).create();
   }
 }

@@ -146,6 +146,21 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   @Override
+  public PsiRecordHeader createRecordHeaderFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
+    PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("record Record("+text+"){}"));
+    PsiClass[] classes = aFile.getClasses();
+    if (classes.length != 1) {
+      throw new IncorrectOperationException("Incorrect record component '" + text + "'");
+    }
+    PsiRecordHeader header = classes[0].getRecordHeader();
+    if (header == null) {
+      throw new IncorrectOperationException("Incorrect record component '" + text + "'");
+    }
+    return header;
+  }
+
+  @NotNull
+  @Override
   public PsiField createFieldFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
     DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, level(context)), context);
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());

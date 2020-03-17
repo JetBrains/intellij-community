@@ -27,10 +27,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ConvertingIterator;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +41,6 @@ import java.util.Iterator;
  */
 @ApiStatus.Internal
 public class ModuleLibraryTable implements LibraryTable, LibraryTable.ModifiableModel {
-  private static final ModuleLibraryOrderEntryCondition MODULE_LIBRARY_ORDER_ENTRY_FILTER = new ModuleLibraryOrderEntryCondition();
-  private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
   @NotNull
   private final RootModelImpl myRootModel;
   @NotNull
@@ -132,8 +127,10 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   @NotNull
   public Iterator<Library> getLibraryIterator() {
     FilteringIterator<OrderEntry, LibraryOrderEntry> filteringIterator =
-      new FilteringIterator<>(myRootModel.getOrderIterator(), MODULE_LIBRARY_ORDER_ENTRY_FILTER);
-    return new ConvertingIterator<>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
+      new FilteringIterator<>(myRootModel.getOrderIterator(), entry -> entry instanceof LibraryOrderEntry &&
+                                                                       ((LibraryOrderEntry)entry).isModuleLevel() &&
+                                                                       ((LibraryOrderEntry)entry).getLibrary() != null);
+    return ContainerUtil.mapIterator(filteringIterator, LibraryOrderEntry::getLibrary);
   }
 
   @NotNull
@@ -177,20 +174,6 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTable.Modifiable
   @NotNull
   public Module getModule() {
     return myRootModel.getModule();
-  }
-
-  private static class ModuleLibraryOrderEntryCondition implements Condition<OrderEntry> {
-    @Override
-    public boolean value(OrderEntry entry) {
-      return entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).isModuleLevel() && ((LibraryOrderEntry)entry).getLibrary() != null;
-    }
-  }
-
-  private static class OrderEntryToLibraryConvertor implements Convertor<LibraryOrderEntry, Library> {
-    @Override
-    public Library convert(LibraryOrderEntry o) {
-      return o.getLibrary();
-    }
   }
 
   @Override

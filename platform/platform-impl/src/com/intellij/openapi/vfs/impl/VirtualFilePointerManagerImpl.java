@@ -671,7 +671,15 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  synchronized void removeNodeFrom(@NotNull VirtualFilePointerImpl pointer) {
+  synchronized boolean decrementUsageCount(@NotNull VirtualFilePointerImpl pointer) {
+    boolean shouldKill = pointer.incrementUsageCount(-1) == 0;
+    if (shouldKill) {
+        removeNodeFrom(pointer);
+    }
+    return shouldKill;
+  }
+
+  private void removeNodeFrom(@NotNull VirtualFilePointerImpl pointer) {
     FilePointerPartNode root = pointer.myNode.remove();
     boolean rootNodeEmpty = root.children.length == 0 ;
     if (rootNodeEmpty) {

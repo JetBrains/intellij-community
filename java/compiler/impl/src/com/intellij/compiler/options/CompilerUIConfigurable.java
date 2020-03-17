@@ -37,7 +37,7 @@ import java.util.*;
 import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerUIConfigurable");
+  private static final Logger LOG = Logger.getInstance(CompilerUIConfigurable.class);
 
   private static final Set<Setting> EXTERNAL_BUILD_SETTINGS = EnumSet.of(
     Setting.EXTERNAL_BUILD, Setting.AUTO_MAKE, Setting.PARALLEL_COMPILATION, Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE,
@@ -307,7 +307,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   @Override
   public String getDisplayName() {
-    return "General";
+    return CompilerBundle.message("configurable.CompilerUIConfigurable.display.name");
   }
 
   @Override

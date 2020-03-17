@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -9,10 +8,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.RootsProvider;
+import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
@@ -52,11 +48,7 @@ import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -123,6 +115,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     };
     project.getMessageBus().connect(this).subscribe(ProblemListener.TOPIC, problemListener);
     Disposer.register(project, this);
+
+    TreeStructureProvider.EP.addExtensionPointListener(project,
+                                                       () -> updateFromRoot(true).waitFor(5000),
+                                                       this);
   }
 
   /**
@@ -296,10 +292,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @NotNull
-  protected <T extends NodeDescriptor> List<T> getSelectedNodes(@NotNull Class<T> nodeClass){
+  protected <T extends NodeDescriptor<?>> List<T> getSelectedNodes(@NotNull Class<T> nodeClass) {
     TreePath[] paths = getSelectionPaths();
-    if (paths == null) return Collections.emptyList();
-    final ArrayList<T> result = new ArrayList<>();
+    if (paths == null) {
+      return Collections.emptyList();
+    }
+
+    List<T> result = new ArrayList<>();
     for (TreePath path : paths) {
       T userObject = TreeUtil.getLastUserObject(nodeClass, path);
       if (userObject != null) {
@@ -315,12 +314,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(@NotNull String dataId) {
-    Object data =
-      myTreeStructure instanceof AbstractTreeStructureBase ?
-      ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId) : null;
-    if (data != null) {
-      return data;
+    if (myTreeStructure instanceof AbstractTreeStructureBase) {
+      @SuppressWarnings("unchecked")
+      List<AbstractTreeNode<?>> nodes = (List)getSelectedNodes(AbstractTreeNode.class);
+      Object data = ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(nodes, dataId);
+      if (data != null) {
+        return data;
+      }
     }
+
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
@@ -518,7 +520,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @NotNull
-  protected Comparator<NodeDescriptor> createComparator() {
+  protected Comparator<NodeDescriptor<?>> createComparator() {
     return new GroupByTypeComparator(ProjectView.getInstance(myProject), getId());
   }
 
@@ -531,11 +533,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @TestOnly
-  public void installComparator(@NotNull Comparator<? super NodeDescriptor> comparator) {
+  public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     installComparator(getTreeBuilder(), comparator);
   }
 
-  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
+  protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (builder != null) builder.setNodeDescriptorComparator(comparator);
   }
 
@@ -771,10 +773,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
     @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
-      final PsiElement[] psiElements = getSelectedPSIElements();
+      PsiElement[] psiElements = getSelectedPSIElements();
       TreePath[] paths = getSelectionPaths();
-      return new DnDDragStartBean(new TransferableWrapper(){
-
+      return new DnDDragStartBean(new TransferableWrapper() {
         @Override
         public List<File> asFileList() {
           return PsiCopyPasteManager.asFileList(psiElements);
@@ -821,14 +822,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       g2.dispose();
 
       return new Pair<>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
-    }
-
-    @Override
-    public void dragDropEnd() {
-    }
-
-    @Override
-    public void dropActionChanged(int gestureModifiers) {
     }
   }
 

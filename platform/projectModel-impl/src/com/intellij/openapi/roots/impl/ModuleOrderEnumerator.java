@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,8 @@ import java.util.List;
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final ModuleRootModel myRootModel;
 
-  ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, @Nullable OrderRootsCache cache) {
+  @ApiStatus.Internal
+  public ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, @Nullable OrderRootsCache cache) {
     super(cache);
     myRootModel = rootModel;
   }

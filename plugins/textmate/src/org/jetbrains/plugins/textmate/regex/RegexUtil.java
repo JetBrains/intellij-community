@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.regex;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.util.TextRange;
-import org.jcodings.specific.NonStrictUTF8Encoding;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +14,7 @@ public class RegexUtil {
       return 0;
     }
     Preconditions.checkPositionIndex(byteOffset, stringBytes.length);
-    return NonStrictUTF8Encoding.INSTANCE.strLength(stringBytes, 0, byteOffset);
+    return UTF8Encoding.INSTANCE.strLength(stringBytes, 0, byteOffset);
   }
 
   public static int byteOffsetByCharOffset(@NotNull CharSequence charSequence, int charOffset) {

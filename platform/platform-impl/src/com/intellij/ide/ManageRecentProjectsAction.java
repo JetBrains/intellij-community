@@ -23,7 +23,7 @@ import java.util.Arrays;
 /**
  * @author Konstantin Bulenkov
  */
-public class ManageRecentProjectsAction extends DumbAwareAction {
+final class ManageRecentProjectsAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Disposable disposable = Disposer.newDisposable();

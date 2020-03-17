@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -56,7 +55,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.nullable.NullableStuffInspectionBase");
+  private static final Logger LOG = Logger.getInstance(NullableStuffInspectionBase.class);
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -173,7 +172,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         for (PsiMethod method : aClass.getConstructors()) {
           PsiParameterList list = method.getParameterList();
           if (list.getParametersCount() == 1 &&
-              list.getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+              Objects.requireNonNull(list.getParameter(0)).getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             return true;
           }
         }
@@ -624,13 +623,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                           @Nullable PsiModifierListOwner listOwner) {
     holder.registerProblem(!annotation.isPhysical() && listOwner != null ? listOwner.getNavigationElement() : annotation,
                            InspectionsBundle.message("inspection.nullable.problems.primitive.type.annotation"),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation, listOwner));
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.nullable.problems.display.name");
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation, listOwner) {
+        @Override
+        protected boolean shouldRemoveInheritors() {
+          return true;
+        }
+      });
   }
 
   @Override
@@ -882,8 +880,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   AddAnnotationPsiFix.isAvailable(parameter, defaultNotNull)) {
                 PsiIdentifier identifier = parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameters[i]);
-                PsiElement psiElement = info == null ? null : info.getAnnotation();
-                if (psiElement == null || !psiElement.isPhysical()) {
+                LOG.assertTrue(info != null);
+                PsiAnnotation annotation = info.getAnnotation();
+                PsiElement psiElement = annotation;
+                if (!annotation.isPhysical()) {
                   psiElement = identifier;
                   if (psiElement == null) continue;
                 }

@@ -39,12 +39,6 @@ import javax.swing.*;
 public class StringEqualsEmptyStringInspection extends BaseInspection {
   public boolean SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = false;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.equals.empty.string.display.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {

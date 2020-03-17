@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -221,6 +221,9 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (expression.getParent() instanceof PsiMethodCallExpression) {
+          super.visitReferenceExpression(expression);
+        }
       }
     });
 
@@ -258,6 +261,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     if (result.isEmpty() && problems.isEmpty()) return null;
 
     for (PsiVariable variable : result) {
+      if (!variable.isPhysical()) continue;
       final PsiIdentifier nameIdentifier = variable.getNameIdentifier();
       PsiElement problemElement = nameIdentifier != null ? nameIdentifier : variable;
       if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
@@ -295,12 +299,6 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       return !REPORT_PARAMETERS;
     }
     return true;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.local.can.be.final.display.name");
   }
 
   @Override

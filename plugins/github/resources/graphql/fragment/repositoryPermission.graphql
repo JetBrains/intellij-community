@@ -1,0 +1,12 @@
+fragment repositoryPermission on Repository {
+    ...nodeInfo
+    owner {
+        ...repositoryOwnerName
+    }
+    nameWithOwner
+    viewerPermission
+
+    mergeCommitAllowed
+    squashMergeAllowed
+    rebaseMergeAllowed
+}

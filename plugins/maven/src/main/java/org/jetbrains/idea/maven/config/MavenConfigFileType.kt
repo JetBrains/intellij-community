@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.config
 
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import icons.MavenIcons
+import icons.OpenapiIcons.RepositoryLibraryLogo
 import javax.swing.Icon
 
 class MavenConfigFileType : LanguageFileType(PlainTextLanguage.INSTANCE, true) {
@@ -21,7 +21,7 @@ class MavenConfigFileType : LanguageFileType(PlainTextLanguage.INSTANCE, true) {
   }
 
   override fun getIcon(): Icon? {
-    return MavenIcons.MavenLogo
+    return RepositoryLibraryLogo
   }
 }
 

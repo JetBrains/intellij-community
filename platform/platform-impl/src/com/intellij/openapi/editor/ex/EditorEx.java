@@ -315,7 +315,8 @@ public interface EditorEx extends Editor {
    * <p>
    * Default handler shows a context menu corresponding to a certain action group
    * registered in {@link ActionManager}. Group's id can be changed using {@link #setContextMenuGroupId(String)}. For inline custom visual
-   * elements (inlays) action group id is obtained from {@link EditorCustomElementRenderer#getContextMenuGroupId(Inlay)}.
+   * elements (inlays) action group is determined by {@link EditorCustomElementRenderer#getContextMenuGroupId(Inlay)} and
+   * {@link EditorCustomElementRenderer#getContextMenuGroup(Inlay)}.
    * <p>
    * If multiple handlers are installed, they are processed in order, starting from the most recently installed one. Processing stops when
    * some handler returns {@code true} from {@link EditorPopupHandler#handlePopup(EditorMouseEvent)} method.

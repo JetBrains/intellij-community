@@ -160,20 +160,15 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       if (event != null) {
         try {
           FileUtil.writeToFile(new File(dir, MESSAGE_FILE_NAME), event.getMessage());
-          try (FileOutputStream fos = new FileOutputStream(new File(dir, THROWABLE_FILE_NAME));
-               ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+          try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(dir, THROWABLE_FILE_NAME)))) {
             oos.writeObject(event.getThrowable());
           }
           File appInfoFile = new File(dir, APPINFO_FILE_NAME);
           if (!appInfoFile.exists()) {
-            String appInfo = ITNProxy.getAppInfoString();
-            if (appInfo != null) {
-              FileUtil.writeToFile(appInfoFile, appInfo);
-            }
+            FileUtil.writeToFile(appInfoFile, ITNProxy.getAppInfoString());
           }
         }
-        catch (IOException ignored) {
-        }
+        catch (IOException ignored) { }
       }
     }
   }
@@ -317,6 +312,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       }
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
+      }
+      double averageLoad = dumpTask.getOsAverageLoad();
+      if (averageLoad > 0) {
+        message += ", load average: " + String.format("%.2f", averageLoad);
       }
       if (nonEdtCause) {
         message += "\n\nThe stack is from the thread that was blocking EDT";

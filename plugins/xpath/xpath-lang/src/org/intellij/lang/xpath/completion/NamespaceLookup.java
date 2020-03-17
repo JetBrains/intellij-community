@@ -15,18 +15,17 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.openapi.util.Iconable;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import icons.XpathIcons;
 
-import javax.swing.*;
+public class NamespaceLookup extends AbstractLookup {
+  public NamespaceLookup(String name) {
+    super(name, name);
+  }
 
-public class NamespaceLookup extends AbstractLookup implements Lookup, Iconable {
-    public NamespaceLookup(String name) {
-        super(name, name);
-    }
-
-    @Override
-    public Icon getIcon(int flags) {
-        return XpathIcons.Namespace;
-    }
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    super.renderElement(presentation);
+    presentation.setIcon(XpathIcons.Namespace);
+  }
 }

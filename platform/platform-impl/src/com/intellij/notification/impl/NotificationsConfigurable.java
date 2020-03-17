@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ import javax.swing.*;
  */
 public class NotificationsConfigurable implements Configurable, SearchableConfigurable, Configurable.NoScroll {
   public static final String DISPLAY_NAME = "Notifications";
-  static final String ID = "reference.settings.ide.settings.notifications";
+  @NonNls static final String ID = "reference.settings.ide.settings.notifications";
   private NotificationsConfigurablePanel myComponent;
 
   @Override

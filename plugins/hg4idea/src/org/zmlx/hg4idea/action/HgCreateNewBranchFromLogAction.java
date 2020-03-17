@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.branch.HgBranchPopupActions;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -38,7 +38,7 @@ public class HgCreateNewBranchFromLogAction extends HgLogSingleCommitAction {
     String shortHash = commit.toShortString();
     final String name = getNewBranchNameFromUser(repository, "Create New Branch From " + shortHash);
     if (name != null) {
-      new Task.Backgroundable(project, HgVcsMessages.message("hg4idea.progress.updatingTo", shortHash)) {
+      new Task.Backgroundable(project, HgBundle.message("hg4idea.progress.updatingTo", shortHash)) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           if (HgUpdateCommand.updateRepoToInCurrentThread(project, repository.getRoot(), commit.asString(), false)) {

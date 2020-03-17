@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,7 +30,7 @@ public abstract class JavaJspRecursiveElementVisitor extends JavaJspElementVisit
   private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<>();
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (!myRefExprsInVisit.isEmpty() && myRefExprsInVisit.peek() == element) {
       myRefExprsInVisit.pop();
       myRefExprsInVisit.push(null);

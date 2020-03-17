@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -21,7 +7,8 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.ResourcesGenerator
 
-import java.util.function.Function
+import java.util.function.BiFunction
+
 /**
  * Describes layout of a plugin in the product distribution
  *
@@ -32,9 +19,10 @@ class PluginLayout extends BaseLayout {
   String directoryName
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
-  Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
+  Collection<String> pathsToScramble = []
+  BiFunction<BuildContext, File, Boolean> scrambleClasspathFilter = { context, file -> return true} as BiFunction<BuildContext, File>
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -56,9 +44,6 @@ class PluginLayout extends BaseLayout {
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
-    if (spec.version != null) {
-      layout.versionEvaluator = { BuildContext context -> spec.version } as Function<BuildContext, String>
-    }
     spec.withModule(mainModuleName, spec.mainJarName)
     if (spec.mainJarNameSetExplicitly) {
       layout.explicitlySetJarPaths.add(spec.mainJarName)
@@ -102,9 +87,6 @@ class PluginLayout extends BaseLayout {
     private boolean directoryNameSetExplicitly
     private PluginBundlingRestrictions bundlingRestrictions = new PluginBundlingRestrictions()
 
-    /**
-     * @deprecated use {@link #withCustomVersion(java.util.function.Function)} instead
-     */
     String version
 
     PluginLayoutSpec(PluginLayout layout) {
@@ -221,14 +203,6 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
-     * By default version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
-     * @deprecated it was temporary added to keep versioning scheme for some old plugins.
-     */
-    void withCustomVersion(Function<BuildContext, String> versionEvaluator) {
-      layout.versionEvaluator = versionEvaluator
-    }
-
-    /**
      * Do not create 'resources_en.jar' and pack all resources into corresponding module JARs.
      * <strong>Do not use this for new plugins, this method is temporary added to keep layout of old plugins</strong>.
      */
@@ -242,6 +216,26 @@ class PluginLayout extends BaseLayout {
      */
     void doNotCopyModuleLibrariesAutomatically(List<String> moduleNames) {
       layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
+    }
+
+    /**
+     * Specifies a relative path to a plugin jar that should be scrambled.
+     * Scrambling is performed by the {@link org.jetbrains.intellij.build.ProprietaryBuildTools#scrambleTool}
+     * If scramble tool is not defined, scrambling will not be performed
+     * Multiple invications of this method will add corresponding paths to a list of paths to be scrambled
+     *
+     * @param relativePath - a path to a jar file relative to plugin root directory
+     */
+    void scramble(String relativePath) {
+      layout.pathsToScramble.add(relativePath)
+    }
+
+    /**
+     * Allows control over classpath entries that will be used by the scrambler to resolve references from jars being scrambled.
+     * By default all platform jars are added to the 'scramble classpath'
+     */
+    void filterScrambleClasspath(BiFunction<BuildContext, File, Boolean> filter) {
+      layout.scrambleClasspathFilter = filter
     }
   }
 }

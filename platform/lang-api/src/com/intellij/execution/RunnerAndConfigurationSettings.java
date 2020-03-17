@@ -92,7 +92,7 @@ public interface RunnerAndConfigurationSettings {
    * @return the settings, or null if the runner doesn't provide any settings or the settings aren't configured for this configuration.
    */
   @Nullable
-  RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner);
+  <Settings extends RunnerSettings> Settings getRunnerSettings(@NotNull ProgramRunner<Settings> runner);
 
   /**
    * Returns the configuration-managed settings for the specified runner.

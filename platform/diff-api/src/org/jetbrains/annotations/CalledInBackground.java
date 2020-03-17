@@ -24,6 +24,6 @@ import java.lang.annotation.Target;
  * Used to indicate that a method should be called in background thread
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledInBackground {
 }

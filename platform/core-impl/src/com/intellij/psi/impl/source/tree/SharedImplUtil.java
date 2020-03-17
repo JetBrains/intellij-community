@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 //TODO: rename/regroup?
 
 public class SharedImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SharedImplUtil");
+  private static final Logger LOG = Logger.getInstance(SharedImplUtil.class);
   private static final boolean CHECK_FOR_READ_ACTION = DebugUtil.DO_EXPENSIVE_CHECKS || ApplicationManager.getApplication().isInternal();
 
   private SharedImplUtil() {

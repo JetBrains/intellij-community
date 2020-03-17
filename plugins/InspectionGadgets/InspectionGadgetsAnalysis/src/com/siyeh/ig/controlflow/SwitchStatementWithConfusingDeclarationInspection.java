@@ -34,12 +34,6 @@ public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspe
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("switch.statement.with.confusing.declaration.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("switch.statement.with.confusing.declaration.problem.descriptor");
   }

@@ -2,7 +2,6 @@ package com.intellij.configurationScript
 
 //import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.configurationScript.providers.PluginsConfiguration
-import com.intellij.configurationScript.providers.readPluginsConfiguration
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.intellij.lang.annotations.Language
@@ -58,5 +57,5 @@ class PropertyValueReaderTest {
 }
 
 private fun doReadPluginsConfiguration(@Language("YAML") data: String): PluginsConfiguration? {
-  return readPluginsConfiguration(doRead(data.trimIndent().reader())!!)
+  return readIntoObject(PluginsConfiguration(), findValueNodeByPath(Keys.plugins, doRead(data.trimIndent().reader())!!.value)!!)
 }

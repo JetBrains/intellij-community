@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -37,9 +38,11 @@ public abstract class OrderEnumerationHandler {
       return true;
     }
 
+    @Contract(pure = true)
     public abstract boolean isApplicable(@NotNull Module module);
 
     @NotNull
+    @Contract(pure = true)
     public abstract OrderEnumerationHandler createHandler(@NotNull Module module);
   }
 

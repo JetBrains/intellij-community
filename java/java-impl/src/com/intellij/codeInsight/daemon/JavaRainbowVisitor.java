@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public class JavaRainbowVisitor extends RainbowVisitor {
     if (rainbowElement == null || resolved == null) {
       return null;
     }
-    if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+    if (PsiUtil.isJvmLocalVariable(resolved)) {
       String name = ((PsiVariable)resolved).getName();
       if (name != null) {
         return getInfo(context, rainbowElement, name, resolved instanceof PsiLocalVariable

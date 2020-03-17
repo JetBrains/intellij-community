@@ -48,6 +48,9 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
   catch (e: InvocationTargetException) {
     throw e.cause ?: e
   }
+  catch (e: InstantiationException) {
+    throw RuntimeException("Cannot create class $aClass", e)
+  }
 }
 
 internal fun isNotApplicableClass(type: Class<*>): Boolean {

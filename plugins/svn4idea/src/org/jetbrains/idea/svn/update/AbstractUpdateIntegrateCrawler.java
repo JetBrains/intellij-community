@@ -19,7 +19,7 @@ public abstract class AbstractUpdateIntegrateCrawler implements SvnWCRootCrawler
   protected final Collection<VcsException> myExceptions;
   protected final UpdatedFiles myPostUpdateFiles;
   protected final boolean myIsTotalUpdate;
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.update.AbstractUpdateIntegrateCrawler");
+  private final static Logger LOG = Logger.getInstance(AbstractUpdateIntegrateCrawler.class);
 
   protected AbstractUpdateIntegrateCrawler(
     final boolean isTotalUpdate,

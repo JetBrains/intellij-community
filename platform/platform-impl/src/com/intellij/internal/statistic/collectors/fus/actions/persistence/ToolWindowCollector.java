@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
+import com.intellij.build.BuildContentManager;
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.ide.actions.ToolWindowMoveAction;
 import com.intellij.ide.actions.ToolWindowViewModeAction;
@@ -12,6 +13,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowWhitelistEP;
@@ -52,9 +54,9 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put(ANT_BUILD, new ToolWindowInfo("Ant"));
     ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo("Debug"));
     ourToolwindowWhitelist.put(RUN, new ToolWindowInfo("Run"));
-    ourToolwindowWhitelist.put(BUILD, new ToolWindowInfo("Build"));
+    ourToolwindowWhitelist.put(BuildContentManager.TOOL_WINDOW_ID, new ToolWindowInfo("Build"));
     ourToolwindowWhitelist.put(FIND, new ToolWindowInfo("Find"));
-    ourToolwindowWhitelist.put(CVS, new ToolWindowInfo("CVS"));
+    ourToolwindowWhitelist.put("CVS", new ToolWindowInfo("CVS"));
     ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo("Hierarchy"));
     ourToolwindowWhitelist.put(INSPECTION, new ToolWindowInfo("Inspection_Results"));
     ourToolwindowWhitelist.put(TODO_VIEW, new ToolWindowInfo("TODO"));
@@ -72,10 +74,11 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put("Statistics Event Log", new ToolWindowInfo("Statistics_Event_Log"));
   }
 
-  public ToolWindowCollector() {
-    for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensions()) {
-      final PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(extension.getPluginId());
-      if (info.isDevelopedByJetBrains()) {
+  private ToolWindowCollector() {
+    for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensionList()) {
+      PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
+      PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
+      if (info != null && info.isDevelopedByJetBrains()) {
         ourToolwindowWhitelist.put(extension.id, new ToolWindowInfo(extension.id, info));
       }
     }
@@ -91,17 +94,19 @@ public final class ToolWindowCollector {
   }
 
   private static void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source, @Nullable WindowInfoImpl windowInfo) {
-    if (StringUtil.isNotEmpty(toolWindowId)) {
-      final ToolWindowInfo info = getToolWindowInfo(toolWindowId);
-      final FeatureUsageData data = new FeatureUsageData().
-        addData("id", info.myRecordedId).
-        addPluginInfo(info.myPluginInfo);
-      if (windowInfo != null) {
-        data.addData("ViewMode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
-        data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
-      }
-      FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
+    if (StringUtil.isEmpty(toolWindowId)) {
+      return;
     }
+
+    ToolWindowInfo info = getToolWindowInfo(toolWindowId);
+    FeatureUsageData data = new FeatureUsageData().
+      addData("id", info.myRecordedId).
+      addPluginInfo(info.myPluginInfo);
+    if (windowInfo != null) {
+      data.addData("ViewMode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
+      data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
+    }
+    FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
   }
 
   @NotNull
@@ -124,7 +129,8 @@ public final class ToolWindowCollector {
   public static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, @NotNull ToolWindowEP[] toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
-        return new ToolWindowInfo(ep.id, PluginInfoDetectorKt.getPluginInfoById(ep.getPluginId()));
+        PluginDescriptor pluginDescriptor = ep.getPluginDescriptor();
+        return new ToolWindowInfo(ep.id, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
       }
     }
     return null;

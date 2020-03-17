@@ -16,16 +16,17 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class RunnerBundle extends AbstractBundle {
+public class RunnerBundle extends DynamicBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
     return ourInstance.getMessage(key, params);
   }
 
-  private static final String PATH_TO_BUNDLE = "RunnerBundle";
+  private static final String PATH_TO_BUNDLE = "messages.MavenRunnerBundle";
   private static final AbstractBundle ourInstance = new RunnerBundle();
 
   private RunnerBundle() {

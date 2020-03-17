@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaStubPsiElement<T extends StubElement> extends StubBasedPsiElementBase<T> implements StubBasedPsiElement<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.JavaStubPsiElement");
+  private static final Logger LOG = Logger.getInstance(JavaStubPsiElement.class);
 
   public JavaStubPsiElement(@NotNull T stub, @NotNull IStubElementType nodeType) {
     super(stub, nodeType);

@@ -15,9 +15,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 
 class PyRainbowVisitor : RainbowVisitor() {
 
-  companion object {
-    private val IGNORED_NAMES = setOf(PyNames.NONE, PyNames.TRUE, PyNames.FALSE)
-    private val DEFAULT_HIGHLIGHTING_KEY = DefaultLanguageHighlighterColors.LOCAL_VARIABLE
+  object Holder {
+    val IGNORED_NAMES = setOf(PyNames.NONE, PyNames.TRUE, PyNames.FALSE)
+    val DEFAULT_HIGHLIGHTING_KEY = DefaultLanguageHighlighterColors.LOCAL_VARIABLE
 
     @JvmStatic
     val HIGHLIGHTING_KEYS: Set<TextAttributesKey> = setOf(PyHighlighter.PY_PARAMETER, DEFAULT_HIGHLIGHTING_KEY)
@@ -59,7 +59,7 @@ class PyRainbowVisitor : RainbowVisitor() {
 
   private fun getReferenceContext(referenceExpression: PyReferenceExpression,
                                   visitedReferenceExpressions: MutableSet<PyReferenceExpression>): PsiElement? {
-    if (referenceExpression.isQualified || referenceExpression.name in IGNORED_NAMES) return null
+    if (referenceExpression.isQualified || referenceExpression.name in Holder.IGNORED_NAMES) return null
 
     val resolved = referenceExpression.reference.resolve()
     return when (resolved) {
@@ -74,7 +74,7 @@ class PyRainbowVisitor : RainbowVisitor() {
   }
 
   private fun getTargetContext(targetExpression: PyTargetExpression): PsiElement? {
-    if (targetExpression.isQualified || targetExpression.name in IGNORED_NAMES) return null
+    if (targetExpression.isQualified || targetExpression.name in Holder.IGNORED_NAMES) return null
 
     val parent = targetExpression.parent
     if (parent is PyGlobalStatement) return targetExpression.containingFile
@@ -83,7 +83,7 @@ class PyRainbowVisitor : RainbowVisitor() {
       return if (outerResolved is PyTargetExpression) getTargetContext(outerResolved) else null
     }
 
-    val resolveResults = targetExpression.getReference(PyResolveContext.noImplicits()).multiResolve(false)
+    val resolveResults = targetExpression.getReference(PyResolveContext.defaultContext()).multiResolve(false)
 
     val resolvesToGlobal = resolveResults
       .asSequence()
@@ -111,7 +111,7 @@ class PyRainbowVisitor : RainbowVisitor() {
 
   private fun updateNameIfGlobal(context: PsiElement, name: String?) = if (context is PyFile && name != null) "global_$name" else name
 
-  private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, key: TextAttributesKey? = DEFAULT_HIGHLIGHTING_KEY) {
+  private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, key: TextAttributesKey? = Holder.DEFAULT_HIGHLIGHTING_KEY) {
     addInfo(getInfo(context, rainbowElement, name, key))
   }
 

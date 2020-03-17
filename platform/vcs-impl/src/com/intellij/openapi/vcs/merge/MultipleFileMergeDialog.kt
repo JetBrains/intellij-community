@@ -17,6 +17,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -372,22 +373,25 @@ open class MultipleFileMergeDialog(
     }
 
     for (file in files) {
+      val filePath = VcsUtil.getFilePath(file)
+
       val conflictData: ConflictData
       try {
         conflictData = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ConflictData, VcsException> {
           val mergeData = mergeProvider.loadRevisions(file)
-          val title = mergeDialogCustomizer.getMergeWindowTitle(file)
 
-          val conflictTitles = mergeDialogCustomizer.run {
-            listOf(
-              getLeftPanelTitle(file),
-              getCenterPanelTitle(file),
-              getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
-            )
-          }
+          val title = tryCompute { mergeDialogCustomizer.getMergeWindowTitle(file) }
 
-          val filePath = VcsUtil.getFilePath(file)
-          ConflictData(mergeData, title, conflictTitles, mergeDialogCustomizer.getTitleCustomizerList(filePath))
+          val conflictTitles = listOf(
+            tryCompute { mergeDialogCustomizer.getLeftPanelTitle(file) },
+            tryCompute { mergeDialogCustomizer.getCenterPanelTitle(file) },
+            tryCompute { mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER) }
+          )
+
+          val titleCustomizer = tryCompute { mergeDialogCustomizer.getTitleCustomizerList(filePath) }
+                                ?: MergeDialogCustomizer.DEFAULT_CUSTOMIZER_LIST
+
+          ConflictData(mergeData, title, conflictTitles, titleCustomizer)
         }, "Loading Revisions...", true, project)
       }
       catch (ex: VcsException) {
@@ -454,6 +458,21 @@ open class MultipleFileMergeDialog(
 
   override fun getPreferredFocusedComponent(): JComponent? = table
 
+  private fun <T> tryCompute(task: () -> T): T? {
+    try {
+      return task()
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+    return null
+  }
 
   companion object {
     private val LOG = Logger.getInstance(MultipleFileMergeDialog::class.java)
@@ -461,8 +480,8 @@ open class MultipleFileMergeDialog(
 
   private data class ConflictData(
     val mergeData: MergeData,
-    val title: String,
-    val contentTitles: List<String>,
+    val title: String?,
+    val contentTitles: List<String?>,
     val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList
   )
 }

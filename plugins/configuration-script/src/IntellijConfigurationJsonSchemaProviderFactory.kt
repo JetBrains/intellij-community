@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationScript
 
+import com.intellij.configurationScript.inspection.InspectionJsonSchemaGenerator
 import com.intellij.configurationScript.providers.PluginsConfiguration
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
@@ -10,9 +11,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.SystemProperties
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
@@ -24,7 +25,7 @@ import org.jetbrains.io.json
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
-private val PROVIDER_KEY = Key.create<List<JsonSchemaFileProvider>>("IntellijConfigurationJsonSchemaProvider")
+private val PROVIDER_KEY = Key.create<SoftReference<List<JsonSchemaFileProvider>>>("IntellijConfigurationJsonSchemaProvider")
 
 internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware {
   private val schemeContent by lazy {
@@ -32,7 +33,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
   }
 
   override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
-    var result = PROVIDER_KEY.get(project)
+    var result = PROVIDER_KEY.get(project)?.get()
     if (result != null) {
       return result
     }
@@ -41,11 +42,14 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
     // LightVirtualFile cannot be cached per application, must be stored per project.
     // Yes, it is hack, but for now decided to not fix this issue on platform level.
     result = listOf(MyJsonSchemaFileProvider())
-    return (project as UserDataHolderBase).putUserDataIfAbsent(PROVIDER_KEY, result)
+    project.putUserData(PROVIDER_KEY, SoftReference<List<JsonSchemaFileProvider>>(result))
+    return result
   }
 
   inner class MyJsonSchemaFileProvider : JsonSchemaFileProvider, DumbAware {
     private val schemeFile = lazy {
+      //do not pass schemeContent directory directly because the initialization for the content is very slow (500ms)
+      //use the lazy initialized field schemeContent only on demand 
       object: LightVirtualFile("ij-scheme.json", JsonFileType.INSTANCE, "", Charsets.UTF_8, 0) {
         override fun getContent(): CharSequence = schemeContent
       }
@@ -76,7 +80,8 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
 }
 
 private fun generateConfigurationSchema(): CharSequence {
-  return doGenerateConfigurationSchema(listOf(RunConfigurationJsonSchemaGenerator(), ComponentStateJsonSchemaGenerator()))
+  return doGenerateConfigurationSchema(listOf(RunConfigurationJsonSchemaGenerator(), ComponentStateJsonSchemaGenerator(),
+    InspectionJsonSchemaGenerator()))
 }
 
 internal interface SchemaGenerator {
@@ -103,6 +108,7 @@ internal fun doGenerateConfigurationSchema(generators: List<SchemaGenerator>): C
     map("properties") {
       map(Keys.plugins) {
         "type" to "object"
+        "description" to "The plugins"
         map("properties") {
           buildJsonSchema(PluginsConfiguration(), this)
         }

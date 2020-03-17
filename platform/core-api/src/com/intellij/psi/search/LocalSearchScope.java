@@ -125,7 +125,7 @@ public class LocalSearchScope extends SearchScope {
   }
 
   @Override
-  public int calcHashCode() {
+  protected int calcHashCode() {
     int result = 0;
     result += myIgnoreInjectedPsi ? 1 : 0;
     for (PsiElement element : myScope) {

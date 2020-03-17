@@ -41,7 +41,7 @@ public class FormInspectionUtil {
   }
 
   static boolean isComponentClass(final Module module, final IComponent component,
-                                  final Class componentClass) {
+                                  final Class<?> componentClass) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);

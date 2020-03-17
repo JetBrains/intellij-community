@@ -25,7 +25,7 @@ import java.util.Collection;
  * author: lesya
  */
 public abstract class AnyProcessedFiles extends FileSetToBeUpdated {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.AnyProcessedFiles");
+  private static final Logger LOG = Logger.getInstance(AnyProcessedFiles.class);
 
   public abstract Collection<VirtualFile> getFiles();
 

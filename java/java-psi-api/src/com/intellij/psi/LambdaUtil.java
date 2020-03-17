@@ -658,9 +658,9 @@ public class LambdaUtil {
         }
       }
       else if (body instanceof PsiExpression) {
-        final PsiType type = ((PsiExpression)body).getType();
         try {
           if (!PsiUtil.isStatement(JavaPsiFacade.getElementFactory(body.getProject()).createStatementFromText(body.getText(), body))) {
+            final PsiType type = ((PsiExpression)body).getType();
             if (PsiType.VOID.equals(type)) {
               errors.put(body, "Lambda body must be a statement expression");
             }

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class DefaultStubBuilder implements StubBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.DefaultStubBuilder");
+  private static final Logger LOG = Logger.getInstance(DefaultStubBuilder.class);
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {

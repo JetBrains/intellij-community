@@ -60,13 +60,8 @@ public class CheckinHandlerUtil {
   }
 
   private static boolean isOutOfSources(@NotNull Project project, @NotNull VirtualFile file) {
-    for (OutOfSourcesChecker checker : OutOfSourcesChecker.EP_NAME.getExtensions()) {
-      if (FileTypeRegistry.getInstance().isFileOfType(file, checker.getFileType())
-          && checker.isOutOfSources(project, file)) {
-        return true;
-      }
-    }
-    return false;
+    return OutOfSourcesChecker.EP_NAME.getExtensionList().stream()
+      .anyMatch(checker -> FileTypeRegistry.getInstance().isFileOfType(file, checker.getFileType()) && checker.isOutOfSources(project, file));
   }
 
   public static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull String tooltip) {

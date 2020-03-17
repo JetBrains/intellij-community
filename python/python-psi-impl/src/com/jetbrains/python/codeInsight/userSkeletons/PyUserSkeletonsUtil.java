@@ -198,7 +198,7 @@ public class PyUserSkeletonsUtil {
         if (type instanceof PyClassLikeType) {
           final PyClassLikeType classType = (PyClassLikeType)type;
           final PyClassLikeType instanceType = classType.toInstance();
-          PyResolveContext resolveContext = PyResolveContext.noImplicits();
+          PyResolveContext resolveContext = PyResolveContext.defaultContext();
           if (context != null) {
             resolveContext = resolveContext.withTypeEvalContext(context);
           }

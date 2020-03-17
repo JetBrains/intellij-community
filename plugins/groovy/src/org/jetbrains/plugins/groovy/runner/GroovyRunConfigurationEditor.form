@@ -61,7 +61,7 @@
         </constraints>
         <properties>
           <selected value="false"/>
-          <text resource-bundle="org/jetbrains/plugins/groovy/GroovyBundle" key="debug.option"/>
+          <text resource-bundle="messages/GroovyBundle" key="debug.option"/>
         </properties>
       </component>
       <component id="62ce7" class="javax.swing.JCheckBox" binding="myAddClasspathCB">

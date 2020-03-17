@@ -2,10 +2,7 @@
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -105,7 +102,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with '" + StringUtil.getShortName(myMatchersClassName) + ".assertThat'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", StringUtil.getShortName(myMatchersClassName) + ".assertThat");
     }
 
     @Override

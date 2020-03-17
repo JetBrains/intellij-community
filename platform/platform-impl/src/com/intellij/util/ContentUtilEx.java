@@ -63,7 +63,7 @@ public class ContentUtilEx extends ContentsUtil {
     if (tabbedContent == null) {
       final Disposable disposable = Disposer.newDisposable();
       tabbedContent = new TabbedContentImpl(contentComponent, tabName, true, groupPrefix);
-      ContentsUtil.addOrReplaceContent(manager, tabbedContent, select);
+      ContentsUtil.addContent(manager, tabbedContent, select);
       Disposer.register(tabbedContent, disposable);
     }
     else {
@@ -100,24 +100,19 @@ public class ContentUtilEx extends ContentsUtil {
 
   @Nullable
   public static TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull String groupPrefix) {
-    TabbedContent tabbedContent = null;
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) {
-        tabbedContent = (TabbedContent)content;
-        break;
+      if (content instanceof TabbedContent) {
+        if (((TabbedContent)content).getTitlePrefix().equals(groupPrefix)) {
+          return (TabbedContent)content;
+        }
       }
     }
-    return tabbedContent;
+    return null;
   }
 
   @NotNull
   public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
-    return getFullPrefix(groupPrefix) + tabName;
-  }
-
-  @NotNull
-  private static String getFullPrefix(@NotNull String groupPrefix) {
-    return groupPrefix + ": ";
+    return groupPrefix + ": " + tabName;
   }
 
   /**

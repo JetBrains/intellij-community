@@ -9,7 +9,6 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -147,7 +146,7 @@ fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = fals
 
   val result = AsyncPromise<List<T>>()
   val latch = AtomicInteger(size)
-  val list = Collections.synchronizedList(Collections.nCopies<T?>(size, null).toMutableSmartList())
+  val list = Collections.synchronizedList(Collections.nCopies<T?>(size, null).toMutableList())
 
   fun arrive() {
     if (latch.decrementAndGet() == 0) {

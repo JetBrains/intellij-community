@@ -29,13 +29,6 @@ public class UnnecessaryLabelOnContinueStatementInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.label.on.continue.statement.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

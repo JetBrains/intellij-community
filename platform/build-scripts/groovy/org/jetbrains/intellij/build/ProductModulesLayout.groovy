@@ -20,21 +20,6 @@ class ProductModulesLayout {
   String mainJarName
 
   /**
-   * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
-   * @see CommunityRepositoryModules#PLATFORM_API_MODULES
-   * @deprecated if you need to pack additional modules into the product, use {@link #productApiModules} instead; {@link CommunityRepositoryModules#PLATFORM_API_MODULES}
-   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.
-   */
-  List<String> platformApiModules = []
-
-  /**
-   * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
-   * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
-   * @deprecated if you need to pack additional modules into the product, use {@link #productImplementationModules} instead; {@link CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES}
-   * will be packed into platform-impl.jar in the product's 'lib' directory automatically then.   */
-  List<String> platformImplementationModules = []
-
-  /**
    * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
    */
   List<String> productApiModules = []
@@ -53,16 +38,10 @@ class ProductModulesLayout {
   List<String> bundledPluginModules = []
 
   /**
-   * Names of the main modules of the plugins which need to be bundled in windows distribution of the product.
-   *
-   * @deprecated specify supported OS in {@link PluginBundlingRestrictions#supportedOs bundlingRestrictions.supportedOs} property in
-   * {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#bundlingRestrictions the plugin layout} and add the plugin to
-   * the standard {@link #bundledPluginModules} instead
+   * @deprecated use {@link #bundledPluginModules} directly instead
    */
-  final Map<OsFamily, List<String>> bundledOsPluginModules = [:]
-
   Set<String> getAllBundledPluginsModules() {
-    return (bundledOsPluginModules.values().flatten() as Set<String>) + bundledPluginModules
+    return bundledPluginModules as Set<String>
   }
 
   private LinkedHashSet<String> pluginsToPublish = new LinkedHashSet<>()
@@ -119,13 +98,6 @@ class ProductModulesLayout {
    * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
    */
   List<String> mainModules = []
-
-  /**
-   * Name of the module containing search/searchableOptions.xml file.
-   * @deprecated not used anymore as searchable options are split between modules
-   */
-  @Deprecated
-  String searchableOptionsModule = ""
 
   /**
    * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.

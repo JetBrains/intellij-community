@@ -10,6 +10,7 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.io.URLUtil
+import org.jetbrains.debugger.ScriptDebuggerUrls
 import java.io.File
 
 interface SourceFileResolver {
@@ -79,8 +80,7 @@ class SourceResolver(private val rawSources: List<String>,
       return -1
     }
 
-    // local file url - without "file" scheme, just path
-    val index = canonicalizedUrlToSourceIndex.get(Urls.newLocalFileUrl(sourceFile))
+    val index = canonicalizedUrlToSourceIndex.get(ScriptDebuggerUrls.newLocalFileUrl(sourceFile))
     if (index != -1) {
       return index
     }
@@ -125,8 +125,8 @@ fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String 
 
 // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
 fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrlIsFile: Boolean = true): Url {
-  if (trimFileScheme && url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-    return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/'))
+  if (url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
+    return ScriptDebuggerUrls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/'))
   }
   else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") ||
            url.startsWith("javascript:") || url.startsWith("webpack:")) {
@@ -142,20 +142,20 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
 
 fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFileIfAbsoluteAndExists: Boolean): Url {
   val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
-  if ((baseUrl.scheme == null && baseUrl.isInLocalFileSystem) ||
+  if (baseUrl.isInLocalFileSystem ||
       asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && File(path).exists()) {
-    // file:///home/user/foo.js.map, foo.ts -> /home/user/foo.ts (baseUrl is in local fs)
-    // http://localhost/home/user/foo.js.map, foo.ts -> /home/user/foo.ts (File(path) exists)
-    return Urls.newLocalFileUrl(path)
+    // file:///home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (baseUrl is in local fs)
+    // http://localhost/home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (File(path) exists)
+    return ScriptDebuggerUrls.newLocalFileUrl(path)
   }
   else if (!path.startsWith("/")) {
     // http://localhost/source.js.map, C:/foo.ts webpack-dsj3c45 -> C:/foo.ts webpack-dsj3c45
     // (we can't append path suffixes unless they start with /
-    return Urls.parse(path, true) ?: Urls.newUnparsable(path)
+    return ScriptDebuggerUrls.parse(path, true) ?: Urls.newUnparsable(path)
   }
   else {
     // new url from path and baseUrl's scheme and authority
     val split = path.split('?', limit = 2)
-    return Urls.newUrl(baseUrl.scheme!!, baseUrl.authority!!, split[0], if (split.size > 1) '?' + split[1] else null)
+    return Urls.newUrl(baseUrl.scheme, baseUrl.authority, split[0], if (split.size > 1) '?' + split[1] else null)
   }
 }

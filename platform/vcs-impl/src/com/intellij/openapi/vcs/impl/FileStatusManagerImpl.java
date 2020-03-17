@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -98,19 +98,16 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     if (!project.isDefault()) {
       StartupManager startManager = StartupManager.getInstance(project);
       if (!startManager.postStartupActivityPassed()) {
-        startManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
+        startManager.registerPostStartupDumbAwareActivity(() -> fileStatusesChanged());
       }
     }
   }
 
-  static final class FileStatusManagerDocumentListener implements DocumentListener {
+  static final class FileStatusManagerDocumentListener implements FileDocumentManagerListener, DocumentListener {
     private final Key<Boolean> CHANGED = Key.create("FileStatusManagerDocumentListener.document.changed");
 
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
-      if (event.getOldLength() == 0 && event.getNewLength() == 0) {
-        return;
-      }
       Document document = event.getDocument();
       if (document.isInBulkUpdate()) {
         document.putUserData(CHANGED, Boolean.TRUE);
@@ -126,6 +123,11 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
         document.putUserData(CHANGED, null);
         refreshFileStatus(document);
       }
+    }
+
+    @Override
+    public void unsavedDocumentDropped(@NotNull Document document) {
+      refreshFileStatus(document);
     }
 
     private static void refreshFileStatus(@NotNull Document document) {

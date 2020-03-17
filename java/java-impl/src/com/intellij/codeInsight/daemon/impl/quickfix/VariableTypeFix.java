@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
+  static final Logger LOG = Logger.getInstance(VariableTypeFix.class);
 
   private final PsiType myReturnType;
   protected final String myName;

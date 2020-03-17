@@ -60,10 +60,9 @@ public abstract class ExecutionTarget {
     return true;
   }
 
-  // Android Studio: b/119839260
   /**
    * Implementation-specific logic to determine if an external plugin is responsible for managing this target.
-   * @return true if the target is externally managed, or false for platform to manage
+   * @return true if the target is externally managed, or false for the platform to manage
    */
   public boolean isExternallyManaged() {
     return false;

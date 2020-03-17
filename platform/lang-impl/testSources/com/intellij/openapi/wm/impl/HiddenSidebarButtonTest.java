@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -17,7 +17,7 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
     boolean[] expectedStripes = {false, true, true};
     boolean[] expectedVisibility = {false, false, true};
 
-    DesktopLayout layout = myManager.getLayout();
+    DesktopLayout layout = manager.getLayout();
     layout.readExternal(JDOMUtil.load(
       "<layout>" +
       "<window_info id=\"TODO\" active=\"false\" anchor=\"bottom\" auto_hide=\"false\" internal_type=\"DOCKED\" type=\"DOCKED\" visible=\"false\"" +
@@ -30,21 +30,18 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
       " show_stripe_button=\"true\" weight=\"0.37235227\" sideWeight=\"0.6060991\" order=\"0\" side_tool=\"false\" content_ui=\"tabs\" x=\"116\"" +
       " y=\"80\" width=\"487\" height=\"787\"/>" +
       "</layout>"));
-    for (String id : toolWindows) {
-      assertFalse(layout.isToolWindowRegistered(id));
-    }
 
     for (ToolWindowEP extension : ToolWindowEP.EP_NAME.getExtensionList()) {
       if (Arrays.asList(ToolWindowId.TODO_VIEW, ToolWindowId.FIND, ToolWindowId.PROJECT_VIEW).contains(extension.id)) {
-        myManager.initToolWindow(extension);
+        manager.initToolWindow(extension);
       }
     }
-    new UsageViewContentManagerImpl(myManager.getProject(), myManager);
+    new UsageViewContentManagerImpl(manager.getProject(), manager);
 
     for (int i = 0; i < toolWindows.length; i++) {
-      assertTrue(layout.isToolWindowRegistered(toolWindows[i]));
-      assertEquals(expectedStripes[i], layout.getInfo(toolWindows[i], true).isShowStripeButton());
-      assertEquals(expectedVisibility[i], myManager.getStripeButton(toolWindows[i]).isVisible());
+      assertTrue(manager.isToolWindowRegistered(toolWindows[i]));
+      assertEquals(expectedStripes[i], layout.getInfo(toolWindows[i]).isShowStripeButton());
+      assertEquals(expectedVisibility[i], manager.getStripeButton(toolWindows[i]).isVisible());
     }
   }
 }

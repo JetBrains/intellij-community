@@ -46,6 +46,17 @@ class GetClass {
       if (<warning descr="Condition 'obj.getClass() == c' is always 'false'">obj.getClass() == c</warning>) {}
     }
   }
+  
+  void testPrimitive(Object obj) {
+    Class<?> c = int.class;
+    if (<warning descr="Condition 'obj.getClass() == c' is always 'false'">obj.getClass() == c</warning>) {}
+    if (<warning descr="Condition 'obj.getClass() == void.class' is always 'false'">obj.getClass() == void.class</warning>) {}
+    if (obj.getClass() == int[].class) {}
+  }
+  
+  void testVoidType(Object obj) {
+    if (<warning descr="Condition 'obj.getClass() == Void.class' is always 'false'">obj.getClass() == Void.class</warning>) {}
+  }
 
   void testIntermediateVar(Object obj) {
     Class<?> c = obj.getClass();

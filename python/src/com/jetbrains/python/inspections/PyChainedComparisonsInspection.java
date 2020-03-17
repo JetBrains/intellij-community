@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.CheckBox;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.ChainedComparisonsQuickFix;
 import com.jetbrains.python.psi.PyBinaryExpression;
@@ -50,13 +49,6 @@ public class PyChainedComparisonsInspection extends PyInspection {
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
   public boolean ignoreConstantInTheMiddle = false;
   private static final String ourIgnoreConstantOptionText = "Ignore statements with a constant in the middle";
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.chained.comparisons");
-  }
 
   @NotNull
   @Override

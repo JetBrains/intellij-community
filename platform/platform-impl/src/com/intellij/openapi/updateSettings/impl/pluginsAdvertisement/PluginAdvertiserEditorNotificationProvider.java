@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
@@ -16,10 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -99,15 +100,15 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       });
     } else if (hasNonBundledPlugin(plugins)) {
       panel.createActionLabel("Install plugins", () -> {
-        Set<String> pluginIds = new HashSet<>();
+        Set<PluginId> pluginIds = new HashSet<>();
         for (PluginsAdvertiser.Plugin plugin : plugins) {
-          pluginIds.add(plugin.myPluginId);
+          pluginIds.add(PluginId.getId(plugin.myPluginId));
         }
         FeatureUsageData data = new FeatureUsageData()
           .addData("source", "editor")
-          .addData("plugins", new ArrayList<>(pluginIds));
+          .addData("plugins", ContainerUtil.map(pluginIds, (pluginId) -> pluginId.getIdString()));
         FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
-        PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> {
+        PluginsAdvertiser.installAndEnable(pluginIds, () -> {
           myEnabledExtensions.add(extension);
           EditorNotifications.getInstance(project).updateAllNotifications();
         });

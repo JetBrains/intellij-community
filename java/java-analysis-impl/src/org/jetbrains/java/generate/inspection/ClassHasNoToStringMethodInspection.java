@@ -65,12 +65,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
   @Override
     @NotNull
-    public String getDisplayName() {
-        return "Class does not override 'toString()' method";
-    }
-
-    @Override
-    @NotNull
     public String getShortName() {
         return "ClassHasNoToStringMethod";
     }

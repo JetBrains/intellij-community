@@ -15,6 +15,7 @@ import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
@@ -24,6 +25,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -51,11 +53,13 @@ import java.util.stream.Collectors;
   name = "RunDashboard",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
+public final class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final ExtensionPointName<RunDashboardCustomizer> CUSTOMIZER_EP_NAME =
     ExtensionPointName.create("com.intellij.runDashboardCustomizer");
   private static final ExtensionPointName<RunDashboardDefaultTypesProvider> DEFAULT_TYPES_PROVIDER_EP_NAME =
     ExtensionPointName.create("com.intellij.runDashboardDefaultTypesProvider");
+  static final ExtensionPointName<RunDashboardGroupingRule> GROUPING_RULE_EP_NAME =
+    ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
 
   private final Project myProject;
   private final ContentManager myContentManager;
@@ -76,6 +80,15 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myContentManager = contentFactory.createContentManager(new PanelContentUI(), false, project);
     myServiceContentManagerListener = new ServiceContentManagerListener();
     myReuseCondition = this::canReuseContent;
+    initExtensionPointListeners();
+
+  }
+
+  private void initExtensionPointListeners() {
+    ExtensionPointChangeListener dashboardUpdater = () -> updateDashboard(true);
+    CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
+    GROUPING_RULE_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
+    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(() -> setTypes(new HashSet<>(getTypes())), myProject);
   }
 
   private void initServiceContentListeners() {
@@ -232,8 +245,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void moveRemovedContent(Condition<? super RunnerAndConfigurationSettings> condition) {
-    ExecutionManagerImpl executionManager = (ExecutionManagerImpl)ExecutionManager.getInstance(myProject);
-    RunContentManagerImpl runContentManager = (RunContentManagerImpl)executionManager.getContentManager();
+    RunContentManagerImpl runContentManager = (RunContentManagerImpl)RunContentManager.getInstance(myProject);
     for (RunDashboardService service : getRunConfigurations()) {
       Content content = service.getContent();
       if (content == null || !condition.value(service.getSettings())) continue;
@@ -251,9 +263,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void moveAddedContent(Condition<? super RunnerAndConfigurationSettings> condition) {
-    ExecutionManagerImpl executionManager = (ExecutionManagerImpl)ExecutionManager.getInstance(myProject);
-    RunContentManagerImpl runContentManager = (RunContentManagerImpl)executionManager.getContentManager();
-    List<RunContentDescriptor> descriptors = executionManager.getRunningDescriptors(condition);
+    RunContentManagerImpl runContentManager = (RunContentManagerImpl)RunContentManager.getInstance(myProject);
+    List<RunContentDescriptor> descriptors = ((ExecutionManagerImpl)ExecutionManager.getInstance(myProject)).getRunningDescriptors(condition);
     for (RunContentDescriptor descriptor : descriptors) {
       Content content = descriptor.getAttachedContent();
       if (content == null) continue;
@@ -469,11 +480,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Nullable
   private RunnerAndConfigurationSettings findSettings(@NotNull Content content) {
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
+    if (descriptor == null) return null;
+
     Set<RunnerAndConfigurationSettings> settingsSet = ExecutionManagerImpl.getInstance(myProject).getConfigurations(descriptor);
     RunnerAndConfigurationSettings result = ContainerUtil.getFirstItem(settingsSet);
     if (result != null) return result;
 
-    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
+    ProcessHandler processHandler = descriptor.getProcessHandler();
     return processHandler == null ? null : processHandler.getUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY);
   }
 

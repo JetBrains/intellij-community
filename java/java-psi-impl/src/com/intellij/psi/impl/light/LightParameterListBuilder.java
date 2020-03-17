@@ -18,6 +18,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,16 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
     }
 
     return myCachedParameters;
+  }
+
+  @Nullable
+  @Override
+  public PsiParameter getParameter(int index) {
+    if (index < 0) {
+      throw new IllegalArgumentException("index is negative: " + index);
+    }
+    if (index < myParameters.size()) return myParameters.get(index);
+    return null;
   }
 
   @Override

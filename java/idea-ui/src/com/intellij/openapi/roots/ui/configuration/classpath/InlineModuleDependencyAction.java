@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
-import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -65,12 +64,12 @@ public class InlineModuleDependencyAction extends AnAction {
 
     model.removeOrderEntry(entryToInline);
 
-    RootModelImpl modelImpl;
+    ModifiableRootModel modelImpl;
     if (Proxy.isProxyClass(model.getClass())) {
-      modelImpl = (RootModelImpl)((ModuleEditor.ProxyDelegateAccessor)Proxy.getInvocationHandler(model)).getDelegate();
+      modelImpl = (ModifiableRootModel)((ModuleEditor.ProxyDelegateAccessor)Proxy.getInvocationHandler(model)).getDelegate();
     }
     else {
-      modelImpl = (RootModelImpl)model;
+      modelImpl = model;
     }
     int addedCount = 0;
     ModuleRootModel otherModel = classpathPanel.getModuleConfigurationState().getModulesProvider().getRootModel(module);

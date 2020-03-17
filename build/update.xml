@@ -8,18 +8,21 @@
     <attribute name="script"/>
     <attribute name="target" default="default"/>
     <attribute name="deploy"/>
+    <attribute name="distOutputRelativePath" default="dist"/>
 
     <sequential>
       <java classname="org.apache.tools.ant.Main" dir="${project.home}" fork="true" failonerror="true">
         <jvmarg line="-Xmx512m"/>
-        <jvmarg line="&quot;-Ddeploy=@{deploy}&quot;"/>
+        <jvmarg line="&quot;-Dintellij.build.output.root=@{deploy}&quot;"/>
+        <jvmarg line="&quot;-Dintellij.build.local.plugins.repository=${intellij.build.local.plugins.repository}&quot;"/>
+        <jvmarg line="&quot;-DdistOutputRelativePath=@{distOutputRelativePath}&quot;"/>
         <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
         <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
         <classpath>
           <fileset dir="${project.home}/lib/ant/lib" includes="*.jar"/>
         </classpath>
         <arg value="-f"/>
-        <arg value="gant.xml"/>
+        <arg value="${project.home}/build/gant.xml"/>
       </java>
     </sequential>
   </macrodef>

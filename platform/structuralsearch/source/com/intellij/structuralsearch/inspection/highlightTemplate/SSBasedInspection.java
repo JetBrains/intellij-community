@@ -1,19 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.DynamicGroupTool;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.Matcher;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.inspection.StructuralSearchInspectionToolWrapper;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -29,20 +41,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-/**
- * @author cdr
- */
-public class SSBasedInspection extends LocalInspectionTool {
+public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
   static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
 
-  static final String SHORT_NAME = "SSBasedInspection";
+  @NonNls public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
   final Set<String> myProblemsReported = new HashSet<>(1);
+  private InspectionProfileImpl mySessionProfile = null;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -59,13 +66,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GENERAL_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return SSRBundle.message("SSRInspection.display.name");
+    return getGeneralGroupName();
   }
 
   @Override
@@ -75,28 +76,61 @@ public class SSBasedInspection extends LocalInspectionTool {
     return SHORT_NAME;
   }
 
+  @Override
+  public void initialize(@NotNull GlobalInspectionContext context) {
+    super.initialize(context);
+    if (Registry.is("ssr.separate.inspections")) {
+      mySessionProfile = ((GlobalInspectionContextBase)context).getCurrentProfile();
+    }
+  }
+
+  @Override
+  public void cleanup(@NotNull Project project) {
+    super.cleanup(project);
+    mySessionProfile = null;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    final Map<Configuration, MatchContext> compiledOptions =
-      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(myConfigurations, holder.getProject());
+    final Project project = holder.getManager().getProject();
+    if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    if (compiledOptions.isEmpty()) return super.buildVisitor(holder, isOnTheFly);
+    final List<Configuration> configurations;
+    final InspectionProfileImpl profile;
+    if (Registry.is("ssr.separate.inspections")) {
+      profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+      configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
+      if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    else {
+      profile = null;
+      configurations = myConfigurations;
+    }
+
+    final Matcher matcher = new Matcher(project);
+    final Map<Configuration, MatchContext> compiledOptions =
+      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, matcher);
+    if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new PsiElementVisitor() {
-      final Matcher matcher = new Matcher(holder.getManager().getProject());
       final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
         final PsiElement element = matchResult.getMatch();
         final String name = configuration.getName();
-        final LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
-        holder.registerProblem(
-          holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
-        );
+        final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
+        final ProblemDescriptor descriptor =
+          holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+        if (Registry.is("ssr.separate.inspections")) {
+          holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
+        }
+        else {
+          holder.registerProblem(descriptor);
+        }
         return true;
       };
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (LexicalNodesFilter.getInstance().accepts(element)) return;
         synchronized (LOCK) {
           final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
@@ -105,7 +139,8 @@ public class SSBasedInspection extends LocalInspectionTool {
             final MatchContext context = entry.getValue();
             if (context == null) continue;
 
-            if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
+            if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes) &&
+                (profile == null || profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element))) {
               final int nodeCount = context.getPattern().getNodeCount();
               try {
                 matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);
@@ -125,6 +160,14 @@ public class SSBasedInspection extends LocalInspectionTool {
         }
       }
     };
+  }
+
+  @Override
+  public List<LocalInspectionToolWrapper> getChildren() {
+    if (Registry.is("ssr.separate.inspections")) {
+      return ContainerUtil.map(getConfigurations(), configuration -> new StructuralSearchInspectionToolWrapper(configuration));
+    }
+    return Collections.emptyList();
   }
 
   static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
@@ -164,8 +207,12 @@ public class SSBasedInspection extends LocalInspectionTool {
   }
 
   @TestOnly
-  public void setConfigurations(@NotNull final List<? extends Configuration> configurations, @NotNull final Project project) {
+  public void setConfigurations(@NotNull final List<? extends Configuration> configurations) {
     myConfigurations.clear();
     myConfigurations.addAll(configurations);
+  }
+
+  public List<Configuration> getConfigurations() {
+    return myConfigurations;
   }
 }

@@ -17,7 +17,7 @@ import java.util.*;
  *
  * @author peter
  */
-public class FileContentUtilCore {
+public final class FileContentUtilCore {
   public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
 
   /**

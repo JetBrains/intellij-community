@@ -5,11 +5,10 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class HeaderDownAction extends MarkdownHeaderAction {
-  private static final Function<Integer, Integer> INC_FUNCTION = integer -> integer + 1;
 
   @NotNull
   @Override
   protected Function<Integer, Integer> getLevelFunction() {
-    return INC_FUNCTION;
+    return integer -> integer + 1;
   }
 }

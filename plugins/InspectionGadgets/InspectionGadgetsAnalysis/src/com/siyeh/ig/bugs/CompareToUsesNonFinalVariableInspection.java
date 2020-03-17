@@ -30,13 +30,6 @@ public class CompareToUsesNonFinalVariableInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.final.field.compareto.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.field.compareto.problem.descriptor");

@@ -35,10 +35,19 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * Performs a non-recursive synchronous refresh of specified files.
    *
    * @param files files to refresh.
+   * @see #refreshIoFiles(Iterable, boolean, boolean, Runnable)
    */
   public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files);
 
-  public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
+  /**
+   * Performs the refresh of the specified files based on filesystem events that have already been received. To perform refresh reliably
+   * for file operations that have just finished (so that related events might not have been generated),
+   * use {@link VfsUtil#markDirtyAndRefresh(boolean, boolean, boolean, File...)} instead.
+   */
+  public abstract void refreshIoFiles(@NotNull Iterable<? extends File> files,
+                                      boolean async,
+                                      boolean recursive,
+                                      @Nullable Runnable onFinish);
 
   /**
    * Performs a non-recursive synchronous refresh of specified files.

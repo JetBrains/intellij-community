@@ -5,6 +5,7 @@ import com.intellij.util.containers.ObjectLongHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,7 +22,7 @@ public final class StartUpMeasurer {
   // not to put common part of name to end of).
   // It is not serves only display purposes - it is IDs. Visualizer and another tools to analyze data uses phase IDs,
   // so, any changes must be discussed across all involved and reflected in changelog (see `format-changelog.md`).
-  public static final class Phases {
+  public static final class Activities {
     public static final String APP_STARTER = "appStarter";
 
     // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
@@ -33,10 +34,12 @@ public final class StartUpMeasurer {
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
-    public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";
 
     public static final String PROJECT_DUMB_POST_STARTUP = "project dumb post-startup";
+    public static final String PROJECT_DUMB_POST_START_UP_ACTIVITIES = "project post-startup dumb-aware activities";
+    public static final String EDITOR_RESTORING = "editor restoring";
+    public static final String EDITOR_RESTORING_TILL_PAINT = "editor restoring till paint";
   }
 
   @SuppressWarnings("StaticNonFinalField")
@@ -54,6 +57,11 @@ public final class StartUpMeasurer {
 
   public static boolean isEnabled() {
     return isEnabled;
+  }
+
+  @TestOnly
+  public static void disable() {
+    isEnabled = false;
   }
 
   @ApiStatus.Internal
@@ -82,7 +90,7 @@ public final class StartUpMeasurer {
       return;
     }
 
-    ActivityImpl activity = new ActivityImpl(name, null);
+    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), null, null);
     activity.setEnd(-1);
     addActivity(activity);
   }
@@ -99,14 +107,12 @@ public final class StartUpMeasurer {
 
   @NotNull
   public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
-    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */  pluginId);
-    activity.setCategory(category);
-    return activity;
+    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
   }
 
   @NotNull
   public static Activity startMainActivity(@NotNull String name) {
-    return new ActivityImpl(name, null);
+    return new ActivityImpl(name, getCurrentTime(), null, null);
   }
 
   /**
@@ -150,8 +156,7 @@ public final class StartUpMeasurer {
       return;
     }
 
-    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId);
-    item.setCategory(category);
+    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId, category);
     item.setEnd(end);
     addActivity(item);
   }

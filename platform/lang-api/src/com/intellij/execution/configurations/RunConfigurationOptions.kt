@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations
 
 import com.intellij.openapi.components.BaseState
@@ -48,6 +48,9 @@ open class RunConfigurationOptions : BaseState() {
   @com.intellij.configurationStore.Property(description = "Allow parallel run")
   @get:Transient
   var isAllowRunningInParallel by property(false)
+
+  @get:OptionTag(tag = "target", valueAttribute = "name", nameAttribute = "")
+  var remoteTarget by string()
 }
 
 open class LocatableRunConfigurationOptions : RunConfigurationOptions() {

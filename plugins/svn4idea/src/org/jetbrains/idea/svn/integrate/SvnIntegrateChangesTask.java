@@ -14,13 +14,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
-import com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -284,7 +284,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void showAlienCommit() {
-    final AlienDirtyScope dirtyScope = new AlienDirtyScope();
+    final AlienDirtyScope dirtyScope = new AlienDirtyScope(myVcs);
 
     if (myMergeTarget != null) {
       dirtyScope.addDir(myMergeTarget);

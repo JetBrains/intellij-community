@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
@@ -157,7 +157,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     final VirtualFile virtualFile = generator.getDocStringOwner().getContainingFile().getVirtualFile();
     if (virtualFile == null) return;
     final Project project = generator.getDocStringOwner().getProject();
-    final Editor targetEditor = PsiUtilBase.findEditor(generator.getDocStringOwner());
+    final Editor targetEditor = PsiEditorUtil.findEditor(generator.getDocStringOwner());
     if (targetEditor != null && template != null) {
       targetEditor.getCaretModel().moveToOffset(docStringExpression.getTextOffset());
       TemplateManager.getInstance(project).startTemplate(targetEditor, template);

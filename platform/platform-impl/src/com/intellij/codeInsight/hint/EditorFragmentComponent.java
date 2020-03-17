@@ -35,7 +35,7 @@ import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 
 public class EditorFragmentComponent extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.EditorFragmentComponent");
+  private static final Logger LOG = Logger.getInstance(EditorFragmentComponent.class);
   private static final Key<WeakReference<LightweightHint>> CURRENT_HINT = Key.create("EditorFragmentComponent.currentHint");
   private static final int LINE_BORDER_THICKNESS = 1;
   private static final int EMPTY_BORDER_THICKNESS = 2;

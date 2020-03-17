@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.vcs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +32,6 @@ import com.intellij.vcs.commit.CommitHandlersNotifier;
 import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
-import icons.TasksIcons;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,7 +103,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("TEST-001 Summary", activeChangeList.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(anotherChangeList));
-    assertEquals(LocalChangeList.DEFAULT_NAME, anotherChangeList.getName());
+    assertEquals(LocalChangeList.getDefaultName(), anotherChangeList.getName());
 
     myTaskManager.activateTask(defaultTask, false);
     myChangeListManager.waitUntilRefreshed();
@@ -117,7 +117,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     assertNotNull(activeChangeList);
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(activeChangeList));
-    assertEquals(LocalChangeList.DEFAULT_NAME, activeChangeList.getName());
+    assertEquals(LocalChangeList.getDefaultName(), activeChangeList.getName());
 
     assertEquals(localTask, myTaskManager.getAssociatedTask(anotherChangeList));
     assertEquals("TEST-001 Summary", anotherChangeList.getName());
@@ -147,7 +147,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     LocalChangeList defaultChangeListActive = myChangeListManager.findChangeList("Default (1)");
     assertNotNull(defaultChangeListActive);
     assertTrue(defaultChangeListActive.isDefault());
-    LocalChangeList defaultChangeListInactive = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultChangeListInactive = myChangeListManager.findChangeList(LocalChangeList.getDefaultName());
     assertNotNull(defaultChangeListInactive);
     LocalChangeList anotherChangeList = myChangeListManager.findChangeList("TEST-001 Summary");
     assertNotNull(anotherChangeList);
@@ -156,7 +156,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("Default (1)", defaultChangeListActive.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListInactive));
-    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeListInactive.getName());
+    assertEquals(LocalChangeList.getDefaultName(), defaultChangeListInactive.getName());
 
     assertEquals(anotherTask, myTaskManager.getAssociatedTask(anotherChangeList));
     assertEquals("TEST-001 Summary", anotherChangeList.getName());
@@ -177,7 +177,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     LocalTask anotherTask = myTaskManager.findTask("TEST-001");
     assertNotNull(anotherTask);
 
-    LocalChangeList defaultChangeList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultChangeList = myChangeListManager.findChangeList(LocalChangeList.getDefaultName());
     assertNotNull(defaultChangeList);
     LocalChangeList anotherChangeList = myChangeListManager.findChangeList("TEST-001 Summary");
     assertNotNull(anotherChangeList);
@@ -188,7 +188,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(1, myChangeListManager.getChangeListsCopy().size());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeList));
-    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeList.getName());
+    assertEquals(LocalChangeList.getDefaultName(), defaultChangeList.getName());
   }
 
   public void testAddChangeListViaVcsAction() {
@@ -211,7 +211,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(2, defaultTask.getChangeLists().size());
     assertEquals(3, myChangeListManager.getChangeListsCopy().size());
 
-    LocalChangeList defaultChangeListActive = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
+    LocalChangeList defaultChangeListActive = myChangeListManager.findChangeList(LocalChangeList.getDefaultName());
     assertNotNull(defaultChangeListActive);
     assertTrue(myChangeListManager.getDefaultListName(), defaultChangeListActive.isDefault());
 
@@ -221,7 +221,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(anotherChangeList);
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListActive));
-    assertEquals(LocalChangeList.DEFAULT_NAME, defaultChangeListActive.getName());
+    assertEquals(LocalChangeList.getDefaultName(), defaultChangeListActive.getName());
 
     assertEquals(defaultTask, myTaskManager.getAssociatedTask(defaultChangeListInactive));
     assertEquals("Default (1)", defaultChangeListInactive.getName());
@@ -578,7 +578,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     @NotNull
     @Override
     public Icon getIcon() {
-      return TasksIcons.Unknown;
+      return AllIcons.FileTypes.Unknown;
     }
 
     @NotNull

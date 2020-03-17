@@ -22,14 +22,14 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * This instruction pops a top-of-stack value dereferencing it (so nullability warning might be issued if top-of-stack is nullable value).
  */
-public class MethodReferenceInstruction extends Instruction implements ExpressionPushingInstruction {
-  private final @NotNull PsiMethodReferenceExpression myExpression;
-
+public class MethodReferenceInstruction extends ExpressionPushingInstruction<PsiMethodReferenceExpression> {
   public MethodReferenceInstruction(@NotNull PsiMethodReferenceExpression expression) {
-    myExpression = expression;
+    super(expression);
   }
 
   @Override
@@ -38,12 +38,12 @@ public class MethodReferenceInstruction extends Instruction implements Expressio
   }
 
   public String toString() {
-    return "METHOD_REF: " + myExpression.getText();
+    return "METHOD_REF: " + getExpression().getText();
   }
 
   @Override
   @NotNull
   public PsiMethodReferenceExpression getExpression() {
-    return myExpression;
+    return Objects.requireNonNull(super.getExpression());
   }
 }

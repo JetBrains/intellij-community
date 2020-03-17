@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
-public class PassThroughIdeFocusManager extends IdeFocusManager {
+public final class PassThroughIdeFocusManager extends IdeFocusManager {
   private static final PassThroughIdeFocusManager ourInstance = new PassThroughIdeFocusManager();
 
   public static PassThroughIdeFocusManager getInstance() {
@@ -26,8 +26,8 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public JComponent getFocusTargetFor(@NotNull JComponent comp) {
-    return comp;
+  public JComponent getFocusTargetFor(@NotNull JComponent component) {
+    return component;
   }
 
   @Override
@@ -48,17 +48,13 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public Component getFocusedDescendantFor(Component comp) {
+  public Component getFocusedDescendantFor(@NotNull Component component) {
     final Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focused == null) return null;
 
-    if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;
+    if (focused == component || SwingUtilities.isDescendingFrom(focused, component)) return focused;
 
     return null;
-  }
-
-  public boolean dispatch(@NotNull KeyEvent e) {
-    return false;
   }
 
   @Override
@@ -81,12 +77,18 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public Component getLastFocusedFor(IdeFrame frame) {
+  public Component getLastFocusedFor(@Nullable Window frame) {
     return null;
   }
 
   @Override
   public IdeFrame getLastFocusedFrame() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Window getLastFocusedIdeWindow() {
     return null;
   }
 

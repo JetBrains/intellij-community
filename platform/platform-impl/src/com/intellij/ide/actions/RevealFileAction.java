@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
@@ -11,14 +12,14 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -38,8 +39,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
-
-import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
 
 /**
  * This helpful action opens a file or directory in a system file manager.
@@ -100,7 +99,7 @@ public class RevealFileAction extends DumbAwareAction {
 
   @NotNull
   public static String getFileManagerName() {
-    return fileManagerName.getValue();
+    return Holder.fileManagerName;
   }
 
   @Nullable
@@ -172,7 +171,7 @@ public class RevealFileAction extends DumbAwareAction {
         spawn("open", dir);
       }
     }
-    else if ((fmApp = fileManagerApp.getValue()) != null) {
+    else if ((fmApp = Holder.fileManagerApp) != null) {
       if (fmApp.endsWith("dolphin") && toSelect != null) {
         spawn(fmApp, "--select", toSelect);
       }
@@ -185,7 +184,7 @@ public class RevealFileAction extends DumbAwareAction {
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       LOG.debug("opening " + dir + " via Desktop API");
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProcessIOExecutorService.INSTANCE.execute(() -> {
         try {
           Desktop.getDesktop().open(new File(dir));
         }
@@ -216,7 +215,7 @@ public class RevealFileAction extends DumbAwareAction {
   private static void spawn(String... command) {
     LOG.debug(Arrays.toString(command));
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {
@@ -235,56 +234,48 @@ public class RevealFileAction extends DumbAwareAction {
     });
   }
 
-  private static final NullableLazyValue<String> fileManagerApp = new AtomicNullableLazyValue<String>() {
-    @Override
-    protected String compute() {
-      return readDesktopEntryKey("Exec")
+  private static class Holder {
+    private static final String fileManagerApp =
+      readDesktopEntryKey("Exec")
         .map(line -> line.split(" ")[0])
         .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files") || exec.endsWith("dolphin"))
         .orElse(null);
-    }
-  };
 
-  private static final NotNullLazyValue<String> fileManagerName = new AtomicNotNullLazyValue<String>() {
-    @NotNull
-    @Override
-    protected String compute() {
-      if (SystemInfo.isMac) return "Finder";
-      if (SystemInfo.isWindows) return "Explorer";
-      return readDesktopEntryKey("Name").orElse("File Manager");
-    }
-  };
+    private static final String fileManagerName =
+      SystemInfo.isMac ? "Finder" :
+      SystemInfo.isWindows ? "Explorer" :
+      readDesktopEntryKey("Name").orElse("File Manager");
 
-  private static Optional<String> readDesktopEntryKey(String key) {
-    if (SystemInfo.hasXdgMime()) {
-      String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-      if (appName != null && appName.endsWith(".desktop")) {
-        return Stream.of(getXdgDataDirectories().split(":"))
-          .map(dir -> new File(dir, "applications/" + appName))
-          .filter(File::exists)
-          .findFirst()
-          .map(file -> readDesktopEntryKey(file, key));
+    private static Optional<String> readDesktopEntryKey(String key) {
+      if (SystemInfo.hasXdgMime()) {
+        String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
+        if (appName != null && appName.endsWith(".desktop")) {
+          return Stream.of(getXdgDataDirectories().split(":"))
+            .map(dir -> new File(dir, "applications/" + appName))
+            .filter(File::exists)
+            .findFirst()
+            .map(file -> readDesktopEntryKey(file, key));
+        }
       }
+
+      return Optional.empty();
     }
 
-    return Optional.empty();
-  }
-
-  private static String getXdgDataDirectories() {
-    String dataHome = System.getenv("XDG_DATA_HOME");
-    String dataDirs = System.getenv("XDG_DATA_DIRS");
-    return defaultIfEmpty(dataHome, SystemProperties.getUserHome() + "/.local/share") + ':' + defaultIfEmpty(dataDirs, "/usr/local/share:/usr/share");
-  }
-
-  private static String readDesktopEntryKey(File file, String key) {
-    LOG.debug("looking for '" + key + "' in " + file);
-    String prefix = key + '=';
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-      return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
+    private static String getXdgDataDirectories() {
+      return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
+             StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
     }
-    catch (IOException | UncheckedIOException e) {
-      LOG.info("Cannot read: " + file, e);
-      return null;
+
+    private static String readDesktopEntryKey(File file, String key) {
+      LOG.debug("looking for '" + key + "' in " + file);
+      String prefix = key + '=';
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+        return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
+      }
+      catch (IOException | UncheckedIOException e) {
+        LOG.info("Cannot read: " + file, e);
+        return null;
+      }
     }
   }
 }

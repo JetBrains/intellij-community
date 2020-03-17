@@ -30,7 +30,7 @@ internal class GHPRHeaderPanel(private val model: SingleValueModel<GHPullRequest
 
   //language=html
   private val createText = HtmlEditorPane("<a href='${model.value.author?.url}'>${model.value.author?.login ?: "unknown"}</a> " +
-                                          "created on ${GithubUIUtil.formatActionDate(model.value.createdAt)}").apply {
+                                          "created ${GithubUIUtil.formatActionDate(model.value.createdAt)}").apply {
     foreground = UIUtil.getContextHelpForeground()
   }
 

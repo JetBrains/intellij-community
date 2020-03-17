@@ -20,7 +20,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.resources.ResourceInspection;
 import org.jdom.Element;
@@ -32,12 +31,6 @@ public class ConnectionResourceInspection extends ResourceInspection {
   @NotNull
   public String getID() {
     return "ConnectionOpenedButNotSafelyClosed";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("connection.opened.not.safely.closed.display.name");
   }
 
   @Override

@@ -4,7 +4,6 @@ package com.jetbrains.python.refactoring.extractmethod;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -694,9 +693,7 @@ public class PyExtractMethodUtil {
 
     @Override
     public boolean isValidName(@NotNull final String name) {
-      final NamesValidator validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
-      assert validator != null;
-      return validator.isIdentifier(name, myProject);
+      return LanguageNamesValidation.isIdentifier(PythonLanguage.getInstance(), name, myProject);
     }
   }
 }

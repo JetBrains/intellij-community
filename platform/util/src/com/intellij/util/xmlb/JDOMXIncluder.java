@@ -17,9 +17,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class JDOMXIncluder {
+public final class JDOMXIncluder {
   private static final Logger LOG = Logger.getInstance(JDOMXIncluder.class);
   public static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
     @NotNull
@@ -29,8 +28,6 @@ public class JDOMXIncluder {
     }
   };
 
-  @NonNls private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
-  @NonNls private static final String XI = "xi";
   @NonNls private static final String INCLUDE = "include";
   @NonNls private static final String HREF = "href";
   @NonNls private static final String BASE = "base";
@@ -38,7 +35,6 @@ public class JDOMXIncluder {
   @NonNls private static final String XML = "xml";
   @NonNls private static final String XPOINTER = "xpointer";
 
-  public static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
   private final boolean myIgnoreMissing;
   private final PathResolver myPathResolver;
 
@@ -48,7 +44,7 @@ public class JDOMXIncluder {
   }
 
   /**
-   * Original element will be mutated in place.
+   * The original element will be mutated in place.
    */
   @NotNull
   public static Element resolveRoot(@NotNull Element original, URL base) throws XIncludeException, MalformedURLException {
@@ -74,16 +70,16 @@ public class JDOMXIncluder {
     return new Document(resolveRoot(original.getRootElement(), new URL((base))));
   }
 
-  @NotNull
-  public static List<Element> resolve(@NotNull Element original, String base, boolean ignoreMissing, PathResolver pathResolver)
-    throws XIncludeException, MalformedURLException {
-    return new JDOMXIncluder(ignoreMissing, pathResolver).doResolve(original, new URL(base));
-  }
-
   /**
-   * Original element will be mutated in place.
+   * The original element will be mutated in place.
+   *
+   * (used by groovy).
    */
-  public static void resolveNonXIncludeElement(@NotNull Element original, @Nullable URL base, boolean ignoreMissing, @NotNull PathResolver pathResolver)
+  @SuppressWarnings("unused")
+  public static void resolveNonXIncludeElement(@NotNull Element original,
+                                               @Nullable URL base,
+                                               boolean ignoreMissing,
+                                               @NotNull PathResolver pathResolver)
     throws XIncludeException, MalformedURLException {
     LOG.assertTrue(!isIncludeElement(original));
 
@@ -108,8 +104,8 @@ public class JDOMXIncluder {
     return resolve(original, bases);
   }
 
-  protected static boolean isIncludeElement(Element element) {
-    return element.getName().equals(INCLUDE) && element.getNamespace().equals(XINCLUDE_NAMESPACE);
+  private static boolean isIncludeElement(Element element) {
+    return element.getName().equals(INCLUDE) && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
   }
 
   @NotNull
@@ -124,7 +120,7 @@ public class JDOMXIncluder {
   }
 
   @NotNull
-  protected List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<URL> bases)
+  private List<Element> resolveXIncludeElement(@NotNull Element element, @NotNull Stack<URL> bases)
     throws XIncludeException, MalformedURLException {
     URL base = null;
     if (!bases.isEmpty()) {
@@ -173,12 +169,6 @@ public class JDOMXIncluder {
     return remoteParsed;
   }
 
-  //xpointer($1)
-  @NonNls public static final Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
-
-  // /$1(/$2)?/*
-  public static final Pattern CHILDREN_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*");
-
   @NotNull
   private static List<Element> extractNeededChildren(@NotNull Element element, @NotNull List<Element> remoteElements) {
     final String xpointer = element.getAttributeValue(XPOINTER);
@@ -186,13 +176,13 @@ public class JDOMXIncluder {
       return remoteElements;
     }
 
-    Matcher matcher = XPOINTER_PATTERN.matcher(xpointer);
+    Matcher matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer);
     if (!matcher.matches()) {
       throw new XIncludeException("Unsupported XPointer: " + xpointer);
     }
 
     String pointer = matcher.group(1);
-    matcher = CHILDREN_PATTERN.matcher(pointer);
+    matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer);
     if (!matcher.matches()) {
       throw new XIncludeException("Unsupported pointer: " + pointer);
     }

@@ -5,6 +5,7 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.util.containers.SortedList
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModelImpl
 
 class GHPRReviewThreadsModel(list: List<GHPullRequestReviewThread>)
   : CollectionListModel<GHPRReviewThreadModel>(createSortedList(list), true) {
@@ -21,7 +22,7 @@ class GHPRReviewThreadsModel(list: List<GHPullRequestReviewThread>)
       remove(model)
     }
     for (thread in threadsById.values) {
-      add(GHPRReviewThreadModel(thread))
+      add(GHPRReviewThreadModelImpl(thread))
     }
   }
 
@@ -29,7 +30,7 @@ class GHPRReviewThreadsModel(list: List<GHPullRequestReviewThread>)
     private fun createSortedList(list: List<GHPullRequestReviewThread>): SortedList<GHPRReviewThreadModel> {
       val sorted = SortedList<GHPRReviewThreadModel>(compareBy { it.createdAt })
       for (thread in list) {
-        sorted.add(GHPRReviewThreadModel(thread))
+        sorted.add(GHPRReviewThreadModelImpl(thread))
       }
       return sorted
     }

@@ -36,15 +36,11 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showChangesBrowser(provider: CommittedChangesProvider<*, *>?, location: RepositoryLocation?, title: String?, parent: Component?) {
+  override fun showCommittedChangesBrowser(provider: CommittedChangesProvider<*, *>, location: RepositoryLocation, title: String?, parent: Component?) {
     throw UnsupportedOperationException()
   }
 
-  override fun openCommittedChangesTab(vcs: AbstractVcs?, root: VirtualFile?, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun openCommittedChangesTab(provider: CommittedChangesProvider<*, *>?, location: RepositoryLocation?, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
+  override fun openCommittedChangesTab(provider: CommittedChangesProvider<*, *>, location: RepositoryLocation, settings: ChangeBrowserSettings, maxCount: Int, title: String?) {
     throw UnsupportedOperationException()
   }
 
@@ -64,27 +60,11 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showChangesListBrowser(changelist: CommittedChangeList, title: String) {
+  override fun showChangesListBrowser(changelist: CommittedChangeList, title: String?) {
     throw UnsupportedOperationException()
   }
 
-  override fun showChangesListBrowser(changelist: CommittedChangeList?, toSelect: VirtualFile?, title: String?) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showChangesBrowser(changelists: List<CommittedChangeList>) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showChangesBrowser(changelists: List<CommittedChangeList>, title: String) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showWhatDiffersBrowser(parent: Component?, changes: Collection<Change>, title: String) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showRollbackChangesDialog(changes: List<Change>) {
+  override fun showWhatDiffersBrowser(changes: Collection<Change>, title: String?) {
     throw UnsupportedOperationException()
   }
 

@@ -143,8 +143,6 @@ public class NewExprent extends Exprent {
     if (anonymous) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
 
-      boolean selfReference = DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE) == child;
-
       // IDEA-204310 - avoid backtracking later on for lambdas (causes spurious imports)
       if (!enumConst && (!lambda || DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS))) {
         String enclosing = null;
@@ -158,36 +156,32 @@ public class NewExprent extends Exprent {
 
         buf.append("new ");
 
-        if (selfReference) {
-          buf.append("<anonymous constructor>");
-        } else {
-          String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
-          if (enclosing != null) {
-            ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
-            if (anonymousNode != null) {
-              typename = anonymousNode.simpleName;
-            }
-            else {
-              typename = typename.substring(typename.lastIndexOf('.') + 1);
-            }
-          }
-
-          GenericClassDescriptor descriptor = ClassWriter.getGenericClassDescriptor(child.classStruct);
-          if (descriptor != null) {
-            if (descriptor.superinterfaces.isEmpty()) {
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass));
-            }
-            else {
-              if (descriptor.superinterfaces.size() > 1 && !lambda) {
-                DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
-                                                           IFernflowerLogger.Severity.WARN);
-              }
-              buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0)));
-            }
+        String typename = ExprProcessor.getCastTypeName(child.anonymousClassType);
+        if (enclosing != null) {
+          ClassNode anonymousNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(child.anonymousClassType.value);
+          if (anonymousNode != null) {
+            typename = anonymousNode.simpleName;
           }
           else {
-            buf.append(typename);
+            typename = typename.substring(typename.lastIndexOf('.') + 1);
           }
+        }
+
+        GenericClassDescriptor descriptor = ClassWriter.getGenericClassDescriptor(child.classStruct);
+        if (descriptor != null) {
+          if (descriptor.superinterfaces.isEmpty()) {
+            buf.append(GenericMain.getGenericCastTypeName(descriptor.superclass));
+          }
+          else {
+            if (descriptor.superinterfaces.size() > 1 && !lambda) {
+              DecompilerContext.getLogger().writeMessage("Inconsistent anonymous class signature: " + child.classStruct.qualifiedName,
+                                                         IFernflowerLogger.Severity.WARN);
+            }
+            buf.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0)));
+          }
+        }
+        else {
+          buf.append(typename);
         }
       }
 
@@ -232,7 +226,7 @@ public class NewExprent extends Exprent {
         buf.append(clsBuf);
         tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
-      else if (!selfReference) {
+      else {
         TextBuffer clsBuf = new TextBuffer();
         new ClassWriter().classToJava(child, clsBuf, indent, tracer);
         buf.append(clsBuf);

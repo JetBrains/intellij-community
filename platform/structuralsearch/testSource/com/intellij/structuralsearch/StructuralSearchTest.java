@@ -3,7 +3,11 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +21,13 @@ import java.util.List;
  */
 @SuppressWarnings("ALL")
 public class StructuralSearchTest extends StructuralSearchTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    setLanguageLevel(LanguageLevel.JDK_14);
+  }
+
   @Override
   protected int findMatchesCount(@Language("JAVA") String in, String pattern, LanguageFileType fileType) {
     return super.findMatchesCount(in, pattern, fileType);
@@ -2608,7 +2619,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("MINIMUM ZERO not applicable for b", checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("case '_a* :");
-    assertEquals("MINIMUM ZERO not applicable for a", checkApplicableConstraints(options, getProject()));
+    assertEquals(null, checkApplicableConstraints(options, getProject()));
 
     options.fillSearchCriteria("int '_a:* ;");
     assertEquals("TEXT HIERARCHY not applicable for a", checkApplicableConstraints(options, getProject()));
@@ -3268,8 +3279,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                              "    '_st*;" +
                                                                              "}"));
     assertEquals("should find switch with 2 cases", 2, findMatchesCount(in, "switch ('_a) {" +
-                                                                            "  case '_c{2,2} :" +
-                                                                            "    '_st*;" +
+                                                                            "  case '_c1 :" +
+                                                                            "  case '_c2? :" +
                                                                             "}"));
     assertEquals("should find swith with one case and default", 2, findMatchesCount(in, "switch ('_a) {" +
                                                                                         "  case '_c :" +
@@ -3278,7 +3289,51 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                                                                         "    '_st2*;" +
                                                                                         "  }"));
     assertEquals("should find defaults", 3, findMatchesCount(in, "default:"));
-    assertEquals("should find cases", 8, findMatchesCount(in, "case '_a :"));
+    assertEquals("should find cases", 5, findMatchesCount(in, "case '_a :"));
+    assertEquals("should find cases & defaults", 8, findMatchesCount(in, "case '_a? :"));
+    assertEquals("should match switch containing 2 statements", 3, findMatchesCount(in, "switch ('_x) {" +
+                                                                                        "  '_st{2,2};" +
+                                                                                        "}"));
+  }
+
+  public void testFindSwitchExpressions() {
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+    final String in = "void dummy() {" +
+                      "  int j = switch (i) {\n" +
+                      "    case 10 -> {\n" +
+                      "      System.out.println(10);\n" +
+                      "    }\n" +
+                      "    default -> {}\n" +
+                      "  }\n" +
+                      "  int k = switch (i) {\n" +
+                      "    case 10 -> {\n" +
+                      "      yield 1;\n" +
+                      "    }\n" +
+                      "    default -> 0;\n" +
+                      "  };" +
+                      "  int l = switch (i) {" +
+                      "    case 1,2,3: " +
+                      "      break;" +
+                      "    case 5:" +
+                      "      break;" +
+                      "  }\n" +
+                      "}";
+    // hack to generate code of the right language level
+    // will no longer be necessary when long LanguageLevel.HIGHEST == JDK_14
+    // (probably after JDK14 release in March 2020)
+    final PsiMethod method = factory.createMethodFromText(in, null, LanguageLevel.JDK_14);
+
+    System.out.println(PsiUtil.getLanguageLevel(method));
+    System.out.println(DebugUtil.psiToString(method, false));
+    options.setScope(new LocalSearchScope(method));
+    assertEquals("find expressions & statements", 2, findMatchesCount(null, "switch (i) {" +
+                                                                          "  case 10 -> {" +
+                                                                          "    '_st;" +
+                                                                          "  }" +
+                                                                          "  default -> $X$;" +
+                                                                          "}"));
+    //options.setScope(new LocalSearchScope(method));
+    //assertEquals("find yield statement", 1, findMatchesCount(null, "yield '_x;"));
   }
 
   public void testRepeatedVars() {

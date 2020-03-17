@@ -326,7 +326,7 @@ PsiJavaFile:AnonymousErrors1.java
                 PsiJavaToken:EQ('=')
                 PsiWhiteSpace(' ')
                 PsiConditionalExpression:x instanceof Integer ? 1 : 0
-                  PsiInstanceofExpression:x instanceof Integer
+                  PsiInstanceofExpression
                     PsiReferenceExpression:x
                       PsiReferenceParameterList
                         <empty list>
@@ -334,11 +334,12 @@ PsiJavaFile:AnonymousErrors1.java
                     PsiWhiteSpace(' ')
                     PsiKeyword:instanceof('instanceof')
                     PsiWhiteSpace(' ')
-                    PsiTypeElement:Integer
-                      PsiJavaCodeReferenceElement:Integer
-                        PsiIdentifier:Integer('Integer')
-                        PsiReferenceParameterList
-                          <empty list>
+                    PsiTypeTestPattern
+                      PsiTypeElement:Integer
+                        PsiJavaCodeReferenceElement:Integer
+                          PsiIdentifier:Integer('Integer')
+                          PsiReferenceParameterList
+                            <empty list>
                   PsiWhiteSpace(' ')
                   PsiJavaToken:QUEST('?')
                   PsiWhiteSpace(' ')

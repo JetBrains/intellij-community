@@ -57,12 +57,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static final NotificationGroup BALLOON_NOTIFICATIONS =
     new NotificationGroup("Package requirements", NotificationDisplayType.BALLOON, false);
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Package requirements";
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm("Ignore packages", ignoredPackages);
@@ -99,7 +93,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPlainTextFile(PsiPlainTextFile file) {
+    public void visitPlainTextFile(@NotNull PsiPlainTextFile file) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
         checkPackagesHaveBeenInstalled(file, module);

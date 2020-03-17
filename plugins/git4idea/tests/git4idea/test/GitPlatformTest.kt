@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
@@ -26,6 +27,7 @@ import git4idea.commands.GitHandler
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -73,6 +75,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     assumeSupportedGitVersion(vcs)
     addSilently()
     removeSilently()
+    overrideDefaultSaveChangesPolicy()
 
     credentialHelpers = if (hasRemoteGitOperation()) readAndResetCredentialHelpers() else emptyMap()
     globalSslVerify = if (hasRemoteGitOperation()) readAndDisableSslVerifyGlobally() else null
@@ -100,6 +103,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected open fun createRepository(rootDir: String): GitRepository {
     return createRepository(project, rootDir)
+  }
+
+  protected open fun getDefaultSaveChangesPolicy() : GitSaveChangesPolicy = GitSaveChangesPolicy.SHELVE
+
+  private fun overrideDefaultSaveChangesPolicy() {
+    settings.saveChangesPolicy = getDefaultSaveChangesPolicy()
   }
 
   /**
@@ -189,9 +198,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   private fun readAndDisableSslVerifyGlobally(): Boolean? {
     val value = git("config --global --get-all -z http.sslVerify", true)
-      .split("\u0000")
-      .singleOrNull { it.isNotBlank() }
-      ?.let { it.toBoolean() }
+        .split("\u0000")
+        .singleOrNull { it.isNotBlank() }
+        ?.toBoolean()
     git("config --global http.sslVerify false", true)
     return value
   }
@@ -236,6 +245,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
+    return changeListManager.assertChanges(changes)
+  }
+
+  protected fun assertChangesWithRefresh(changes: ChangesBuilder.() -> Unit): List<Change> {
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    changeListManager.ensureUpToDate()
     return changeListManager.assertChanges(changes)
   }
 

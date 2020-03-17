@@ -40,12 +40,14 @@ import java.util.List;
 public class PropertiesReferenceContributor extends PsiReferenceContributor{
   private static final Logger LOG = Logger.getInstance(PropertiesReferenceContributor.class);
 
-  private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
-    @Override
-    public boolean isSoft() {
-      return true;
-    }
-  };
+  private static class Holder {
+    private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
+      @Override
+      public boolean isSoft() {
+        return true;
+      }
+    };
+  }
 
 
   @Override
@@ -117,7 +119,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         String text = element.getText();
         String[] words = text.split("\\s");
         if (words.length != 1) return PsiReference.EMPTY_ARRAY;
-        return CLASS_REFERENCE_PROVIDER.getReferencesByString(words[0], element, 0);
+        return Holder.CLASS_REFERENCE_PROVIDER.getReferencesByString(words[0], element, 0);
       }
     });
   }

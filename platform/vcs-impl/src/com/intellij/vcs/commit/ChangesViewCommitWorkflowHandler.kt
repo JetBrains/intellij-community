@@ -27,16 +27,21 @@ class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
+    CommitAuthorListener,
     ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
 
-  private fun getCommitState() = CommitState(getIncludedChanges(), getCommitMessage())
+  private fun getCommitState(): ChangeListCommitState {
+    val changes = getIncludedChanges()
+    val changeList = workflow.getAffectedChangeList(changes)
+    return ChangeListCommitState(changeList, changes, getCommitMessage())
+  }
 
   private val activityEventDispatcher = EventDispatcher.create(ActivityListener::class.java)
 
-  private val changeListManager = ChangeListManager.getInstance(project)
+  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
   private var knownActiveChanges: Collection<Change> = emptyList()
 
   private val inclusionModel = PartialCommitInclusionModel(project)
@@ -60,6 +65,7 @@ class ChangesViewCommitWorkflowHandler(
     workflow.addListener(this, this)
     workflow.addCommitListener(CommitListener(), this)
 
+    ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
     ui.addInclusionListener(this, this)
@@ -205,6 +211,15 @@ class ChangesViewCommitWorkflowHandler(
 
   private fun changeListDataChanged() {
     ui.commitAuthor = currentChangeList?.author
+  }
+
+  override fun commitAuthorChanged() {
+    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+    val newAuthor = ui.commitAuthor
+
+    if (newAuthor != changeList.author) {
+      changeListManager.editChangeListData(changeList.name, ChangeListData.of(newAuthor, changeList.authorDate))
+    }
   }
 
   override fun inclusionChanged() {

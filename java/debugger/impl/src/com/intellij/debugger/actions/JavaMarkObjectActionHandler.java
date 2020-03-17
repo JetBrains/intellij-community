@@ -56,7 +56,7 @@ import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONE
  * @author Jeka
  */
 public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JavaMarkObjectActionHandler");
+  private static final Logger LOG = Logger.getInstance(JavaMarkObjectActionHandler.class);
   public static final long AUTO_MARKUP_REFERRING_OBJECTS_LIMIT = 100L; // todo: some reasonable limit
 
   @Override

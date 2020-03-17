@@ -43,12 +43,6 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("missorted.modifiers.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor");
   }

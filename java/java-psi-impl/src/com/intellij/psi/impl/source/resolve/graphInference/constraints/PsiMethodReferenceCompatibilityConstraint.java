@@ -139,7 +139,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
     }
 
-    JavaResolveResult resolve = LambdaUtil.performWithTargetType(myExpression, session.startWithFreshVars(groundTargetType), () -> myExpression.advancedResolve(true));
+    JavaResolveResult resolve = myExpression.advancedResolve(false);
     final PsiElement element = resolve.getElement();
     if (element == null || resolve instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolve).isApplicable()) {
       session.registerIncompatibleErrorMessage("No compile-time declaration for the method reference is found");

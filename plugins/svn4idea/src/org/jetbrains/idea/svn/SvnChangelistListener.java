@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class SvnChangelistListener implements ChangeListListener {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangelistListener");
+  private final static Logger LOG = Logger.getInstance(SvnChangelistListener.class);
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Condition<FilePath> myUnderSvnCondition;
@@ -38,7 +38,7 @@ public class SvnChangelistListener implements ChangeListListener {
 
   @Override
   public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-    if (LocalChangeList.DEFAULT_NAME.equals(fromList.getName())) {
+    if (LocalChangeList.getDefaultName().equals(fromList.getName())) {
       return;
     }
     removeFromChangeList(changes);
@@ -46,7 +46,7 @@ public class SvnChangelistListener implements ChangeListListener {
 
   @Override
   public void changesAdded(Collection<Change> changes, ChangeList toList) {
-    if (toList == null || LocalChangeList.DEFAULT_NAME.equals(toList.getName())) {
+    if (toList == null || LocalChangeList.getDefaultName().equals(toList.getName())) {
       return;
     }
     addToChangeList(toList.getName(), changes);
@@ -67,7 +67,7 @@ public class SvnChangelistListener implements ChangeListListener {
     if (Comparing.equal(list.getName(), oldName)) {
       return;
     }
-    if (LocalChangeList.DEFAULT_NAME.equals(list.getName())) {
+    if (LocalChangeList.getDefaultName().equals(list.getName())) {
       changeListRemoved(list);
       return;
     }
@@ -79,12 +79,12 @@ public class SvnChangelistListener implements ChangeListListener {
     if (fromList.getName().equals(toList.getName())) {
       return;
     }
-    if (LocalChangeList.DEFAULT_NAME.equals(toList.getName())) {
+    if (LocalChangeList.getDefaultName().equals(toList.getName())) {
       changeListRemoved(toList);
       return;
     }
 
-    final String[] fromLists = LocalChangeList.DEFAULT_NAME.equals(fromList.getName()) ? null : new String[] {fromList.getName()};
+    final String[] fromLists = LocalChangeList.getDefaultName().equals(fromList.getName()) ? null : new String[] {fromList.getName()};
     addToChangeList(toList.getName(), changes, fromLists);
   }
 

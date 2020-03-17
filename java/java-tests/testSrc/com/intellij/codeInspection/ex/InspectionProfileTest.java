@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -786,6 +787,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     list.add(createTool("foo", true));
 
     InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(list);
+    Disposer.register(getTestRootDisposable(), toolSupplier);
     InspectionProfileImpl profile = createProfile(toolSupplier);
 
     List<ScopeToolState> tools = profile.getAllTools();

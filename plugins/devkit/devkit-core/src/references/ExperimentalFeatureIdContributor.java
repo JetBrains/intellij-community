@@ -62,9 +62,8 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       return "Cannot resolve feature '" + getValue() + "'";
     }
 
-    @NotNull
     @Override
-    public Object[] getVariants() {
+    public Object @NotNull [] getVariants() {
       final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
       processCandidates(extension -> {
         final GenericAttributeValue<String> id = extension.getId();

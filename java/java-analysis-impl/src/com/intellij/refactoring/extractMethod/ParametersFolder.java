@@ -269,7 +269,7 @@ class ParametersFolder {
     final PsiExpression[] exprWithWriteAccessInside = new PsiExpression[1];
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (exprWithWriteAccessInside[0] != null) return;
         super.visitElement(element);
       }

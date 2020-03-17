@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -54,12 +53,12 @@ public class RunContentBuilder extends RunTab {
 
   @NotNull
   private RunContentDescriptor createDescriptor() {
-    final RunProfile profile = myEnvironment.getRunProfile();
+    RunProfile profile = myEnvironment.getRunProfile();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new RunContentDescriptor(profile, myExecutionResult, myUi);
     }
 
-    final ExecutionConsole console = myExecutionResult.getExecutionConsole();
+    ExecutionConsole console = myExecutionResult.getExecutionConsole();
     RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     AnAction[] consoleActionsToMerge = AnAction.EMPTY_ARRAY;
     Content consoleContent = null;
@@ -90,8 +89,7 @@ public class RunContentBuilder extends RunTab {
                                                                                       myProject,
                                                                                       myEnvironment.getExecutor(),
                                                                                       contentDescriptor,
-                                                                                      myUi),
-                                                           this);
+                                                                                      myUi), this);
       }
     }
 
@@ -142,7 +140,6 @@ public class RunContentBuilder extends RunTab {
       actionGroup.addSeparator();
     }
 
-
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
     actionGroup.addAll(myExecutionResult.getActions());
     if (consoleActions.length > 0) {
@@ -178,7 +175,7 @@ public class RunContentBuilder extends RunTab {
     return descriptor;
   }
 
-  public static class ConsoleToFrontListener implements ConsoleViewImpl.ChangeListener {
+  public static final class ConsoleToFrontListener implements ConsoleViewImpl.ChangeListener {
     @NotNull private final RunConfigurationBase myRunConfigurationBase;
     @NotNull private final Project myProject;
     @NotNull private final Executor myExecutor;
@@ -204,7 +201,7 @@ public class RunContentBuilder extends RunTab {
       for (ConsoleViewContentType type : types) {
         if ((type == ConsoleViewContentType.NORMAL_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdOut()
             || (type == ConsoleViewContentType.ERROR_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdErr()) {
-          ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(myExecutor, myRunContentDescriptor);
+          RunContentManager.getInstance(myProject).toFrontRunContent(myExecutor, myRunContentDescriptor);
           myUi.selectAndFocus(myUi.findContent(ExecutionConsole.CONSOLE_CONTENT_ID), false, false);
           return;
         }

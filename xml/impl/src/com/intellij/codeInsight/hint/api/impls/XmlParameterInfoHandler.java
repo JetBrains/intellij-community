@@ -92,11 +92,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
 
   @Override
   public void updateParameterInfo(@NotNull final XmlTag parameterOwner, @NotNull final UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() == null || parameterOwner.equals(context.getParameterOwner())) {
-      context.setParameterOwner(parameterOwner);
-    } else {
-      context.removeHint();
-    }
+    context.setParameterOwner(parameterOwner);
   }
 
   @Nullable

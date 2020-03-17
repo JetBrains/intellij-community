@@ -42,12 +42,6 @@ import java.nio.charset.CharsetEncoder;
  * User : catherine
  */
 public class PyNonAsciiCharInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.non.ascii");
-  }
 
   @NotNull
   @Override
@@ -63,7 +57,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
     }
 
     @Override
-    public void visitComment(PsiComment node) {
+    public void visitComment(@NotNull PsiComment node) {
       checkString(node, node.getText());
     }
 

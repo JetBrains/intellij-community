@@ -8,10 +8,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
+import git4idea.fetch.GitFetchResult;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import static git4idea.GitUtil.getRepositories;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.hasRemotes;
 
 public class GitFetch extends DumbAwareAction {
 
@@ -23,8 +26,7 @@ public class GitFetch extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      boolean hasRemotes = getRepositories(project).stream().anyMatch(repository -> !repository.getRemotes().isEmpty());
-      e.getPresentation().setEnabledAndVisible(hasRemotes);
+      e.getPresentation().setEnabledAndVisible(hasRemotes(project));
     }
   }
 
@@ -32,10 +34,24 @@ public class GitFetch extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", true) {
+      GitFetchResult result;
+
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        fetchSupport(project).fetchAllRemotes(getRepositories(project)).showNotification();
+        result = fetchSupport(project).fetchAllRemotes(getRepositories(project));
+      }
+
+      @Override
+      public void onFinished() {
+        if (result != null) {
+          onFetchFinished(result);
+        }
       }
     });
+  }
+
+  @CalledInAwt
+  protected void onFetchFinished(@NotNull GitFetchResult result) {
+    result.showNotification();
   }
 }

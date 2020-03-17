@@ -15,22 +15,19 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.ResourceBundle;
+public class RefactorJBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.RefactorJBundle";
+  private static final RefactorJBundle INSTANCE = new RefactorJBundle();
 
-public class RefactorJBundle {
+  private RefactorJBundle() { super(BUNDLE); }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = "com.intellij.refactoring.RefactorJBundle") String key,
-                               @NotNull Object... params) {
-    return CommonBundle.message(ourBundle, key, params);
-  }
-
-  private static final ResourceBundle ourBundle =
-    ResourceBundle.getBundle("com.intellij.refactoring.RefactorJBundle");
-
-  private RefactorJBundle() {
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 }

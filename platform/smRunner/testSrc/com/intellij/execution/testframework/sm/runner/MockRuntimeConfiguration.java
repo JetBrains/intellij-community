@@ -34,7 +34,7 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -80,7 +80,7 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
 
     @Override
     public ConfigurationFactory[] getConfigurationFactories() {
-      return new ConfigurationFactory[0];
+      return ConfigurationFactory.EMPTY_ARRAY;
     }
   }
 }

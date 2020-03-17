@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -135,12 +135,12 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
    * events will be fired during iteration and probably it will be not expected.
-   *
+   * <p>
    * Use only for interface extension points, not for bean.
-   *
+   * <p>
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
    * so, `next` may return `null` (in this case stop iteration).
-   *
+   * <p>
    * Possible use cases:
    * 1. Conditional iteration (no need to create all extensions if iteration will be stopped due to some condition).
    * 2. Iterated only once per application (no need to cache extension list internally).
@@ -157,7 +157,13 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     getPointImpl(null).processWithPluginDescriptor(consumer);
   }
 
-  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @Nullable Disposable parentDisposable) {
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
+                                        @Nullable Disposable parentDisposable) {
+    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
+  }
+
+  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener,
+                                        @Nullable Disposable parentDisposable) {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 }

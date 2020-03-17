@@ -35,13 +35,6 @@ import java.util.Set;
 
 public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.unconnected.to.package.display.name");
-  }
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(

@@ -7,7 +7,10 @@
     <p>Originally developed by Theory In Practice.</p>
     ]]></description>
     <vendor>JetBrains</vendor>
-    <depends>com.intellij.java-i18n</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <depends optional="true" config-file="testng-intellilang.xml">org.intellij.intelliLang</depends>
+
     <extensions defaultExtensionNs="com.intellij">
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGEntryPoint"/>
         <cantBeStatic implementation="com.theoryinpractice.testng.inspection.TestNGCanBeStaticExtension" />
@@ -72,7 +75,7 @@
       <runConfigurationProducer
           implementation="com.theoryinpractice.testng.configuration.testDiscovery.TestNGTestDiscoveryConfigurationProducer"/>
       <localInspection implementationClass="com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection"
-                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
+                       groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="messages.InspectionGadgetsBundle"
                        key="simplifiable.testng.assertion.display.name" groupName="TestNG"
                        enabledByDefault="true" level="WARNING"/>
       <localInspection groupPath="Java" language="JAVA" shortName="ConstantTestNGAssertArgument" displayName="Constant TestNG assert argument"

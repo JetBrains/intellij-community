@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,8 +32,15 @@ public abstract class GeneratedSourcesFilter {
   public static final ExtensionPointName<GeneratedSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.generatedSourcesFilter");
 
   public static boolean isGeneratedSourceByAnyFilter(@NotNull VirtualFile file, @NotNull Project project) {
-    return ReadAction.compute(() -> !project.isDisposed() && file.isValid() &&
-                                    Arrays.stream(EP_NAME.getExtensions()).anyMatch(filter -> filter.isGeneratedSource(file, project)));
+    return ReadAction.compute(() -> {
+      if (project.isDisposed() || !file.isValid()) return false;
+      for (GeneratedSourcesFilter filter : EP_NAME.getExtensions()) {
+        if (filter.isGeneratedSource(file, project)) {
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   public abstract boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project);

@@ -7,6 +7,7 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -29,16 +30,18 @@ public class ThemeAnnotator implements Annotator {
       if (parentNames.startsWith("*")) return; // anything allowed
 
       String fullKey = parentNames.isEmpty() ? property.getName() : parentNames + "." + property.getName();
-      holder.createWarningAnnotation(property.getNameElement().getTextRange(),
+      holder.newAnnotation(HighlightSeverity.WARNING,
                                      "Unresolved key '" + fullKey + "'")
-        .setHighlightType(ProblemHighlightType.WARNING);
+        .range(property.getNameElement())
+        .highlightType(ProblemHighlightType.WARNING).create();
       return;
     }
 
     if (pair.second.isDeprecated()) {
-      holder.createWarningAnnotation(property.getNameElement().getTextRange(),
+      holder.newAnnotation(HighlightSeverity.WARNING,
                                      "Deprecated key '" + pair.second.getKey() + "'")
-        .setHighlightType(ProblemHighlightType.LIKE_DEPRECATED);
+        .range(property.getNameElement())
+        .highlightType(ProblemHighlightType.LIKE_DEPRECATED).create();
     }
   }
 }

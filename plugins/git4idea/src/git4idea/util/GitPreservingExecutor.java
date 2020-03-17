@@ -31,7 +31,7 @@ public class GitPreservingExecutor implements VcsPreservingExecutor {
       return false;
     }
     new GitPreservingProcess(project, Git.getInstance(), rootsToSave, operationTitle, "",
-                             GitVcsSettings.getInstance(project).updateChangesPolicy(),
+                             GitVcsSettings.getInstance(project).getSaveChangesPolicy(),
                              indicator, operation).execute();
     return true;
   }

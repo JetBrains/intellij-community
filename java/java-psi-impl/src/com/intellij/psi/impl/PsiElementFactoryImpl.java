@@ -95,15 +95,6 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiClassType createType(@NotNull PsiClass resolve,
-                                 @NotNull PsiSubstitutor substitutor,
-                                 @Nullable LanguageLevel languageLevel,
-                                 @NotNull PsiAnnotation[] annotations) {
-    return new PsiImmediateClassType(resolve, substitutor, languageLevel, annotations);
-  }
-
-  @NotNull
-  @Override
   public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
     return createClassInner("class", name);
   }
@@ -118,6 +109,18 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public PsiClass createEnum(@NotNull String name) throws IncorrectOperationException {
     return createClassInner("enum", name);
+  }
+
+  @NotNull
+  @Override
+  public PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
+    PsiUtil.checkIsIdentifier(myManager, name);
+    PsiJavaFile aFile = createDummyJavaFile("public record " +  name +  "() { }");
+    PsiClass[] classes = aFile.getClasses();
+    if (classes.length != 1) {
+      throw new IncorrectOperationException("Incorrect record name \"" + name + "\".");
+    }
+    return classes[0];
   }
 
   @NotNull

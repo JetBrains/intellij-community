@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
@@ -37,7 +37,7 @@ import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 /**
  * @author peter
  */
-public class GotoActionItemProvider implements ChooseByNameItemProvider {
+public final class GotoActionItemProvider implements ChooseByNameItemProvider {
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionModel myModel;
   private final NotNullLazyValue<Map<String, ApplyIntentionAction>> myIntentions;
@@ -71,10 +71,9 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     DataContext dataContext = DataManager.getInstance().getDataContext(myModel.getContextComponent());
 
     if (!processAbbreviations(pattern, consumer, dataContext)) return false;
-    if (!processIntentions(pattern, consumer, dataContext)) return false;
     if (!processActions(pattern, consumer, dataContext)) return false;
-    if (Registry.is("goto.action.skip.tophits.and.options")) return true;
     if (!processTopHits(pattern, consumer, dataContext)) return false;
+    if (!processIntentions(pattern, consumer, dataContext)) return false;
     if (!processOptions(pattern, consumer, dataContext)) return false;
 
     return true;
@@ -129,11 +128,13 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     List<Object> options = new ArrayList<>();
     final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
-    final String actionManagerName = myActionManager.getComponentName();
+    String actionManagerName = myActionManager.getComponentName();
+    boolean filterOutInspections = Registry.is("go.to.action.filter.out.inspections", true);
     for (String word : words) {
       final Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
       if (descriptions != null) {
-        descriptions.removeIf(description -> actionManagerName.equals(description.getPath()));
+        descriptions.removeIf(description -> actionManagerName.equals(description.getPath()) ||
+                                             filterOutInspections && "Inspections".equals(description.getGroupName()));
         if (!descriptions.isEmpty()) {
           if (optionDescriptions == null) {
             optionDescriptions = descriptions;
@@ -142,7 +143,8 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
             optionDescriptions.retainAll(descriptions);
           }
         }
-      } else {
+      }
+      else {
         optionDescriptions = null;
         break;
       }

@@ -49,7 +49,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
         visitLoop(statement);
       }
 
-      private void visitLoop(@NotNull PsiLoopStatement loopStatement) {
+      private void visitLoop(@NotNull PsiConditionalLoopStatement loopStatement) {
         PsiElement keyword = getKeyword(loopStatement);
         if(keyword == null) return;
         Context context = Context.from(loopStatement, noConversionToDoWhile);
@@ -101,7 +101,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
 
 
     @Nullable
-    static Context from(@NotNull PsiLoopStatement loopStatement, boolean noConversionToDoWhile) {
+    static Context from(@NotNull PsiConditionalLoopStatement loopStatement, boolean noConversionToDoWhile) {
       if (!ControlFlowUtils.isEndlessLoop(loopStatement)) return null;
       PsiStatement body = loopStatement.getBody();
       if (body == null) return null;
@@ -157,7 +157,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLoopStatement.class);
+      PsiConditionalLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiConditionalLoopStatement.class);
       if (loop == null) return;
       Context context = Context.from(loop, false);
       if (context == null) return;

@@ -5,6 +5,7 @@ class GHCommit(id: String,
                oid: String,
                abbreviatedOid: String,
                val url: String,
+               val message: String,
                val messageHeadlineHTML: String,
                val messageBodyHTML: String,
                val author: GHGitActor?)

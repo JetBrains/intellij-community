@@ -83,4 +83,9 @@ public class UnknownSdkType extends SdkType{
   public Icon getIcon() {
     return AllIcons.Nodes.UnknownJdk;
   }
+
+  @Override
+  public boolean allowCreationByUser() {
+    return false;
+  }
 }

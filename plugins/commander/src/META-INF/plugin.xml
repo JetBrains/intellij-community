@@ -3,7 +3,7 @@
   <name>Commander</name>
   <description>Provides a two-panel view for navigating and working with the project structure</description>
   <vendor>JetBrains</vendor>
-  <resource-bundle>com.intellij.ide.commander.CommanderBundle</resource-bundle>
+  <resource-bundle>messages.CommanderBundle</resource-bundle>
   <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -23,12 +23,12 @@
       <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
     </action>
 
-    <group id="ImagesCommanderActions1" text="Images Commander Actions (1)">
+    <group id="ImagesCommanderActions1">
       <reference id="Images.EditExternally"/>
       <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
     </group>
 
-    <group id="ImagesCommanderActions2" text="Images Commander Actions (2)">
+    <group id="ImagesCommanderActions2">
       <reference id="Images.ShowThumbnails"/>
       <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
     </group>

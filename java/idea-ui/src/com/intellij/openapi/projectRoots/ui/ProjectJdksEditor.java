@@ -26,6 +26,8 @@ import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,12 +39,11 @@ public class ProjectJdksEditor extends DialogWrapper {
   private ProjectJdksConfigurable myConfigurable;
   private Sdk myProjectJdk;
 
-
-  public ProjectJdksEditor(final Sdk jdk, Project project, Component parent) {
+  public ProjectJdksEditor(@Nullable final Sdk jdk, @NotNull Project project, @NotNull Component parent) {
     this(jdk, parent, new ProjectJdksConfigurable(project));
   }
   
-  public ProjectJdksEditor(final Sdk jdk, Component parent, ProjectJdksConfigurable configurable) {
+  public ProjectJdksEditor(@Nullable final Sdk jdk, @NotNull Component parent, @NotNull ProjectJdksConfigurable configurable) {
     super(parent, true);
     myConfigurable = configurable;
     SwingUtilities.invokeLater(() -> myConfigurable.selectNodeInTree(jdk != null ? jdk.getName() : null));

@@ -9,13 +9,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.junit.Assert;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.EventQueue;
+import java.awt.*;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -42,6 +43,9 @@ public class TreeTest implements Disposable {
       Throwable throwable = promise.blockingGet(minutes, MINUTES);
       if (throwable != null) throw new IllegalStateException("test failed", throwable);
     }
+    catch (TimeoutException e) {
+      throw new RuntimeException(e);
+    }
     finally {
       Disposer.dispose(this);
     }
@@ -52,12 +56,15 @@ public class TreeTest implements Disposable {
   }
 
   public void invokeAfterProcessing(@NotNull Runnable runnable) {
-    if (TreeTestUtil.isProcessing(tree)) {
-      invokeLater(() -> invokeAfterProcessing(runnable));
+    TreeModel model = tree.getModel();
+    if (model instanceof AsyncTreeModel) {
+      AsyncTreeModel async = (AsyncTreeModel)model;
+      if (async.isProcessing()) {
+        invokeLater(() -> invokeAfterProcessing(runnable));
+        return; // do nothing if delayed
+      }
     }
-    else {
-      invokeSafely(runnable);
-    }
+    invokeSafely(runnable);
   }
 
   public void invokeLater(@NotNull Runnable runnable) {
@@ -79,7 +86,7 @@ public class TreeTest implements Disposable {
 
   public void assertTree(@NotNull String expected, boolean showSelection, @NotNull Runnable runnable) {
     invokeSafely(() -> {
-      Assert.assertEquals(expected, TreeTestUtil.toString(getTree(), showSelection));
+      Assert.assertEquals(expected, new TreeTestUtil(getTree()).setSelection(showSelection).toString());
       runnable.run();
     });
   }

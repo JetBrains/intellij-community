@@ -56,6 +56,7 @@ public interface ProjectGeneratorPeer<T> {
   /**
    * @deprecated use {@link #addSettingsListener(SettingsListener)} method instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener);
+  default void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener) {}
 }

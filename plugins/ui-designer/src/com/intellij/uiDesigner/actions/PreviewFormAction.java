@@ -69,7 +69,7 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class PreviewFormAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.PreviewFormAction");
+  private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 
   /**
    * The problem is that this class is in a default package so it's not
@@ -362,7 +362,7 @@ public final class PreviewFormAction extends AnAction{
 
         @Override
         @NotNull
-        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+        public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
           try {
             ExecutionResult executionResult = super.execute(executor, runner);
             executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {

@@ -168,6 +168,7 @@ public class WizardContext extends UserDataHolderBase {
     return myProject == null;
   }
 
+  @Nullable
   public Icon getStepIcon() {
     return null;
   }

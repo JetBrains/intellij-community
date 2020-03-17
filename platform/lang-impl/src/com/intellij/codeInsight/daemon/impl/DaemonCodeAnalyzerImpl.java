@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -38,7 +39,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -72,8 +72,8 @@ import java.util.stream.Collectors;
  * This class also controls the auto-reparse and auto-hints.
  */
 @State(name = "DaemonCodeAnalyzer", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl");
+public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements PersistentStateComponent<Element>, Disposable {
+  private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerImpl.class);
 
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
   private final Project myProject;
@@ -129,7 +129,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       assert !myDisposed : "Double dispose";
       myUpdateRunnable.clearFieldsOnDispose();
 
-      stopProcess(false, "Dispose");
+      stopProcess(false, "Dispose "+myProject);
 
       myDisposed = true;
       myLastSettings = null;
@@ -222,10 +222,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
       throw new IllegalStateException("Must run highlighting from under read action");
     }
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (!(indicator instanceof DaemonProgressIndicator)) {
-      throw new IllegalStateException("Must run highlighting under progress with DaemonProgressIndicator");
-    }
+    GlobalInspectionContextBase.assertUnderDaemonProgress();
     // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
     myFileStatusMap.markAllFilesDirty("prepare to run main passes");
     stopProcess(false, "disable background daemon");
@@ -326,23 +323,22 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
 
     myUpdateRunnableFuture.cancel(false);
-
+    // previous passes can be canceled but still in flight. wait for them to avoid interference
+    myPassExecutorService.cancelAll(false);
+    fileStatusMap.allowDirt(canChangeDocument);
     final DaemonProgressIndicator progress = createUpdateProgress(map.keySet());
     myPassExecutorService.submitPasses(map, progress);
     try {
-      fileStatusMap.allowDirt(canChangeDocument);
       long start = System.currentTimeMillis();
       while (progress.isRunning() && System.currentTimeMillis() < start + 10*60*1000) {
-        wrap(() -> {
-          progress.checkCanceled();
-          if (callbackWhileWaiting != null) {
-            callbackWhileWaiting.run();
-          }
-          waitInOtherThread(50, canChangeDocument);
-          UIUtil.dispatchAllInvocationEvents();
-          Throwable savedException = PassExecutorService.getSavedException(progress);
-          if (savedException != null) throw savedException;
-        });
+        progress.checkCanceled();
+        if (callbackWhileWaiting != null) {
+          callbackWhileWaiting.run();
+        }
+        waitInOtherThread(50, canChangeDocument);
+        UIUtil.dispatchAllInvocationEvents();
+        Throwable savedException = PassExecutorService.getSavedException(progress);
+        if (savedException != null) throw savedException;
       }
       if (progress.isRunning() && !progress.isCanceled()) {
         throw new RuntimeException("Highlighting still running after " +(System.currentTimeMillis()-start)/1000 + " seconds." +
@@ -354,15 +350,20 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       }
 
       HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, progress, null);
-      wrap(() -> {
-        if (!waitInOtherThread(60000, canChangeDocument)) {
-          throw new TimeoutException("Unable to complete in 60s");
-        }
-        session.waitForHighlightInfosApplied();
-      });
+      if (!waitInOtherThread(60000, canChangeDocument)) {
+        throw new TimeoutException("Unable to complete in 60s. Thread dump:\n"+ThreadDumper.dumpThreadsToString());
+      }
+      session.waitForHighlightInfosApplied();
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();
+    }
+    catch (Throwable e) {
+      if (e instanceof ExecutionException) e = e.getCause();
+      if (progress.isCanceled() && progress.isRunning()) {
+        e.addSuppressed(new RuntimeException("Daemon progress was canceled unexpectedly: " + progress));
+      }
+      ExceptionUtil.rethrow(e);
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
@@ -591,10 +592,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     DaemonProgressIndicator updateProgress = myUpdateProgress;
     if (myDisposed) return false;
     boolean wasCanceled = updateProgress.isCanceled();
-    myPassExecutorService.cancelAll(false);
     if (!wasCanceled) {
       PassExecutorService.log(updateProgress, null, "Cancel", reason, toRestartAlarm);
       updateProgress.cancel();
+      myPassExecutorService.cancelAll(false);
       return true;
     }
     return false;
@@ -683,7 +684,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return ((IntentionsUIImpl)IntentionsUI.getInstance(myProject)).getLastIntentionHint();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element state = new Element("state");
@@ -909,18 +910,5 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       }
     }
     return result;
-  }
-
-  @TestOnly
-  private static void wrap(@NotNull ThrowableRunnable<?> runnable) {
-    try {
-      runnable.run();
-    }
-    catch (RuntimeException | Error e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      throw new RuntimeException(e);
-    }
   }
 }

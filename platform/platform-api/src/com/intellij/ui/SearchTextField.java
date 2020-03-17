@@ -11,25 +11,19 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Consumer;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,13 +78,6 @@ public class SearchTextField extends JPanel {
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
         super.processMouseEvent(e);
-      }
-
-      @Override
-      public void setUI(TextUI ui) {
-        if (customSetupUIAndTextField(this, textUI -> super.setUI(textUI))) return;
-
-        super.setUI(ui);
       }
 
       @Override
@@ -169,9 +156,14 @@ public class SearchTextField extends JPanel {
       updateMenu();
       myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
     }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
 
     if (toClearTextOnEscape()) {
-      final ActionManager actionManager = ActionManager.getInstance();
+      ActionManager actionManager = ActionManager.getInstance();
       if (actionManager != null) {
         EmptyAction.registerWithShortcutSet(IdeActions.ACTION_CLEAR_TEXT, CommonShortcuts.ESCAPE, this);
       }
@@ -223,27 +215,6 @@ public class SearchTextField extends JPanel {
   @Deprecated
   @SuppressWarnings("unused")
   protected boolean hasIconsOutsideOfTextField() {
-    return false;
-  }
-
-  protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
-    if (SystemInfo.isMac) {
-      try {
-        Class<?> uiClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI")
-                                                       : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
-        Method method = ReflectionUtil.getMethod(uiClass, "createUI", JComponent.class);
-        if (method != null) {
-          uiConsumer.consume((TextUI)method.invoke(uiClass, textField));
-          Class<?> borderClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder")
-                                                             : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder");
-          textField.setBorder((Border)ReflectionUtil.newInstance(borderClass));
-          textField.setOpaque(false);
-        }
-        return true;
-      }
-      catch (Exception ignored) {
-      }
-    }
     return false;
   }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +26,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -127,7 +129,8 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
         final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
         for (String sourceRoot: mySourceRoots) {
-          String s = contentRoot + "/" + sourceRoot;
+          String s = StringUtil.trimTrailing(contentRoot + "/" + sourceRoot, '/');
+
           VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
           if (vf == null) {
             final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
@@ -135,11 +138,19 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
           }
   //        assert vf != null : "cannot find source root: " + sourceRoot;
           if (vf != null) {
-            contentEntry.addSourceFolder(vf, false);
+            VirtualFile finalVf = vf;
+
+            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> finalVf.equals(folder.getFile()))) {
+              contentEntry.addSourceFolder(finalVf, false);
+            }
           }
           else {
             // files are not created yet
-            contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
+
+            String url = VfsUtilCore.pathToUrl(s);
+            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> url.equals(folder.getUrl()))) {
+              contentEntry.addSourceFolder(url, false);
+            }
           }
         }
       }

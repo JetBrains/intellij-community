@@ -438,6 +438,13 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     def test_general_results_and_layout(self):
         self.check_generator_output()
 
+    @test_data_dir('simple')
+    def test_logging_configured_and_propagates_from_worker_subprocess(self):
+        result = self.run_generator()
+        log_messages = [m['message'] for m in result.control_messages if m['type'] == 'log']
+        subprocess_messages = [m for m in log_messages if m.startswith('Updating cache for mod')]
+        self.assertEquals(2, len(subprocess_messages))
+
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--state-file-policy', 'readwrite', '--name-pattern', 'mod?']

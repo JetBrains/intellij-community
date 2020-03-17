@@ -25,15 +25,16 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -44,7 +45,7 @@ public class DissociateResourceBundleAction extends AnAction {
   private static final String MULTIPLE_RB_PRESENTATION_TEXT_TEMPLATE = "Dissociate %s Resource Bundles";
 
   public DissociateResourceBundleAction() {
-    super(null, null, AllIcons.FileTypes.Properties);
+    super(Presentation.NULL_STRING, Presentation.NULL_STRING, AllIcons.FileTypes.Properties);
   }
 
   @Override

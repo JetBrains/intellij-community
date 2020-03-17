@@ -43,6 +43,10 @@ public class VcsLogUsageTriggerCollector {
     data.addData("context", isFromHistory ? "history" : "log");
   }
 
+  public static void triggerClick(@NotNull String target) {
+    triggerUsage(VcsLogEvent.TABLE_CLICKED, data -> data.addData("target", target));
+  }
+
   public enum VcsLogEvent {
     ACTION_CALLED,
     FILTER_SET,

@@ -49,7 +49,7 @@ public class ApplicationUtil {
       ExceptionUtil.rethrowAll(error.get());
     }
     catch (ProcessCanceledException e) {
-      future.cancel(true);
+      future.cancel(false);
       throw e;
     }
     return result.get();
@@ -57,7 +57,8 @@ public class ApplicationUtil {
 
   /**
    * Waits for {@code future} to be complete, or the current thread's indicator to be canceled.
-   * Note that {@code future} will not be cancelled by this method.
+   * Note that {@code future} will not be cancelled by this method.<br/>
+   * See also {@link com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(Future)} which throws no checked exceptions.
    */
   public static <T> T runWithCheckCanceled(@NotNull Future<T> future,
                                            @NotNull final ProgressIndicator indicator) throws ExecutionException {
@@ -65,7 +66,7 @@ public class ApplicationUtil {
       indicator.checkCanceled();
 
       try {
-        return future.get(25, TimeUnit.MILLISECONDS);
+        return future.get(10, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) {
         throw new ProcessCanceledException(e);

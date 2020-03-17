@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content.impl;
 
 import com.intellij.icons.AllIcons;
@@ -59,6 +59,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myPinnable = isPinnable;
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return myComponent;
@@ -86,7 +87,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setPreferredFocusedComponent(@SuppressWarnings("BoundedWildcard") Computable<? extends JComponent> computable) {
+  public void setPreferredFocusedComponent(Computable<? extends JComponent> computable) {
     myFocusRequest = computable;
   }
 
@@ -152,8 +153,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public String getToolwindowTitle() {
-    if (myToolwindowTitle != null) return myToolwindowTitle;
-    return myDisplayName;
+    return myToolwindowTitle == null ? myDisplayName : myToolwindowTitle;
   }
 
   @Override
@@ -169,11 +169,6 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public void setShouldDisposeContent(boolean value) {
     myShouldDisposeContent = value;
-  }
-
-  @Override
-  public boolean shouldDisposeContent() {
-    return myShouldDisposeContent;
   }
 
   @Override
@@ -302,15 +297,15 @@ public class ContentImpl extends UserDataHolderBase implements Content {
       Disposer.dispose((Disposable)myComponent);
     }
 
-    myComponent = null;
-    myFocusRequest = null;
-    myManager = null;
-
-    clearUserData();
     if (myDisposer != null) {
       Disposer.dispose(myDisposer);
       myDisposer = null;
     }
+
+    myComponent = null;
+    myFocusRequest = null;
+    myManager = null;
+    clearUserData();
   }
 
   @Override

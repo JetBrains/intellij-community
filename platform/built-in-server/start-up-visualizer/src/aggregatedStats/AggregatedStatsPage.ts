@@ -1,50 +1,57 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Component, Vue, Watch} from "vue-property-decorator"
-import {LineChartManager} from "./LineChartManager"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {InfoResponse, Machine} from "@/aggregatedStats/model"
-import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
+import {DataRequest, InfoResponse, MachineGroup} from "@/aggregatedStats/model"
 import {debounce} from "debounce"
-import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
+import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
+import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
 
-@Component
+export const projectNameToTitle = new Map<string, string>()
+projectNameToTitle.set("/q9N7EHxr8F1NHjbNQnpqb0Q0fs", "joda-time")
+projectNameToTitle.set("73YWaW9bytiPDGuKvwNIYMK5CKI", "simple for IJ")
+projectNameToTitle.set("j1a8nhKJexyL/zyuOXJ5CFOHYzU", "simple for PS")
+projectNameToTitle.set("JeNLJFVa04IA+Wasc+Hjj3z64R0", "simple for WS")
+projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
+Object.seal(projectNameToTitle)
+
+@Component({
+  components: {LineChartComponent, ClusteredChartComponent}
+})
 export default class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
-  private readonly lineChartManagers: Array<LineChartManager> = []
-  private readonly clusteredChartManagers: Array<ClusteredChartManager> = []
+
+  private lastInfoResponse: InfoResponse | null = null
 
   chartSettings = this.dataModule.chartSettings
 
   products: Array<string> = []
-  machines: Array<Machine> = []
-
-  aggregationOperators: Array<string> = ["median", "min", "max", "quantile"]
-
-  private lastInfoResponse: InfoResponse | null = null
+  projects: Array<string> = []
+  machines: Array<MachineGroup> = []
 
   isFetching: boolean = false
+
+  projectNameToTitle = projectNameToTitle
 
   private loadDataAfterDelay = debounce(() => {
     this.loadData()
   }, 1000)
 
-  isShowScrollbarXPreviewChanged(_value: boolean) {
-    this.lineChartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
-    this.dataModule.updateChartSettings(this.chartSettings)
-  }
+  dataRequest: DataRequest | null = null
 
   loadData() {
     this.isFetching = true
-    loadJson(`${this.chartSettings.serverUrl}/api/v1/info`, null, this.$notify)
+    loadJson(`${this.chartSettings.serverUrl}/api/v1/info`, null)
       .then((data: InfoResponse | null) => {
         if (data == null) {
+          this.isFetching = false
           return
         }
 
-        this.lastInfoResponse = data
+        this.lastInfoResponse = Object.seal(data)
         this.products = data.productNames
+
         let selectedProduct = this.chartSettings.selectedProduct
         if (this.products.length === 0) {
           selectedProduct = ""
@@ -53,9 +60,15 @@ export default class AggregatedStatsPage extends Vue {
           selectedProduct = this.products[0]
         }
         this.chartSettings.selectedProduct = selectedProduct
+
         // not called by Vue for some reasons
-        this.selectedProductChanged(selectedProduct, "")
-        this.selectedMachineChanged(this.chartSettings.selectedMachine, "")
+        console.log("update product on info response", selectedProduct)
+        const oldSelectedMachine = this.chartSettings.selectedMachine
+        this.applyChangedProduct(selectedProduct, data)
+        const newSelectedMachine = this.chartSettings.selectedMachine
+        if (!isArrayContentTheSame(oldSelectedMachine, newSelectedMachine)) {
+          this.selectedMachineChanged(newSelectedMachine, oldSelectedMachine)
+        }
 
         this.isFetching = false
       })
@@ -68,36 +81,72 @@ export default class AggregatedStatsPage extends Vue {
   @Watch("chartSettings.selectedProduct")
   selectedProductChanged(product: string | null, _oldV: string): void {
     console.log("product changed", product, _oldV)
+
     const infoResponse = this.lastInfoResponse
-    if (infoResponse == null) {
-      return
+    if (infoResponse != null) {
+      this.applyChangedProduct(product, infoResponse)
     }
 
+    this.dataModule.updateChartSettings(this.chartSettings)
+  }
+
+  private applyChangedProduct(product: string | null, info: InfoResponse) {
     if (product != null && product.length > 0) {
       // later maybe will be more info for machine, so, do not use string instead of Machine
-      this.machines = infoResponse.productToMachine[product].map(name => {
-        return {id: name, name}
-      }) || []
+      this.machines = info.productToMachine[product] || []
+      const projects = info.productToProjects[product] || []
+      projects.sort((a, b) => {
+        const t1 = projectNameToTitle.get(a)!!
+        const t2 = projectNameToTitle.get(b)!!
+        if (t1.startsWith("simple ") && !t2.startsWith("simple ")) {
+          return -1
+        }
+        if (t2.startsWith("simple ") && !t1.startsWith("simple ")) {
+          return 1
+        }
+        return t1.localeCompare(t2)
+      })
+      this.projects = projects
     }
     else {
       this.machines = []
+      this.projects = []
     }
 
-    let selectedMachine = this.chartSettings.selectedMachine
+    let selectedProject = this.chartSettings.selectedProject
+    const projects = this.projects
+    if (projects.length === 0) {
+      selectedProject = ""
+      this.chartSettings.selectedProject = selectedProject
+    }
+    else if (selectedProject == null || selectedProject.length === 0 || !projects.includes(selectedProject)) {
+      selectedProject = projects[0]
+    }
+
+    let selectedMachine = this.chartSettings.selectedMachine || []
     const machines = this.machines
     if (machines.length === 0) {
-      selectedMachine = ""
+      selectedMachine = []
       this.chartSettings.selectedMachine = selectedMachine
     }
-    else if (selectedMachine == null || !machines.find(it => it.id === selectedMachine)) {
-      selectedMachine = machines[0].id
+    else if (selectedMachine.length === 0 || !machines.find(it => selectedMachine.includes(it.name)) || !machines.find(it => it.children.find(it => selectedMachine.includes(it.name)))) {
+      selectedMachine = [machines[0].name]
     }
 
-    if (this.chartSettings.selectedMachine === selectedMachine) {
+    if (this.chartSettings.selectedProject === selectedProject) {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
-      if (product != null && selectedMachine != null) {
-        this.loadClusteredChartsData(product)
-        this.loadLineChartData(product, selectedMachine)
+      if (product != null && selectedProject != null && selectedProject.length > 0) {
+        this.requestDataReloading(product, selectedMachine, selectedProject)
+      }
+    }
+    else {
+      this.chartSettings.selectedProject = selectedProject
+    }
+
+    if (isArrayContentTheSame(this.chartSettings.selectedMachine, selectedMachine)) {
+      // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
+      if (product != null && selectedMachine != null && selectedMachine.length > 0 && this.chartSettings.selectedProject !== selectedProject) {
+        this.requestDataReloading(product, selectedMachine, selectedProject)
       }
     }
     else {
@@ -105,76 +154,45 @@ export default class AggregatedStatsPage extends Vue {
     }
   }
 
+  private requestDataReloading(product: string, machine: Array<string>, project: string) {
+    this.dataRequest = Object.seal({product, machine, project, infoResponse: this.lastInfoResponse!!})
+  }
+
   @Watch("chartSettings.selectedMachine")
-  selectedMachineChanged(machine: string | null | undefined, _oldV: string): void {
+  selectedMachineChanged(machine: Array<string> | string, _oldV: Array<string>): void {
+    if (typeof machine === "string") {
+      machine = [machine]
+      this.chartSettings.selectedMachine = machine
+    }
+
     console.log("machine changed", machine, _oldV)
     if (machine == null) {
       return
     }
 
     const product = this.chartSettings.selectedProduct
-    if (product == null || product.length === 0) {
+    const project = this.chartSettings.selectedProject
+    if (product == null || product.length === 0 || project == null || project.length === 0) {
       return
     }
 
-    this.loadClusteredChartsData(product)
-    this.loadLineChartData(product, machine)
+    this.requestDataReloading(product, machine, project)
   }
 
-  private loadClusteredChartsData(product: string): void {
-    const machineId = this.chartSettings.selectedMachine
-    if (machineId == null) {
+  @Watch("chartSettings.selectedProject")
+  selectedProjectChanged(project: string, _oldV: Array<string>): void {
+    console.log("project changed", project, _oldV)
+    if (project == null) {
       return
     }
 
-    const chartManagers = this.clusteredChartManagers
-    if (chartManagers.length === 0) {
-      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredDurationChartContainer as HTMLElement))
-      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredInstantChartContainer as HTMLElement))
+    const product = this.chartSettings.selectedProduct
+    const machine = this.chartSettings.selectedMachine
+    if (product == null || product.length === 0 || machine == null || machine.length === 0) {
+      return
     }
 
-    chartManagers[0].setData(loadJson(this.createGroupedMetricUrl(product, machineId, false), null, this.$notify))
-    chartManagers[1].setData(loadJson(this.createGroupedMetricUrl(product, machineId, true), null, this.$notify))
-  }
-
-  createGroupedMetricUrl(product: string, machineId: string, isInstant: boolean): string {
-    const chartSettings = this.chartSettings
-    let operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
-    let operatorArg = 0
-    if (operator === "median") {
-      operator = "quantile"
-      operatorArg = 50
-    } else if (operator === "quantile") {
-      operatorArg = chartSettings.quantile
-    }
-
-    let result = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` +
-      `product=${encodeURIComponent(product)}` +
-      `&machine=${machineId}` +
-      `&operator=${operator}`
-    if (operatorArg !== 0) {
-      result += `&operatorArg=${operatorArg}`
-    }
-    result += `&eventType=${isInstant ? "i" : "d"}`
-    return result
-  }
-
-  // noinspection DuplicatedCode
-  loadLineChartData(product: string, machineId: string): void {
-    const chartManagers = this.lineChartManagers
-    if (chartManagers.length === 0) {
-      chartManagers.push(new LineChartManager(this.$refs.lineDurationChartContainer as HTMLElement, this.chartSettings, false))
-      chartManagers.push(new LineChartManager(this.$refs.lineInstantChartContainer as HTMLElement, this.chartSettings, true))
-    }
-
-    const productAndMachineParams = `product=${encodeURIComponent(product)}&machine=${encodeURIComponent(machineId)}`
-    const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` + productAndMachineParams
-    const infoResponse = this.lastInfoResponse!!
-
-    const reportUrlPrefix = `${this.chartSettings.serverUrl}/api/v1/report/` + productAndMachineParams
-
-    chartManagers[0].setData(loadJson(`${url}&eventType=d`, null, this.$notify), infoResponse, reportUrlPrefix)
-    chartManagers[1].setData(loadJson(`${url}&eventType=i`, null, this.$notify), infoResponse, reportUrlPrefix)
+    this.requestDataReloading(product, machine, this.chartSettings.selectedProject)
   }
 
   @Watch("chartSettings.serverUrl")
@@ -184,32 +202,9 @@ export default class AggregatedStatsPage extends Vue {
     }
   }
 
-  @Watch("chartSettings.aggregationOperator")
-  aggregationOperatorChanged(newV: string | null, _oldV: string) {
-    if (isEmpty(newV)) {
-      return
-    }
-
-    this.reloadClusteredDataIfPossible()
-  }
-
-  private reloadClusteredDataIfPossible() {
-    const product = this.chartSettings.selectedProduct
-    if (product == null || product.length === 0) {
-      return
-    }
-    this.loadClusteredChartsData(product)
-  }
-
-  private reloadClusteredDataIfPossibleAfterDelay = debounce(() => {
-    this.reloadClusteredDataIfPossible()
-  }, 300)
-
-
-  @Watch("chartSettings.quantile")
-  quantileChanged(_newV: number, _oldV: number) {
-    console.log("quantile changed", _newV)
-    this.reloadClusteredDataIfPossibleAfterDelay()
+  @Watch("chartSettings", {deep: true})
+  chartSettingsChanged(_newV: string | null, _oldV: string) {
+    this.dataModule.updateChartSettings(this.chartSettings)
   }
 
   mounted() {
@@ -218,20 +213,21 @@ export default class AggregatedStatsPage extends Vue {
       this.loadData()
     }
   }
-
-  beforeDestroy() {
-    for (const chartManager of this.clusteredChartManagers) {
-      chartManager.dispose()
-    }
-    this.clusteredChartManagers.length = 0
-
-    for (const chartManager of this.lineChartManagers) {
-      chartManager.dispose()
-    }
-    this.lineChartManagers.length = 0
-  }
 }
 
 function isEmpty(v: string | null): boolean {
   return v == null || v.length === 0
+}
+
+function isArrayContentTheSame(a: Array<string>, b: Array<string>): boolean {
+  if (a.length !== b.length) {
+    return false
+  }
+
+  for (const item of a) {
+    if (!b.includes(item)) {
+      return false
+    }
+  }
+  return true
 }

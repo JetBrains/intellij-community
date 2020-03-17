@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -41,7 +40,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridCaptionPanel");
+  private static final Logger LOG = Logger.getInstance(GridCaptionPanel.class);
 
   private final GuiEditor myEditor;
   private final boolean myIsRow;
@@ -518,20 +517,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
     }
-
-    @Override
-    @Nullable
-    public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
-      return null;
-    }
-
-    @Override
-    public void dragDropEnd() {
-    }
-
-    @Override
-    public void dropActionChanged(final int gestureModifiers) {
-    }
   }
 
   private class MyDnDTarget implements DnDTarget {
@@ -589,10 +574,6 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     public void cleanUpOnLeave() {
       setDropInsertLine(-1);
       myEditor.getActiveDecorationLayer().removeFeedback();
-    }
-
-    @Override
-    public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
 
     private void setDropInsertLine(final int i) {

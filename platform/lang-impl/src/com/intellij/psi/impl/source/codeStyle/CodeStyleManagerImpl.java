@@ -29,7 +29,7 @@ import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdj
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -197,7 +197,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     LOG.assertTrue(file.isValid(), "File name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
 
     if (editor == null) {
-      editor = PsiUtilBase.findEditor(file);
+      editor = PsiEditorUtil.findEditor(file);
     }
 
     CaretPositionKeeper caretKeeper = null;
@@ -768,7 +768,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       int caretOffset = getCaretOffset();
       int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
       int lineEndOffset = getLineEndOffsetByTotalOffset(caretOffset);
-      boolean shouldFixCaretPosition = rangeHasWhiteSpaceSymbolsOnly(myDocument.getCharsSequence(), lineStartOffset, lineEndOffset);
+      boolean shouldFixCaretPosition = CharArrayUtil.isEmptyOrSpaces(myDocument.getCharsSequence(), lineStartOffset, lineEndOffset);
 
       if (shouldFixCaretPosition) {
         initRestoreInfo(caretOffset);
@@ -841,15 +841,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       myDocument.replaceString(lineToInsertStartOffset, caretLineOffset, myCaretIndentToRestore);
     }
 
-    private static boolean rangeHasWhiteSpaceSymbolsOnly(CharSequence text, int lineStartOffset, int lineEndOffset) {
-      for (int i = lineStartOffset; i < lineEndOffset; i++) {
-        char c = text.charAt(i);
-        if (c != ' ' && c != '\t' && c != '\n') {
-          return false;
-        }
-      }
-      return true;
-    }
 
     private boolean isVirtualSpaceEnabled() {
       return myEditor.getSettings().isVirtualSpace();
@@ -874,7 +865,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     private boolean lineContainsWhiteSpaceSymbolsOnly(int lineNumber) {
       int startOffset = myDocument.getLineStartOffset(lineNumber);
       int endOffset = myDocument.getLineEndOffset(lineNumber);
-      return rangeHasWhiteSpaceSymbolsOnly(myDocument.getCharsSequence(), startOffset, endOffset);
+      return CharArrayUtil.isEmptyOrSpaces(myDocument.getCharsSequence(), startOffset, endOffset);
     }
 
     private int getCurrentCaretLine() {

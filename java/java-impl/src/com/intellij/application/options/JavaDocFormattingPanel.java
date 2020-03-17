@@ -41,10 +41,6 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   private JCheckBox myEnableCheckBox;
 
   private final JPanel myJavaDocPanel = new JPanel(new BorderLayout());
-  public static final String OTHER_GROUP = ApplicationBundle.message("group.javadoc.other");
-  public static final String INVALID_TAGS_GROUP = ApplicationBundle.message("group.javadoc.invalid.tags");
-  public static final String BLANK_LINES_GROUP = ApplicationBundle.message("group.javadoc.blank.lines");
-  public static final String ALIGNMENT_GROUP = ApplicationBundle.message("group.javadoc.alignment");
 
   public JavaDocFormattingPanel(CodeStyleSettings settings) {
     super(settings);
@@ -85,11 +81,11 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
   @Override
   protected void initTables() {
-    initCustomOptions(ALIGNMENT_GROUP);
-    initCustomOptions(BLANK_LINES_GROUP);
-    initCustomOptions(INVALID_TAGS_GROUP);
-    initBooleanField("WRAP_COMMENTS", ApplicationBundle.message("checkbox.wrap.at.right.margin"), OTHER_GROUP);
-    initCustomOptions(OTHER_GROUP);
+    initCustomOptions(getAlignmentGroup());
+    initCustomOptions(getBlankLinesGroup());
+    initCustomOptions(getInvalidTagsGroup());
+    initBooleanField("WRAP_COMMENTS", ApplicationBundle.message("checkbox.wrap.at.right.margin"), getOtherGroup());
+    initCustomOptions(getOtherGroup());
   }
 
   @Override
@@ -183,5 +179,21 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   @Override
   public Language getDefaultLanguage() {
     return JavaLanguage.INSTANCE;
+  }
+
+  public static String getOtherGroup() {
+    return ApplicationBundle.message("group.javadoc.other");
+  }
+
+  public static String getInvalidTagsGroup() {
+    return ApplicationBundle.message("group.javadoc.invalid.tags");
+  }
+
+  public static String getBlankLinesGroup() {
+    return ApplicationBundle.message("group.javadoc.blank.lines");
+  }
+
+  public static String getAlignmentGroup() {
+    return ApplicationBundle.message("group.javadoc.alignment");
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.BaseExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
-import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -26,6 +25,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
@@ -157,6 +157,9 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     String unescaped = StringUtil.unescapeXmlEntities(externalName);
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
+    if (words.size() == 1 && JavaPsiFacade.getInstance(getProject()).findPackage(className) != null) {
+      return;
+    }
     PsiClass aClass = assertClassFqn(className, psiFile, externalName, assumedPackage);
     if (words.size() == 1) return;
 

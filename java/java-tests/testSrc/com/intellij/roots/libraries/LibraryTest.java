@@ -132,7 +132,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testModificationCount() {
-    ignoreTestUnderTreeProjectModel();
+    ignoreTestUnderWorkspaceModel();
 
     final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
 
@@ -169,7 +169,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testReloadLibraryTable() {
-    ignoreTestUnderTreeProjectModel();
+    ignoreTestUnderWorkspaceModel();
 
     ((LibraryTableBase)getProjectLibraryTable()).loadState(new Element("component"));
     createLibrary("a", null, null);
@@ -178,7 +178,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testReloadLibraryTableWithoutChanges() {
-    ignoreTestUnderTreeProjectModel();
+    ignoreTestUnderWorkspaceModel();
 
     ((LibraryTableBase)getProjectLibraryTable()).loadState(new Element("component"));
     createLibrary("a", null, null);

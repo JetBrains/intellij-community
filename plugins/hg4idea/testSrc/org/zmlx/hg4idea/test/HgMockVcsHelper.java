@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
@@ -77,42 +63,26 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
+  public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls String title) {
   }
 
   @Override
-  public void showChangesListBrowser(CommittedChangeList changelist, @Nullable VirtualFile toSelect, @Nls String title) {
+  public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title) {
   }
 
   @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists) {
+  public void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                          @NotNull RepositoryLocation location,
+                                          @Nullable @Nls String title,
+                                          @Nullable Component parent) {
   }
 
   @Override
-  public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
-  }
-
-  @Override
-  public void showChangesBrowser(CommittedChangesProvider provider,
-                                 RepositoryLocation location,
-                                 @Nls String title,
-                                 @Nullable Component parent) {
-  }
-
-  @Override
-  public void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title) {
-  }
-
-  @Override
-  public void openCommittedChangesTab(AbstractVcs vcs, VirtualFile root, ChangeBrowserSettings settings, int maxCount, String title) {
-  }
-
-  @Override
-  public void openCommittedChangesTab(CommittedChangesProvider provider,
-                                      RepositoryLocation location,
-                                      ChangeBrowserSettings settings,
+  public void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
+                                      @NotNull RepositoryLocation location,
+                                      @NotNull ChangeBrowserSettings settings,
                                       int maxCount,
-                                      String title) {
+                                      @Nullable String title) {
   }
 
   @NotNull
@@ -132,10 +102,6 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                               AnnotationProvider annotationProvider,
                               @NotNull FilePath path,
                               @NotNull AbstractVcs vcs) {
-  }
-
-  @Override
-  public void showRollbackChangesDialog(List<? extends Change> changes) {
   }
 
   @Nullable

@@ -31,7 +31,6 @@ import java.util.List;
  * @author maxim
  */
 public class UserColorLookup extends LookupElementDecorator<LookupElement> {
-  private static final String COLOR_STRING = XmlBundle.message("choose.color.in.color.lookup");
   private static final Function<Color, String> COLOR_TO_STRING_CONVERTER = color -> '#' + ColorUtil.toHex(color);
 
   public UserColorLookup() {
@@ -43,7 +42,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   public UserColorLookup(final Function<? super Color, String> colorToStringConverter, int priority) {
-    super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(COLOR_STRING).withInsertHandler(
+    super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(getColorString()).withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -80,5 +79,9 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
     if (!(element instanceof XmlToken)) return null;
 
     return ColorMap.getColor(element.getText());
+  }
+
+  private static String getColorString() {
+    return XmlBundle.message("choose.color.in.color.lookup");
   }
 }

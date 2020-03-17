@@ -40,9 +40,8 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpoin
 import javax.swing.*;
 
 public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointProperties> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint");
+  private static final Logger LOG = Logger.getInstance(ExceptionBreakpoint.class);
 
-  protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   public static final @NonNls Key<ExceptionBreakpoint> CATEGORY = BreakpointCategory.lookup("exception_breakpoints");
 
   public ExceptionBreakpoint(Project project, XBreakpoint<JavaExceptionBreakpointProperties> xBreakpoint) {
@@ -245,7 +244,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     String className = parentNode.getAttributeValue("class_name");
     setQualifiedName(className);
     if(className == null) {
-      throw new InvalidDataException(READ_NO_CLASS_NAME);
+      throw new InvalidDataException(getReadNoClassName());
     }
   }
 
@@ -279,5 +278,9 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   public void setCatchClassExclusionFilters(ClassFilter[] filters) {
     getProperties().setCatchClassExclusionFilters(filters);
+  }
+
+  protected static String getReadNoClassName() {
+    return DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   }
 }

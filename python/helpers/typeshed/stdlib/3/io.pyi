@@ -53,6 +53,7 @@ class RawIOBase(IOBase):
     def read(self, size: int = ...) -> Optional[bytes]: ...
 
 class BufferedIOBase(IOBase):
+    raw: RawIOBase  # This is not part of the BufferedIOBase API and may not exist on some implementations.
     def detach(self) -> RawIOBase: ...
     def readinto(self, b: _bytearray_like) -> int: ...
     def write(self, b: Union[bytes, bytearray]) -> int: ...
@@ -66,7 +67,7 @@ class FileIO(RawIOBase):
     name: Union[int, str]
     def __init__(
         self,
-        name: Union[str, bytes, int],
+        file: Union[str, bytes, int],
         mode: str = ...,
         closefd: bool = ...,
         opener: Optional[Callable[[Union[int, str], str], int]] = ...

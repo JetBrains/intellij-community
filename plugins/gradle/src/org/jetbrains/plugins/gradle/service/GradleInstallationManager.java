@@ -136,7 +136,7 @@ public class GradleInstallationManager {
     if (settings == null) {
       Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
       if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first) ||
-          ExternalSystemJdkUtil.isValidJdk(sdkPair.second.getHomePath())) {
+          ExternalSystemJdkUtil.isValidJdk(sdkPair.second)) {
         return sdkPair.second;
       }
       else {
@@ -145,7 +145,7 @@ public class GradleInstallationManager {
     }
 
     final String gradleJvm = settings.getGradleJvm();
-    final Sdk sdk;
+    Sdk sdk;
     try {
       sdk = ExternalSystemJdkUtil.getJdk(project, gradleJvm);
     }

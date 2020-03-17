@@ -1,0 +1,36 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="languageBundle" beanClass="com.intellij.DynamicBundle$LanguageBundleEP"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
+    <extensionPoint name="virtualFileManagerListener" interface="com.intellij.openapi.vfs.VirtualFileManagerListener" dynamic="true"/>
+    <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
+
+    <!-- only bundled plugin can define startupActivity -->
+    <extensionPoint name="startupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
+    <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
+    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
+
+    <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector" dynamic="true"/>
+    <extensionPoint name="editorFactoryDocumentListener" interface="com.intellij.openapi.editor.event.DocumentListener" dynamic="true"/>
+    <extensionPoint name="multiHostInjector" interface="com.intellij.lang.injection.MultiHostInjector" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider" dynamic="true"/>
+    <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
+    <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>
+    </extensionPoint>
+    <extensionPoint name="lang.elementManipulator" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.ElementManipulator"/>
+    </extensionPoint>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.util.messages.MessageBusFactory"
+                        serviceImplementation="com.intellij.util.messages.impl.MessageBusFactoryImpl"/>
+  </extensions>
+</idea-plugin>

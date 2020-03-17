@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -183,24 +182,16 @@ abstract class UndoRedo {
   }
 
   private boolean askUser() {
-    final boolean[] isOk = new boolean[1];
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      String actionText = getActionName(myUndoableGroup.getCommandName());
-      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
-                                            Messages.getQuestionIcon()) == Messages.OK;
-    });
-    return isOk[0];
+    String actionText = getActionName(myUndoableGroup.getCommandName());
+    return Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
+                                          Messages.getQuestionIcon()) == Messages.OK;
   }
 
   boolean confirmSwitchTo(@NotNull UndoRedo other) {
-    final boolean[] isOk = new boolean[1];
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" +
-                       getActionName(other.myUndoableGroup.getCommandName()) + "?";
-      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
-                                            Messages.getQuestionIcon()) == Messages.OK;
-    });
-    return isOk[0];
+    String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" +
+                     getActionName(other.myUndoableGroup.getCommandName()) + "?";
+    return Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
+                                          Messages.getQuestionIcon()) == Messages.OK;
   }
 
   private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {

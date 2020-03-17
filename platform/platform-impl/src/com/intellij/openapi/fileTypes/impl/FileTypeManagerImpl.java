@@ -155,10 +155,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private final Object PENDING_INIT_LOCK = new Object();
 
-  private MultiValuesMap<FileType, FileTypeDetector> myFileTypeDetectorMap;
-  private final List<FileTypeDetector> myUntypedFileTypeDetectors = new ArrayList<>();
-  private final Object FILE_TYPE_DETECTOR_MAP_LOCK = new Object();
-
   public FileTypeManagerImpl() {
     int fileTypeChangedCounter = PropertiesComponent.getInstance().getInt("fileTypeChangedCounter", 0);
     fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
@@ -267,22 +263,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
-    FileTypeDetector.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeDetector>() {
-      @Override
-      public void extensionAdded(@NotNull FileTypeDetector extension, @NotNull PluginDescriptor pluginDescriptor) {
-        synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
-          myFileTypeDetectorMap = null;
-        }
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull FileTypeDetector extension, @NotNull PluginDescriptor pluginDescriptor) {
-        synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
-          myFileTypeDetectorMap = null;
-        }
-      }
-    }, this);
-
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
       @Override
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -295,6 +275,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       @Override
       public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         final FileType fileType = findFileTypeByName(extension.name);
+        if (fileType == null) return;
         unregisterFileType(fileType);
         if (fileType instanceof LanguageFileType) {
           final LanguageFileType languageFileType = (LanguageFileType)fileType;
@@ -338,7 +319,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           FileTypeBean pendingTypeByMatcher = myPendingAssociations.findAssociatedFileType(matcher);
           if (pendingTypeByMatcher != null) {
             PluginId id = pendingTypeByMatcher.getPluginId();
-            if (id == null || id.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
+            if (id == null || PluginManagerCore.CORE_ID == id) {
               instantiateFileTypeBean(pendingTypeByMatcher);
             }
           }
@@ -856,7 +837,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private static String readableFlags(long flags) {
     String result = "";
-    if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += (result.isEmpty() ? "" :" | ") + "ATTRIBUTES_WERE_LOADED_MASK";
+    if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += "ATTRIBUTES_WERE_LOADED_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECT_WAS_RUN_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECTED_AS_BINARY_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECTED_AS_TEXT_MASK";
@@ -953,14 +934,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType type = getStdFileType(fileTypeName);
     // TODO: Abstract file types are not std one, so need to be restored specially,
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
-    if (type == PlainTextFileType.INSTANCE && !fileTypeName.equals(type.getName())) {
-      for (FileType fileType: mySchemeManager.getAllSchemes()) {
-        if (fileTypeName.equals(fileType.getName())) {
-          return fileType;
-        }
+    if (type != PlainTextFileType.INSTANCE || fileTypeName.equals(type.getName())) {
+      return type;
+    }
+    for (FileType fileType: mySchemeManager.getAllSchemes()) {
+      if (fileTypeName.equals(fileType.getName())) {
+        return fileType;
       }
     }
-    return type;
+    return null;
   }
 
   private static boolean isDetectable(@NotNull final VirtualFile file) {
@@ -1065,6 +1047,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           try {
             detected = detector.detect(file, firstBytes, text);
           }
+          catch (ProcessCanceledException e) {
+            LOG.error("Detector " + detector + " (" + detector.getClass() + ") threw PCE. Bad detector, bad!", new RuntimeException(e));
+          }
           catch (Exception e) {
             LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
           }
@@ -1109,33 +1094,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
              ", file.exists=" + file.exists() + ", file.content='" + FileUtil.loadFile(file) + "')";
     }
     return stream;
-  }
-
-  @Nullable
-  private Collection<FileTypeDetector> getDetectorsForType(@NotNull FileType fileType) {
-    synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
-      if (myFileTypeDetectorMap == null) {
-        myFileTypeDetectorMap = new MultiValuesMap<>();
-        for (FileTypeDetector detector : FileTypeDetector.EP_NAME.getExtensionList()) {
-          Collection<? extends FileType> detectedFileTypes = detector.getDetectedFileTypes();
-          if (detectedFileTypes != null) {
-            for (FileType type : detectedFileTypes) {
-              myFileTypeDetectorMap.put(type, detector);
-            }
-          }
-          else {
-            myUntypedFileTypeDetectors.add(detector);
-            if (ApplicationManager.getApplication().isInternal()) {
-              LOG.error(PluginException.createByClass(
-                "File type detector " + detector + " does not implement getDetectedFileTypes(), leading to suboptimal performance. Please implement the method.",
-                null, detector.getClass()));
-            }
-          }
-        }
-      }
-
-      return myFileTypeDetectorMap.get(fileType);
-    }
   }
 
   @Override

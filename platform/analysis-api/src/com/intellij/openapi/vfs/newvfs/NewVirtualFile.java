@@ -75,10 +75,6 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Override
   public abstract int getId();
 
-  @Nullable @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public NewVirtualFile findChildById(int id) {return null;}
-
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
@@ -128,7 +124,8 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract Iterable<VirtualFile> iterInDbChildren();
 
   @NotNull
-  @ApiStatus.Internal
+  @Deprecated
+  @ApiStatus.Experimental
   public Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }

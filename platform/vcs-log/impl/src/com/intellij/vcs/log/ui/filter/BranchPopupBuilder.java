@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
@@ -81,7 +82,8 @@ public abstract class BranchPopupBuilder {
       actionGroup.add(recentGroup);
     }
     if (groups.favoriteGroups.size() > 1) {
-      createFavoritesAction(actionGroup, new ArrayList<>(groups.favoriteGroups.keySet()));
+      createFavoritesAction(actionGroup, new ArrayList<>(ContainerUtil.map2LinkedSet(ContainerUtil.flatten(groups.favoriteGroups.values()),
+                                                                                     ref -> ref.getName())));
     }
     for (Map.Entry<String, Collection<VcsRef>> entry : groups.favoriteGroups.entrySet()) {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));

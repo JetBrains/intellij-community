@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.NettyKt;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference;
+import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor;
 import org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,15 @@ class SafeOpener {
     "svg",
     "html"
   );
+
+  static {
+    MarkdownAccessor.setSafeOpenerAccessor(new MarkdownAccessor.SafeOpenerAccessor() {
+      @Override
+      public void openLink(@NotNull String link) {
+        SafeOpener.openLink(link);
+      }
+    });
+  }
 
   private SafeOpener() {
   }

@@ -48,11 +48,6 @@ public class BulkDecompilationTest {
   }
 
   @Test
-  public void testKtJar() {
-    doTestJar("kt25937");
-  }
-
-  @Test
   public void testObfuscated() {
     doTestJar("obfuscated");
   }

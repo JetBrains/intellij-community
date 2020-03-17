@@ -2,11 +2,12 @@
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.hierarchy.HierarchyBrowserBase;
+import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserBase;
 import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -19,7 +20,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -28,8 +28,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.search.scope.EditorSelectionLocalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -65,8 +64,9 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScope.allScope(project));
     }
 
+    DataContext adjustedContext = dataContext != null ? dataContext : SimpleDataContext.getProjectContext(project);
     for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
-      result.addAll(each.getGeneralSearchScopes(project));
+      result.addAll(each.getGeneralSearchScopes(project, adjustedContext));
     }
 
     if (ModuleUtil.hasTestSourceRoots(project)) {
@@ -129,31 +129,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     if (currentSelection && selectedTextEditor != null && psiFile != null) {
       SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
       if (selectionModel.hasSelection()) {
-        int start = selectionModel.getSelectionStart();
-        final PsiElement startElement = psiFile.findElementAt(start);
-        if (startElement != null) {
-          int end = selectionModel.getSelectionEnd();
-          final PsiElement endElement = psiFile.findElementAt(end);
-          if (endElement != null) {
-            final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
-            if (parent != null) {
-              final List<PsiElement> elements = new ArrayList<>();
-              final PsiElement[] children = parent.getChildren();
-              TextRange selection = new TextRange(start, end);
-              for (PsiElement child : children) {
-                if (!(child instanceof PsiWhiteSpace) &&
-                    child.getContainingFile() != null &&
-                    selection.contains(child.getTextOffset())) {
-                  elements.add(child);
-                }
-              }
-              if (!elements.isEmpty()) {
-                SearchScope local = new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
-                result.add(local);
-              }
-            }
-          }
-        }
+        result.add(new EditorSelectionLocalSearchScope(selectedTextEditor, project, IdeBundle.message("scope.selection")));
       }
     }
 
@@ -253,10 +229,10 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
   }
 
   @Nullable
-  private static SearchScope getSelectedFilesScope(final Project project,
+  private static SearchScope getSelectedFilesScope(@NotNull Project project,
                                                    @Nullable DataContext dataContext,
                                                    @Nullable PsiFile currentFile) {
-    final VirtualFile[] filesOrDirs = (dataContext == null) ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    VirtualFile[] filesOrDirs = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (filesOrDirs == null || filesOrDirs.length == 0 ||
         filesOrDirs.length == 1 && currentFile != null && filesOrDirs[0].equals(currentFile.getVirtualFile())) {
       return null;

@@ -47,12 +47,6 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Shadowing built-ins";
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm("Ignore built-ins", ignoredNames);

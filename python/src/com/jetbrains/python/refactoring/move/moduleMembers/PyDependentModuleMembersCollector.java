@@ -48,7 +48,7 @@ public class PyDependentModuleMembersCollector extends DependentMembersCollector
       assert memberBody != null;
       memberBody.accept(new PyRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           for (PsiElement result : PyUtil.multiResolveTopPriority(element, resolveContext)) {
             if (result != null && isValidSameModuleDependency(result) && result != member) {
               myCollection.add((PsiNamedElement)result);

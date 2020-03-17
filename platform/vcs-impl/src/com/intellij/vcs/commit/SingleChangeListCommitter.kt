@@ -31,17 +31,11 @@ open class SingleChangeListCommitter(
 
   private val changeList get() = commitState.changeList
 
-  private var isSuccess = false
-
   override fun commit() {
     if (vcsToCommit != null && changes.isEmpty()) {
       commit(vcsToCommit, changes)
     }
     super.commit()
-  }
-
-  override fun onSuccess() {
-    isSuccess = true
   }
 
   override fun onFailure() {

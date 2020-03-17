@@ -2,6 +2,7 @@
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.Constants;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -14,11 +15,11 @@ public @interface XMap {
   /**
    * The property element name. Defaults to property name.
    */
-  String propertyElementName() default "";
+  @NonNls String propertyElementName() default "";
 
-  String entryTagName() default Constants.ENTRY;
+  @NonNls String entryTagName() default Constants.ENTRY;
 
-  String keyAttributeName() default Constants.KEY;
+  @NonNls String keyAttributeName() default Constants.KEY;
 
-  String valueAttributeName() default Constants.VALUE;
+  @NonNls String valueAttributeName() default Constants.VALUE;
 }

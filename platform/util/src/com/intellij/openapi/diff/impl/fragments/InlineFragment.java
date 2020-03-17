@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 
 public class InlineFragment implements Fragment {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.fragments.InlineFragment");
+  private static final Logger LOG = Logger.getInstance(InlineFragment.class);
   private final TextRange myRange1;
   private final TextRange myRange2;
   private final TextDiffTypeEnum myType;

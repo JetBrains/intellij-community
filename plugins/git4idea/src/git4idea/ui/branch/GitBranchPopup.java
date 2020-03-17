@@ -20,26 +20,38 @@ import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
+import com.intellij.dvcs.ui.BranchActionGroupPopup;
 import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.popup.PopupDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitVcs;
+import git4idea.actions.GitFetch;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.config.GitVcsSettings;
+import git4idea.fetch.GitFetchResult;
+import git4idea.fetch.GitFetchSupport;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
+import java.util.Optional;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_NUM;
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
@@ -56,18 +68,19 @@ import static java.util.stream.Collectors.toList;
  * The popup which allows to quickly switch and control Git branches.
  * <p/>
  */
-class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
+public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   private static final String DIMENSION_SERVICE_KEY = "Git.Branch.Popup";
   static final String SHOW_ALL_LOCALS_KEY = "Git.Branch.Popup.ShowAllLocals";
   static final String SHOW_ALL_REMOTES_KEY = "Git.Branch.Popup.ShowAllRemotes";
   static final String SHOW_ALL_REPOSITORIES = "Git.Branch.Popup.ShowAllRepositories";
+  static final Icon LOADING_ICON = new AnimatedIcon.Default();
 
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
    *                          In the case of synchronized branch operations current repository matter much less, but sometimes is used,
    *                          for example, it is preselected in the repositories combobox in the compare branches dialog.
    */
-  static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
+  public static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
     final GitVcsSettings vcsSettings = GitVcsSettings.getInstance(project);
     Condition<AnAction> preselectActionCondition = action -> {
      GitBranchPopupActions.LocalBranchActions branchAction = getBranchAction(action);
@@ -108,21 +121,60 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
     final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
     if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && !gitBranchIncomingOutgoingManager.supportsIncomingOutgoing()) {
-      myPopup.addToolbarAction(
-        createWarningAction("Update checks not supported. Git 2.9+ required",
-                            e -> ShowSettingsUtil.getInstance().showSettingsDialog(myProject, GitVcs.NAME)), false);
+      myPopup.addToolbarAction(createUnsupportedIncomingAction(myProject), false);
     }
-    else if (gitBranchIncomingOutgoingManager.shouldCheckIncoming() && gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
-      myPopup.addToolbarAction(createWarningAction("Update checks failed. Click to retry", e -> {
-        gitBranchIncomingOutgoingManager.forceUpdateBranchesToPull();
-        myPopup.cancel();
-      }), false);
-    }
+    myPopup.addToolbarAction(createFetchAction(myProject), false);
+    MessageBusConnection connection = myProject.getMessageBus().connect(myPopup);
+    connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, () -> {
+      ApplicationManager.getApplication().invokeLater(() -> myPopup.update(), o -> myPopup.isDisposed());
+    });
   }
 
   @NotNull
-  private static AnAction createWarningAction(@NotNull String text, @NotNull Consumer<? super AnActionEvent> actionEventConsumer) {
-    AnAction updateBranchInfoWithAuthenticationAction = DumbAwareAction.create(text, actionEventConsumer);
+  private static AnAction createFetchAction(@NotNull Project project) {
+    return new GitFetch() {
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (isBusy(project)) return;
+        super.actionPerformed(e);
+      }
+
+      @Override
+      protected void onFetchFinished(@NotNull GitFetchResult result) {
+        GitBranchIncomingOutgoingManager.getInstance(project).forceUpdateBranches(() -> ActionToolbarImpl.updateAllToolbarsImmediately());
+        showNotificationIfNeeded(result);
+      }
+
+      private void showNotificationIfNeeded(@NotNull GitFetchResult result) {
+        Optional<JBPopup> popupOptional =
+          StreamEx.of(PopupDispatcher.getInstance().getPopupStream()).findFirst(BranchActionGroupPopup.class::isInstance);
+        if (popupOptional.isPresent()) {
+          result.showNotificationIfFailed();
+        }
+        else {
+          result.showNotification();
+        }
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setIcon(isBusy(project) ? LOADING_ICON : AllIcons.Actions.Refresh);
+        e.getPresentation().setText(isBusy(project) ? "Fetching..." : "Fetch");
+      }
+
+      private boolean isBusy(@NotNull Project project) {
+        return GitFetchSupport.fetchSupport(project).isFetchRunning() || GitBranchIncomingOutgoingManager.getInstance(project).isUpdating();
+      }
+    };
+  }
+
+  @NotNull
+  private static AnAction createUnsupportedIncomingAction(@NotNull Project project) {
+    AnAction updateBranchInfoWithAuthenticationAction = DumbAwareAction.create("Update Checks not Supported. Git 2.9+ Required",
+                                                                               e -> ShowSettingsUtil.getInstance()
+                                                                                 .showSettingsDialog(project, GitVcs.NAME));
     Presentation presentation = updateBranchInfoWithAuthenticationAction.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Warning);
     presentation.setHoveredIcon(AllIcons.General.Warning);
@@ -169,7 +221,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @NotNull
-  private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<? extends GitRepository> allRepositories,
+  public GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<? extends GitRepository> allRepositories,
                                                                             @NotNull String branch) {
     return new GitBranchPopupActions.LocalBranchActions(myProject, allRepositories, branch, myCurrentRepository);
   }
