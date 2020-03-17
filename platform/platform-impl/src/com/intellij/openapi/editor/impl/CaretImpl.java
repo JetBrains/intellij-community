@@ -593,10 +593,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     boolean leanRight = pos.leansRight;
 
     int lastLine = myEditor.getVisibleLineCount() - 1;
-    if (lastLine <= 0) {
-      lastLine = 0;
-    }
-
     if (line > lastLine) {
       line = lastLine;
     }

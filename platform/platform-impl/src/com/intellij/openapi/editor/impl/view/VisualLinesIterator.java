@@ -95,7 +95,7 @@ public class VisualLinesIterator {
   public int getEndLogicalLine() {
     checkEnd();
     setNextLocation();
-    return myNextLocation.atEnd() ? myDocument.getLineCount() - 1
+    return myNextLocation.atEnd() ? Math.max(0, myDocument.getLineCount() - 1)
                                   : myNextLocation.logicalLine - (myNextLocation.softWrap == myLocation.softWrap ? 2 : 1);
   }
 

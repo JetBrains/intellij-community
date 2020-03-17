@@ -512,7 +512,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText(StringUtil.repeat("a ", 1000));
     ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes());
     runWriteCommand(() -> getEditor().getDocument().deleteString(0, getEditor().getDocument().getTextLength()));
-    assertEquals(0, ((EditorImpl)getEditor()).getVisibleLineCount());
+    assertEquals(1, ((EditorImpl)getEditor()).getVisibleLineCount());
   }
 
   public void testDragInsideSelectionWithDndDisabled() {
