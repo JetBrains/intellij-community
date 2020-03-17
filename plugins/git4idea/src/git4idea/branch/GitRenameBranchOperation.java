@@ -101,8 +101,9 @@ class GitRenameBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Nls
   @Override
   protected String getOperationName() {
-    return "rename";
+    return GitBundle.message("rename.branch.operation.name");
   }
 }

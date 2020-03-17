@@ -21,6 +21,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,10 +218,10 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Nls
   @Override
   protected String getOperationName() {
-    // TODO: check that operation name should be @Nls
-    return "checkout";
+    return GitBundle.message("checkout.operation.name");
   }
 
   @Override

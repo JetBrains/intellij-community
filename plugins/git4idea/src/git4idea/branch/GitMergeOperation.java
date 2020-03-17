@@ -23,6 +23,7 @@ import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import git4idea.util.GitPreservingProcess;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -333,9 +334,10 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Nls
   @Override
   protected String getOperationName() {
-    return "merge";
+    return GitBundle.message("merge.operation.name");
   }
 
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {

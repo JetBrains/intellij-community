@@ -80,7 +80,7 @@ public interface GitBranchUiHandler {
   GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
                                                           @NotNull List<? extends Change> changes,
                                                           @NotNull Collection<String> paths,
-                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operation,
+                                                          @NotNull String operation,
                                                           @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle);
 
   /**
