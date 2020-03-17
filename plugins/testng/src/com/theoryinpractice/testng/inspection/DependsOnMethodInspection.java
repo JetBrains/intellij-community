@@ -103,7 +103,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
 
       LOGGER.debug("dependsOnMethods contains ()" + psiClass.getName());
       // TODO Add quick fix for removing brackets on annotation
-      String template = "Method '" + methodName + "' should not include () characters.";
+      String template = TestngBundle.message("inspection.depends.on.method.check", methodName);
       problemDescriptors.add(manager.createProblemDescriptor(
         value, template, (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
     }
@@ -137,8 +137,8 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
 
         if (!hasTestsOrConfigs) {
           String template = configAnnotation == null
-                            ? "Method '" + methodName + "' is not a test or configuration method."
-                            : "Method '" + methodName + "' is not annotated with @" + configAnnotation;
+                            ? TestngBundle.message("inspection.depends.on.method.is.not.test", methodName)
+                            : TestngBundle.message("inspection.depends.on.method.is.not.annotated", methodName, configAnnotation);
           problemDescriptors.add(manager.createProblemDescriptor(
             value, template, (LocalQuickFix)null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly));
         }

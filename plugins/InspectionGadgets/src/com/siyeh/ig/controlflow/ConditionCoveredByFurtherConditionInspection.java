@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.ReorderingUtils;
@@ -79,13 +80,10 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         dependencies = minimizeDependencies(context, operand, and, dependencies);
         if (dependencies.isEmpty()) continue;
         String operandText = PsiExpressionTrimRenderer.render(operand);
-        String description = "Condition '" + operandText + "' covered by subsequent " +
-                             (dependencies.size() == 1
-                              ? "condition '" +
-                                PsiExpressionTrimRenderer.render(
-                                  Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(dependencies.get(0)))) +
-                                "'"
-                              : "conditions");
+        String description =
+          InspectionGadgetsBundle.message("inspection.condition.covered.by.further.condition.descr",
+                                          operandText, dependencies.size() == 1 ? "condition '" + PsiExpressionTrimRenderer
+              .render(Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(dependencies.get(0)))) + "'" : "conditions");
         myHolder.registerProblem(operand, description, new RemoveRedundantPolyadicOperandFix(operandText));
       }
     }

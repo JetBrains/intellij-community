@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -88,7 +89,8 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
     if (targets.size() == 1) {
       selectionConsumer.consume(targets);
     } else {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiLiteralExpression>("Choose Inspections to Highlight Suppressed Problems from", targets){
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiLiteralExpression>(
+        JavaBundle.message("highlight.suppressed.warnings.choose.inspections"), targets){
         @Override
         public PopupStep onChosen(PsiLiteralExpression selectedValue, boolean finalChoice) {
           selectionConsumer.consume(Collections.singletonList(selectedValue));

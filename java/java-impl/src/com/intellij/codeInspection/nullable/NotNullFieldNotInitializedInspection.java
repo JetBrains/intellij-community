@@ -64,7 +64,8 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         PsiJavaCodeReferenceElement name = annotation.getNameReferenceElement();
         boolean ownAnnotation = annotation.isPhysical() && !byDefault;
         PsiElement anchor = ownAnnotation ? annotation : field.getNameIdentifier();
-        String message = (byDefault && name != null ? "@" + name.getReferenceName() : "Not-null") + " fields must be initialized";
+        String message = JavaBundle.message("inspection.notnull.field.not.initialized.message",
+                                            byDefault && name != null ? "@" + name.getReferenceName() : "Not-null");
 
         List<LocalQuickFix> fixes = new ArrayList<>();
         if (implicitWrite) {

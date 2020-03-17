@@ -69,7 +69,7 @@ class HighlightThrowsClassesHandler extends HighlightExceptionsHandler {
           new PsiElement2UsageTargetAdapter(myResolved).highlightUsages(myFile, myEditor, HighlightUsagesHandler.isClearHighlights(myEditor));
         }
       })
-      .setTitle("Highlight Throws "+className);
+      .setTitle(JavaBundle.message("highlight.throws.class.name", className));
     builder.createPopup().showInBestPositionFor(myEditor);
   }
 }

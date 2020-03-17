@@ -167,8 +167,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
             StringUtil.removeHtmlTags(RefactoringUIUtil.getDescription(targetElement.getParent(), false));
           LocalQuickFix[] quickFixes =
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
-          String problem = elementDescription + " overrides a package-private method from " + classDescription +
-                           " which is declared in a different module '" + targetModule.getName() + "'";
+          String problem = InspectionGadgetsBundle
+            .message("inspection.suspicious.package.private.access.problem", elementDescription, classDescription, targetModule.getName());
           myProblemsHolder.registerProblem(nameIdentifier, problem,
                                            ArrayUtil.append(quickFixes,
                                                             new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),

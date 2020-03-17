@@ -59,7 +59,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
     String suffix = "";
     if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
-      suffix = canExtractSideEffect(subExpression) ? " extracting side effects" : " (may change semantics)";
+      suffix = canExtractSideEffect(subExpression) ? QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects")
+                                                   : QuickFixBundle.message("simplify.boolean.expression.may.change.semantics");
     }
     return getIntentionText(subExpression, mySubExpressionValue) + suffix;
   }
