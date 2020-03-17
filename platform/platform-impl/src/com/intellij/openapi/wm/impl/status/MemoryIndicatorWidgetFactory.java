@@ -24,7 +24,12 @@ public class MemoryIndicatorWidgetFactory implements StatusBarWidgetFactory {
 
   @Override
   public boolean isAvailable(@NotNull Project project) {
-    return UISettings.getInstance().getShowMemoryIndicator();
+    return true;
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
   }
 
   @Override
@@ -37,19 +42,8 @@ public class MemoryIndicatorWidgetFactory implements StatusBarWidgetFactory {
     Disposer.dispose(widget);
   }
 
-  /**
-   * Memory indicator is controlled by UISettings
-   */
-  @Override
-  public boolean isConfigurable() {
-    return false;
-  }
-
-  /**
-   * Memory indicator is controlled by UISettings
-   */
   @Override
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-    return false;
+    return true;
   }
 }

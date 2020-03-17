@@ -35,10 +35,8 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
   protected CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull ActionManager actionManager) {
     return () -> {
       Collection<AnAction> toggleActions = new ArrayList<>(ContainerUtil.map(myManager.getWidgetFactories(), ToggleWidgetAction::new));
-      toggleActions.add(new MemoryIndicatorToggleAction());
       toggleActions.add(Separator.getInstance());
       toggleActions.add(new HideCurrentWidgetAction());
-      toggleActions.add(new HideMemoryIndicatorAction());
       return CachedValueProvider.Result.create(toggleActions.toArray(AnAction.EMPTY_ARRAY), myManager);
     };
   }
@@ -105,41 +103,6 @@ public class StatusBarPopupActionGroup extends ComputableActionGroup {
         return project.getService(StatusBarWidgetsManager.class).findWidgetFactory(hoveredWidgetId);
       }
       return null;
-    }
-  }
-
-  private static class MemoryIndicatorToggleAction extends DumbAwareToggleAction {
-    private MemoryIndicatorToggleAction() {
-      super(() -> UIBundle.message("status.bar.memory.usage.widget.name"));
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return UISettings.getInstance().getShowMemoryIndicator();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      UISettings.getInstance().setShowMemoryIndicator(state);
-      UISettings.getInstance().fireUISettingsChanged();
-    }
-  }
-
-  private static class HideMemoryIndicatorAction extends DumbAwareAction {
-    private HideMemoryIndicatorAction() {
-      super(() -> UIBundle.message("status.bar.hide.widget.action.name", UIBundle.message("status.bar.memory.usage.widget.name")));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      UISettings.getInstance().setShowMemoryIndicator(false);
-      UISettings.getInstance().fireUISettingsChanged();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabledAndVisible(MemoryUsagePanel.WIDGET_ID.equals(e.getData(IdeStatusBarImpl.HOVERED_WIDGET_ID)));
     }
   }
 }

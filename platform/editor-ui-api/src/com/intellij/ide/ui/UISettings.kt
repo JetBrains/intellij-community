@@ -62,6 +62,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.animateWindows = value
     }
 
+  @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean
     get() = state.showMemoryIndicator
     set(value) {
