@@ -296,9 +296,10 @@ class IntroduceConstantDialog extends DialogWrapper {
             codeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, psiExpression, type);
         if (psiExpression != null) {
           String[] names = nameInfo.names;
+          PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(psiExpression.getProject()).getResolveHelper();
           for (int i = 0, namesLength = names.length; i < namesLength; i++) {
             String name = names[i];
-            if (parentClass.findFieldByName(name, false) != null) {
+            if (resolveHelper.resolveAccessibleReferencedVariable(name, parentClass) != null) {
               names[i] = codeStyleManager.suggestUniqueVariableName(name, psiExpression, true);
             }
           }
