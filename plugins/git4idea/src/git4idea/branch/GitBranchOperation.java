@@ -36,6 +36,7 @@ import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -307,7 +308,7 @@ abstract class GitBranchOperation {
   }
 
   protected void fatalLocalChangesError(@NotNull String reference) {
-    String title = String.format("Couldn't %s %s", getOperationName(), reference);
+    String title = GitBundle.message("branch.operation.could.not.0.operation.name.1.reference", getOperationName(), reference);
     if (wereSuccessful()) {
       showFatalErrorDialogWithRollback(title, "");
     }
@@ -403,8 +404,8 @@ abstract class GitBranchOperation {
     }
     return StringUtil.join(grouped.entrySet(), entry -> {
       String roots = StringUtil.join(entry.getValue(), file -> file.getName(), ", ");
-      return entry.getKey() + " (in " + roots + ")";
-    }, "<br/>");
+      return GitBundle.message("branch.operation.in", entry.getKey(), roots);
+    }, "<br/>"); //NON-NLS
   }
 
   @NotNull
