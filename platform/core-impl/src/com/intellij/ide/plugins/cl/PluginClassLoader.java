@@ -451,7 +451,9 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   @ApiStatus.Internal
-  public void detachParent(ClassLoader classLoader) {
+  public boolean detachParent(ClassLoader classLoader) {
+    int oldSize = myParents.length;
     myParents = ArrayUtil.remove(myParents, classLoader);
+    return myParents.length == oldSize - 1;
   }
 }

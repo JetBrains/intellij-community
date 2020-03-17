@@ -315,8 +315,12 @@ object DynamicPlugins {
         try {
           processOptionalDependenciesOnPlugin(pluginDescriptor) { loadedDescriptorOfDependency, dependencyDescriptor ->
             unloadPluginDescriptor(dependencyDescriptor, loadedDescriptorOfDependency, dependencyDescriptor)
+            var detached: Boolean? = false
             if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
-              (loadedDescriptorOfDependency.pluginClassLoader as? PluginClassLoader)?.detachParent(loadedPluginDescriptor.pluginClassLoader)
+              detached = (loadedDescriptorOfDependency.pluginClassLoader as? PluginClassLoader)?.detachParent(loadedPluginDescriptor.pluginClassLoader)
+            }
+            if (detached != true) {
+              LOG.info("Failed to detach classloader of ${loadedPluginDescriptor.pluginId} from classloader of ${loadedDescriptorOfDependency.pluginId}")
             }
             true
           }
