@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SdkIndexableFilesProvider(val sdk: Sdk) : IndexableFilesProvider {
-
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, visitedFileSet: ConcurrentBitSet): Boolean {
     val roots = runReadAction {
       val rootProvider = sdk.rootProvider
