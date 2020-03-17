@@ -17,10 +17,10 @@ import git4idea.commands.GitImplBase;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitLogUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.interactive.GitRebaseTodoModel;
 import git4idea.rebase.interactive.GitRewordedCommitMessageProvider;
 import git4idea.rebase.interactive.RewordedCommitMessageMapping;
 import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog;
-import git4idea.rebase.interactive.dialog.GitRebaseEntryWithEditedMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +35,7 @@ import static com.intellij.CommonBundle.getOkButtonText;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static git4idea.DialogManager.showOkCancelDialog;
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
+import static git4idea.rebase.interactive.GitRebaseTodoModelConverterKt.convertToEntries;
 
 /**
  * The handler for rebase editor request. The handler shows the {@link GitInteractiveRebaseDialog}
@@ -143,24 +144,24 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
 
   @Nullable
   private List<? extends GitRebaseEntry> showInteractiveRebaseDialog(List<GitRebaseEntryWithDetails> entriesWithDetails) {
-    GitInteractiveRebaseDialog editor = new GitInteractiveRebaseDialog(myProject, myRoot, entriesWithDetails);
+    GitInteractiveRebaseDialog<GitRebaseEntryWithDetails> editor = new GitInteractiveRebaseDialog<>(myProject, myRoot, entriesWithDetails);
     DialogManager.show(editor);
     if (editor.isOK()) {
-      List<GitRebaseEntryWithEditedMessage> newEntries = editor.getEntries();
-      processNewEntries(newEntries);
-      return ContainerUtil.map(newEntries, entry -> entry.getEntry());
+      GitRebaseTodoModel<GitRebaseEntryWithDetails> rebaseTodoModel = editor.getModel();
+      processModel(rebaseTodoModel);
+      return convertToEntries(rebaseTodoModel);
     }
     return null;
   }
 
-  protected void processNewEntries(@NotNull List<GitRebaseEntryWithEditedMessage> newEntries) {
+  protected void processModel(@NotNull GitRebaseTodoModel<? extends GitRebaseEntryWithDetails> rebaseTodoModel) {
     List<RewordedCommitMessageMapping> messages = new ArrayList<>();
-    for (GitRebaseEntryWithEditedMessage newEntryWithMessage : newEntries) {
-      GitRebaseEntryWithDetails newEntry = newEntryWithMessage.getEntry();
-      if (newEntry.getAction() instanceof GitRebaseEntry.Action.REWORD) {
+    for (GitRebaseTodoModel.Element<? extends GitRebaseEntryWithDetails> element : rebaseTodoModel.getElements()) {
+      if (element.getType() instanceof GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword) {
+        GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword type = (GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword)element.getType();
         messages.add(RewordedCommitMessageMapping.fromMapping(
-          newEntry.getCommitDetails().getFullMessage(),
-          newEntryWithMessage.getNewMessage()
+          element.getEntry().getCommitDetails().getFullMessage(),
+          type.getNewMessage()
         ));
       }
     }

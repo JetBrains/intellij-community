@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive.dialog
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -13,6 +14,9 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.TableUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.interactive.convertToEntries
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
@@ -22,17 +26,14 @@ import javax.swing.KeyStroke
 
 private fun getActionShortcutList(actionId: String): List<Shortcut> = KeymapUtil.getActiveKeymapShortcuts(actionId).shortcuts.toList()
 
-internal open class ChangeEntryStateSimpleAction(
+internal abstract class ChangeEntryStateSimpleAction(
   protected val action: GitRebaseEntry.Action,
   title: Supplier<String>,
   description: Supplier<String>,
   icon: Icon?,
-  protected val table: GitRebaseCommitsTableView,
+  private val table: GitRebaseCommitsTableView,
   additionalShortcuts: List<Shortcut> = listOf()
 ) : AnActionButton(title, description, icon), DumbAware {
-
-  protected open val disableIfAlreadySet = true
-
   constructor(
     action: GitRebaseEntry.Action,
     icon: Icon?,
@@ -50,33 +51,47 @@ internal open class ChangeEntryStateSimpleAction(
     this.registerCustomShortcutSet(table, null)
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    table.selectedRows.forEach { row ->
-      table.setValueAt(action, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
-    }
+  final override fun actionPerformed(e: AnActionEvent) {
+    updateModel(::performEntryAction)
   }
 
   override fun updateButton(e: AnActionEvent) {
-    enableAction(e)
-    if (table.editingRow != -1 || table.selectedRowCount == 0) {
-      actionIsEnabled(e, false)
-    }
-    if (disableIfAlreadySet) {
-      val selectedRows = table.selectedRows
-      actionIsEnabled(e, selectedRows.any { table.model.getEntryAction(it) != action })
-    }
+    val hasSelection = table.editingRow == -1 && table.selectedRowCount != 0
+    e.presentation.isEnabled = hasSelection && isEntryActionEnabled(table.selectedRows.toList(), table.model.rebaseTodoModel)
   }
 
-  protected open fun enableAction(e: AnActionEvent) {
-    e.presentation.isEnabled = true
+  protected abstract fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>)
+
+  protected abstract fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>): Boolean
+
+  private fun updateModel(f: (List<Int>, GitRebaseTodoModel<out GitRebaseEntryWithDetails>) -> Unit) {
+    val model = table.model
+    val selectedRows = table.selectedRows.toList()
+    val selectedEntries = selectedRows.map { model.getEntry(it) }
+    table.model.updateModel { rebaseTodoModel ->
+      f(selectedRows, rebaseTodoModel)
+    }
+    restoreSelection(selectedEntries)
   }
 
-  protected open fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
-    e.presentation.isEnabled = e.presentation.isEnabled && isEnabled
+  private fun restoreSelection(selectedEntries: List<GitRebaseEntry>) {
+    val selectedEntriesSet = selectedEntries.toSet()
+    val newSelection = mutableListOf<Int>()
+    table.model.rebaseTodoModel.elements.forEachIndexed { index, element ->
+      if (element.entry in selectedEntriesSet) {
+        newSelection.add(index)
+      }
+    }
+    TableUtil.selectRows(table, newSelection.toIntArray())
+  }
+
+  protected fun reword(row: Int) {
+    TableUtil.selectRows(table, intArrayOf(row))
+    TableUtil.editCellAt(table, row, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
   }
 }
 
-internal open class ChangeEntryStateButtonAction(
+internal abstract class ChangeEntryStateButtonAction(
   action: GitRebaseEntry.Action,
   table: GitRebaseCommitsTableView,
   additionalShortcuts: List<Shortcut> = listOf()
@@ -97,89 +112,83 @@ internal open class ChangeEntryStateButtonAction(
 
   private val buttonPanel = button.withLeftToolbarBorder()
 
-  override fun enableAction(e: AnActionEvent) {
-    super.enableAction(e)
-    button.isEnabled = true
-  }
-
-  override fun actionIsEnabled(e: AnActionEvent, isEnabled: Boolean) {
-    super.actionIsEnabled(e, isEnabled)
-    button.isEnabled = button.isEnabled && isEnabled
+  override fun updateButton(e: AnActionEvent) {
+    super.updateButton(e)
+    button.isEnabled = e.presentation.isEnabled
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String) = buttonPanel
 }
 
-internal open class UniteCommitsAction(action: GitRebaseEntry.Action, table: GitRebaseCommitsTableView) :
-  ChangeEntryStateSimpleAction(action, null, table) {
+internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.FIXUP, null, table) {
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) = rebaseTodoModel.canUnite(selection)
 
-  override fun updateButton(e: AnActionEvent) {
-    super.updateButton(e)
-    val selectedRows = table.selectedRows
-    if (selectedRows.size == 1 && table.model.getFixupRootRow(selectedRows.single()) == null) {
-      actionIsEnabled(e, false)
-    }
-  }
-
-  final override fun actionPerformed(e: AnActionEvent) {
-    val selectedRows = table.selectedRows
-    if (selectedRows.size == 1) {
-      val fixupCommitRow = selectedRows.single()
-      fixupCommits(table.model.getFixupRootRow(fixupCommitRow)!!, listOf(fixupCommitRow))
-    }
-    else {
-      fixupCommits(selectedRows.first(), selectedRows.drop(1))
-    }
-  }
-
-  protected open fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
-    table.model.keepCommit(fixupRootRow)
-    commitRows.forEach { row ->
-      table.setValueAt(GitRebaseEntry.Action.FIXUP, row, GitRebaseCommitsTableModel.COMMIT_ICON_COLUMN)
-    }
-    table.model.moveRowsToFirst(listOf(fixupRootRow) + commitRows)
-    TableUtil.selectRows(table, (fixupRootRow..fixupRootRow + commitRows.size).toList().toIntArray())
+  override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
+    rebaseTodoModel.unite(selection)
   }
 }
 
-internal class FixupAction(table: GitRebaseCommitsTableView) : UniteCommitsAction(GitRebaseEntry.Action.FIXUP, table)
-
 // squash = reword + fixup
-internal class SquashAction(table: GitRebaseCommitsTableView) : UniteCommitsAction(GitRebaseEntry.Action.SQUASH, table) {
-  override fun fixupCommits(fixupRootRow: Int, commitRows: List<Int>) {
-    super.fixupCommits(fixupRootRow, commitRows)
-    val selectedRows = table.selectedRows
-    val model = table.model
-    model.setValueAt(model.uniteCommitMessages(selectedRows.toList()), fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
-    TableUtil.selectRows(table, intArrayOf(fixupRootRow))
-    TableUtil.editCellAt(table, fixupRootRow, GitRebaseCommitsTableModel.SUBJECT_COLUMN)
+internal class SquashAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.SQUASH, null, table) {
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) = rebaseTodoModel.canUnite(selection)
+
+  override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
+    val root = rebaseTodoModel.unite(selection)
+    rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { it.commitDetails.fullMessage })
+    reword(root.index)
   }
 }
 
 internal class RewordAction(table: GitRebaseCommitsTableView) :
   ChangeEntryStateButtonAction(GitRebaseEntry.Action.REWORD, table, getActionShortcutList("Git.Reword.Commit")) {
 
-  override val disableIfAlreadySet = false
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) =
+    selection.size == 1 && rebaseTodoModel.canReword(selection.single())
 
-  override fun updateButton(e: AnActionEvent) {
-    super.updateButton(e)
-    if (table.selectedRowCount != 1) {
-      actionIsEnabled(e, false)
-    }
+  override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
+    reword(selection.single())
   }
+}
 
-  override fun actionPerformed(e: AnActionEvent) {
-    TableUtil.editCellAt(table, table.selectedRows.single(), GitRebaseCommitsTableModel.SUBJECT_COLUMN)
+internal class PickAction(table: GitRebaseCommitsTableView) :
+  ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, table) {
+
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) = rebaseTodoModel.canPick(selection)
+
+  override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
+    rebaseTodoModel.pick(selection)
+  }
+}
+
+internal class EditAction(table: GitRebaseCommitsTableView) :
+  ChangeEntryStateSimpleAction(
+    GitRebaseEntry.Action.EDIT,
+    GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
+    GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
+    AllIcons.Actions.Pause,
+    table
+  ) {
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) = rebaseTodoModel.canEdit(selection)
+
+  override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
+    rebaseTodoModel.edit(selection)
   }
 }
 
 internal class DropAction(table: GitRebaseCommitsTableView) :
-  ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, table, getActionShortcutList(IdeActions.ACTION_DELETE))
+  ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, table, getActionShortcutList(IdeActions.ACTION_DELETE)) {
+
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) = rebaseTodoModel.canDrop(selection)
+
+  override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
+    rebaseTodoModel.drop(selection)
+  }
+}
 
 internal class ShowGitRebaseCommandsDialog(private val project: Project, private val table: GitRebaseCommitsTableView) :
   DumbAwareAction(GitBundle.getString("rebase.interactive.dialog.view.git.commands.text")) {
 
-  private fun getEntries(): List<GitRebaseEntry> = table.model.entries.map { it.entry }
+  private fun getEntries(): List<GitRebaseEntry> = table.model.rebaseTodoModel.convertToEntries()
 
   override fun actionPerformed(e: AnActionEvent) {
     val dialog = GitRebaseCommandsDialog(project, getEntries())

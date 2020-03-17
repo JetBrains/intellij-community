@@ -19,7 +19,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.paint.PaintParameters
-import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.interactive.GitRebaseTodoModel
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.DEFAULT_CELL_HEIGHT
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_COLOR
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_LINE_WIDTH
@@ -34,7 +34,7 @@ import javax.swing.table.TableCellEditor
 
 internal open class GitRebaseCommitsTableView(
   val project: Project,
-  val model: GitRebaseCommitsTableModel,
+  val model: GitRebaseCommitsTableModel<*>,
   private val disposable: Disposable
 ) : JBTable(model) {
 
@@ -104,9 +104,9 @@ internal open class GitRebaseCommitsTableView(
   }
 
   internal fun getDrawNodeType(row: Int): NodeType = when {
-    model.getEntryAction(row) == GitRebaseEntry.Action.EDIT -> NodeType.EDIT
-    model.isFixupOrDrop(row) -> NodeType.NO_NODE
-    model.isFixupRoot(row) -> NodeType.DOUBLE_NODE
+    model.getElement(row).type == GitRebaseTodoModel.Type.NonUnite.KeepCommit.Edit -> NodeType.EDIT
+    model.getElement(row).type !is GitRebaseTodoModel.Type.NonUnite.KeepCommit -> NodeType.NO_NODE
+    model.getElement(row) is GitRebaseTodoModel.Element.UniteRoot -> NodeType.DOUBLE_NODE
     else -> NodeType.SIMPLE_NODE
   }
 }
@@ -144,9 +144,8 @@ private class CommitMessageCellEditor(
   }
 
   override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
-    val model = table.model as GitRebaseCommitsTableModel
-    val entry = model.getEntry(row)
-    commitMessageField.text = entry.newMessage
+    val model = this.table.model
+    commitMessageField.text = model.getCommitMessage(row)
     table.setRowHeight(row, DEFAULT_CELL_HEIGHT * 5)
     return commitMessageField
   }
@@ -218,13 +217,15 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
     }
   }
 
-  private fun getRowGraphType(table: GitRebaseCommitsTableView, row: Int) =
-    if (table.model.getEntryAction(row) == GitRebaseEntry.Action.FIXUP) {
-      GraphType.FixupGraph(table.model.isFirstFixup(row), table.model.isLastFixup(row))
+  private fun getRowGraphType(table: GitRebaseCommitsTableView, row: Int): GraphType {
+    val element = table.model.getElement(row)
+    return if (element is GitRebaseTodoModel.Element.UniteChild<*>) {
+      GraphType.FixupGraph(table.model.isFirstFixup(element), table.model.isLastFixup(element))
     }
     else {
       GraphType.NoGraph
     }
+  }
 
   override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
     if (value != null) {
@@ -233,23 +234,23 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
       val commitsTable = table as GitRebaseCommitsTableView
       graphType = getRowGraphType(commitsTable, row)
       rowHeight = table.getRowHeight(row)
-      val entryWithEditedMessage = commitsTable.model.getEntry(row)
       var attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
-      when (entryWithEditedMessage.entry.action) {
-        GitRebaseEntry.Action.DROP -> {
+      val element = commitsTable.model.rebaseTodoModel.elements[row]
+      when (element.type) {
+        GitRebaseTodoModel.Type.NonUnite.Drop -> {
           attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null)
         }
-        GitRebaseEntry.Action.REWORD -> {
+        is GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword -> {
           attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLUE)
         }
-        GitRebaseEntry.Action.FIXUP -> {
+        GitRebaseTodoModel.Type.Unite -> {
           append("")
           appendTextPadding(GRAPH_WIDTH)
         }
         else -> {
         }
       }
-      append(IndexedDetails.getSubject(entryWithEditedMessage.newMessage), attributes, true)
+      append(IndexedDetails.getSubject(commitsTable.model.getCommitMessage(row)), attributes, true)
       SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
     }
   }
