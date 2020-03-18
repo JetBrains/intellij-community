@@ -25,6 +25,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANC
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE;
 
 public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
+  @NonNls private static final String RESOLVE_HREF_ATTRIBUTE = "resolve";
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -80,7 +82,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification,
                                     @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
+          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals(RESOLVE_HREF_ATTRIBUTE)) {
             GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
               setMergeDescription(GitBundle.message("branch.ui.handler.merge.notification.description", operationName)).
               setErrorNotificationTitle(GitBundle.message("branch.ui.handler.merge.error.notification.title"));
@@ -195,6 +197,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull
   private static String unmergedFilesErrorNotificationDescription(String operationName) {
-    return GitBundle.message("branch.ui.handler.unmerged.files.error.notification", operationName);
+    return GitBundle.message("branch.ui.handler.unmerged.files.error.notification", RESOLVE_HREF_ATTRIBUTE, operationName);
   }
 }
