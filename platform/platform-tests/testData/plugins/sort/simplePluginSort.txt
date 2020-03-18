@@ -21,18 +21,18 @@
 + plugin1
 + plugin2
 
-The incompatible0 (id=incompatible0, path=file:/incompatible0.xml) plugin is incompatible (until build 1.111111 < 202.SNAPSHOT, target build range is 1.0 to 1.111111).
-The incompatible0-alt (id=incompatible0-alt, path=file:/incompatible0-alt.xml) plugin is incompatible (until build 1.111 < 202.SNAPSHOT, target build is 1.111).
-The incompatible1 (id=incompatible1, path=file:/incompatible1.xml) plugin is incompatible (since build 2001.0 > 202.SNAPSHOT, target build range is 2001.0 to *.*).
-The incompatible2 (id=incompatible2, path=file:/incompatible2.xml) plugin is incompatible (until build 1.111111 < 202.SNAPSHOT, target build range is 0.0 to 1.111111).
-The missing4 (id=missing4, path=file:/missing4.xml) plugin defines no module dependencies (supported only in IntelliJ IDEA).
+Plugin "incompatible0" is incompatible (until build 1.111111 < 202.SNAPSHOT).
+Plugin "incompatible0-alt" is incompatible (until build 1.111 < 202.SNAPSHOT).
+Plugin "incompatible1" is incompatible (since build 2001.0 > 202.SNAPSHOT).
+Plugin "incompatible2" is incompatible (until build 1.111111 < 202.SNAPSHOT).
+Plugin "missing4" is incompatible (supported only in IntelliJ IDEA).
 Module com.intellij.modules.duplicate is declared by plugins:
   PluginDescriptor(name=duplicate0, id=duplicate0, path=file:/duplicate0.xml)
   PluginDescriptor(name=duplicate, id=duplicate, path=file:/duplicate1.xml).
-Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2 <-> optional_cycle0, optional_config_cycle2 <-> optional_config_cycle0, cycle5 <-> cycle4, cycle2 <-> cycle3 <-> cycle1.
-The missing2 (id=missing2, path=file:/missing2.xml) plugin requires "com.intellij.missing" plugin to be installed.
-The missing3 (id=missing3, path=file:/missing3.xml) plugin requires "missing2" plugin to be enabled.
-The missing1 (id=missing1, path=file:/missing1.xml) plugin requires "com.intellij.modules.missing" plugin to be installed.
-The cycle0 (id=cycle0, path=file:/cycle0.xml) plugin requires "cycle1" plugin to be enabled.
+Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2 <-> optional_cycle0, cycle5 <-> cycle4, cycle2 <-> cycle3 <-> cycle1.
+Plugin "missing2" requires "com.intellij.missing" plugin to be installed.
+Plugin "missing3" requires "missing2" plugin to be enabled.
+Plugin "missing1" requires "com.intellij.modules.missing" plugin to be installed.
+Plugin "cycle0" requires "cycle1" plugin to be enabled.
 <br><a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>
