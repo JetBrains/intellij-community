@@ -32,7 +32,7 @@ import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
 
-public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
+public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
