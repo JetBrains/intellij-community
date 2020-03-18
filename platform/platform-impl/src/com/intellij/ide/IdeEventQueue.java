@@ -201,7 +201,7 @@ public final class IdeEventQueue extends EventQueue {
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
     systemEventQueue.push(this);
 
-    EDT.assertIsEdt();
+    EDT.updateEdt();
 
     KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
@@ -389,6 +389,9 @@ public final class IdeEventQueue extends EventQueue {
 
       fixNestedSequenceEvent(e);
       // Add code below if you need
+
+      // Update EDT if it changes (might happen after Application disposal)
+      EDT.updateEdt();
 
       if (e.getID() == WindowEvent.WINDOW_ACTIVATED
           || e.getID() == WindowEvent.WINDOW_DEICONIFIED
