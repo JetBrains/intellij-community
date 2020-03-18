@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ConfigImportHelper.isConfigImported
 import com.intellij.openapi.application.ConfigImportHelper.isFirstSession
@@ -22,16 +23,25 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.util.messages.Topic
+import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
 import java.util.*
 
 private val isForceNonModalCommit get() = Registry.get("vcs.force.non.modal.commit")
 private val appSettings get() = VcsApplicationSettings.getInstance()
 
-private class NonModalCommitCustomization : ApplicationInitializedListener {
+internal class NonModalCommitCustomization : ApplicationInitializedListener {
   override fun componentsInitialized() {
     if (!isFirstSession() || isConfigImported()) return
 
+    PropertiesComponent.getInstance().setValue(KEY, true)
     appSettings.COMMIT_FROM_LOCAL_CHANGES = true
+    logStateChanged()
+  }
+
+  companion object {
+    private const val KEY = "NonModalCommitCustomization.IsApplied"
+
+    internal fun isNonModalCustomizationApplied(): Boolean = PropertiesComponent.getInstance().isTrueValue(KEY)
   }
 }
 
@@ -92,6 +102,7 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
       if (oldValue == value) return
 
       appSettings.COMMIT_FROM_LOCAL_CHANGES = value
+      logStateChanged()
       getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
     }
 

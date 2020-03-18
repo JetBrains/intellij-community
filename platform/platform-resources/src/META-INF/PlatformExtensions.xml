@@ -617,7 +617,7 @@
 
     <statistics.counterUsagesCollector groupId="vfs" version="2"/>
     <statistics.counterUsagesCollector groupId="indexing" version="2"/>
-    <statistics.counterUsagesCollector groupId="vcs" version="2"/>
+    <statistics.counterUsagesCollector groupId="vcs" version="3"/>
     <statistics.counterUsagesCollector groupId="build" version="2"/>
     <statistics.counterUsagesCollector groupId="project.import" version="2"/>
     <statistics.counterUsagesCollector groupId="ui.event" version="5"/>
