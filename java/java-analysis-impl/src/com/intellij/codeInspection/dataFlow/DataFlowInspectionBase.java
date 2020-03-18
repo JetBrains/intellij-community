@@ -412,6 +412,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (shouldBeSuppressed(ref) || constant == ConstantResult.UNKNOWN) return;
     List<LocalQuickFix> fixes = new SmartList<>();
     String presentableName = constant.toString();
+    if (Integer.valueOf(0).equals(constant.value()) && !shouldReportZero(ref)) return;
     if (constant.value() instanceof Boolean) {
       fixes.add(createSimplifyBooleanExpressionFix(ref, (Boolean)constant.value()));
     } else {
@@ -440,7 +441,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     String valueText;
     ProblemHighlightType type;
-    if (ref instanceof PsiMethodCallExpression) {
+    if (ref instanceof PsiMethodCallExpression || ref instanceof PsiPolyadicExpression) {
       type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       valueText = "Result of";
     }
@@ -450,6 +451,27 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
     reporter.registerProblem(ref, MessageFormat.format("{0} <code>#ref</code> #loc is always ''{1}''", valueText, presentableName),
                              type, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+  }
+
+  private static boolean shouldReportZero(PsiExpression ref) {
+    boolean reportZeroValue = ref instanceof PsiPolyadicExpression && !PsiUtil.isConstantExpression(ref) ||
+                              ref instanceof PsiMethodCallExpression;
+    if (!reportZeroValue) return false;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
+    PsiBinaryExpression binOp = tryCast(parent, PsiBinaryExpression.class);
+    if (binOp != null && ComparisonUtils.isEqualityComparison(binOp) &&
+        (ExpressionUtils.isZero(binOp.getLOperand()) || ExpressionUtils.isZero(binOp.getROperand()))) {
+      return false;
+    }
+    PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, true, PsiLambdaExpression.class, PsiClass.class);
+    if (MethodUtils.isHashCode(method)) {
+      // Standard hashCode template generates int result = 0; result = result * 31 + ...;
+      // so annoying warnings might be produced there
+      if (ref instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)ref).getOperationTokenType().equals(JavaTokenType.ASTERISK)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static void reportPointlessSameArguments(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
