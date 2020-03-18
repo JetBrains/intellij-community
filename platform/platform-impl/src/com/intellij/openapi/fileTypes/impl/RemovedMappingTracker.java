@@ -152,10 +152,7 @@ class RemovedMappingTracker {
                                              boolean specifyTypeName,
                                              boolean approved) {
     Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
-    if (matcher instanceof ExtensionFileNameMatcher) {
-      mapping.setAttribute(AbstractFileType.ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
-    }
-    else if (AbstractFileType.writePattern(matcher, mapping)) {
+    if (!AbstractFileType.writePattern(matcher, mapping)) {
       return null;
     }
     if (approved) {

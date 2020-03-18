@@ -328,12 +328,9 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   @Nullable
-  static Element writeMapping(String typeName, @NotNull FileNameMatcher matcher, boolean specifyTypeName) {
+  static Element writeMapping(@NotNull String typeName, @NotNull FileNameMatcher matcher, boolean specifyTypeName) {
     Element mapping = new Element(ELEMENT_MAPPING);
-    if (matcher instanceof ExtensionFileNameMatcher) {
-      mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
-    }
-    else if (writePattern(matcher, mapping)) {
+    if (!writePattern(matcher, mapping)) {
       return null;
     }
 
@@ -344,17 +341,21 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return mapping;
   }
 
-  static boolean writePattern(FileNameMatcher matcher, Element mapping) {
-    if (matcher instanceof WildcardFileNameMatcher) {
+  // returns true if written
+  static boolean writePattern(@NotNull FileNameMatcher matcher, @NotNull Element mapping) {
+    if (matcher instanceof ExtensionFileNameMatcher) {
+      mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
+    }
+    else if (matcher instanceof WildcardFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
     }
     else if (matcher instanceof ExactFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExactFileNameMatcher)matcher).getFileName());
     }
     else {
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   @Override
