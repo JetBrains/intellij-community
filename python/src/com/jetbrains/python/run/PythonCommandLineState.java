@@ -4,7 +4,10 @@ package com.jetbrains.python.run;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.intellij.execution.*;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.filters.TextConsoleBuilder;
@@ -423,7 +426,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
     // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
     String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
-    return new PythonProcessHandler(process, commandLineString, commandLine.getCharset());
+    return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(), targetEnvironment);
   }
 
   /**
