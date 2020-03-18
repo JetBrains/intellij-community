@@ -12,7 +12,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
   fun `test cancel paused coroutines`(): Unit = runBlocking {
     val count = 10
     val started = Semaphore(count)
-    val suspender = coroutineSuspender()
+    val suspender = coroutineSuspender(false)
     val job = launch(Dispatchers.Default + suspender) {
       repeat(count) {
         launch {
@@ -22,8 +22,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
         }
       }
     }
-    suspender.pause()
-    started.waitFor()
+    assertTrue(started.waitFor(1000))
     withTimeout(1000) {
       job.cancelAndJoin()
     }
