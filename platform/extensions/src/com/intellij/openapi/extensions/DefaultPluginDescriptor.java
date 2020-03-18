@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -84,6 +85,11 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   @Override
   public boolean isLicenseOptional() {
     return false;
+  }
+
+  @Override
+  public @NotNull List<PluginId> getIncompatiblePluginIds() {
+    return Collections.emptyList();
   }
 
   @Override

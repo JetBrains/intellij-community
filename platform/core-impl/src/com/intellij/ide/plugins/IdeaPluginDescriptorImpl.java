@@ -78,6 +78,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private String myUrl;
   private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
+  private List<PluginId> myIncompatibilities;
   private List<PluginDependency> myPluginDependencies;
 
   // used only during initializing
@@ -275,6 +276,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           if (!readPluginDependency(basePath, context, child)) return false;
           break;
 
+        case "incompatible-with":
+          readPluginIncompatibility(child);
+          break;
+
         case "category":
           myCategory = StringUtil.nullize(child.getTextTrim());
           break;
@@ -336,6 +341,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     return true;
+  }
+
+  private void readPluginIncompatibility(@NotNull Element child) {
+    String pluginId = child.getTextTrim();
+    if (pluginId.isEmpty()) return;
+
+    if (myIncompatibilities == null) {
+      myIncompatibilities = new ArrayList<>();
+    }
+    myIncompatibilities.add(PluginId.getId(pluginId));
   }
 
   private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorLoadingContext context, Element child) {
@@ -728,6 +743,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   public boolean isLicenseOptional() {
     return myIsLicenseOptional;
+  }
+
+  @Override
+  public @NotNull List<PluginId> getIncompatiblePluginIds() {
+    return ContainerUtil.notNullize(myIncompatibilities);
   }
 
   @Override

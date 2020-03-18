@@ -1790,12 +1790,23 @@ public final class PluginManagerCore {
       return true;
     }
 
+    boolean result = true;
+
+    for (PluginId incompatibleId : descriptor.getIncompatiblePluginIds()) {
+      if (!loadedIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
+
+      result = false;
+      IdeaPluginDescriptor dep = idMap.get(incompatibleId);
+      String depName = dep == null ? null : dep.getName();
+      String presentableName = toPresentableName(depName == null ? incompatibleId.getIdString() : depName);
+      errors.add(descriptor.formatErrorMessage("requires " + presentableName + " plugin to be disabled"));
+    }
+
     // no deps at all or all are optional
-    if (descriptor.getDependentPluginIds().length == descriptor.getOptionalDependentPluginIds().length) {
+    if (result && descriptor.getDependentPluginIds().length == descriptor.getOptionalDependentPluginIds().length) {
       return true;
     }
 
-    boolean result = true;
     for (PluginId depId : descriptor.getDependentPluginIds()) {
       if (loadedIds.contains(depId) || isOptional(descriptor, depId)) {
         continue;
