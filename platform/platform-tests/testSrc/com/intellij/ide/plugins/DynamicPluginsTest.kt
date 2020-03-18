@@ -3,6 +3,8 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
@@ -20,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.PluginId
@@ -28,6 +31,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
@@ -470,6 +474,25 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun unloadEPWithTags() {
+    val disposable = loadExtensionWithText(
+      """
+          <intentionAction>
+            <bundleName>foo</bundleName>
+            <categoryKey>bar</categoryKey>
+            <className>${MyIntentionAction::class.java.name}</className>
+          </intentionAction>""",
+      DynamicPlugins::class.java.classLoader)
+    try {
+      assertThat(IntentionManager.EP_INTENTION_ACTIONS.extensions.any { it.className == MyIntentionAction::class.java.name }).isTrue()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+    assertThat(IntentionManager.EP_INTENTION_ACTIONS.extensions.any { it.className == MyIntentionAction::class.java.name }).isFalse()
+  }
+
+  @Test
   fun unloadEPCollection() {
     val project = projectRule.project
     assertThat(Configurable.PROJECT_CONFIGURABLE.getExtensions(project).any { it.instanceClass == MyConfigurable::class.java.name }).isFalse()
@@ -617,6 +640,15 @@ class DynamicPluginsTest {
 
   private class MyAction2 : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
+    }
+  }
+
+  private class MyIntentionAction : IntentionAction {
+    override fun startInWriteAction() = false
+    override fun getFamilyName() = TODO()
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = false
+    override fun getText(): String = TODO()
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     }
   }
 }

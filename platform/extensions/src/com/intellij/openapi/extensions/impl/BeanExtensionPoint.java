@@ -66,7 +66,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
       else {
         defaultInstance = componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());
       }
-      defaultAttributes.putAll(XmlExtensionAdapter.getExtensionAttributesMap(XmlSerializer.serialize(defaultInstance)));
+      defaultAttributes.putAll(XmlExtensionAdapter.getSerializedDataMap(XmlSerializer.serialize(defaultInstance)));
     }
     catch (ClassNotFoundException ignored) {
     }
