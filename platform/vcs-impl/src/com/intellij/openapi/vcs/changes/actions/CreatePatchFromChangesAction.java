@@ -113,7 +113,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
   }
 
   private static void createWithDialog(@NotNull Project project, @Nullable String commitMessage, @NotNull List<? extends Change> changes) {
-    final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
+    final CreatePatchCommitExecutor executor = new CreatePatchCommitExecutor(project);
     CommitSession commitSession = executor.createCommitSession(new CommitContext());
     DialogWrapper sessionDialog = new SessionDialog(executor.getActionText(),
                                                     project,

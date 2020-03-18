@@ -6,7 +6,6 @@ import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
@@ -34,16 +33,12 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
-public final class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
+public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
   private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path"; //NON-NLS
   private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard"; //NON-NLS
 
   private final Project myProject;
-
-  public static CreatePatchCommitExecutor getInstance(@NotNull Project project) {
-    return project.getComponent(CreatePatchCommitExecutor.class);
-  }
 
   public CreatePatchCommitExecutor(@NotNull Project project) {
     myProject = project;
@@ -70,11 +65,6 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor impleme
   @Override
   public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
     return new CreatePatchCommitSession(commitContext);
-  }
-
-  @Override
-  public void projectOpened() {
-    ChangeListManager.getInstance(myProject).registerCommitExecutor(this);
   }
 
   private class CreatePatchCommitSession implements CommitSession {
