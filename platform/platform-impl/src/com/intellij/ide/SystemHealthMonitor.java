@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
@@ -35,7 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
-  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
+  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true, null, null,
+                                                                       PluginManagerCore.CORE_ID);
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
 

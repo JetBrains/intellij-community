@@ -16,6 +16,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
@@ -42,7 +43,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   private final Map<String,CodeStyleSettings> mySettingsMap = new HashMap<>();
 
   private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true);
+    new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true, null, null, PluginId.getId("com.intellij"));
 
   public ProjectCodeStyleSettingsManager(Project project) {
     myProject = project;

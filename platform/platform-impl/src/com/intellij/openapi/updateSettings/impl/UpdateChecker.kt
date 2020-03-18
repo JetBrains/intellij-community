@@ -63,7 +63,7 @@ private enum class NotificationUniqueType {
  */
 object UpdateChecker {
   private val notificationGroupRef by lazy {
-    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true)
+    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, PluginManagerCore.CORE_ID)
   }
 
   @JvmField
