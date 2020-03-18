@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -406,7 +407,7 @@ abstract class GitBranchOperation {
     return StringUtil.join(grouped.entrySet(), entry -> {
       String roots = StringUtil.join(entry.getValue(), file -> file.getName(), ", ");
       return GitBundle.message("branch.operation.in", entry.getKey(), roots);
-    }, "<br/>"); //NON-NLS
+    }, UIUtil.BR);
   }
 
   @NotNull

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
@@ -60,7 +61,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       StringBuilder description = new StringBuilder();
       if (!StringUtil.isEmptyOrSpaces(message)) {
-        description.append(message).append("<br/>"); //NON-NLS
+        description.append(message).append(UIUtil.BR);
       }
       description.append(rollbackProposal);
       ok.set(YES == DialogManager.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
@@ -162,8 +163,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     }
     String forBranch = GitBundle.message("branch.ui.handler.delete.tracking.local.branch.as.well", trackingBranches.iterator().next());
     String forBranches = XmlStringUtil.wrapInHtml(GitBundle.message("branch.ui.handler.delete.tracking.local.branches") +
-                                                  "<br/>" + //NON-NLS
-                                                  StringUtil.join(trackingBranches, ", <br/>")); //NON-NLS
+                                                  UIUtil.BR +
+                                                  StringUtil.join(trackingBranches, ", " + UIUtil.BR));
     String checkboxMessage = trackingBranches.size() == 1 ? forBranch : forBranches;
 
     Ref<Boolean> deleteChoice = Ref.create(false);

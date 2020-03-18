@@ -851,7 +851,7 @@ public class GitUtil {
 
   @NotNull
   public static String joinToHtml(@NotNull Collection<? extends GitRepository> repositories) {
-    return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), "<br/>");
+    return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), UIUtil.BR);
   }
 
   @NotNull
