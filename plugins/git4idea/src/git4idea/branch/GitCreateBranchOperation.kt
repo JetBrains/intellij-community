@@ -17,6 +17,7 @@ package git4idea.branch
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCompoundResult
 import git4idea.i18n.GitBundle
@@ -81,9 +82,9 @@ internal class GitCreateBranchOperation(
   override fun getRollbackProposal(): @NotNull String =
     GitBundle.message("create.branch.operation.however.the.branch.was.created.in.the.following.repositories",
                       successfulRepositories.size) +
-    "<br/>" + //NON-NLS
+    UIUtil.BR +
     successfulRepositoriesJoined() +
-    "<br/>" + //NON-NLS
+    UIUtil.BR +
     GitBundle.message("create.branch.operation.you.may.rollback.not.to.let.branches.diverge", branchName)
 
   override fun getOperationName(): @NotNull @Nls String = GitBundle.message("create.branch.operation.name")

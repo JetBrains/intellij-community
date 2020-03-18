@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
@@ -131,7 +132,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     boolean unmergedCommits = !myUnmergedToBranches.isEmpty();
     String message = GitBundle.message("delete.branch.operation.deleted.branch.bold", myBranchName);
     if (unmergedCommits) {
-      message += "<br/>";  //NON-NLS
+      message += UIUtil.BR;
       message += GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded");
     }
 
@@ -232,9 +233,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return GitBundle.message("delete.branch.operation.however.branch.deletion.has.succeeded.for.the.following",
                              getSuccessfulRepositories().size()) +
-           "<br/>" + //NON-NLS
+           UIUtil.BR +
            successfulRepositoriesJoined() +
-           "<br/>" + //NON-NLS
+           UIUtil.BR +
            GitBundle.message("delete.branch.operation.you.may.rollback.not.to.let.branches.diverge", myBranchName);
   }
 

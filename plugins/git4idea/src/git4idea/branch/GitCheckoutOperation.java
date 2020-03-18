@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
@@ -138,13 +139,14 @@ class GitCheckoutOperation extends GitBranchOperation {
                                                     successfulRepositories.size(),
                                                     joinShortNames(successfulRepositories, REPOSITORIES_LIMIT));
           String mentionSkipped = wereSkipped()
-                                  ? "<br>" + revisionNotFound // NON-NLS
+                                  ? UIUtil.BR + revisionNotFound
                                   : "";
 
           VcsNotifier.getInstance(myProject).notifySuccess("",
                                                            mentionSuccess +
                                                            mentionSkipped +
-                                                           "<br><a href='" + ROLLBACK_HREF_ATTRIBUTE + "'>" + //NON-NLS
+                                                           UIUtil.BR +
+                                                           "<a href='" + ROLLBACK_HREF_ATTRIBUTE + "'>" + //NON-NLS
                                                            GitBundle.message("checkout.operation.rollback")
                                                            + "</a>", //NON-NLS
                                                            new RollbackOperationNotificationListener());
@@ -212,8 +214,8 @@ class GitCheckoutOperation extends GitBranchOperation {
     String previousBranch = getIfSingle(repositories.stream().map(myCurrentHeads::get).distinct());
     if (previousBranch == null) previousBranch = GitBundle.message("checkout.operation.previous.branch");
     String rollBackProposal = GitBundle.message("checkout.operation.you.may.rollback.not.to.let.branches.diverge", previousBranch);
-    return GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()) + "<br/>" +//NON-NLS
-           successfulRepositoriesJoined() + "<br/>" +//NON-NLS
+    return GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()) + UIUtil.BR +
+           successfulRepositoriesJoined() + UIUtil.BR +
            rollBackProposal;
   }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitUtil;
 import git4idea.commands.*;
@@ -154,7 +155,7 @@ class GitMergeOperation extends GitBranchOperation {
         break;
       case PROPOSE:
         String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
-        String description = message + "<br/><a href='" + DELETE_HREF_ATTRIBUTE + "'>" + deleteBranch + "</a>";  //NON-NLS
+        String description = message + UIUtil.BR + "<a href='" + DELETE_HREF_ATTRIBUTE + "'>" + deleteBranch + "</a>";  //NON-NLS
         VcsNotifier.getInstance(myProject).notifySuccess("", description, new DeleteMergedLocalBranchNotificationListener());
         break;
       case NOTHING:
@@ -327,9 +328,9 @@ class GitMergeOperation extends GitBranchOperation {
   @Override
   protected String getRollbackProposal() {
     return GitBundle.message("merge.operation.however.merge.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
-           "<br/>" + //NON-NLS
+           UIUtil.BR +
            successfulRepositoriesJoined() +
-           "<br/>" + //NON-NLS
+           UIUtil.BR +
            GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge");
   }
 
