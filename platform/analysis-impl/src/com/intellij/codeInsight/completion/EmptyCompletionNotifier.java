@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public interface DumbModeNotifier {
-  String getIncompleteMessageSuffix();
-  void showIncompleteHint(@NotNull Editor editor, @NotNull String text);
+public interface EmptyCompletionNotifier {
+  void showIncompleteHint(@NotNull Editor editor, @NotNull String text, boolean isDumbMode);
 }
