@@ -35,8 +35,10 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   return runBlocking(CoroutineName("indicator run blocking")) {
     val indicatorWatchJob = launch(Dispatchers.Default + CoroutineName("indicator watcher")) {
       while (true) {
-        // will throw PCE which will cancel the runBlocking Job and thrown further in the caller of runBlockingWithProgress
-        indicator.checkCanceled()
+        if (indicator.isCanceled) {
+          // will throw PCE which will cancel the runBlocking Job and thrown further in the caller of runBlockingWithProgress
+          indicator.checkCanceled()
+        }
         // timeout taken from ProgressIndicatorUtils#awaitWithCheckCanceled(Semaphore, ProgressIndicator)
         delay(10)
       }
