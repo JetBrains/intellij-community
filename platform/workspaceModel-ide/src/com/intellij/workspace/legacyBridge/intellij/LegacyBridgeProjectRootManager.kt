@@ -14,8 +14,10 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.APPLICATION_LEVEL
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
@@ -24,8 +26,8 @@ import com.intellij.workspace.ide.WorkspaceModelTopics
 @Suppress("ComponentNotRegistered")
 class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerComponent(project) {
   private val LOG = Logger.getInstance(javaClass)
-  private val rootChangedListener = RootChangedListener()
-  private var globalLibraryTableListener: GlobalLibraryTableListener? = null
+  private val libraryNameDelimiter = ":"
+  private val globalLibraryTableListener = GlobalLibraryTableListener()
   private val rootProviderPerModule = mutableMapOf<RootProvider, MutableSet<ModuleEntity>>()
 
   init {
@@ -97,10 +99,16 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
   }
 
   private fun unsubscribeListeners() {
-    val globalLibraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    globalLibraryTableListener?.let { globalLibraryTable.removeListener(it) }
-    globalLibraryTableListener = null
-    rootProviderPerModule.keys.forEach { it.removeRootSetChangedListener(rootChangedListener) }
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    val globalLibraryTable = libraryTablesRegistrar.libraryTable
+    globalLibraryTableListener.getLibraryLevels().forEach {
+      when (it) {
+        APPLICATION_LEVEL -> globalLibraryTable.removeListener(globalLibraryTableListener)
+        else -> libraryTablesRegistrar.getLibraryTableByLevel(it, project)?.removeListener(globalLibraryTableListener)
+      }
+    }
+    globalLibraryTableListener.clear()
+    rootProviderPerModule.keys.forEach { it.removeRootSetChangedListener(globalLibraryTableListener) }
     rootProviderPerModule.clear()
   }
 
@@ -121,35 +129,44 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
   }
 
   private fun addTrackedLibraryFromEntity(moduleEntity: ModuleEntity) {
-    val globalLibraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    val globalLibraryTable = libraryTablesRegistrar.libraryTable
     moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
       .filter { it.library.tableId is LibraryTableId.GlobalLibraryTableId }
       .forEach {
         val libraryName = it.library.name
-        if (globalLibraryTableListener == null) {
-          globalLibraryTableListener = GlobalLibraryTableListener()
-          globalLibraryTable.addListener(globalLibraryTableListener!!)
+        val libraryLevel = it.library.tableId.level
+        if (globalLibraryTableListener.isEmpty(libraryLevel)) {
+          when (libraryLevel) {
+            APPLICATION_LEVEL -> globalLibraryTable.addListener(globalLibraryTableListener)
+            else -> libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)?.addListener(
+              globalLibraryTableListener)
+          }
         }
-        globalLibraryTableListener?.addTrackedLibrary(moduleEntity, libraryName)
+        globalLibraryTableListener.addTrackedLibrary(moduleEntity, "$libraryLevel$libraryNameDelimiter$libraryName")
 
         val library = globalLibraryTable.getLibraryByName(libraryName)
         if (library !is RootProvider) return@forEach
-        if (!rootProviderPerModule.contains(library)) library.addRootSetChangedListener(rootChangedListener)
+        if (!rootProviderPerModule.contains(library)) library.addRootSetChangedListener(globalLibraryTableListener)
         rootProviderPerModule.computeIfAbsent(library) { mutableSetOf() }.add(moduleEntity)
       }
   }
 
   private fun unTrackLibraryFromEntity(moduleEntity: ModuleEntity) {
-    val globalLibraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    val globalLibraryTable = libraryTablesRegistrar.libraryTable
     moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
       .filter { it.library.tableId is LibraryTableId.GlobalLibraryTableId }
       .forEach {
         val libraryName = it.library.name
-        globalLibraryTableListener?.let { listener ->
-          listener.unTrackLibrary(moduleEntity, libraryName)
-          if (listener.isEmpty()) {
-            globalLibraryTable.removeListener(listener)
-            globalLibraryTableListener = null
+        val libraryLevel = it.library.tableId.level
+        globalLibraryTableListener.let { listener ->
+          listener.unTrackLibrary(moduleEntity, "$libraryLevel$libraryNameDelimiter$libraryName")
+          if (listener.isEmpty(libraryLevel)) {
+            when (libraryName) {
+              APPLICATION_LEVEL -> globalLibraryTable.removeListener(listener)
+              else -> libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)?.removeListener(listener)
+            }
           }
         }
 
@@ -158,7 +175,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
         rootProviderPerModule[library]?.let { modules ->
           modules.remove(moduleEntity)
           if (modules.isEmpty()) {
-            library.removeRootSetChangedListener(rootChangedListener)
+            library.removeRootSetChangedListener(globalLibraryTableListener)
             rootProviderPerModule.remove(library)
           }
         }
@@ -177,35 +194,29 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
   }
 
   // Listener for global libraries linked to module
-  private inner class GlobalLibraryTableListener : LibraryTable.Listener {
-    private val librariesPerModuleMap = mutableMapOf<ModuleEntity, MutableSet<String>>()
+  private inner class GlobalLibraryTableListener : LibraryTable.Listener, RootSetChangedListener {
+    private val librariesPerModuleMap = BidirectionalMultiMap<ModuleEntity, String>()
+    private var insideRootsChange = false
 
-    fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryName: String) {
-      librariesPerModuleMap.computeIfAbsent(moduleEntity) { mutableSetOf() }.add(libraryName)
+    fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryIdentifier: String) {
+      librariesPerModuleMap.put(moduleEntity, libraryIdentifier)
     }
 
-    fun unTrackLibrary(moduleEntity: ModuleEntity, libraryName: String) {
-      librariesPerModuleMap[moduleEntity]?.let { libraries ->
-        libraries.remove(libraryName)
-        if (libraries.isEmpty()) librariesPerModuleMap.remove(moduleEntity)
-      }
+    fun unTrackLibrary(moduleEntity: ModuleEntity, libraryIdentifier: String) {
+      librariesPerModuleMap.remove(moduleEntity, libraryIdentifier)
     }
 
-    fun isEmpty() = librariesPerModuleMap.isEmpty()
+    fun isEmpty(libraryLevel: String) = librariesPerModuleMap.values.asSequence().filter { it.startsWith("$libraryLevel$libraryNameDelimiter") }.none()
+
+    fun getLibraryLevels() = librariesPerModuleMap.values.asSequence().map { it.split(libraryNameDelimiter)[0] }.toSet()
 
     override fun afterLibraryAdded(newLibrary: Library) {
-      if (librariesSet().contains(newLibrary.name)) makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(newLibrary))) makeRootsChange(EmptyRunnable.INSTANCE, false, true)
     }
 
     override fun afterLibraryRemoved(library: Library) {
-      if (librariesSet().contains(library.name)) makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(library))) makeRootsChange(EmptyRunnable.INSTANCE, false, true)
     }
-
-    private fun librariesSet() = librariesPerModuleMap.values.flatten().toSet()
-  }
-
-  private inner class RootChangedListener : RootSetChangedListener {
-    private var insideRootsChange = false
 
     override fun rootSetChanged(wrapper: RootProvider) {
       if (insideRootsChange) return
@@ -217,5 +228,9 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
         insideRootsChange = false
       }
     }
+
+    private fun getLibraryIdentifier(library: Library) = "${library.table.tableLevel}$libraryNameDelimiter${library.name}"
+
+    internal fun clear() = librariesPerModuleMap.clear()
   }
 }
