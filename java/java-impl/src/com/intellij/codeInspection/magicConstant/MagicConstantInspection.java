@@ -277,8 +277,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       return value.getText();
     };
     String values = StreamEx.of(allowedValues.getValues()).map(formatter).collect(Joining.with(", ").cutAfterDelimiter().maxCodePoints(100));
-    String message = JavaBundle
-      .message("inspection.magic.constants.should.be.one.of.values", values, allowedValues.isFlagSet() ? " or their combination" : "");
+    String message = JavaBundle.message("inspection.magic.constants.should.be.one.of.values", values, allowedValues.isFlagSet() ? 1 : 0);
     holder.registerProblem(argument, message, suggestMagicConstant(argument, allowedValues));
   }
 

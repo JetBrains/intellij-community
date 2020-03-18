@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -60,7 +61,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     String suffix = "";
     if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
       suffix = canExtractSideEffect(subExpression) ? QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects")
-                                                   : QuickFixBundle.message("simplify.boolean.expression.may.change.semantics");
+                                                   : JavaBundle.message("quickfix.text.suffix.may.change.semantics");
     }
     return getIntentionText(subExpression, mySubExpressionValue) + suffix;
   }

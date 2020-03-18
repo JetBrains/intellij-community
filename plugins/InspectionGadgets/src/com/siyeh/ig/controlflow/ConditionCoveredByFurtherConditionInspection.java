@@ -82,8 +82,8 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         String operandText = PsiExpressionTrimRenderer.render(operand);
         String description =
           InspectionGadgetsBundle.message("inspection.condition.covered.by.further.condition.descr",
-                                          operandText, dependencies.size() == 1 ? "condition '" + PsiExpressionTrimRenderer
-              .render(Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(dependencies.get(0)))) + "'" : "conditions");
+                                          operandText, dependencies.size(), PsiExpressionTrimRenderer
+                                            .render(Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(dependencies.get(0)))));
         myHolder.registerProblem(operand, description, new RemoveRedundantPolyadicOperandFix(operandText));
       }
     }

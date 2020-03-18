@@ -59,9 +59,9 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
         boolean opCountChanged = context.myTerminalBlock.getOperationCount() > 1;
         boolean lastOpChanged = !(context.myMigration instanceof ForEachMigration);
         if (opCountChanged || lastOpChanged) {
-          String customMessage = lastOpChanged ? JavaBundle
-            .message("inspection.simplify.for.each.replace", context.myMigration.getReplacement()) : JavaBundle
-                                   .message("inspection.simplify.for.each.extract.intermediate.operations");
+            String customMessage = lastOpChanged ?
+                                   JavaBundle.message("inspection.simplify.for.each.replace", context.myMigration.getReplacement()) :
+                                   JavaBundle.message("inspection.simplify.for.each.extract.intermediate.operations");
           ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           holder.registerProblem(context.myMainStatement, customMessage, highlightType, getRange(call).shiftRight(-call.getTextOffset()),
                                  new SimplifyForEachFix(customMessage));
