@@ -6,8 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -102,12 +100,15 @@ public final class InjectorUtils {
     }
     ParserDefinition parser = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     ReferenceInjector injector = ReferenceInjector.findById(language.getID());
-    if (parser == null && injector != null && list.size() == 1) {
-      String prefix = list.get(0).second.getPrefix();
-      String suffix = list.get(0).second.getSuffix();
-      PsiLanguageInjectionHost host = list.get(0).first;
-      TextRange textRange = list.get(0).third;
-      InjectedLanguageUtil.injectReference(registrar, language, prefix, suffix, host, textRange);
+    if (parser == null && injector != null) {
+      for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
+        String prefix = trinity.second.getPrefix();
+        String suffix = trinity.second.getSuffix();
+        PsiLanguageInjectionHost host = trinity.first;
+        TextRange textRange = trinity.third;
+        InjectedLanguageUtil.injectReference(registrar, language, prefix, suffix, host, textRange);
+        return;
+      }
       return;
     }
     boolean injectionStarted = false;
