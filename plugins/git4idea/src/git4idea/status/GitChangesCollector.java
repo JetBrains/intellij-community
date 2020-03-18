@@ -33,6 +33,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
+import git4idea.diff.GitSubmoduleContentRevision;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
@@ -468,7 +469,10 @@ class GitChangesCollector {
 
     FilePath filePath = ChangesUtil.getFilePath(change);
     VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
-    if (!myVcsRoot.equals(root)) {
+    boolean isUnderOurRoot = myVcsRoot.equals(root) ||
+                             before instanceof GitSubmoduleContentRevision ||
+                             after instanceof GitSubmoduleContentRevision;
+    if (!isUnderOurRoot) {
       LOG.warn(String.format("Ignoring change under another root: %s; root: %s; mapped root: %s", change, myVcsRoot, root));
       return;
     }
