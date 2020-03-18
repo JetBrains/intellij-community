@@ -3,12 +3,12 @@ package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaDebugProcess;
-import com.intellij.debugger.engine.RemoteStateState;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -48,6 +48,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
+import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -349,6 +350,16 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     });
 
     createBreakpoints(psiFile);
+  }
+
+  protected Value evaluateExpression(String code, SuspendContextImpl suspendContext) throws EvaluateException {
+    return ReadAction.compute(() ->
+                                EvaluatorBuilderImpl.build(
+                                  new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, code),
+                                  ContextUtil.getContextElement(suspendContext),
+                                  ContextUtil.getSourcePosition(suspendContext),
+                                  myProject))
+      .evaluate(createEvaluationContext(suspendContext));
   }
 
   protected EvaluationContextImpl createEvaluationContext(final SuspendContextImpl suspendContext) {
