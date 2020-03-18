@@ -3,6 +3,7 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,5 +38,6 @@ public abstract class DnDManager {
    * @see JComponent#setAutoscrolls
    * @see JComponent#putClientProperty
    */
+  @ApiStatus.Experimental
   public static final Key<Boolean> AUTO_SCROLL = Key.create("AUTO_SCROLL");
 }
