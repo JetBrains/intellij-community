@@ -1002,11 +1002,6 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
   private static class ReplaceWithToArrayFix implements CallChainSimplification {
     private static final CallMatcher TO_ARRAY = instanceCall(JAVA_UTIL_STREAM_STREAM, "toArray");
-    private final String myReplacement;
-
-    private ReplaceWithToArrayFix(String replacement) {
-      myReplacement = replacement;
-    }
 
     @Override
     public String getName() {
@@ -1025,23 +1020,36 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     @Override
     public PsiElement simplify(PsiMethodCallExpression toArrayCall) {
+      CommentTracker ct = new CommentTracker();
+      String replacement = getReplacement(toArrayCall, ct);
+      if (replacement == null) return null;
       PsiMethodCallExpression streamCall = getQualifierMethodCall(toArrayCall);
       if(streamCall == null) return null;
       PsiExpression collectionExpression = streamCall.getMethodExpression().getQualifierExpression();
       if(collectionExpression == null) return null;
-      CommentTracker ct = new CommentTracker();
-      return ct.replaceAndRestoreComments(toArrayCall, ct.text(collectionExpression) + ".toArray(" + myReplacement + ")");
+      return ct.replaceAndRestoreComments(toArrayCall, ct.text(collectionExpression) + ".toArray(" + replacement + ")");
     }
 
     static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(TO_ARRAY, methodCall -> {
         if (!COLLECTION_STREAM.test(getQualifierMethodCall(methodCall))) return null;
-        PsiArrayType type = getArrayType(methodCall);
-        if (type == null) return null;
-        String replacement = type.equalsToText(JAVA_LANG_OBJECT + "[]") ? "" :
-                             "new " + type.getCanonicalText().replaceFirst("\\[]", "[0]");
-        return new ReplaceWithToArrayFix(replacement);
+        return getReplacement(methodCall, new CommentTracker()) == null ? null : new ReplaceWithToArrayFix();
       });
+    }
+
+    @Nullable
+    private static String getReplacement(PsiMethodCallExpression methodCall, CommentTracker ct) {
+      PsiArrayType type = getArrayType(methodCall);
+      if (type != null && type.equalsToText(JAVA_LANG_OBJECT + "[]")) {
+        return "";
+      }
+      if (PsiUtil.isLanguageLevel11OrHigher(methodCall)) {
+        return ct.text(methodCall.getArgumentList().getExpressions()[0]);
+      }
+      if (type != null) {
+        return "new " + type.getCanonicalText().replaceFirst("\\[]", "[0]");
+      }
+      return null;
     }
 
     @Nullable

@@ -5,6 +5,6 @@ import java.util.function.*;
 
 class Test {
   public void testToArray(List<String[]> data, IntFunction<String[]> generator) {
-    Object[] array = data.stream().toA<caret>rray(generator);
+    Object[] array = data.toArray(generator);
   }
 }
