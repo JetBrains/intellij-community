@@ -132,7 +132,7 @@ public class _LastInSuiteTest extends TestCase {
   private static void startCorePluginUnload() {
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
     assert corePlugin != null;
-    WriteAction.runAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
         .beforePluginUnload(corePlugin, false);
     });
@@ -141,7 +141,7 @@ public class _LastInSuiteTest extends TestCase {
   private static void finishCorePluginUnload() {
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
     assert corePlugin != null;
-    WriteAction.runAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
         .pluginUnloaded(corePlugin, false);
     });
