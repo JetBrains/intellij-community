@@ -574,18 +574,6 @@ public final class PluginManagerCore {
     return false;
   }
 
-  private static boolean shouldLoadPlugins() {
-    try {
-      // no plugins during bootstrap
-      Class.forName("com.intellij.openapi.extensions.Extensions");
-    }
-    catch (ClassNotFoundException e) {
-      return false;
-    }
-    String loadPlugins = System.getProperty("idea.load.plugins");
-    return loadPlugins == null || Boolean.TRUE.toString().equals(loadPlugins);
-  }
-
   @NotNull
   private static ClassLoader createPluginClassLoader(ClassLoader @NotNull [] parentLoaders, @NotNull IdeaPluginDescriptorImpl descriptor, @NotNull UrlClassLoader.Builder urlLoaderBuilder) {
     List<Path> classPath = descriptor.jarFiles;
@@ -1501,8 +1489,7 @@ public final class PluginManagerCore {
       }
     }
 
-    boolean shouldLoadPlugins = shouldLoadPlugins();
-
+    boolean shouldLoadPlugins = Boolean.parseBoolean(System.getProperty("idea.load.plugins", "true"));
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       if (descriptor == coreDescriptor) {
         continue;
