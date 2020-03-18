@@ -44,7 +44,7 @@ class BundledJreManager {
       return targetDir
     }
 
-    File archive = findArchive(os, getJreBuild(os), getJreVersion(), jrePrefix(), arch)
+    File archive = findArchive(os, getJreBuild(os), arch)
     if (archive == null) return null
 
     String destination = "${targetDir}/${arch == JvmArchitecture.x32 ? "jre32" : "jbr"}"
@@ -64,7 +64,7 @@ class BundledJreManager {
   }
 
   File findJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    return findArchive(os, getJreBuild(os), getJreVersion(), jrePrefix(), arch)
+    return findArchive(os, getJreBuild(os), arch)
   }
 
   String x86JreDownloadUrl(OsFamily os) {
@@ -141,15 +141,30 @@ class BundledJreManager {
     "${update}-${os.jbrArchiveSuffix}-${arch == JvmArchitecture.x32 ? 'x86' : 'x64'}-${build}.tar.gz"
   }
 
-  private File findArchive(OsFamily os, String jreBuild,
-                           int jreVersion, String jrePrefix,
-                           JvmArchitecture arch) {
+  /**
+   * Update this method together with:
+   *  `build/dependencies/setupJbre.gradle`
+   */
+  private def prefix(JvmArchitecture arch) {
+    if (forcedPrefix != null) {
+      forcedPrefix
+    }
+    else if (jreVersion < 9 && buildContext.productProperties.toolsJarRequired) {
+      'jbrx-'
+    }
+    else if (arch == JvmArchitecture.x32 || buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
+      'jbr-'
+    }
+    else {
+      "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"
+    }
+  }
+
+  private File findArchive(OsFamily os, String jreBuild, JvmArchitecture arch) {
     def jreDir = jreDir()
     String suffix = jreArchiveSuffix(jreBuild, jreVersion, arch, os)
-    if (jrePrefix == null) {
-      jrePrefix = jreVersion < 9 && buildContext.productProperties.toolsJarRequired ? "jbrx-" : "jbr-"
-    }
-    def jreArchive = new File(jreDir, "$jrePrefix$suffix")
+    String prefix = prefix(arch)
+    def jreArchive = new File(jreDir, "$prefix$suffix")
     if (!jreArchive.file) {
       def errorMessage = "Cannot extract $os.osName JRE: file $jreArchive is not found (${jreDir.listFiles()})"
       if (buildContext.options.isInDevelopmentMode) {
@@ -180,7 +195,7 @@ class BundledJreManager {
     }
   }
 
-  String jrePrefix() {
+  private static String getForcedPrefix() {
     return System.getProperty("intellij.build.bundled.jre.prefix")
   }
 
