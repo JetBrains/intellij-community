@@ -62,7 +62,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   public static final Topic<GitIncomingOutgoingListener> GIT_INCOMING_OUTGOING_CHANGED =
     Topic.create("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
 
-  private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd";
+  private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd"; //NON-NLS
 
   private static final boolean HAS_EXTERNAL_SSH_AGENT = hasExternalSSHAgent();
 
@@ -346,7 +346,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     }
 
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
-      List<String> params = newArrayList("--heads", remote.getName());
+      List<String> params = newArrayList("--heads", remote.getName()); //NON-NLS
       params.addAll(refs);
       GitCommandResult lsRemoteResult =
         Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
