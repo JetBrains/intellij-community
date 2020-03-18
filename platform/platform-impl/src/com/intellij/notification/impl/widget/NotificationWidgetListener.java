@@ -4,19 +4,22 @@ package com.intellij.notification.impl.widget;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.EventLog;
+import com.intellij.notification.EventLogListener;
 import com.intellij.notification.Notification;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class NotificationWidgetListener implements UISettingsListener, ToolWindowManagerListener, Runnable {
+public class NotificationWidgetListener implements UISettingsListener, ToolWindowManagerListener, EventLogListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateWidgetAndIcon();
@@ -30,7 +33,7 @@ public class NotificationWidgetListener implements UISettingsListener, ToolWindo
   }
 
   @Override
-  public void run() {
+  public void modelChanged() {
     if (NotificationWidgetFactory.isAvailable()) {
       return;
     }
@@ -76,9 +79,10 @@ public class NotificationWidgetListener implements UISettingsListener, ToolWindo
     ToolWindow eventLog = EventLog.getEventLog(project);
     if (eventLog != null) {
       ArrayList<Notification> notifications = EventLog.getLogModel(project).getNotifications();
-      eventLog.setIcon(IdeNotificationArea.createIconWithNotificationCount(new JBLabel(),
-                                                                           IdeNotificationArea.getMaximumType(notifications),
-                                                                           notifications.size(), true));
+      LayeredIcon icon = IdeNotificationArea.createIconWithNotificationCount(new JBLabel(),
+                                                                              IdeNotificationArea.getMaximumType(notifications),
+                                                                              notifications.size(), true);
+      ApplicationManager.getApplication().invokeLater(() -> eventLog.setIcon(icon));
     }
   }
 }
