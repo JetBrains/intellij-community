@@ -321,7 +321,7 @@ class CommunityRepositoryModules {
 
       // from AOSP's plugin("intellij.android.layoutlib"). Force layoutlib-standard. //
       withModuleLibrary("precompiled-layoutlib-api", "android.sdktools.layoutlib-api", "")
-      withModuleLibrary("layoutlib-jre11-26.6.0.1.2.jar", "intellij.android.layoutlib", "")
+      withModuleLibrary("layoutlib-jre11-26.6.0.1.jar", "intellij.android.layoutlib", "")
       //////////////////////////////////////////////////////
 
       withModuleLibrary("precompiled-manifest-merger", "android.sdktools.manifest-merger", "")
