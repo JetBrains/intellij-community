@@ -17,7 +17,6 @@ import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
@@ -148,9 +147,7 @@ open class IdeStarter : ApplicationStarter {
       }
     }
 
-    app.invokeLater {
-      reportPluginError()
-    }
+    reportPluginError()
 
     if (!app.isHeadlessEnvironment) {
       postOpenUiTasks(app)
@@ -256,38 +253,38 @@ private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
 }
 
 private fun reportPluginError() {
-  if (PluginManagerCore.ourPluginError == null) {
-    return
-  }
-
-  val title = IdeBundle.message("title.plugin.error")
-  Notifications.Bus.notify(Notification(title, title, PluginManagerCore.ourPluginError, NotificationType.ERROR) { notification, event ->
-    notification.expire()
-
-    val description = event.description
-    if (PluginManagerCore.EDIT == description) {
-      val ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null)
-      PluginManagerConfigurableProxy.showPluginConfigurable(ideFrame?.component, null)
-      return@Notification
-    }
-
-    val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
-    if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
-      disabledPlugins.addAll(PluginManagerCore.ourPluginsToDisable)
-    }
-    else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
-      disabledPlugins.removeAll(PluginManagerCore.ourPluginsToEnable)
-      PluginManagerMain.notifyPluginsUpdated(null)
-    }
-
-    try {
-      PluginManagerCore.saveDisabledPlugins(disabledPlugins, false)
-    }
-    catch (ignore: IOException) { }
-
-    PluginManagerCore.ourPluginsToEnable = null
-    PluginManagerCore.ourPluginsToDisable = null
-  })
-
+  val pluginError = PluginManagerCore.ourPluginError ?: return
   PluginManagerCore.ourPluginError = null
+
+  ApplicationManager.getApplication().invokeLater({
+    val title = IdeBundle.message("title.plugin.error")
+    Notification(title, title, pluginError, NotificationType.ERROR) { notification, event ->
+      notification.expire()
+
+      val description = event.description
+      if (PluginManagerCore.EDIT == description) {
+        val ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null)
+        PluginManagerConfigurableProxy.showPluginConfigurable(ideFrame?.component, null)
+        return@Notification
+      }
+
+      val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
+      if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
+        disabledPlugins.addAll(PluginManagerCore.ourPluginsToDisable)
+      }
+      else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
+        disabledPlugins.removeAll(PluginManagerCore.ourPluginsToEnable)
+        PluginManagerMain.notifyPluginsUpdated(null)
+      }
+
+      try {
+        PluginManagerCore.saveDisabledPlugins(disabledPlugins, false)
+      }
+      catch (ignore: IOException) {
+      }
+
+      PluginManagerCore.ourPluginsToEnable = null
+      PluginManagerCore.ourPluginsToDisable = null
+    }.notify(null)
+  }, ModalityState.NON_MODAL)
 }
