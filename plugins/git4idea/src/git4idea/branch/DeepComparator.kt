@@ -39,6 +39,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.NonNls
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,
@@ -301,7 +302,7 @@ class DeepComparator(private val project: Project,
     }
 
     override fun toString(): String {
-      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches"
+      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches" //NON-NLS
     }
   }
 
@@ -312,7 +313,7 @@ class DeepComparator(private val project: Project,
     }
 
     override fun getId(): String {
-      return "CHERRY_PICKED_COMMITS"
+      return "CHERRY_PICKED_COMMITS" //NON-NLS
     }
 
     override fun getTitle(): String {
@@ -334,7 +335,7 @@ class DeepComparator(private val project: Project,
     }
   }
 
-  private inline fun <R> measureTimeMillis(root: VirtualFile, actionName: String, block: () -> R): R {
+  private inline fun <R> measureTimeMillis(root: VirtualFile, @NonNls actionName: String, block: () -> R): R {
     val start = System.currentTimeMillis()
     val result = block()
     if (result != null) {
