@@ -8,10 +8,7 @@ iml_module(
     resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
-        "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt",
-    ],
+    exports = ["//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/.idea/libraries:javassist",
@@ -21,7 +18,6 @@ iml_module(
     ],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/projectModel-api:intellij.platform.projectModel[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",

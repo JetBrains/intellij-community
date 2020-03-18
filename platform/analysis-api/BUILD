@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.analysis",
     srcs = ["src"],
     iml_files = ["intellij.platform.analysis.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/editor-ui-api:intellij.platform.editor"],
     # do not sort: must match IML order

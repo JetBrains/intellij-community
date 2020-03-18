@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.projectModel.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.projectModel.impl.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [

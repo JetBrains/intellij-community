@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.indexing",
     srcs = ["src"],
     iml_files = ["intellij.platform.indexing.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/core-api:intellij.platform.core"],
     # do not sort: must match IML order
@@ -14,5 +15,6 @@ iml_module(
         "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/platform/util:intellij.platform.concurrency[module]",
     ],
 )

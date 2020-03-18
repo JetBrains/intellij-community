@@ -21,8 +21,8 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "ecj-4.10",
-    jars = ["ecj-4.10.jar"],
+    name = "ecj-4.13",
+    jars = ["ecj-4.13.jar"],
     visibility = ["//visibility:public"],
 )
 

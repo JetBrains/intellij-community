@@ -15,8 +15,8 @@ iml_module(
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:jna",
-        "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:winp",
+        "//tools/idea/.idea/libraries:jackson",
     ],
 )

@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.vcs.cvs.core",
     srcs = ["src"],
     iml_files = ["intellij.vcs.cvs.core.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [

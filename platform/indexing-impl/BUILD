@@ -14,5 +14,6 @@ iml_module(
         "//tools/idea/platform/indexing-api:intellij.platform.indexing[module]",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/.idea/libraries:NanoXML",
+        "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
     ],
 )

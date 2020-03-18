@@ -10,7 +10,6 @@ iml_module(
     exports = [
         "//tools/idea/xml/xml-psi-api:intellij.xml.psi",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis",
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/core-api:intellij.platform.core",
         "//tools/idea/platform/extensions:intellij.platform.extensions",
         "//tools/idea/platform/util:intellij.platform.util",
@@ -19,7 +18,6 @@ iml_module(
     deps = [
         "//tools/idea/xml/xml-psi-api:intellij.xml.psi[module]",
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",

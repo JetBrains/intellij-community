@@ -84,8 +84,8 @@ java_library(
 java_library(
     name = "gson",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.5:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.5:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.6:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.6:jar"],
 )
 
 # managed by go/iml_to_build
@@ -370,14 +370,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "picocontainer",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/picocontainer/picocontainer/1.2:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/picocontainer/picocontainer/1.2:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "jna",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -516,25 +508,25 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.41.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.43.Final:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.41.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.43.Final:jar",
     ],
 )
 
@@ -544,13 +536,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.41.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.43.Final:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.41.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-socks/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler-proxy/4.1.43.Final:jar",
     ],
 )
 
@@ -580,23 +572,27 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "Mocks",
+    name = "easymock",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/easymock/easymock/4.0.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/easymock/easymock/4.0.2:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "jmock",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib/dev:easymock-3.4",
         "//tools/idea/lib/dev:jmock-2.5.1",
         "//tools/idea/lib/dev:jmock-junit4-2.5.1",
         "//tools/idea/lib/dev:jmock-legacy-2.5.1",
-        "//tools/idea/lib/dev:objenesis-1.0",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib/dev:easymock-3.4",
         "//tools/idea/lib/dev:jmock-2.5.1",
         "//tools/idea/lib/dev:jmock-junit4-2.5.1",
         "//tools/idea/lib/dev:jmock-legacy-2.5.1",
-        "//tools/idea/lib/dev:objenesis-1.0",
     ],
 )
 
@@ -798,8 +794,8 @@ java_library(
 java_library(
     name = "Eclipse",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:ecj-4.10"],
-    runtime_deps = ["//tools/idea/lib:ecj-4.10"],
+    exports = ["//tools/idea/lib:ecj-4.13"],
+    runtime_deps = ["//tools/idea/lib:ecj-4.13"],
 )
 
 # managed by go/iml_to_build
@@ -966,8 +962,8 @@ java_library(
 java_library(
     name = "StreamEx",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.8:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.6.8:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.7.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/one/util/streamex/0.7.2:jar"],
 )
 
 # managed by go/iml_to_build
@@ -982,8 +978,8 @@ java_library(
 java_library(
     name = "snakeyaml",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.24:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.24:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.25:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.25:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1166,13 +1162,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.2.1:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.2:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.3.2:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.2.1:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.3.2:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/1.3.2:jar",
     ],
 )
 
@@ -1213,9 +1209,9 @@ java_library(
     name = "jackson",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.10.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.10.2:jar"],
     # do not sort: must match IML order
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.10.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.10.2:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1224,13 +1220,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.10.0:jar",
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.10.0:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.10.2:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.10.2:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.10.0:jar",
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.10.0:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.10.2:jar",
+        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-databind/2.10.2:jar",
     ],
 )
 
@@ -1238,8 +1234,8 @@ java_library(
 java_library(
     name = "jackson-module-kotlin",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/module/jackson-module-kotlin/2.9.10:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/module/jackson-module-kotlin/2.9.10:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/module/jackson-module-kotlin/2.10.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/module/jackson-module-kotlin/2.10.2:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1258,72 +1254,72 @@ java_library(
     exports = [
         "//prebuilts/tools/common/m2/repository/be/cyberelf/nanoxml/nanoxml/2.2.3:jar",
         "//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1.5:jar",
-        "//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.5:jar",
+        "//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.6:jar",
         "//prebuilts/tools/common/m2/repository/com/google/guava/failureaccess/1.0.1:jar",
         "//prebuilts/tools/common/m2/repository/com/google/guava/guava/27.1-jre:jar",
         "//prebuilts/tools/common/m2/repository/com/google/j2objc/j2objc-annotations/1.1:jar",
         "//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/3.5.1:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-constants-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-jps/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-aether-dependency-resolver/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util-java8/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-compiler/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-jps/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build-javac-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-impl/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-serialization/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-class-loader/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-ant-tasks/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-script-dependencies/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-standalone/193.5964:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-constants-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-jps/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-aether-dependency-resolver/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util-java8/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-compiler/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-jps/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build-javac-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-impl/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-serialization/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-class-loader/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-ant-tasks/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-script-dependencies/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-standalone/201.3580:jar",
         "//prebuilts/tools/common/m2/repository/com/jgoodies/forms/1.1-preview:jar",
         "//prebuilts/tools/common/m2/repository/com/thoughtworks/qdox/qdox/2.0-M10:jar",
         "//prebuilts/tools/common/m2/repository/commons-cli/commons-cli/1.2:jar",
         "//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.41.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.43.Final:jar",
         "//prebuilts/tools/common/m2/repository/javax/annotation/javax.annotation-api/1.3.2:jar",
         "//prebuilts/tools/common/m2/repository/log4j/log4j/1.2.17:jar",
         "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna-platform/5.4.0:jar",
         "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna/5.4.0:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.18:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.9:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.10:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.12:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-aether-provider/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-builder-support/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model-builder/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-repository-metadata/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-builder-support/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model-builder/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-repository-metadata/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-resolver-provider/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-api/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-impl/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-spi/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-transport-file/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-util/1.3.3:jar",
         "//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar",
         "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.17:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-component-annotations/1.6:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-interpolation/1.21:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-api/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-connector-basic/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-impl/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-spi/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-transport-file/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-transport-http/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-util/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/17.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-component-annotations/1.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-interpolation/1.25:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.2.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/18.0.0:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0.1:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20190514:jar",
@@ -1336,72 +1332,72 @@ java_library(
     runtime_deps = [
         "//prebuilts/tools/common/m2/repository/be/cyberelf/nanoxml/nanoxml/2.2.3:jar",
         "//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1.5:jar",
-        "//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.5:jar",
+        "//prebuilts/tools/common/m2/repository/com/google/code/gson/gson/2.8.6:jar",
         "//prebuilts/tools/common/m2/repository/com/google/guava/failureaccess/1.0.1:jar",
         "//prebuilts/tools/common/m2/repository/com/google/guava/guava/27.1-jre:jar",
         "//prebuilts/tools/common/m2/repository/com/google/j2objc/j2objc-annotations/1.1:jar",
         "//prebuilts/tools/common/m2/repository/com/google/protobuf/protobuf-java/3.5.1:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-constants-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-jps/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-aether-dependency-resolver/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util-java8/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-compiler/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-jps/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build-javac-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-impl/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-serialization/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-class-loader/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-rt/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-ant-tasks/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-script-dependencies/193.5964:jar",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-standalone/193.5964:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-constants-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-jps/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/groovy/groovy-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-aether-dependency-resolver/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util-java8/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-compiler-instrumentation-util/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-compiler/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-jps/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-gui-forms-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/java/java-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build-javac-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-build/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-impl/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model-serialization/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/jps-model/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-class-loader/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util-rt/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/platform/util/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-ant-tasks/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-script-dependencies/201.3580:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/tools/jps-build-standalone/201.3580:jar",
         "//prebuilts/tools/common/m2/repository/com/jgoodies/forms/1.1-preview:jar",
         "//prebuilts/tools/common/m2/repository/com/thoughtworks/qdox/qdox/2.0-M10:jar",
         "//prebuilts/tools/common/m2/repository/commons-cli/commons-cli/1.2:jar",
         "//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.41.Final:jar",
-        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.41.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-buffer/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec-http2/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-codec/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-common/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-handler/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-resolver/4.1.43.Final:jar",
+        "//prebuilts/tools/common/m2/repository/io/netty/netty-transport/4.1.43.Final:jar",
         "//prebuilts/tools/common/m2/repository/javax/annotation/javax.annotation-api/1.3.2:jar",
         "//prebuilts/tools/common/m2/repository/log4j/log4j/1.2.17:jar",
         "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna-platform/5.4.0:jar",
         "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna/5.4.0:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-compress/1.18:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.9:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpclient/4.5.10:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpcore/4.4.12:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/httpcomponents/httpmime/4.5.10:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-aether-provider/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-builder-support/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model-builder/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-repository-metadata/3.3.9:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-builder-support/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model-builder/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-repository-metadata/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-resolver-provider/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-api/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-impl/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-spi/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-transport-file/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-util/1.3.3:jar",
         "//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar",
         "//prebuilts/tools/common/m2/repository/org/codehaus/groovy/groovy-all/2.4.17:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-component-annotations/1.6:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-interpolation/1.21:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-api/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-connector-basic/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-impl/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-spi/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-transport-file/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-transport-http/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/eclipse/aether/aether-util/1.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/17.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-component-annotations/1.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-interpolation/1.25:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.2.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/18.0.0:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0.1:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jdom/2.0.6:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20190514:jar",
@@ -1422,6 +1418,9 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-ide",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/annotations-13.0",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/completion-ranking-kotlin-0.0.2",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/ide-common",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/idea-gradle-tooling-api",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javaslang-2.0.6",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javaslang-match-2.0.6",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javax.inject-1",
@@ -1463,6 +1462,9 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-compiler",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/android-extensions-ide",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/annotations-13.0",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/completion-ranking-kotlin-0.0.2",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/ide-common",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/idea-gradle-tooling-api",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javaslang-2.0.6",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javaslang-match-2.0.6",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/javax.inject-1",
@@ -1504,8 +1506,8 @@ java_library(
 java_library(
     name = "Objenesis",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.0.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.0.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/3.1:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1568,16 +1570,16 @@ java_library(
 java_library(
     name = "jetbrains-annotations-java5",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/17.0.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/17.0.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/18.0.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations-java5/18.0.0:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "jetbrains-annotations",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations/17.0.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations/17.0.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations/18.0.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/annotations/18.0.0:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1656,19 +1658,47 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "maven-model",
+    name = "commons-lang3",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.9:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.9:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "org.apache.maven_maven-resolver-provider",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-builder-support/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model-builder/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-repository-metadata/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-resolver-provider/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-api/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-impl/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-spi/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-util/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-component-annotations/1.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-interpolation/1.25:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.2.0:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/apache/commons/commons-lang3/3.4:jar",
-        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-artifact/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-builder-support/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model-builder/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-repository-metadata/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-resolver-provider/3.6.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-api/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-impl/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-spi/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/maven/resolver/maven-resolver-util/1.3.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-component-annotations/1.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-interpolation/1.25:jar",
+        "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.2.0:jar",
     ],
 )
 
@@ -1682,18 +1712,18 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "sa-jdwp",
+    name = "jcef",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.13:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.13:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jcef/jcef/3.3683.1920.g9f41a27-3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jcef/jcef/3.3683.1920.g9f41a27-3:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "plexus-utils",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.2.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.2.0:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1916,4 +1946,12 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/zxing/core/3.4.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/zxing/core/3.4.0:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "xz",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/tukaani/xz/1.8:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/tukaani/xz/1.8:jar"],
 )

@@ -6,9 +6,10 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.platform.jps.model.iml"],
     visibility = ["//visibility:public"],
+    exports = ["//tools/idea/.idea/libraries:jetbrains-annotations-java5"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
         "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
     ],
 )

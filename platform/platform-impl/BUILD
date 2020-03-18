@@ -26,6 +26,7 @@ iml_module(
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
         "//tools/idea/platform/util:intellij.platform.util.ui",
+        "//tools/idea/platform/statistics:intellij.platform.statistics",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -42,7 +43,9 @@ iml_module(
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
+        "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
+        "//tools/idea/platform/diff-impl:intellij.platform.diff.impl",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
@@ -50,6 +53,7 @@ iml_module(
         "//tools/idea/xml/impl:intellij.xml.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/json:intellij.json",
+        "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
@@ -59,7 +63,6 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:Mac",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
-        "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/platform/boot:intellij.platform.boot[module]",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
@@ -88,10 +91,6 @@ iml_module(
         "//tools/idea/platform/built-in-server-api:intellij.platform.builtInServer[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:imageio-tiff",
-        "//tools/analytics-library/tracker:analytics-tracker[module]",
-        "//tools/analytics-library/shared:analytics-shared[module]",
-        "//tools/analytics-library/publisher:analytics-publisher[module]",
-        "//tools/base/common:studio.android.sdktools.common[module]",
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:jediterm-pty",
@@ -106,5 +105,7 @@ iml_module(
         "//tools/idea/platform/platform-util-io:intellij.platform.ide.util.io[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
+        "//tools/idea/.idea/libraries:jcef",
+        "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
     ],
 )

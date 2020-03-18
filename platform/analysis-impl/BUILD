@@ -5,19 +5,13 @@ iml_module(
     name = "intellij.platform.analysis.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.analysis.impl.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
         "//tools/idea/platform/analysis-api:intellij.platform.analysis",
         "//tools/idea/platform/core-impl:intellij.platform.core.impl",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea/.idea/libraries:delight-rhino-sandbox",
-        "//tools/idea/.idea/libraries:rhino",
-        "//tools/idea/.idea/libraries:netty-handler-proxy",
-        "//tools/idea/.idea/libraries:javassist",
     ],
     # do not sort: must match IML order
     deps = [
@@ -31,8 +25,9 @@ iml_module(
         "//tools/idea/platform/editor-ui-ex:intellij.platform.editor.ex[module]",
         "//tools/idea/platform/indexing-impl:intellij.platform.indexing.impl[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
-        "//tools/idea/platform/external-system-api:intellij.platform.externalSystem[module]",
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:studio-analytics-proto",
         "//tools/analytics-library/tracker:analytics-tracker[module]",
         "//tools/idea/.idea/libraries:HdrHistogram",

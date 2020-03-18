@@ -32,7 +32,7 @@ iml_module(
         "//tools/idea/platform/analysis-api:intellij.platform.analysis[module]",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/.idea/libraries:Mocks[test]",
+        "//tools/idea/.idea/libraries:jmock[test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:hamcrest[test]",
         "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",

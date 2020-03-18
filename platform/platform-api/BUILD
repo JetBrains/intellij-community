@@ -10,9 +10,7 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/platform/util:intellij.platform.util",
-        "//tools/idea/platform/extensions:intellij.platform.extensions",
         "//tools/idea/platform/core-api:intellij.platform.core",
-        "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/platform/forms_rt:intellij.java.guiForms.rt",
         "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en",
@@ -36,7 +34,6 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
         "//tools/idea/platform/core-api:intellij.platform.core[module]",
-        "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/platform/forms_rt:intellij.java.guiForms.rt[module]",
@@ -66,5 +63,6 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/core-ui:intellij.platform.core.ui[module]",
         "//tools/idea/platform/platform-util-io:intellij.platform.ide.util.io[module]",
+        "//tools/idea/.idea/libraries:jcef",
     ],
 )
