@@ -4,10 +4,7 @@ package com.intellij.debugger;
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.debugger.engine.*;
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.*;
@@ -352,14 +349,18 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     createBreakpoints(psiFile);
   }
 
-  protected Value evaluateExpression(String code, SuspendContextImpl suspendContext) throws EvaluateException {
+  protected Value evaluate(CodeFragmentKind kind, String code, EvaluationContext evaluationContext) throws EvaluateException {
     return ReadAction.compute(() ->
                                 EvaluatorBuilderImpl.build(
-                                  new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, code),
-                                  ContextUtil.getContextElement(suspendContext),
-                                  ContextUtil.getSourcePosition(suspendContext),
+                                  new TextWithImportsImpl(kind, code),
+                                  ContextUtil.getContextElement(evaluationContext),
+                                  ContextUtil.getSourcePosition(evaluationContext),
                                   myProject))
-      .evaluate(createEvaluationContext(suspendContext));
+      .evaluate(evaluationContext);
+  }
+
+  protected Value evaluate(CodeFragmentKind kind, String code, SuspendContextImpl suspendContext) throws EvaluateException {
+    return evaluate(kind, code, createEvaluationContext(suspendContext));
   }
 
   protected EvaluationContextImpl createEvaluationContext(final SuspendContextImpl suspendContext) {
