@@ -68,6 +68,7 @@ public class ThreadTracker {
     "AWT-Shutdown",
     "AWT-Windows",
     "Batik CleanerThread",
+    "Cleaner-0",
     "CompilerThread0",
     "dockerjava-netty",
     "External compiler",
