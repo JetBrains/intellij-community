@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.model.module.JpsModule
@@ -44,6 +45,12 @@ class IntellijModulesPublication {
      */
     String repositoryUrl = property('intellij.modules.publication.repository.url')
     /**
+     * Base for url to check if an artifact was already published.
+     * Check {@link org.jetbrains.intellij.build.impl.IntellijModulesPublication#artifactExists} for the details.
+     */
+    String checkArtifactExistsUrl =
+      StringUtil.trimTrailing(property('intellij.modules.publication.repository.existsUrl'), '/' as char)
+    /**
      * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
      */
     File outputDir = property('intellij.modules.publication.prebuilt.artifacts.dir')?.with { new File(it) }
@@ -77,7 +84,7 @@ class IntellijModulesPublication {
       def jar = new File(dir, coordinates.getFileName('', 'jar'))
       def sources = new File(dir, coordinates.getFileName('sources', 'jar'))
       if (jar.exists()) {
-        deployJar(jar, pom)
+        deployJar(jar, pom, coordinates)
       }
       else {
         context.messages.warning("$it.name jar is not found")
@@ -103,12 +110,12 @@ class IntellijModulesPublication {
       }
   }
 
-  private def deployJar(File jar, File pom) {
-    deployFile(jar, ["-DpomFile=$pom.absolutePath"])
+  private def deployJar(File jar, File pom, MavenArtifactsBuilder.MavenCoordinates coordinates) {
+    deployFile(jar, coordinates, ["-DpomFile=$pom.absolutePath"])
   }
 
   private def deploySources(File sources, MavenArtifactsBuilder.MavenCoordinates coordinates) {
-    deployFile(sources, [
+    deployFile(sources, coordinates, [
       "-DgroupId=$coordinates.groupId",
       "-DartifactId=$coordinates.artifactId",
       "-Dversion=$coordinates.version",
@@ -117,21 +124,36 @@ class IntellijModulesPublication {
     ])
   }
 
-  private def deployFile(File file, Collection args) {
+  private def deployFile(File file, MavenArtifactsBuilder.MavenCoordinates coordinates, Collection args) {
     context.messages.info("Upload of $file.name")
-    def process = ([
-                     'mvn', '--settings', mavenSettings.absolutePath,
-                     'deploy:deploy-file',
-                     '-DrepositoryId=server-id',
-                     "-Dfile=$file.absolutePath",
-                     "-Durl=$options.repositoryUrl",
-                     "-DretryFailedDeploymentCount=$options.uploadRetryCount"
-                   ] + args).execute()
-    def output = process.text
-    def exitCode = process.waitFor()
-    if (exitCode != 0) {
-      context.messages.warning("Upload of $file.name failed with exit code $exitCode: $output")
+    if (artifactExists(coordinates)) {
+      context.messages.info("Artifact ${coordinates.groupId}:${coordinates.artifactId}:${coordinates.version} was already published.")
     }
+    else {
+      def process = (['mvn', '--settings', mavenSettings.absolutePath,
+                      'deploy:deploy-file',
+                      '-DrepositoryId=server-id',
+                      "-Dfile=$file.absolutePath",
+                      "-Durl=$options.repositoryUrl",
+                      "-DretryFailedDeploymentCount=$options.uploadRetryCount"
+                     ] + args).execute()
+      def output = process.text
+      def exitCode = process.waitFor()
+      if (exitCode != 0) {
+        context.messages.error("Upload of $file.name failed with exit code $exitCode: $output")
+      }
+    }
+  }
+
+  private boolean artifactExists(MavenArtifactsBuilder.MavenCoordinates coordinates) {
+    String groupUrlPart = coordinates.groupId.replace('.' as char, '/' as char)
+    URL url = new URL("${options.checkArtifactExistsUrl}/${groupUrlPart}/${coordinates.artifactId}/${coordinates.version}")
+
+    HttpURLConnection connection = (HttpURLConnection)url.openConnection()
+    connection.requestMethod = "HEAD"
+    connection.instanceFollowRedirects = true
+
+    return connection.responseCode == 200
   }
 
   private File mavenSettings() {
