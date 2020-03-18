@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.ide.plugins.PluginRepositoryRequests
 import com.intellij.ide.plugins.PluginsMetaLoader
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -52,7 +52,7 @@ internal class InstallPluginService : RestService() {
                                  context: ChannelHandlerContext,
                                  pluginId: String): Nothing? {
     //check if there is an update for this IDE with this ID.
-    val buildNumber = PluginRepositoryRequests.getBuildForPluginRepositoryRequests()
+    val buildNumber = MarketplaceRequests.getBuildForPluginRepositoryRequests()
     PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber))
     val compatibleUpdateExists = PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber)).isNotEmpty()
 

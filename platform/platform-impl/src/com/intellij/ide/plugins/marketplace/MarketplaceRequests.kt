@@ -3,8 +3,10 @@ package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
-import com.intellij.ide.plugins.PluginRepositoryRequests
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
 import com.intellij.util.io.HttpRequests
@@ -16,6 +18,19 @@ import java.io.IOException
 object MarketplaceRequests {
 
   private val mapper = ObjectMapper()
+
+  @JvmStatic
+  fun getBuildForPluginRepositoryRequests(): String {
+    val instance = ApplicationInfoImpl.getShadowInstance()
+    val compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild()
+    return if (compatibleBuild != null) {
+      BuildNumber.fromStringWithProductCode(
+        compatibleBuild,
+        instance.build.productCode
+      ).asString()
+    }
+    else instance.apiVersion
+  }
 
   @JvmStatic
   @Throws(IOException::class)
@@ -33,7 +48,7 @@ object MarketplaceRequests {
     val repoUrl = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl
     return newFromEncoded(
       repoUrl + "/api/search/plugins?" + query + "&build=" +
-      URLUtil.encodeURIComponent(PluginRepositoryRequests.getBuildForPluginRepositoryRequests()) + "&max=" + count
+      URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests()) + "&max=" + count
     )
   }
 }

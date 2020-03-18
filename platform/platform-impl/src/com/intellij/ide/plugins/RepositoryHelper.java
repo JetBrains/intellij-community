@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -103,7 +104,7 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(singletonMap("build", build != null ? build.asString() : PluginRepositoryRequests.getBuildForPluginRepositoryRequests()));
+      url = url.addParameters(singletonMap("build", build != null ? build.asString() : MarketplaceRequests.getBuildForPluginRepositoryRequests()));
     }
 
     if (indicator != null) {

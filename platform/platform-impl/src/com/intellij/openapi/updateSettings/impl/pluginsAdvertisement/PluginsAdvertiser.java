@@ -8,6 +8,7 @@ import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -57,7 +58,7 @@ public final class PluginsAdvertiser {
     Map<String, String> map = new HashMap<>();
     map.put("featureType", unknownFeature.getFeatureType());
     map.put("implementationName", unknownFeature.getImplementationName());
-    map.put("build", PluginRepositoryRequests.getBuildForPluginRepositoryRequests());
+    map.put("build", MarketplaceRequests.getBuildForPluginRepositoryRequests());
     return processFeatureRequest(map, request -> {
       JsonReader jsonReader = new JsonReader(request.getReader());
       jsonReader.setLenient(true);
