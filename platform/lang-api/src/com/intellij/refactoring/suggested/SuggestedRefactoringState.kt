@@ -13,8 +13,7 @@ private var nextFeatureUsageId = 0
 /**
  * Data class representing state of accumulated signature changes.
  */
-//TODO: drop data modifier
-data class SuggestedRefactoringState(
+class SuggestedRefactoringState(
   val declaration: PsiElement,
   val refactoringSupport: SuggestedRefactoringSupport,
   val errorLevel: ErrorLevel,
@@ -107,12 +106,7 @@ data class SuggestedRefactoringState(
     }
     return restoredDeclarationCopy!!
   }
-
-  @Deprecated("Use restoredDeclarationCopy()", ReplaceWith("restoredDeclarationCopy()"))
-  fun createRestoredDeclarationCopy(refactoringSupport: SuggestedRefactoringSupport): PsiElement {
-    return restoredDeclarationCopy()
-  }
-
+  
   private fun createRestoredDeclarationCopy(): PsiElement {
     val psiFile = declaration.containingFile
     val signatureRange = refactoringSupport.signatureRange(declaration)!!
