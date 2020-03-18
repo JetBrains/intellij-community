@@ -682,13 +682,8 @@ public class PluginManagerConfigurable
                   return;
                 }
 
-                Url url = PluginRepositoryRequests.createSearchUrl(parser.getUrlQuery(), 10000);
-                for (PluginId pluginId : PluginRepositoryRequests.requestToPluginRepository(url)) {
-                  IdeaPluginDescriptor descriptor = allRepositoriesMap.get(pluginId);
-                  if (descriptor != null) {
-                    result.descriptors.add(descriptor);
-                  }
-                }
+                List<PluginNode> plugins = MarketplaceRequests.searchPlugins(parser.getUrlQuery(), 10000);
+                result.descriptors.addAll(plugins);
 
                 if (parser.searchQuery != null) {
                   String builtinUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();

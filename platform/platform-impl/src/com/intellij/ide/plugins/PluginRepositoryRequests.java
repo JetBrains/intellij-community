@@ -1,17 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.google.gson.stream.JsonToken;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
@@ -19,8 +15,6 @@ import org.jetbrains.io.JsonUtil;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author yole
@@ -33,43 +27,6 @@ public class PluginRepositoryRequests {
       return BuildNumber.fromStringWithProductCode(compatibleBuild, instance.getBuild().getProductCode()).asString();
     }
     return instance.getApiVersion();
-  }
-
-  @NotNull
-  public static Url createSearchUrl(@NotNull String query, int count) {
-    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
-    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
-                               "&build=" + URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests()) +
-                               "&max=" + count);
-  }
-
-  @NotNull
-  public static List<PluginId> requestToPluginRepository(@NotNull Url url) throws IOException {
-    List<PluginId> ids = new ArrayList<>();
-
-    HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
-      URLConnection connection = request.getConnection();
-      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() != HttpURLConnection.HTTP_OK) {
-        return null;
-      }
-
-      try (JsonReaderEx json = new JsonReaderEx(FileUtil.loadTextAndClose(request.getReader()))) {
-        if (json.peek() == JsonToken.BEGIN_OBJECT) {
-          json.beginObject();
-          json.nextName(); // query
-          json.nextString(); // query value
-          json.nextName(); // suggestions
-        }
-        json.beginArray();
-        while (json.hasNext()) {
-          ids.add(PluginId.getId(json.nextString()));
-        }
-      }
-
-      return null;
-    });
-
-    return ids;
   }
 
   @Nullable
