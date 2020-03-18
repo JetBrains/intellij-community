@@ -58,12 +58,12 @@ class GitDeleteTagOperation extends GitBranchOperation {
         myDeletedTagTips.put(repository, revisionNumber.asString());
       }
       catch (VcsException e) {
-        String title = "";
+        String title;
         if (!GitUtil.justOneGitRepository(myProject)) {
-          title += GitBundle.message("delete.tag.operation.could.not.find.tag.in", repository.getPresentableUrl());
+          title = GitBundle.message("delete.tag.operation.could.not.find.tag.in", repository.getPresentableUrl());
         }
         else {
-          title += GitBundle.message("delete.tag.operation.could.not.find.tag", myTagName);
+          title = GitBundle.message("delete.tag.operation.could.not.find.tag", myTagName);
         }
         fatalError(title, "");
         return;
