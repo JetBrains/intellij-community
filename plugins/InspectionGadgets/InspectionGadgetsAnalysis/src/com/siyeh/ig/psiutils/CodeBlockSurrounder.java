@@ -3,6 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -11,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -128,6 +130,7 @@ public abstract class CodeBlockSurrounder {
    * @return the expression that replaced the original expression
    */
   public @NotNull CodeBlockSurrounder.SurroundResult surround() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     Object marker = new Object();
     PsiTreeUtil.mark(myExpression, marker);
     Project project = myExpression.getProject();
@@ -194,11 +197,8 @@ public abstract class CodeBlockSurrounder {
         if (parentContext != ParentContext.ASSIGNMENT && parentContext != ParentContext.RETURN) return null;
         return new TernaryToIfSurrounder(expression, (PsiConditionalExpression)parent, parentSurrounder);
       }
-      if (parent instanceof PsiMethodCallExpression) {
-        PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
-        if (methodExpression.textMatches("this") || methodExpression.textMatches("super")) {
-          return null;
-        }
+      if (JavaPsiConstructorUtil.isConstructorCall(parent)) {
+        return null;
       }
       cur = parent;
       parent = cur.getParent();
@@ -260,7 +260,7 @@ public abstract class CodeBlockSurrounder {
         .select(PsiLocalVariable.class)
         .map(PsiLocalVariable::getName)
         .nonNull()
-        .anyMatch(name -> helper.resolveReferencedVariable(name, context) != null);
+        .anyMatch(name -> helper.resolveAccessibleReferencedVariable(name, context) != null);
     }
     return false;
   }
