@@ -5,6 +5,7 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,9 @@ public class DecodeDefaultsUtil {
     if (url == null) {
       if (StringUtil.startsWithChar(componentResourcePath, '/')) {
         url = getResource(appendExt(componentResourcePath), requestor);
+        if (url == null && !(requestor instanceof UrlClassLoader)) {
+          url = getResource(appendExt(componentResourcePath.substring(1)), requestor);
+        }
       }
       else {
         url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
