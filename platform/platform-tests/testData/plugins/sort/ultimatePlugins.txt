@@ -179,14 +179,14 @@
 + -org-jetbrains-plugins-ruby-chef-
 + -org-jetbrains-settingsRepository-
 
-The Concurrency Visualiser (id=-org-jetbrains-python-concurrency-visualiser-, path=file:/out/intellij.python.concurrencyVisualizer/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
-The Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave) (id=-org-jetbrains-plugins-python-gherkin-, path=file:/out/intellij.python.gherkin/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
-The Python pytest-bdd support (id=-org-jetbrains-plugins-pytest-bdd-, path=file:/out/intellij.python.pytestBdd/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
-The Python pytest-bdd support (id=-org-jetbrains-plugins-pytest-bdd-, path=file:/out/intellij.python.pytestBdd/META-INF/plugin.xml) plugin requires "Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)" plugin to be enabled.
-The Python SSH Interpreter (id=-org-jetbrains-plugins-python-remote-interpreter-, path=file:/out/intellij.python.remoteInterpreter/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
-The Python WSL Support (id=-org-jetbrains-plugins-python-wsl-, path=file:/out/intellij.python.wsl/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
-The Python WSL Support (id=-org-jetbrains-plugins-python-wsl-, path=file:/out/intellij.python.wsl/META-INF/plugin.xml) plugin requires "Python SSH Interpreter" plugin to be enabled.
-The Jupyter Notebook (id=-org-jetbrains-plugins-notebooks-jupyter-, path=file:/out/intellij.python.jupyter/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm" plugin to be installed.
-The Python Docker (id=-org-jetbrains-plugins-python-docker-, path=file:/out/intellij.python.docker/META-INF/plugin.xml) plugin requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+Plugin "Concurrency Visualiser" requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+Plugin "Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)" requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+Plugin "Python pytest-bdd support" requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+Plugin "Python pytest-bdd support" requires "Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)" plugin to be enabled.
+Plugin "Python SSH Interpreter" requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+Plugin "Python WSL Support" requires "com.intellij.modules.pycharm.professional" plugin to be installed.
+Plugin "Python WSL Support" requires "Python SSH Interpreter" plugin to be enabled.
+Plugin "Jupyter Notebook" requires "com.intellij.modules.pycharm" plugin to be installed.
+Plugin "Python Docker" requires "com.intellij.modules.pycharm.professional" plugin to be installed.
 <br><a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>
