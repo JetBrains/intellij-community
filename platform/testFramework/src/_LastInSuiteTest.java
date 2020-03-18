@@ -123,7 +123,7 @@ public class _LastInSuiteTest extends TestCase {
 
   private static void unloadExtensionPoints(@NotNull Set<ExtensionPoint<?>> extensionPoints) {
     for (ExtensionPoint<?> ep : extensionPoints) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
+      WriteAction.runAndWait(() -> {
         ep.unregisterExtensions((a, b) -> false, false);
       });
     }
