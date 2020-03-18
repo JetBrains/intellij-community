@@ -18,6 +18,8 @@ class CircletIdeaContainerStepExecutionEntity(
     override var workerId: String? = null,
     override val services: List<ServiceExecutionData> = emptyList()
 ) : AContainerStepExecutionEntity {
+    override val metadata: MutableMap<String, Any> = hashMapOf()
+
     override fun equals(other: Any?): Boolean {
         return (other as? CircletIdeaContainerStepExecutionEntity)?.id == this.id
     }
