@@ -1610,9 +1610,9 @@ public final class PluginManagerCore {
     List<String> errors = new ArrayList<>(loadingResult.getErrors());
 
     if (loadingResult.duplicateModuleMap != null) {
-      loadingResult.duplicateModuleMap.forEach((id, values) -> {
-        errors.add("Module " + id + " is declared by plugins:\n  " + StringUtil.join(values, "\n  "));
-      });
+      for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry : loadingResult.duplicateModuleMap.entrySet()) {
+        errors.add("Module " + entry.getKey() + " is declared by plugins:\n  " + StringUtil.join(entry.getValue(), "\n  "));
+      }
     }
 
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
@@ -1871,7 +1871,7 @@ public final class PluginManagerCore {
       if (context == null) {
         context = loadDescriptors();
       }
-      Activity loadPluginsActivity = StartUpMeasurer.startActivity("plugin initialization");
+      Activity activity = StartUpMeasurer.startActivity("plugin initialization");
       PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode);
 
       ourPlugins = initResult.sortedPlugins;
@@ -1889,8 +1889,8 @@ public final class PluginManagerCore {
       ourLoadedPlugins = initResult.sortedEnabledPlugins;
       ourShadowedBundledPlugins = result.getShadowedBundledIds();
 
-      loadPluginsActivity.end();
-      loadPluginsActivity.setDescription("plugin count: " + ourLoadedPlugins.size());
+      activity.end();
+      activity.setDescription("plugin count: " + ourLoadedPlugins.size());
       logPlugins(initResult.sortedPlugins);
     }
     catch (ExtensionInstantiationException e) {
@@ -1918,8 +1918,7 @@ public final class PluginManagerCore {
     }
   }
 
-  @Nullable
-  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
+  public static @Nullable IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     if (id != null) {
       for (IdeaPluginDescriptor plugin : getPlugins()) {
         if (id == plugin.getPluginId()) {
@@ -1930,8 +1929,7 @@ public final class PluginManagerCore {
     return null;
   }
 
-  @Nullable
-  public static IdeaPluginDescriptor findPluginByModuleDependency(@NotNull PluginId id) {
+  public static @Nullable IdeaPluginDescriptor findPluginByModuleDependency(@NotNull PluginId id) {
     for (IdeaPluginDescriptor descriptor : getPlugins()) {
       if (descriptor instanceof IdeaPluginDescriptorImpl) {
         if (((IdeaPluginDescriptorImpl)descriptor).getModules().contains(id)) {
@@ -1946,9 +1944,8 @@ public final class PluginManagerCore {
     return getPlugin(id) != null;
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap() {
+  public static @NotNull Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap() {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred();
     return buildPluginIdMap(Arrays.asList(ourPlugins));
   }
@@ -2016,12 +2013,11 @@ public final class PluginManagerCore {
     return true;
   }
 
-  @NotNull
-   private static List<IdeaPluginDescriptorImpl> getOnlyEnabledPlugins(IdeaPluginDescriptorImpl[] sortedAll) {
-     List<IdeaPluginDescriptorImpl> enabledPlugins = new ArrayList<>(sortedAll.length);
-     for (IdeaPluginDescriptorImpl descriptor : sortedAll) {
-       if (descriptor.isEnabled()) {
-         enabledPlugins.add(descriptor);
+  private static @NotNull List<IdeaPluginDescriptorImpl> getOnlyEnabledPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull[] sortedAll) {
+    List<IdeaPluginDescriptorImpl> enabledPlugins = new ArrayList<>(sortedAll.length);
+    for (IdeaPluginDescriptorImpl descriptor : sortedAll) {
+      if (descriptor.isEnabled()) {
+        enabledPlugins.add(descriptor);
        }
      }
      return enabledPlugins;

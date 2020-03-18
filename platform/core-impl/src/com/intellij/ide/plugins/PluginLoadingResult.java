@@ -16,8 +16,7 @@ import java.util.*;
 @ApiStatus.Internal
 final class PluginLoadingResult {
   final Map<PluginId, Set<String>> brokenPluginVersions;
-  @NotNull
-  final BuildNumber productBuildNumber;
+  @NotNull final BuildNumber productBuildNumber;
 
   final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = ContainerUtil.newConcurrentMap();
 
@@ -27,8 +26,7 @@ final class PluginLoadingResult {
   // only read is concurrent, write from the only thread
   final Map<PluginId, IdeaPluginDescriptorImpl> idMap = ContainerUtil.newConcurrentMap();
 
-  @Nullable
-  Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
+  @Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
   private final Map<PluginId, String> errors = ContainerUtil.newConcurrentMap();
 
@@ -68,8 +66,7 @@ final class PluginLoadingResult {
     this.enabledPlugins = Arrays.asList(enabledPlugins);
   }
 
-  @NotNull
-  List<String> getErrors() {
+  @NotNull List<String> getErrors() {
     if (errors.isEmpty()) {
       return Collections.emptyList();
     }

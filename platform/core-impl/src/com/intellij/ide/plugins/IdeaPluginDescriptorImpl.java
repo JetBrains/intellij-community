@@ -398,8 +398,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return false;
   }
 
-  @NotNull
-  String formatErrorMessage(@NotNull String message) {
+  @NotNull String formatErrorMessage(@NotNull String message) {
     String path = myPath.toString();
     StringBuilder builder = new StringBuilder();
     builder.append("The ").append(myName).append(" (id=").append(myId).append(", path=");
