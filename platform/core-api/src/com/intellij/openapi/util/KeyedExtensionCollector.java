@@ -60,7 +60,9 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   protected void invalidateCacheForExtension(String key) {
-    myCache.remove(key);
+    if (key != null) {
+      myCache.remove(key);
+    }
     myTracker.incModificationCount();
   }
 
