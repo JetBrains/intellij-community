@@ -20,6 +20,7 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
+import com.intellij.pom.wrappers.PsiEventWrapperAspect;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
@@ -32,6 +33,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,7 +54,19 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private final Collection<PomModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public PomModelImpl(@NotNull Project project) {
+    this(project, null);
+  }
+
+  @NonInjectable
+  protected PomModelImpl(@NotNull Project project, @Nullable PomModelAspect extraAspect) {
     myProject = project;
+
+    TreeAspect treeAspect = TreeAspect.getInstance(project);
+    registerAspect(TreeAspect.class, treeAspect, null);
+    if (extraAspect != null) {
+      registerAspect(extraAspect.getClass(), extraAspect, treeAspect);
+    }
+    registerAspect(PsiEventWrapperAspect.class, new PsiEventWrapperAspect(treeAspect), treeAspect);
   }
 
   @Override
@@ -61,13 +75,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     return (T)myAspects.get(aClass);
   }
 
-  @Override
-  public void registerAspect(@NotNull Class<? extends PomModelAspect> aClass, @NotNull PomModelAspect aspect, @NotNull Set<? extends PomModelAspect> dependencies) {
+  private void registerAspect(@NotNull Class<? extends PomModelAspect> aClass, @NotNull PomModelAspect aspect, @Nullable PomModelAspect dependency) {
     myAspects.put(aClass, aspect);
     final List<PomModelAspect> deps = new ArrayList<>();
-    // todo: reorder dependencies
-    for (PomModelAspect depend : dependencies) {
-      deps.addAll(getAllDependencies(depend));
+    if (dependency != null) {
+      deps.addAll(getAllDependencies(dependency));
     }
     deps.add(aspect); // add self to block same aspect transactions from event processing and update
     for (final PomModelAspect pomModelAspect : deps) {

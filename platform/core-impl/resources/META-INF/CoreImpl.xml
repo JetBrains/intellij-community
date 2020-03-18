@@ -61,12 +61,7 @@
                     serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
                     serviceImplementation="com.intellij.psi.impl.BlockSupportImpl"/>
+    <!-- must be a service because KotlinCodeBlockModificationListener requests it via constructor injection -->
+    <projectService serviceImplementation="com.intellij.pom.tree.TreeAspect"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-  </project-components>
 </idea-plugin>
