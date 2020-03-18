@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -44,7 +45,6 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
   @Nullable
   private Project myProject;
   private @Nullable Sdk myProjectJdk;
-  private boolean suggestJre = true;
 
   public ExternalSystemJdkComboBox() {
     this(null);
@@ -168,9 +168,13 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     return jdk;
   }
 
-  @NotNull
-  public ExternalSystemJdkComboBox withoutJre() {
-    suggestJre = false;
+
+  /**
+   * @deprecated because it do nothing
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public @NotNull ExternalSystemJdkComboBox withoutJre() {
     return this;
   }
 
@@ -181,7 +185,10 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
   public void refreshData(@Nullable String selectedValue, @Nullable Sdk projectJdk) {
     myProjectJdk = projectJdk;
     Map<String, JdkComboBoxItem> jdkMap = collectComboBoxItem();
-    if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
+    if (ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(selectedValue)) {
+      jdkMap.put(selectedValue, getInternalJdkItem());
+    }
+    else if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
       assert selectedValue.length() > 0;
       jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, "", false));
     }
@@ -193,21 +200,37 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
       ((MutableComboBoxModel<JdkComboBoxItem>)comboBoxModel).addElement(entry.getValue());
     }
 
-    select(comboBoxModel, selectedValue);
+    select(selectedValue);
   }
 
   @ApiStatus.Experimental
-  public static void select(@NotNull ComboBoxModel<? extends JdkComboBoxItem> model, @Nullable String value) {
+  public void select(@Nullable String selectedValue) {
+    ComboBoxModel<JdkComboBoxItem> model = getModel();
     for (int i = 0; i < model.getSize(); i++) {
       JdkComboBoxItem item = model.getElementAt(i);
-      if (item.jdkName.equals(value)) {
+      if (item.jdkName.equals(selectedValue)) {
         model.setSelectedItem(item);
         return;
       }
     }
+    if (ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(selectedValue)) {
+      JdkComboBoxItem item = getInternalJdkItem();
+      ((MutableComboBoxModel<JdkComboBoxItem>)model).addElement(item);
+    }
     if (model.getSize() != 0) {
       model.setSelectedItem(model.getElementAt(0));
     }
+  }
+
+  private static JdkComboBoxItem getInternalJdkItem() {
+    ExternalSystemJdkProvider jdkProvider = ExternalSystemJdkProvider.getInstance();
+    Sdk internalJdk = jdkProvider.getInternalJdk();
+    return new JdkComboBoxItem(
+      ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
+      ExternalSystemBundle.message("external.system.java.internal.jre"),
+      buildComment(internalJdk),
+      true
+    );
   }
 
   @Nullable
@@ -228,19 +251,6 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
       String name = sdk.getName();
       String comment = buildComment(sdk);
       result.put(name, new JdkComboBoxItem(name, name, comment, true));
-    }
-
-    if (suggestJre) {
-      final Sdk internalJdk = ExternalSystemJdkUtil.getJdk(null, ExternalSystemJdkUtil.USE_INTERNAL_JAVA);
-      assert internalJdk != null;
-      assert internalJdk.getHomePath() != null;
-      result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-                 new JdkComboBoxItem(
-                   ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
-                   ExternalSystemBundle.message("external.system.java.internal.jre"),
-                   buildComment(internalJdk),
-                   true
-                 ));
     }
 
     if (myProjectJdk == null) {
