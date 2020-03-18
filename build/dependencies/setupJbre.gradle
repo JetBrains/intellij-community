@@ -1,7 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import org.gradle.internal.os.OperatingSystem
-
-import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 task setupJbre()
@@ -9,8 +6,8 @@ task setupJbre()
 def targetOs = System.getProperty("intellij.build.target.os", "all")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
-def jrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
-jbrTasks(jreBuild, jreVersion, targetOs, jrePrefix)
+def forcedPrefix = System.getProperty("intellij.build.bundled.jre.prefix")
+jbrTasks(jreBuild, jreVersion, targetOs, forcedPrefix)
 
 /**
  * Update this method together with:
@@ -36,14 +33,15 @@ static def splitJbrBuild(String jreBuild, String version) {
   }
 }
 
-def jbrTasks(String defaultBuild, int version, String targetOs, String prefix = null) {
-  if (prefix == null) prefix = 'jbr-'
+def jbrTasks(String defaultBuild, int version, String targetOs, String forcedPrefix) {
   platformsToDownload(targetOs).each { platform ->
     archToDownload(platform).each { arch ->
-      def jbrBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
-      def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), version.toString())
-      def jbrArtifactName = "$prefix$update-$platform-$arch-$buildNumber"
-      downloadJbrTask(jbrArtifactName, jbrBuild.toString())
+      prefixes(arch, forcedPrefix).each { prefix ->
+        def jbrBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
+        def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), version.toString())
+        def jbrArtifactName = "$prefix$update-$platform-$arch-$buildNumber"
+        downloadJbrTask(jbrArtifactName, jbrBuild.toString())
+      }
     }
   }
 }
@@ -75,52 +73,6 @@ def downloadJbrTask(String artifactName, String build) {
   file(outputFile)
 }
 
-def untarJbrTask(File downloadOutputs, String taskName) {
-  Task untar
-  if (OperatingSystem.current().isWindows()) {
-    // note: tarTree extracts symlinks as 0 length files which breaks osx distributions
-    untar = task("untar$taskName", type: Copy, dependsOn: "download$taskName") {
-      from tarTree(downloadOutputs)
-      into { "${downloadOutputs.parent}/${downloadOutputs.name - '.tar.gz'}/" }
-      includeEmptyDirs = false
-    }
-  }
-  else {
-    untar = task("untar$taskName", type: Exec, dependsOn: "download$taskName") {
-      def outputDir = "${downloadOutputs.absolutePath - '.tar.gz'}"
-      inputs.file(downloadOutputs)
-      outputs.dir(outputDir)
-      doFirst { exec { commandLine 'mkdir', '-p', outputDir } }
-      commandLine 'tar', '-xpf', "${downloadOutputs.absolutePath}", '--directory', outputDir
-    }
-  }
-  cleanSetupJbre.dependsOn("cleanUntar$taskName")
-  untar
-}
-
-def tarJbrTask(String taskName, Task untarTask, String archive) {
-  def dirToTar = 'jbr'
-  def untarOutputs = untarTask.outputs.files
-  if (OperatingSystem.current().isWindows()) {
-    task(taskName, type: Tar) {
-      inputs.files(untarOutputs)
-      from "$untarOutputs.singleFile/$dirToTar"
-      into dirToTar
-      compression = Compression.GZIP
-      archiveFileName = "${archive}.tar.gz"
-      destinationDirectory = untarOutputs.singleFile.parentFile
-    }
-  }
-  else {
-    task(taskName, type: Exec) {
-      def outputFile = "${untarOutputs.singleFile.parentFile}/${archive}.tar.gz"
-      inputs.files(untarOutputs)
-      outputs.file(outputFile)
-      commandLine = ['tar', '-czf', outputFile, '-C', untarOutputs.singleFile.absolutePath, dirToTar]
-    }
-  }
-}
-
 // see org.jetbrains.intellij.build.BuildOptions.targetOS
 static def platformsToDownload(targetOs) {
   Set<String> jrePlatformToDownload = []
@@ -130,6 +82,26 @@ static def platformsToDownload(targetOs) {
   jrePlatformToDownload
 }
 
+enum Arch {
+  x86, x64
+}
+
 static def archToDownload(platform) {
-  platform != 'osx' ? ['x86', 'x64'] : ['x64']
+  platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64]
+}
+
+/**
+ * Update this method together with:
+ *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
+ */
+static def prefixes(Arch arch, String forcedPrefix) {
+  if (forcedPrefix != null) {
+    [forcedPrefix]
+  }
+  else if (arch == Arch.x86) {
+    ['jbr-']
+  }
+  else {
+    ['jbr-', 'jbr_jcef-', 'jbr_jfx-']
+  }
 }
