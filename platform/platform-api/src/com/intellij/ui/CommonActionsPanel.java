@@ -31,31 +31,31 @@ public class CommonActionsPanel extends JPanel {
   public enum Buttons {
     ADD(IconUtil.getAddIcon(), UIBundle.messagePointer("button.text.add")) {
       @Override
-      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new AddButton(listener, name == null ? getText() : name, icon);
       }
     },
     REMOVE(IconUtil.getRemoveIcon(), UIBundle.messagePointer("button.text.remove")) {
       @Override
-      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new RemoveButton(listener, name == null ? getText() : name, icon);
       }
     },
     EDIT(IconUtil.getEditIcon(), UIBundle.messagePointer("button.text.edit")) {
       @Override
-      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new EditButton(listener, name == null ? getText() : name, icon);
       }
     },
     UP(IconUtil.getMoveUpIcon(), UIBundle.messagePointer("button.text.up")) {
       @Override
-      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new UpButton(listener, name == null ? getText() : name, icon);
       }
     },
     DOWN(IconUtil.getMoveDownIcon(), UIBundle.messagePointer("button.text.down")) {
       @Override
-      @NotNull MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
+      @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new DownButton(listener, name == null ? getText() : name, icon);
       }
     };
@@ -73,8 +73,7 @@ public class CommonActionsPanel extends JPanel {
       return myIcon;
     }
 
-    @NotNull
-    abstract MyActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon);
+    abstract @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon);
 
     @NotNull
     public String getText() {
@@ -99,7 +98,7 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  private final Map<Buttons, MyActionButton> myButtons = new HashMap<>();
+  private final Map<Buttons, AnActionButton> myButtons = new HashMap<>();
   private final AnActionButton[] myActions;
   private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 
@@ -121,7 +120,7 @@ public class CommonActionsPanel extends JPanel {
         case UP:     name = moveUpName;   break;
         case DOWN:   name = moveDownName; break;
       }
-      final MyActionButton b = button.createButton(listener, name, button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon());
+      AnActionButton b = button.createButton(listener, name, button == Buttons.ADD && addIcon != null ? addIcon : button.getIcon());
       actions[i] = b;
       myButtons.put(button, b);
     }
@@ -240,7 +239,7 @@ public class CommonActionsPanel extends JPanel {
   }
 
   public void setEnabled(Buttons button, boolean enabled) {
-    final MyActionButton b = myButtons.get(button);
+    AnActionButton b = myButtons.get(button);
     if (b != null) {
       b.setEnabled(enabled);
     }
