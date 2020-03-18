@@ -32,7 +32,6 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 @ApiStatus.Experimental
 public class JBCefBrowser implements JBCefDisposable {
   private static final String BLANK_URI = "about:blank";
-  protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
 
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
@@ -131,25 +130,9 @@ public class JBCefBrowser implements JBCefDisposable {
     myCefClient.addContextMenuHandler(myDefaultContextMenuHandler, this.getCefBrowser());
   }
 
-  protected CefContextMenuHandlerAdapter createDefaultContextMenuHandler() {
+  protected DefaultCefContextMenuHandler createDefaultContextMenuHandler() {
     boolean isInternal = ApplicationManager.getApplication().isInternal();
-    return new CefContextMenuHandlerAdapter() {
-      @Override
-      public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
-        if (isInternal) {
-          model.addItem(DEBUG_COMMAND_ID, "Open DevTools");
-        }
-      }
-
-      @Override
-      public boolean onContextMenuCommand(CefBrowser browser, CefFrame frame, CefContextMenuParams params, int commandId, int eventFlags) {
-        if (commandId == DEBUG_COMMAND_ID) {
-          openDevtools();
-          return true;
-        }
-        return false;
-      }
-    };
+    return new DefaultCefContextMenuHandler(isInternal);
   }
 
   /**
@@ -276,6 +259,31 @@ public class JBCefBrowser implements JBCefDisposable {
   protected static JBCefBrowser getJBCefBrowser(CefBrowser browser) {
     if (browser == null) return null;
     return ((MyComponent)browser.getUIComponent().getParent()).getJBCefBrowser();
+  }
+
+  protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
+    protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
+    private final boolean isInternal;
+
+    public DefaultCefContextMenuHandler(boolean isInternal) {
+      this.isInternal = isInternal;
+    }
+
+    @Override
+    public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
+      if (isInternal) {
+        model.addItem(DEBUG_COMMAND_ID, "Open DevTools");
+      }
+    }
+
+    @Override
+    public boolean onContextMenuCommand(CefBrowser browser, CefFrame frame, CefContextMenuParams params, int commandId, int eventFlags) {
+      if (commandId == DEBUG_COMMAND_ID) {
+        openDevtools();
+        return true;
+      }
+      return false;
+    }
   }
 
   private class MyComponent extends JPanel {
