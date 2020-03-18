@@ -32,7 +32,7 @@ fun IndexDataGetter.match(root: VirtualFile,
   return result
 }
 
-private const val suffixStart = "cherry picked from commit"
+private const val suffixStart = "cherry picked from commit" //NON-NLS
 private val suffixPattern = Pattern.compile("$suffixStart.*\\)")
 
 private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
