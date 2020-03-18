@@ -30,12 +30,24 @@ import com.intellij.util.ui.JBUI.Borders.merge
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.commit.CommitWorkflowManager.Companion.setCommitFromLocalChanges
+import com.intellij.vcs.commit.NonModalCommitPromoter.Companion.getPromotionState
+import com.intellij.vcs.commit.NonModalCommitPromotionState.*
+import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logPromotionEvent
 import java.awt.Color
 import javax.swing.JComponent
 
-private const val DONT_SHOW_AGAIN_KEY = "NonModalCommitPromoter.DontShowAgain"
-private fun isDontShowAgain(): Boolean = PropertiesComponent.getInstance().isTrueValue(DONT_SHOW_AGAIN_KEY)
-private fun setDontShowAgain() = PropertiesComponent.getInstance().setValue(DONT_SHOW_AGAIN_KEY, true)
+private const val PROMOTION_STATE_KEY = "NonModalCommitPromotionState"
+private fun isDontShowAgain(): Boolean = getPromotionState().let { it == ACCEPTED || it == REJECTED }
+private fun setPromotionState(value: NonModalCommitPromotionState) {
+  PropertiesComponent.getInstance().setValue(PROMOTION_STATE_KEY, value.name)
+  logPromotionEvent(value)
+}
+
+internal enum class NonModalCommitPromotionState {
+  SHOWN,
+  ACCEPTED,
+  REJECTED
+}
 
 @Service
 internal class NonModalCommitPromoter(private val project: Project) {
@@ -46,11 +58,23 @@ internal class NonModalCommitPromoter(private val project: Project) {
     if (isDontShowAgain()) return null
     if (commitWorkflowManager.run { !canSetNonModal() || isNonModal() }) return null
 
+    setPromotionState(SHOWN)
     return NonModalCommitPromotionPanel(commitDialog)
   }
 
   companion object {
     fun getInstance(project: Project): NonModalCommitPromoter = project.service()
+
+    fun getPromotionState(): NonModalCommitPromotionState? {
+      val value = PropertiesComponent.getInstance().getValue(PROMOTION_STATE_KEY) ?: return null
+
+      return try {
+        enumValueOf<NonModalCommitPromotionState>(value)
+      }
+      catch (e: IllegalArgumentException) {
+        null
+      }
+    }
   }
 }
 
@@ -74,7 +98,7 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
   private fun createSwitchAction(): JComponent =
     HyperlinkLabel(message("non.modal.commit.promoter.use.non.modal.action.text")).apply {
       addHyperlinkListener {
-        setDontShowAgain()
+        setPromotionState(ACCEPTED)
         commitDialog.doCancelAction()
 
         setCommitFromLocalChanges(true)
@@ -93,7 +117,7 @@ private class NonModalCommitPromotionPanel(private val commitDialog: DefaultComm
         AllIcons.Actions.CloseHovered
       )
     ) {
-      setDontShowAgain()
+      setPromotionState(REJECTED)
       this@NonModalCommitPromotionPanel.isVisible = false
     }
 }
