@@ -246,7 +246,7 @@ def set_trace_to_threads(tracing_func):
                 ctypes.py_object(None),
             )
             if result != 0:
-                pydev_log.info('Unable to set tracing for existing threads. Result: %s', result)
+                pydev_log.info('Unable to set tracing for existing threads. Result: %s' % result)
                 ret = result
     finally:
         if not IS_PY37_OR_GREATER:
