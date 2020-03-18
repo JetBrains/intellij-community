@@ -2,7 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.DumbModeNotifier;
+import com.intellij.codeInsight.completion.EmptyCompletionNotifier;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -19,13 +19,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
@@ -33,6 +32,7 @@ import java.util.stream.Stream;
 
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
+  private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
 
   private LightEditUtil() {
   }
@@ -122,32 +122,22 @@ public final class LightEditUtil {
 
   @ApiStatus.Internal
   @NotNull
-  public static DumbModeNotifier createDumbModeCompletionNotifier() {
-    return new DumbModeNotifier() {
+  public static EmptyCompletionNotifier createEmptyCompletionNotifier() {
+    return new EmptyCompletionNotifier() {
       @Override
-      public String getIncompleteMessageSuffix() {
-        return CodeInsightBundle.message("completion.incomplete.light.edit.suffix");
-      }
-
-      @Override
-      public void showIncompleteHint(@NotNull Editor editor, @NotNull String text) {
+      public void showIncompleteHint(@NotNull Editor editor, @NotNull String text, boolean isDumbMode) {
         HintManager.getInstance().showInformationHint(
-          editor, escapeXmlWithoutLink(text),
-          new HyperlinkListener() {
-            @Override
-            public void hyperlinkUpdate(HyperlinkEvent e) {
+          editor,
+          StringUtil.escapeXmlEntities(text) + CodeInsightBundle.message("completion.incomplete.light.edit.suffix", OPEN_FILE_IN_PROJECT_HREF),
+          e -> {
+            if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())
+                && OPEN_FILE_IN_PROJECT_HREF.equals(e.getDescription())) {
               VirtualFile file = LightEditService.getInstance().getSelectedFile();
               if (file != null) {
                 LightEditOpenInProjectIntention.performOn(file);
               }
             }
           });
-      }
-
-      private String escapeXmlWithoutLink(@NotNull String text) {
-        int linkPos = text.indexOf("<a href=");
-        if (linkPos < 0) linkPos = text.length();
-        return StringUtil.escapeXmlEntities(text.substring(0, linkPos)) + text.substring(linkPos);
       }
     };
   }
