@@ -1,7 +1,7 @@
 class OverridableMethodCallDuringObjectConstruction {
   {
     a();
-    <warning descr="Call to overridable method 'b()' during object construction">b</warning>();
+    b();
     c();
     d();
   }
@@ -12,11 +12,11 @@ class OverridableMethodCallDuringObjectConstruction {
   public final void d() {}
 }
 class One {
-  public void a() {}
+  public final void a() {}
 }
 class Two extends One {
   Two() {
-    <warning descr="Call to overridable method 'a()' during object construction"><caret>a</warning>();
+    a();
   }
 }
 class A implements Cloneable {

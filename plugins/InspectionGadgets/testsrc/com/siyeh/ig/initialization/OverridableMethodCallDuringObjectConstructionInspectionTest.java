@@ -13,6 +13,7 @@ public class OverridableMethodCallDuringObjectConstructionInspectionTest extends
 
   public void testOverridableMethodCallDuringObjectConstruction() {
     doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("make.method.final.fix.name", "a"));
   }
 
   public void testNoQuickFixes() {
