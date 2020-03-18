@@ -55,7 +55,7 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
   }
 
   private void addListener(VirtualFile virtualFile) {
-    if (virtualFile instanceof VirtualFileWindow) return;
+    if (virtualFile instanceof VirtualFileWindow || !virtualFile.isValid()) return;
     PsiJavaFile psiFile = tryCast(PsiManager.getInstance(myProject).findFile(virtualFile), PsiJavaFile.class);
     if (psiFile == null) return;
     Document document = getDocument(virtualFile);
@@ -66,7 +66,7 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
   }
 
   private void removeListener(VirtualFile virtualFile) {
-    if (virtualFile == null || virtualFile instanceof VirtualFileWindow) return;
+    if (virtualFile == null || virtualFile instanceof VirtualFileWindow || !virtualFile.isValid()) return;
     if (!(PsiManager.getInstance(myProject).findFile(virtualFile) instanceof PsiJavaFile)) return;
     Document document = getDocument(virtualFile);
     if (document == null) return;
