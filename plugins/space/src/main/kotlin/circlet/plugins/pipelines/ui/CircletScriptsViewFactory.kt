@@ -128,19 +128,19 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
             }
         }
 
-        val runAction = object : DumbAwareActionButton(ExecutionBundle.message("run.configurable.display.name"), AllIcons.RunConfigurations.TestState.Run) {
-            override fun actionPerformed(e: AnActionEvent) {
-                if (modelBuilder.script.value?.state?.value == ScriptState.Building) {
-                    return
-                }
-                val selectedNode = viewModel.selectedNode.value ?: return
-                if (!selectedNode.isRunnable) {
-                    return
-                }
-                val taskName = selectedNode.userObject
-                CircletRunConfigurationUtils.run(taskName.toString(), project)
-            }
-        }
+//        val runAction = object : DumbAwareActionButton(ExecutionBundle.message("run.configurable.display.name"), AllIcons.RunConfigurations.TestState.Run) {
+//            override fun actionPerformed(e: AnActionEvent) {
+//                if (modelBuilder.script.value?.state?.value == ScriptState.Building) {
+//                    return
+//                }
+//                val selectedNode = viewModel.selectedNode.value ?: return
+//                if (!selectedNode.isRunnable) {
+//                    return
+//                }
+//                val taskName = selectedNode.userObject
+//                CircletRunConfigurationUtils.run(taskName.toString(), project)
+//            }
+//        }
 
         val expandAllAction = object : DumbAwareActionButton(IdeBundle.message("action.expand.all"), AllIcons.Actions.Expandall) {
             override fun actionPerformed(e: AnActionEvent) {
@@ -174,7 +174,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
             val smthIsRunning = modelBuilder.script.value?.state?.value == ScriptState.Building || viewModel.taskIsRunning.value
             val isSelectedNodeRunnable = viewModel.selectedNode.value?.isRunnable ?: false
             refreshAction.isEnabled = !smthIsRunning
-            runAction.isEnabled = !smthIsRunning && isSelectedNodeRunnable
+//            runAction.isEnabled = !smthIsRunning && isSelectedNodeRunnable
         }
 
         viewModel.selectedNode.forEach(lifetime) {
@@ -194,7 +194,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         val panel = ToolbarDecorator
             .createDecorator(tree)
             .addExtraAction(refreshAction)
-            .addExtraAction(runAction)
+//            .addExtraAction(runAction)
             .addExtraAction(expandAllAction)
             .addExtraAction(collapseAllAction)
             .addExtraAction(showExtendedInfoAction)
@@ -278,7 +278,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         infoText.alignmentX = Component.CENTER_ALIGNMENT
         panel.add(infoText)
 
-        val createDslLink = LinkLabel.create("Add automation DSL script") {
+        val createDslLink = LinkLabel.create("Add automation script") {
             val basePath = project.basePath
             if (basePath != null) {
                 val baseDirFile = LocalFileSystem.getInstance().findFileByPath(basePath)
@@ -287,7 +287,13 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
                     application.runWriteAction {
                         val file = baseDirFile.createChildData(this, DefaultDslFileName)
                         val newLine = System.getProperty("line.separator", "\n")
-                        val newFileContent = "//todo add link to help/tutorial${newLine}job(\"My First Task\") {$newLine  container(\"hello-world\")$newLine}"
+                        val newFileContent =
+                            "// Write your automation script $newLine" +
+                            "// Once the script is ready, commit the changes to the repository $newLine" +
+                            "// Use full DSL reference when needed https://jetbrains.team/help/space/automation-dsl.html $newLine" +
+                            "job(\"My First Job\") {$newLine  " +
+                                "container(\"hello-world\")$newLine" +
+                                "}"
                         VfsUtil.saveText(file, newFileContent)
                         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true)
                     }
