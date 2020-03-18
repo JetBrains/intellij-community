@@ -24,6 +24,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -217,7 +218,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   @NotNull
   private Sdk getJdk() {
     if (myState.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
       if (!StringUtil.isEmptyOrSpaces(javaHome)) {
         return JavaSdk.getInstance().createJdk("", javaHome);
       }

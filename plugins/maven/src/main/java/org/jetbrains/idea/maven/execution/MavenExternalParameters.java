@@ -29,6 +29,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -357,7 +358,7 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }
