@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -92,7 +93,8 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         it.componentCount == 0 &&
         it.unspecifiedDynamicEPs.isEmpty() &&
         it.nonDynamicEPs.isEmpty() &&
-        it.nonDynamicEPsInDependencies.isEmpty()
+        it.nonDynamicEPsInDependencies.isEmpty() &&
+        it.serviceOverrides.isEmpty()
       }
       appendln("Can unload ${unloadablePlugins.size} plugins out of ${result.size}")
       for (status in unloadablePlugins) {
@@ -107,11 +109,19 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
       appendln()
 
+      val pluginsUsingServiceOverrides = result.filter { it.serviceOverrides.isNotEmpty() }.sortedByDescending { it.serviceOverrides.size }
+      appendln("Plugins using service overrides (${pluginsUsingServiceOverrides.size}):")
+      for (status in pluginsUsingServiceOverrides) {
+        appendln("${status.pluginId} (${status.serviceOverrides.joinToString()})")
+      }
+      appendln()
+
       val pluginsWithOptionalDependencies = result.filter {
         it.componentCount == 0 &&
         it.unspecifiedDynamicEPs.isEmpty() &&
         it.nonDynamicEPs.isEmpty() &&
-        it.nonDynamicEPsInDependencies.isNotEmpty()
+        it.nonDynamicEPsInDependencies.isNotEmpty() &&
+        it.serviceOverrides.isEmpty()
       }
       appendln("Plugins not unloadable because of optional dependencies (${pluginsWithOptionalDependencies.size}):")
       for (status in pluginsWithOptionalDependencies) {
@@ -176,7 +186,8 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     val unspecifiedDynamicEPs = mutableSetOf<String>()
     val nonDynamicEPs = mutableSetOf<String>()
     val analysisErrors = mutableListOf<String>()
-    var componentCount = analyzePluginFile(ideaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners, true)
+    val serviceOverrides = mutableListOf<String>()
+    var componentCount = analyzePluginFile(ideaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, extensionPointOwners, true)
 
     for (dependency in ideaPlugin.dependencies) {
       val configFileName = dependency.configFile.stringValue ?: continue
@@ -185,10 +196,11 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
         continue
       }
-      componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, extensionPointOwners, true)
+      componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, extensionPointOwners, true)
     }
 
     val nonDynamicEPsInOptionalDependencies = mutableMapOf<String, MutableSet<String>>()
+    val serviceOverridesInDependencies = mutableListOf<String>()
     for (descriptor in allPlugins.mapNotNull { DescriptorUtil.getIdeaPlugin(it) }) {
       for (dependency in descriptor.dependencies) {
         if (dependency.optional.value == true && dependency.value == ideaPlugin) {
@@ -200,7 +212,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             continue
           }
           val nonDynamicEPsInDependency = mutableSetOf<String>()
-          analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPsInDependency, nonDynamicEPsInDependency, extensionPointOwners, false)
+          analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPsInDependency, nonDynamicEPsInDependency, serviceOverridesInDependencies, extensionPointOwners, false)
           if (nonDynamicEPsInDependency.isNotEmpty()) {
             nonDynamicEPsInOptionalDependencies[descriptor.pluginId ?: "<unknown>"] = nonDynamicEPsInDependency
           }
@@ -210,7 +222,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
 
     return PluginUnloadabilityStatus(
       ideaPlugin.pluginId ?: "?",
-      unspecifiedDynamicEPs, nonDynamicEPs, nonDynamicEPsInOptionalDependencies, componentCount, analysisErrors
+      unspecifiedDynamicEPs, nonDynamicEPs, nonDynamicEPsInOptionalDependencies, componentCount, serviceOverrides, analysisErrors
     )
   }
 
@@ -229,6 +241,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
                                 analysisErrors: MutableList<String>,
                                 nonDynamicEPs: MutableSet<String>,
                                 unspecifiedDynamicEPs: MutableSet<String>,
+                                serviceOverrides: MutableList<String>,
                                 extensionPointOwners: ExtensionPointOwners,
                                 allowOwnEPs: Boolean): Int {
     for (extension in ideaPlugin.extensions.flatMap { it.collectExtensions() }) {
@@ -246,6 +259,13 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         false -> nonDynamicEPs.add(ep.effectiveQualifiedName)
         null -> unspecifiedDynamicEPs.add(ep.effectiveQualifiedName)
       }
+
+      if ((ep.effectiveQualifiedName == "com.intellij.applicationService" ||
+           ep.effectiveQualifiedName == "com.intellij.projectService" ||
+           ep.effectiveQualifiedName == "com.intellij.moduleService") &&
+          extension.xmlTag.getAttributeValue("overrides") == "true") {
+        serviceOverrides.add(extension.xmlTag.getAttributeValue("serviceInterface") ?: "<unknown>")
+      }
     }
     val componentCount = ideaPlugin.applicationComponents.flatMap { it.components }.size +
                          ideaPlugin.projectComponents.flatMap { it.components }.size +
@@ -260,6 +280,7 @@ private data class PluginUnloadabilityStatus(
   val nonDynamicEPs: Set<String>,
   val nonDynamicEPsInDependencies: Map<String, Set<String>>,
   val componentCount: Int,
+  val serviceOverrides: List<String>,
   val analysisErrors: List<String>
 )
 

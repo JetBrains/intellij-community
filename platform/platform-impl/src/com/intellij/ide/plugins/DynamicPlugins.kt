@@ -176,7 +176,7 @@ object DynamicPlugins {
       }
     }
 
-    if (!hasNoComponents(descriptor)) return false
+    if (!hasNoComponentsOrServiceOverrides(descriptor)) return false
     if (!((ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(descriptor))) return false
 
     descriptor.optionalConfigs?.forEach { (pluginId, optionalDescriptors) ->
@@ -261,15 +261,25 @@ object DynamicPlugins {
         it.key == BundledKeymapBean.EP_NAME.name}) {
       return false
     }
-    return hasNoComponents(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
+    return hasNoComponentsOrServiceOverrides(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
   }
 
-  private fun hasNoComponents(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean =
-    isUnloadSafe(pluginDescriptor.appContainerDescriptor) &&
-    isUnloadSafe(pluginDescriptor.projectContainerDescriptor) &&
-    isUnloadSafe(pluginDescriptor.moduleContainerDescriptor)
+  private fun hasNoComponentsOrServiceOverrides(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean =
+    hasNoComponentsOrServiceOverrides(pluginDescriptor.appContainerDescriptor) &&
+    hasNoComponentsOrServiceOverrides(pluginDescriptor.projectContainerDescriptor) &&
+    hasNoComponentsOrServiceOverrides(pluginDescriptor.moduleContainerDescriptor)
 
-  private fun isUnloadSafe(containerDescriptor: ContainerDescriptor): Boolean = containerDescriptor.components.isNullOrEmpty()
+  private fun hasNoComponentsOrServiceOverrides(containerDescriptor: ContainerDescriptor): Boolean {
+    if (!containerDescriptor.components.isNullOrEmpty()) {
+      LOG.info("Plugin is not unload-safe because it declares components")
+      return false
+    }
+    if (containerDescriptor.services?.any { it.overrides } == true) {
+      LOG.info("Plugin is not unload-safe because it overrides services")
+      return false
+    }
+    return true
+  }
 
   @JvmStatic
   @JvmOverloads
