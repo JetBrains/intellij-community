@@ -209,7 +209,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @Nullable
   private static VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded) {
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFileSystem fileSystem = StandardFileSystems.local();
     VirtualFile virtualFile = fileSystem.findFileByPath(filePath);
     if (refreshIfNeeded && (virtualFile == null || !virtualFile.isValid())) {
       virtualFile = fileSystem.refreshAndFindFileByPath(filePath);
