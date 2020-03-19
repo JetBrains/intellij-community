@@ -39,6 +39,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
           started.up()
           while (!stop.waitFor(1)) {
             checkCanceled()
+            yield()
           }
           it
         }
