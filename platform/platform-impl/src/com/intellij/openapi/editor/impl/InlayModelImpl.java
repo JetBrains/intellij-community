@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -324,7 +325,8 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
           }
           yDiff -= height;
         }
-        LOG.error("Inconsistent state");
+        LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
+                  new Attachment("editorState.txt", myEditor.dumpState()));
         return null;
       }
       else {
@@ -339,7 +341,8 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
             }
             yDiff -= height;
           }
-          LOG.error("Inconsistent state");
+          LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
+                    new Attachment("editorState.txt", myEditor.dumpState()));
           return null;
         }
       }
