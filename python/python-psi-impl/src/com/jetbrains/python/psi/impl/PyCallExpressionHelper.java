@@ -978,8 +978,8 @@ public class PyCallExpressionHelper {
           for (PyKeywordArgument argument : keywordArguments) {
             mappedParameters.put(argument, parameter);
           }
-          if (variadicKeywordArguments.size() == 1) {
-            mappedParameters.put(variadicKeywordArguments.get(0), parameter);
+          for (PyExpression variadicKeywordArg : variadicKeywordArguments) {
+            mappedParameters.put(variadicKeywordArg, parameter);
           }
           keywordArguments.clear();
           variadicKeywordArguments.clear();
