@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl
 
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.concurrency.Semaphore
@@ -17,7 +17,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
       repeat(count) {
         launch {
           started.up()
-          checkCancelled()
+          checkCanceled()
           fail("must not be called")
         }
       }
@@ -38,7 +38,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
         async { // coroutine context (including CoroutineSuspender) is inherited
           started.up()
           while (!stop.waitFor(1)) {
-            checkCancelled()
+            checkCanceled()
           }
           it
         }

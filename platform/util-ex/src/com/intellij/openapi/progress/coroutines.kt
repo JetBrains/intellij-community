@@ -10,15 +10,15 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 /**
- * Checks whether the coroutine is active, and throws [CancellationException] if the coroutine is cancelled.
+ * Checks whether the coroutine is active, and throws [CancellationException] if the coroutine is canceled.
  * This function might suspend if the coroutine is paused,
  * or yield if the coroutine has a lower priority while higher priority task is running.
  *
- * @throws CancellationException if the coroutine is cancelled; the exception is also thrown if coroutine is cancelled while suspended
+ * @throws CancellationException if the coroutine is canceled; the exception is also thrown if coroutine is canceled while suspended
  * @see ensureActive
  * @see coroutineSuspender
  */
-suspend fun checkCancelled() {
+suspend fun checkCanceled() {
   val ctx = coroutineContext
   ctx.ensureActive() // standard check first
   ctx[CoroutineSuspenderElementKey]?.checkPaused() // will suspend if paused

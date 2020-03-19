@@ -12,25 +12,25 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 
 /**
- * Coroutine pause-ability is cooperative, the coroutine must periodically invoke [checkCancelled] to achieve that.
+ * Coroutine pause-ability is cooperative, the coroutine must periodically invoke [checkCanceled] to achieve that.
  *
  * Example:
  * ```
  * val suspender = coroutineSuspender()
  * launch(Dispatchers.Default + suspender) {
  *   for (item in data) {
- *     checkCancelled()
+ *     checkCanceled()
  *     // process data
  *   }
  * }
  *
  * // later e.g. when user clicks the button:
- * suspender.pause() // after this call the coroutine (and its children) will suspend in the checkCancelled()
+ * suspender.pause() // after this call the coroutine (and its children) will suspend in the checkCanceled()
  * ```
  *
  * @param active `true` means non-paused, while `false` creates a suspender in paused state
  * @return handle which can be used to pause and resume the coroutine
- * @see checkCancelled
+ * @see checkCanceled
  */
 fun coroutineSuspender(active: Boolean = true): CoroutineSuspender = CoroutineSuspenderElement(active)
 
