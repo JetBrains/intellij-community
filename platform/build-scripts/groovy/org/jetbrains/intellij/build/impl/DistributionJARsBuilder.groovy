@@ -980,11 +980,14 @@ class DistributionJARsBuilder {
         //include all module libraries from the plugin modules added to IDE classpath to layout
         actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
                              .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
+          def excluded = layout.excludedModuleLibraries.get(moduleName) ?: Collections.emptyList()
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
+            collect { ((JpsLibraryDependency)it).library }.
+            findAll { !excluded.contains(it.name) }.
             each {
-              jpsLibrary(((JpsLibraryDependency)it).library)
+              jpsLibrary(it)
             }
         }
 
