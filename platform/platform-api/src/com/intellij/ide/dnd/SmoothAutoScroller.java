@@ -3,6 +3,7 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,74 @@ public final class SmoothAutoScroller {
   @ApiStatus.Experimental
   public static @NotNull DropTargetListener getSharedListener() {
     return ScrollListener.SHARED;
+  }
+
+  /**
+   * @see SwingUtilities#installSwingDropTargetAsNecessary(Component, TransferHandler)
+   */
+  @ApiStatus.Experimental
+  public static void installDropTargetAsNecessary(@NotNull JComponent component) {
+    component.putClientProperty(ENABLED, true);
+    component.setAutoscrolls(false); // disable default scroller if needed
+    DropTarget target = component.getDropTarget();
+    if (target == null && !GraphicsEnvironment.isHeadless()) {
+      component.setDropTarget(new DropTarget(component, DragListener.ACTION, DragListener.SHARED));
+    }
+  }
+
+  /**
+   * This is a replacement for TransferHandler.DropHandler
+   * that replaces hardcoded auto-scrolling with the smooth auto-scrolling.
+   * It depends on Swing's implementation and must be supported accordingly.
+   */
+  private static final class DragListener implements DropTargetListener {
+    public static final int ACTION = DnDConstants.ACTION_COPY_OR_MOVE | DnDConstants.ACTION_LINK;
+    private static final DropTargetListener SHARED = new DragListener();
+    private final DropTargetListener listener;
+
+    private DragListener() {
+      try {
+        //noinspection ConstantConditions
+        listener = (DropTargetListener)ReflectionUtil.getDeclaredMethod(TransferHandler.class, "getDropTargetListener").invoke(null);
+      }
+      catch (Exception exception) {
+        throw new IllegalStateException(exception);
+      }
+    }
+
+    @Override
+    public void dragEnter(DropTargetDragEvent event) {
+      getSharedListener().dragEnter(event);
+      // ignore auto-scrolling from TransferHandler.DropHandler.dragEnter
+      ReflectionUtil.setField(listener.getClass(), listener, Object.class, "state", null);
+      ReflectionUtil.setField(listener.getClass(), listener, Component.class, "component", event.getDropTargetContext().getComponent());
+      listener.dropActionChanged(event); // depends on implementation
+    }
+
+    @Override
+    public void dragOver(DropTargetDragEvent event) {
+      getSharedListener().dragOver(event);
+      // ignore auto-scrolling from TransferHandler.DropHandler.dragOver
+      listener.dropActionChanged(event); // depends on implementation
+    }
+
+    @Override
+    public void dropActionChanged(DropTargetDragEvent event) {
+      getSharedListener().dropActionChanged(event);
+      listener.dropActionChanged(event);
+    }
+
+    @Override
+    public void dragExit(DropTargetEvent event) {
+      getSharedListener().dragExit(event);
+      listener.dragExit(event);
+    }
+
+    @Override
+    public void drop(DropTargetDropEvent event) {
+      getSharedListener().drop(event);
+      listener.drop(event);
+    }
   }
 
 
