@@ -539,6 +539,7 @@ object UpdateChecker {
                                extraBuilder: ((Notification) -> Unit)?,
                                notificationType: NotificationUniqueType) {
     val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, null)
+    notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         notification.expire()
