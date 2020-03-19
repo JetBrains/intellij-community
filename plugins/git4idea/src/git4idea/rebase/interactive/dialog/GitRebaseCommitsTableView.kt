@@ -3,7 +3,12 @@ package git4idea.rebase.interactive.dialog
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.CommitIconTableCellRenderer
@@ -57,6 +62,16 @@ internal open class GitRebaseCommitsTableView(
     installSpeedSearch()
     prepareCommitIconColumn()
     prepareSubjectColumn()
+    installUndoRedoActions()
+  }
+
+  private fun installUndoRedoActions() {
+    installAnActionWithShortcut(UndoAction(this), IdeActions.ACTION_UNDO)
+    installAnActionWithShortcut(RedoAction(this), IdeActions.ACTION_REDO)
+  }
+
+  private fun installAnActionWithShortcut(action: AnAction, shortcutActionId: String) {
+    action.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(shortcutActionId), this)
   }
 
   final override fun setSelectionMode(selectionMode: Int) {
@@ -108,6 +123,18 @@ internal open class GitRebaseCommitsTableView(
     model.getElement(row).type !is GitRebaseTodoModel.Type.NonUnite.KeepCommit -> NodeType.NO_NODE
     model.getElement(row) is GitRebaseTodoModel.Element.UniteRoot -> NodeType.DOUBLE_NODE
     else -> NodeType.SIMPLE_NODE
+  }
+
+  private class UndoAction(private val table: GitRebaseCommitsTableView) : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+      table.model.undo()
+    }
+  }
+
+  private class RedoAction(private val table: GitRebaseCommitsTableView) : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+      table.model.redo()
+    }
   }
 }
 
