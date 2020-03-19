@@ -2,13 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
-import javax.swing.tree.DefaultTreeModel
+import org.jetbrains.plugins.github.api.data.GHCommit
 
-interface GHPRChangesModel {
-  var changes: List<Change>?
-
-  fun buildChangesTree(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel
+interface GHPRCommitsModel {
+  var commitsWithChanges: Map<GHCommit, List<Change>>?
 
   fun addStateChangesListener(listener: () -> Unit)
 }

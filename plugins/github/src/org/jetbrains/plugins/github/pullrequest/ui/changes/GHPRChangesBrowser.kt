@@ -7,10 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.diff.impl.GenericDataProvider
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
@@ -28,16 +25,15 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import javax.swing.border.Border
 import javax.swing.tree.DefaultTreeModel
 
-internal class GHPRChangesBrowser(private val model: GHPRChangesModel,
-                                  private val diffHelper: GHPRChangesDiffHelper,
-                                  private val project: Project)
+internal open class GHPRChangesBrowser(private val model: GHPRChangesModel,
+                                       private val diffHelper: GHPRChangesDiffHelper,
+                                       private val project: Project)
   : ChangesBrowserBase(project, false, false),
     ComponentWithEmptyText {
 
@@ -113,23 +109,5 @@ internal class GHPRChangesBrowser(private val model: GHPRChangesModel,
 
   override fun buildTreeModel(): DefaultTreeModel {
     return model.buildChangesTree(grouping)
-  }
-
-  class ToggleZipCommitsAction : ToggleAction("Commit"), DumbAware {
-
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isEnabledAndVisible = e.getData(DATA_KEY) is GHPRChangesBrowser
-    }
-
-    override fun isSelected(e: AnActionEvent): Boolean {
-      val project = e.project ?: return false
-      return !GithubPullRequestsProjectUISettings.getInstance(project).zipChanges
-    }
-
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      val project = e.project ?: return
-      GithubPullRequestsProjectUISettings.getInstance(project).zipChanges = !state
-    }
   }
 }

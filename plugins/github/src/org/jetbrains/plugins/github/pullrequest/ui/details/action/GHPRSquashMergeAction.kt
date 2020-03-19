@@ -26,7 +26,7 @@ internal class GHPRSquashMergeAction(busyStateModel: SingleValueModel<Boolean>,
   }
 
   override fun submitMergeTask(mergeability: GHPRMergeabilityState): CompletableFuture<Unit>? = dataProvider.apiCommitsRequest.successOnEdt { commits ->
-    val body = "* " + StringUtil.join(commits, { it.message }, "\n\n* ")
+    val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
     val dialog = GithubMergeCommitMessageDialog(project,
                                                 "Merge Pull Request",
                                                 "Merge pull request #${mergeability.number}",
