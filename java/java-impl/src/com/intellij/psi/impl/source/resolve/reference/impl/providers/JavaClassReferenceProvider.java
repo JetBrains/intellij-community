@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
-
+  /** Tells reference provider to process only qualified class references (e.g. not resolve String as java.lang.String) */
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
-    new CustomizationKey<>("Tells reference provider to process only qualified class references (e.g. not resolve String as java.lang.String)");
+    new CustomizationKey<>("RESOLVE_QUALIFIED_CLASS_NAME");
   public static final CustomizationKey<List<String>> SUPER_CLASSES = new CustomizationKey<>("SUPER_CLASSES");
   public static final CustomizationKey<List<String>> IMPORTS = new CustomizationKey<>("IMPORTS");
   public static final CustomizationKey<String> CLASS_TEMPLATE = new CustomizationKey<>("CLASS_TEMPLATE");
