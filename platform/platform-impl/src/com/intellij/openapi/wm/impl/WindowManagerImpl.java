@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
@@ -621,7 +622,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frameHelper.setFileTitle(null, null);
 
     myProjectToFrame.remove(project);
-    if (myProjectToFrame.isEmpty()) {
+    if (myProjectToFrame.isEmpty() && !LightEdit.owns(project)) {
       myProjectToFrame.put(null, frameHelper);
     }
     else {
