@@ -55,6 +55,12 @@ public class NlsContexts {
   public @interface PopupTitle {
   }
 
+  @NlsContext(prefix = "popup.content")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface PopupContent {
+  }
+
   /**
    * File chooser
    */
