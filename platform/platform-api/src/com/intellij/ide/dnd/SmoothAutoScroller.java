@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 
+import static com.intellij.openapi.util.SystemInfo.JAVA_VERSION;
 import static com.intellij.ui.scale.JBUIScale.sysScale;
 import static com.intellij.util.ui.TimerUtil.createNamedTimer;
 import static com.intellij.util.ui.UIUtil.isClientPropertyTrue;
@@ -47,6 +48,7 @@ public final class SmoothAutoScroller {
    */
   @ApiStatus.Experimental
   public static void installDropTargetAsNecessary(@NotNull JComponent component) {
+    if (component instanceof Autoscroll) return; // Swing DnD
     component.putClientProperty(ENABLED, true);
     component.setAutoscrolls(false); // disable default scroller if needed
     DropTarget target = component.getDropTarget();
@@ -71,7 +73,7 @@ public final class SmoothAutoScroller {
         listener = (DropTargetListener)ReflectionUtil.getDeclaredMethod(TransferHandler.class, "getDropTargetListener").invoke(null);
       }
       catch (Exception exception) {
-        throw new IllegalStateException(exception);
+        throw new InternalError("Unexpected JDK: " + JAVA_VERSION, exception);
       }
     }
 
@@ -126,7 +128,7 @@ public final class SmoothAutoScroller {
     }
 
     private void update(DropTargetDragEvent event) {
-      JComponent component = event == null ? null : getComponent(event);
+      JComponent component = getComponent(event);
       if (component != null) {
         Point location = new Point(event.getLocation());
         SwingUtilities.convertPointToScreen(location, component);
@@ -147,7 +149,7 @@ public final class SmoothAutoScroller {
     }
 
     private boolean validate(DropTargetDragEvent event) {
-      JComponent component = event == null ? null : getComponent(event);
+      JComponent component = getComponent(event);
       if (component == null) return false;
 
       Point location = new Point(this.screen);
