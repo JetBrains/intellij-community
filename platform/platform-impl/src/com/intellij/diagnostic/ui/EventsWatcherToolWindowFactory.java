@@ -28,7 +28,7 @@ import java.util.function.Function;
 public final class EventsWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
 
   @NotNull
-  public static final String TOOL_WINDOW_ID = "Events Watcher";
+  public static final String TOOL_WINDOW_ID = "Event Watcher";
 
   @Override
   public void createToolWindowContent(@NotNull Project project,
