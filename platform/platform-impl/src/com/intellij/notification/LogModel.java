@@ -54,7 +54,9 @@ public final class LogModel  {
       result = getNotifications();
       myNotifications.clear();
     }
-    fireModelChanged();
+    if (!result.isEmpty()) {
+      fireModelChanged();
+    }
     return result;
   }
 
