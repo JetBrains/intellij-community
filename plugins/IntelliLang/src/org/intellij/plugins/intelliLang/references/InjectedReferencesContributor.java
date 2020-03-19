@@ -39,6 +39,7 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
   }
 
   public static PsiReference @Nullable [] getInjectedReferences(PsiElement element) {
+    if (!(element instanceof ContributedReferenceHost) && !(element instanceof PsiLanguageInjectionHost)) return null;
     Pair<PsiReference[], Boolean> info = getInjectionInfo(element);
     if (!info.second) return null;
     return info.first;
