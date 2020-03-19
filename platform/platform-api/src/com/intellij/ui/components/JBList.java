@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -261,7 +262,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     return myEmptyText;
   }
 
-  public void setEmptyText(@NotNull @Nls String text) {
+  public void setEmptyText(@NotNull @Nls @NlsContexts.StatusText String text) {
     myEmptyText.setText(text);
   }
 

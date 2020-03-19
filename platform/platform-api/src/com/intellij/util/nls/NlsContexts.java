@@ -90,8 +90,7 @@ public class NlsContexts {
    */
   @NlsContext(prefix = "notification.title")
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE, ElementType.TYPE,
-    ElementType.PACKAGE})
+  @Target({ElementType.PARAMETER, ElementType.TYPE_USE})
   public @interface NotificationTitle {
   }
 
@@ -105,6 +104,12 @@ public class NlsContexts {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target({ElementType.PARAMETER, ElementType.TYPE_USE})
   public @interface NotificationContent {
+  }
+
+  @NlsContext(prefix = "status.text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface StatusText {
   }
 
   /**
