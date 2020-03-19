@@ -18,8 +18,8 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import javax.swing.JPanel
 
-class GHPRToolWindowsTabsContentManager(private val project: Project,
-                                        private val viewContentManager: ChangesViewContentI) {
+class GHPRToolWindowTabsContentManager(private val project: Project,
+                                       private val viewContentManager: ChangesViewContentI) {
 
   @CalledInAwt
   internal fun addTab(remoteUrl: GitRemoteUrlCoordinates, onDispose: Disposable) {
