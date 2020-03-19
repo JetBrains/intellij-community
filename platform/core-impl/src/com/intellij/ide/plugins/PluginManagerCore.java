@@ -1226,7 +1226,7 @@ public final class PluginManagerCore {
     return loadDescriptors().result.getEnabledPlugins();
   }
 
-  public static synchronized void scheduleDescriptorLoading() {
+  public static void scheduleDescriptorLoading() {
     getOrScheduleLoading();
   }
 
