@@ -42,14 +42,18 @@
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                          instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
     <statistics.applicationUsagesCollector
-        implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
+      implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
 
     <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
     <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
-        implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
+      implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
 
     <fileType name="GithubPullRequest" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRFileType"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
+
+    <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"
+                anchor="left" canCloseContents="true" doNotActivateOnStart="true"
+                factoryClass="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowFactory"/>
   </extensions>
 
   <applicationListeners>
@@ -69,7 +73,8 @@
               topic="git4idea.repo.GitRepositoryChangeListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
-    <listener class="org.jetbrains.plugins.github.ui.GHPREditorContentSynchronizer$MyToolwindowListener" topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener" />
+    <listener class="org.jetbrains.plugins.github.ui.GHPREditorContentSynchronizer$MyToolwindowListener"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="Git4Idea">

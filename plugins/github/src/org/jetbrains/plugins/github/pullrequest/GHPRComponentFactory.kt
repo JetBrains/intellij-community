@@ -198,12 +198,12 @@ internal class GHPRComponentFactory(private val project: Project) {
       errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProviderModel.value?.reloadChanges() }
     }
 
-    return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
+    return OnePixelSplitter(true, "Github.PullRequests.Component", 0.33f).apply {
       background = UIUtil.getListBackground()
       isOpaque = true
       isFocusCycleRoot = true
       firstComponent = list
-      secondComponent = OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f).apply {
+      secondComponent = OnePixelSplitter(true, "Github.PullRequest.Preview.Component", 0.5f).apply {
         firstComponent = detailsLoadingPanel
         secondComponent = changesLoadingPanel
       }.also {
