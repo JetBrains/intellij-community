@@ -478,13 +478,15 @@ class DynamicPluginsTest {
     val disposable = loadExtensionWithText(
       """
           <intentionAction>
-            <bundleName>foo</bundleName>
-            <categoryKey>bar</categoryKey>
+            <bundleName>messages.CommonBundle</bundleName>
+            <categoryKey>button.add</categoryKey>
             <className>${MyIntentionAction::class.java.name}</className>
           </intentionAction>""",
       DynamicPlugins::class.java.classLoader)
     try {
-      assertThat(IntentionManager.EP_INTENTION_ACTIONS.extensions.any { it.className == MyIntentionAction::class.java.name }).isTrue()
+      val intention = IntentionManager.EP_INTENTION_ACTIONS.extensions.find { it.className == MyIntentionAction::class.java.name }
+      assertThat(intention).isNotNull
+      intention!!.categories
     }
     finally {
       Disposer.dispose(disposable)

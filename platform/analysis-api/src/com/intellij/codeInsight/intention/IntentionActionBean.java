@@ -55,7 +55,7 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
         return ContainerUtil.map2Array(keys, String.class, s -> AbstractBundle.message(bundle, s));
       }
 
-      category = AbstractBundle.message(bundle, categoryKey);
+      return AbstractBundle.message(bundle, categoryKey).split("/");
     }
     return category == null ? null : category.split("/");
   }
