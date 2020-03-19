@@ -2,6 +2,7 @@
 package com.intellij.notification
 
 import com.intellij.ide.plugins.PluginUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
@@ -35,7 +36,9 @@ class NotificationGroup(@param:NonNls val displayId: String,
   var parentId: String? = null
     private set
 
-  val pluginId = pluginId ?: PluginUtil.getInstance().findPluginId(Throwable())
+  val pluginId = ApplicationManager.getApplication()?.let {
+    pluginId ?: PluginUtil.getInstance().findPluginId(Throwable())
+  }
 
   init {
     if (registeredGroups.containsKey(displayId)) {
