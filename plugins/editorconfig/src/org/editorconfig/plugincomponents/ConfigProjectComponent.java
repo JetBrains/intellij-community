@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.plugincomponents;
 
-import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -15,10 +14,8 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBus;
 import org.editorconfig.EditorConfigRegistry;
 import org.editorconfig.configmanagement.EditorSettingsManager;
-import org.editorconfig.configmanagement.LineEndingsManager;
 import org.jetbrains.annotations.NotNull;
 
 public class ConfigProjectComponent implements StartupActivity.DumbAware {
@@ -28,9 +25,6 @@ public class ConfigProjectComponent implements StartupActivity.DumbAware {
 
     // Register project-level config managers
     final EditorFactory editorFactory = EditorFactory.getInstance();
-    MessageBus bus = project.getMessageBus();
-    LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
-    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
