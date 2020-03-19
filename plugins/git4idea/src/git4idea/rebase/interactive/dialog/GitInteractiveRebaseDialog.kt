@@ -45,8 +45,8 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     private const val DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
     internal const val PLACE = "Git.Interactive.Rebase.Dialog"
 
-    private const val DIALOG_HEIGHT = 450
-    private const val DIALOG_WIDTH = 800
+    private const val DIALOG_HEIGHT = 550
+    private const val DIALOG_WIDTH = 1000
   }
 
   private val commitsTableModel = GitRebaseCommitsTableModel(entries)
