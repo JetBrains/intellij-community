@@ -234,7 +234,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun calcUpdatedFilesCount(): Int {
     return calcCount { repository, range ->
-      MergeChangeCollector(project, repository.root, GitRevisionNumber(range.start.asString())).calcUpdatedFilesCount()
+      MergeChangeCollector(project, repository, GitRevisionNumber(range.start.asString())).calcUpdatedFilesCount()
     }
   }
 

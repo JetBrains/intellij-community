@@ -215,7 +215,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         VcsNotifier.getInstance(project).notify(notification);
       }
       else {
-        showUpdates(project, root, currentRev, beforeLabel, getActionName());
+        showUpdates(project, repository, currentRev, beforeLabel, getActionName());
       }
     }
     else if (localChangesDetector.wasMessageDetected()) {
@@ -233,13 +233,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
   }
 
   private static void showUpdates(@NotNull Project project,
-                                  @NotNull VirtualFile root,
+                                  @NotNull GitRepository repository,
                                   @NotNull GitRevisionNumber currentRev,
                                   @NotNull Label beforeLabel,
                                   @NotNull String actionName) {
     try {
       UpdatedFiles files = UpdatedFiles.create();
-      MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
+      MergeChangeCollector collector = new MergeChangeCollector(project, repository, currentRev);
       collector.collect(files);
 
       GuiUtils.invokeLaterIfNeeded(() -> {

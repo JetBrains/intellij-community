@@ -143,14 +143,14 @@ public abstract class GitUpdater {
 
   @NotNull
   public GitUpdateResult update() throws VcsException {
-    markStart(myRoot);
+    markStart(myRepository);
     try {
       GitUpdateResult result = doUpdate();
       myRepository.update();
       return result;
     }
     finally {
-      markEnd(myRoot);
+      markEnd(myRepository);
     }
   }
 
@@ -181,14 +181,14 @@ public abstract class GitUpdater {
   @NotNull
   protected abstract GitUpdateResult doUpdate();
 
-  protected void markStart(VirtualFile root) throws VcsException {
+  protected void markStart(GitRepository repository) throws VcsException {
     // remember the current position
-    myBefore = GitRevisionNumber.resolve(myProject, root, "HEAD");
+    myBefore = GitRevisionNumber.resolve(myProject, repository.getRoot(), "HEAD");
   }
 
-  protected void markEnd(VirtualFile root) throws VcsException {
+  protected void markEnd(GitRepository repository) throws VcsException {
     // find out what have changed, this is done even if the process was cancelled.
-    new MergeChangeCollector(myProject, root, myBefore).collect(myUpdatedFiles);
+    new MergeChangeCollector(myProject, repository, myBefore).collect(myUpdatedFiles);
   }
 
   protected boolean hasRemoteChanges(@NotNull String remoteBranch) throws VcsException {
