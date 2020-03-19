@@ -16,6 +16,11 @@
 package com.jetbrains.python.pyi
 
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.ResolveState
+import com.intellij.psi.scope.DelegatingScopeProcessor
+import com.intellij.psi.scope.PsiScopeProcessor
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyImportElement
@@ -47,5 +52,19 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
         }
     else
       baseResults
+  }
+
+  override fun processDeclarations(processor: PsiScopeProcessor,
+                                   resolveState: ResolveState,
+                                   lastParent: PsiElement?,
+                                   place: PsiElement): Boolean {
+    val wrapper = object : DelegatingScopeProcessor(processor) {
+      override fun execute(element: PsiElement, state: ResolveState): Boolean = when {
+        element is PyImportElement && element.asName == null -> true
+        element is PsiNamedElement && element.name?.startsWith("_") == true -> true
+        else -> super.execute(element, state)
+      }
+    }
+    return super.processDeclarations(wrapper, resolveState, lastParent, place)
   }
 }
