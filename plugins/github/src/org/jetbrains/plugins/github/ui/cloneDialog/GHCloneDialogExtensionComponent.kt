@@ -172,12 +172,11 @@ internal class GHCloneDialogExtensionComponent(
     }
 
     repositoriesPanel = panel {
-      val gapLeft = JBUI.scale(VcsCloneDialogUiSpec.Components.innerHorizontalGap)
       row {
         cell(isFullWidth = true) {
           searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY).withLeftGap(gapLeft)
-          accountsPanel().withLeftGap(gapLeft)
+          JSeparator(JSeparator.VERTICAL)(growY).withLargeLeftGap()
+          accountsPanel().withLargeLeftGap()
         }
       }
       row {
