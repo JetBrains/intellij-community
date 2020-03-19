@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.function.Function;
 
 @ApiStatus.Experimental
-public final class EventsWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
+public final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
 
   @NotNull
   public static final String TOOL_WINDOW_ID = "Event Watcher";
