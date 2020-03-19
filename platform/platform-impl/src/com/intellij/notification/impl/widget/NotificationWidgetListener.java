@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.EventLogListener;
+import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -17,9 +18,10 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public class NotificationWidgetListener implements UISettingsListener, ToolWindowManagerListener, EventLogListener {
+final class NotificationWidgetListener implements UISettingsListener, ToolWindowManagerListener, EventLogListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateWidgetAndIcon();
@@ -78,7 +80,7 @@ public class NotificationWidgetListener implements UISettingsListener, ToolWindo
   private static void updateToolWindowNotificationsIcon(@NotNull Project project) {
     ToolWindow eventLog = EventLog.getEventLog(project);
     if (eventLog != null) {
-      ArrayList<Notification> notifications = EventLog.getLogModel(project).getNotifications();
+      List<Notification> notifications = EventLog.getNotifications(project);
       LayeredIcon icon = IdeNotificationArea.createIconWithNotificationCount(new JBLabel(),
                                                                               IdeNotificationArea.getMaximumType(notifications),
                                                                               notifications.size(), true);

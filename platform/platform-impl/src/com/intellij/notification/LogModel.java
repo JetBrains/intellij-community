@@ -11,6 +11,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -87,7 +88,7 @@ public final class LogModel  {
     setStatusToImportant();
   }
 
-  public ArrayList<Notification> getNotifications() {
+  public @NotNull ArrayList<Notification> getNotifications() {
     synchronized (myNotifications) {
       return new ArrayList<>(myNotifications);
     }
@@ -112,7 +113,7 @@ public final class LogModel  {
   private void setStatusToImportant() {
     ArrayList<Notification> notifications = getNotifications();
     Collections.reverse(notifications);
-    Notification message = ContainerUtil.find(notifications, notification -> notification.isImportant());
+    Notification message = ContainerUtil.find(notifications, Notification::isImportant);
     if (message == null) {
       setStatusMessage(null, 0);
     }
