@@ -121,6 +121,7 @@ public class PluginManagerConfigurable
 
   private PluginUpdatesService myPluginUpdatesService;
 
+  private List<IdeaPluginDescriptor> myCustomRepositoryPluginsList;
   private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
   private Map<PluginId, IdeaPluginDescriptor> myAllRepositoryPluginsMap;
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
@@ -1527,9 +1528,19 @@ public class PluginManagerConfigurable
       }
     }
     try {
-      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
-      if (list != null) {
-        return list;
+      if (myCustomRepositoryPluginsList != null) {
+        myAllRepositoryPluginsList = RepositoryHelper.loadPlugins(null, null);
+        //TODO: actually choose latest plugin for deduplication
+        {
+          myAllRepositoryPluginsList.addAll(myCustomRepositoryPluginsList);
+          ContainerUtil.removeDuplicates(myCustomRepositoryPluginsList);
+          return myAllRepositoryPluginsList;
+        }
+      } else {
+        List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
+        if (list != null) {
+          return list;
+        }
       }
     }
     catch (IOException e) {
