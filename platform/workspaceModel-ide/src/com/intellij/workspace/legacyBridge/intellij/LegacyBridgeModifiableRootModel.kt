@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
@@ -393,7 +392,7 @@ class LegacyBridgeModifiableRootModel(
       if (jdkTable.findJdk (jdk.name, jdk.sdkType.name) == null) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           // TODO Fix all tests and remove this
-          (jdkTable as ProjectJdkTableImpl).addTestJdk(jdk, (project as ProjectEx).earlyDisposable)
+          (jdkTable as ProjectJdkTableImpl).addTestJdk(jdk, project)
         } else {
           error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
         }
