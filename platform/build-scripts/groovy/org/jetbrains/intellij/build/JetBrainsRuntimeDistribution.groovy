@@ -8,7 +8,7 @@ enum JetBrainsRuntimeDistribution {
   VANILLA(''), JCEF('jcef')
 
   /**
-   * Distinguishes artifacts of JBR distributions
+   * Distinguishes artifacts of different JBR distributions
    */
   final String classifier
 
