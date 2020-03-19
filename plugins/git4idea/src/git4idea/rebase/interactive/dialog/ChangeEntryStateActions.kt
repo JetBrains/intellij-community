@@ -26,6 +26,26 @@ import javax.swing.KeyStroke
 
 private fun getActionShortcutList(actionId: String): List<Shortcut> = KeymapUtil.getActiveKeymapShortcuts(actionId).shortcuts.toList()
 
+private fun findNewRoot(
+  rebaseTodoModel: GitRebaseTodoModel<*>,
+  elementIndex: Int
+): GitRebaseTodoModel.Element<*>? {
+  val element = rebaseTodoModel.elements[elementIndex]
+  return rebaseTodoModel.elements.take(element.index).findLast {
+    it is GitRebaseTodoModel.Element.UniteRoot ||
+    (it is GitRebaseTodoModel.Element.Simple && it.type is GitRebaseTodoModel.Type.NonUnite.KeepCommit)
+  }
+}
+
+private fun getIndicesToUnite(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>): List<Int>? {
+  if (rebaseTodoModel.canUnite(selection)) {
+    return selection
+  }
+  val index = selection.singleOrNull() ?: return null
+  val newRoot = findNewRoot(rebaseTodoModel, index) ?: return null
+  return (listOf(newRoot.index) + selection).takeIf { rebaseTodoModel.canUnite(it) }
+}
+
 internal abstract class ChangeEntryStateSimpleAction(
   protected val action: GitRebaseEntry.Action,
   title: Supplier<String>,
@@ -121,19 +141,21 @@ internal abstract class ChangeEntryStateButtonAction(
 }
 
 internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.FIXUP, null, table) {
-  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) = rebaseTodoModel.canUnite(selection)
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) =
+    getIndicesToUnite(selection, rebaseTodoModel) != null
 
   override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
-    rebaseTodoModel.unite(selection)
+    rebaseTodoModel.unite(getIndicesToUnite(selection, rebaseTodoModel)!!)
   }
 }
 
 // squash = reword + fixup
 internal class SquashAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.SQUASH, null, table) {
-  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) = rebaseTodoModel.canUnite(selection)
+  override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) =
+    getIndicesToUnite(selection, rebaseTodoModel) != null
 
   override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
-    val root = rebaseTodoModel.unite(selection)
+    val root = rebaseTodoModel.unite(getIndicesToUnite(selection, rebaseTodoModel)!!)
     rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { it.commitDetails.fullMessage })
     reword(root.index)
   }
