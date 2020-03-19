@@ -105,7 +105,8 @@ public class BatchEvaluator {
           public void action() {
             myBuffer.remove(suspendContext);
 
-            if (commands.size() == 1 || !doEvaluateBatch(commands, evaluationContext)) {
+            if ((commands.size() == 1 && !Registry.is("debugger.batch.evaluation.force")) ||
+                !doEvaluateBatch(commands, evaluationContext)) {
               commands.forEach(ToStringCommand::action);
             }
           }
