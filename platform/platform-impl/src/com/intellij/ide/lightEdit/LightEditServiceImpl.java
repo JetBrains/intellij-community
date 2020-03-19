@@ -72,7 +72,7 @@ public final class LightEditServiceImpl implements LightEditService,
       myFrameWrapper = LightEditFrameWrapper.allocate(() -> closeEditorWindow());
       LOG.info("Frame created");
     }
-    else {
+    if (!myFrameWrapper.getFrame().isVisible()) {
       myFrameWrapper.getFrame().setVisible(true);
       LOG.info("Window opened");
     }
@@ -139,10 +139,8 @@ public final class LightEditServiceImpl implements LightEditService,
     LightEditorInfo openEditorInfo = myEditorManager.findOpen(file);
     if (openEditorInfo == null) {
       LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
-      if (newEditorInfo != null) {
-        addEditorTab(newEditorInfo);
-        LOG.info("Opened new tab for " + file.getPresentableUrl());
-      }
+      addEditorTab(newEditorInfo);
+      LOG.info("Opened new tab for " + file.getPresentableUrl());
     }
     else {
       selectEditorTab(openEditorInfo);
@@ -210,6 +208,10 @@ public final class LightEditServiceImpl implements LightEditService,
         catch (Throwable t) {
           System.exit(1);
         }
+      }
+      else {
+        myFrameWrapper.releaseFrame();
+        myFrameWrapper = null;
       }
     }
     else {
