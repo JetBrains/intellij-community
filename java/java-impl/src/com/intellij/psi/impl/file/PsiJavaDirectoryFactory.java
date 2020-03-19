@@ -38,7 +38,7 @@ public final class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
       final String qualifiedName = aPackage.getQualifiedName();
       if (!qualifiedName.isEmpty()) return qualifiedName;
       if (presentable) {
-        return JavaBundle.message("default.package.presentation") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
+        return JavaBundle.message("default.package.presentable.name") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
       }
       return "";
     }

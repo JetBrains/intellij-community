@@ -178,7 +178,7 @@ public abstract class ElementPresentation {
     @Override
     public String getQualifiedName() {
       String qualifiedName = myPsiPackage.getQualifiedName();
-      if (qualifiedName.length() == 0) return JavaBundle.message("default.package.presentation");
+      if (qualifiedName.length() == 0) return JavaBundle.message("default.package.presentable.name");
       return qualifiedName;
     }
 
@@ -205,7 +205,7 @@ public abstract class ElementPresentation {
     public String getQualifiedName() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(myPsiAnonymousClass, PsiClass.class);
       if (psiClass != null) return JavaPsiBundle.message("anonymous.class.context.display", forElement(psiClass).getQualifiedName());
-      return JavaBundle.message("anonymous.class.display");
+      return JavaBundle.message("presentable.text.anonymous.class");
     }
 
     @Override
@@ -324,8 +324,8 @@ public abstract class ElementPresentation {
     @Override
     public String getQualifiedName() {
       PsiFile containingFile = myPsiElement.getContainingFile();
-      if (containingFile != null) return JavaBundle.message("code.from.context.display", forElement(containingFile).getQualifiedName());
-      return JavaBundle.message("code.display");
+      if (containingFile != null) return JavaBundle.message("presentable.text.code.from.context", forElement(containingFile).getQualifiedName());
+      return JavaBundle.message("presentable.text.code.display");
     }
 
     @Override
