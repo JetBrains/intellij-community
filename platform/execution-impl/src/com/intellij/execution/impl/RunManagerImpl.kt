@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
@@ -136,7 +137,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
+  // See also notYetAppliedInitialSelectedConfigurationId, which helps when the initially selected RC is stored in some arbitrary *.run.xml file in project
   private var selectedConfigurationId: String? = null
+  // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace an .idea/runConfigurations.
+  // This var helps if initially selected RC is a one from such file.
+  private var notYetAppliedInitialSelectedConfigurationId: String? = null
 
   private val iconCache = TimedIconCache()
 
@@ -346,7 +351,16 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
           addConfiguration(runConfig)
 
-          if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
+          if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
+            if (notYetAppliedInitialSelectedConfigurationId != null &&
+                runConfig.uniqueID == notYetAppliedInitialSelectedConfigurationId) {
+              // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box
+              selectedConfiguration = runConfig
+              notYetAppliedInitialSelectedConfigurationId = null
+            }
+          }
+          else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
+            // don't loose currently selected RC in case of ay external changes in the file
             selectedConfigurationId = oldSelectedId
           }
         }
@@ -775,6 +789,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   private fun runConfigurationFirstLoaded() {
     if (selectedConfiguration == null) {
+      notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId
       selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
     }
   }
