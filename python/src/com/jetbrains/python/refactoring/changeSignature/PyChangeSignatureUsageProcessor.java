@@ -122,7 +122,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         return true;
       }
     }
-    else if (element instanceof PyFunction) {
+    else if (element instanceof PyFunction && element != changeInfo.getMethod()) {
       processFunctionDeclaration((PyChangeInfo)changeInfo, (PyFunction)element);
     }
     return false;
