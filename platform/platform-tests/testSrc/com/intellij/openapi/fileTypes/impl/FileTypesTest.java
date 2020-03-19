@@ -989,4 +989,17 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       return null;
     }
   }
+
+  public void testHashBangPatternsCanBeConfiguredDynamically() throws IOException {
+    VirtualFile file0 = createTempFile("xxxx", null, "#!/usr/bin/gogogo\na=b", CharsetToolkit.UTF8_CHARSET);
+    assertEquals(StdFileTypes.PLAIN_TEXT, file0.getFileType());
+    myFileTypeManager.getExtensionMap().addHashBangPattern("gogogo", StdFileTypes.PROPERTIES);
+    try {
+      VirtualFile file = createTempFile("xxxx", null, "#!/usr/bin/gogogo\na=b", CharsetToolkit.UTF8_CHARSET);
+      assertEquals(StdFileTypes.PROPERTIES, file.getFileType());
+    }
+    finally {
+      myFileTypeManager.getExtensionMap().removeHashBangPattern("gogogo", StdFileTypes.PROPERTIES);
+    }
+  }
 }

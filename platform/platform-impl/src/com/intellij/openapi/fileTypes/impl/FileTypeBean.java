@@ -82,13 +82,20 @@ public final class FileTypeBean implements PluginAware {
   @Attribute("language")
   public String language;
 
+  /**
+   * Semicolon-separated list of hash bang patterns to be associated with the file type
+   */
+  @Attribute("hashBangs")
+  @NonNls
+  public String hashBangs;
+
   @ApiStatus.Internal
-  public void addMatchers(List<? extends FileNameMatcher> matchers) {
+  public void addMatchers(@NotNull List<? extends FileNameMatcher> matchers) {
     myMatchers.addAll(matchers);
   }
 
   @ApiStatus.Internal
-  public List<FileNameMatcher> getMatchers() {
+  public @NotNull List<FileNameMatcher> getMatchers() {
     return new ArrayList<>(myMatchers);
   }
 

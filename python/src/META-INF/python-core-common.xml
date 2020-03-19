@@ -27,7 +27,6 @@
               fieldName="INSTANCE"/>
     <fileType name="Qt UI file" extensions="ui" implementationClass="com.jetbrains.pyqt.QtUIFileType" fieldName="INSTANCE"/>
     <fileType name="XML" language="XML" extensions="qrc"/>
-    <fileTypeDetector implementation="com.jetbrains.python.PyFileTypeDetector"/>
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>

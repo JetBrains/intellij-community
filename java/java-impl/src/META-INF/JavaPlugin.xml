@@ -1259,7 +1259,7 @@
     <completion.plainTextSymbol language="JAVA" implementationClass="com.intellij.codeInsight.completion.JvmPlainTextSymbolCompletionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider" id="excludeFromCompletion" order="last"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
-    <fileType extensions="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
+    <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
     <fileType extensions="class" name="CLASS" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaClassFileType"/>
     <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
@@ -1990,7 +1990,6 @@
     </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
-    <fileTypeDetector implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeDetector"/>
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
 

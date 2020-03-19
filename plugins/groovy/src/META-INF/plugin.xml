@@ -304,7 +304,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Groovy" language="Groovy" extensions="groovy;gy"
+    <fileType name="Groovy" language="Groovy" extensions="groovy;gy" hashBangs="groovy"
               implementationClass="org.jetbrains.plugins.groovy.GroovyFileType" fieldName="GROOVY_FILE_TYPE"/>
     <fileType name="gdsl" extensions="gdsl"
               implementationClass="org.jetbrains.plugins.groovy.GdslFileType" fieldName="INSTANCE"/>
@@ -328,8 +328,6 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
     <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
-
-    <fileTypeDetector implementation="org.jetbrains.plugins.groovy.GroovyHashBangFileTypeDetector"/>
 
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrMethodDeclarationRangeHandler"/>
