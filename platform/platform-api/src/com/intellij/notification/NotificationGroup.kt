@@ -13,6 +13,7 @@ import javax.swing.Icon
 
 private val LOG = logger<NotificationGroup>()
 private val registeredGroups: MutableMap<String, NotificationGroup> = ContainerUtil.newConcurrentMap()
+private val localizedTitles: MutableMap<String, String> = ContainerUtil.newConcurrentMap()
 
 /**
  * Groups notifications and allows controlling display options in Settings.
@@ -22,6 +23,8 @@ class NotificationGroup(@param:NonNls val displayId: String,
                         val isLogByDefault: Boolean = true,
                         @param:NonNls val toolWindowId: String? = null,
                         val icon: Icon? = null,
+                        @param:Nls(capitalization = Nls.Capitalization.Sentence)
+                        var localizedTitle: String? = null,
                         pluginId: PluginId? = null) {
 
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
@@ -45,12 +48,22 @@ class NotificationGroup(@param:NonNls val displayId: String,
       LOG.info("Notification group $displayId is already registered", Throwable())
     }
     registeredGroups.put(displayId, this)
+
+    if (localizedTitle == null) {
+      localizedTitle = localizedTitles[displayId]
+    }
   }
 
   companion object {
     @JvmStatic
     fun balloonGroup(@NonNls displayId: String): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.BALLOON)
+    }
+
+    @JvmStatic
+    fun balloonGroup(@NonNls displayId: String,
+                     @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String?): NotificationGroup {
+      return NotificationGroup(displayId, NotificationDisplayType.BALLOON, localizedTitle = localizedTitle)
     }
 
     @JvmStatic
@@ -64,6 +77,12 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
+    fun logOnlyGroup(@NonNls displayId: String,
+                     @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String?): NotificationGroup {
+      return NotificationGroup(displayId, NotificationDisplayType.NONE, localizedTitle = localizedTitle)
+    }
+
+    @JvmStatic
     fun logOnlyGroup(@NonNls displayId: String, pluginId: PluginId): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.NONE, pluginId = pluginId)
     }
@@ -74,6 +93,15 @@ class NotificationGroup(@param:NonNls val displayId: String,
       return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId)
     }
 
+    @JvmOverloads
+    @JvmStatic
+    fun toolWindowGroup(@NonNls displayId: String,
+                        @NonNls toolWindowId: String,
+                        logByDefault: Boolean = true,
+                        @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String?): NotificationGroup {
+      return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, localizedTitle = localizedTitle)
+    }
+
     @JvmStatic
     fun toolWindowGroup(@NonNls displayId: String, @NonNls toolWindowId: String, logByDefault: Boolean, pluginId: PluginId): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, pluginId = pluginId)
@@ -82,6 +110,21 @@ class NotificationGroup(@param:NonNls val displayId: String,
     @JvmStatic
     fun findRegisteredGroup(displayId: String): NotificationGroup? {
       return registeredGroups.get(displayId)
+    }
+
+    @JvmStatic
+    fun findLocalizedGroupTitle(@NonNls displayId: String): String? {
+      val group = findRegisteredGroup(displayId)
+      if (group?.localizedTitle != null) {
+        return group.localizedTitle
+      }
+      return localizedTitles[displayId]
+    }
+
+    @JvmStatic
+    fun createIdWithTitle(@NonNls displayId: String, @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String): String {
+      localizedTitles[displayId] = localizedTitle
+      return displayId
     }
 
     @JvmStatic

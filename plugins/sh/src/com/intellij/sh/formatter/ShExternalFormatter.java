@@ -7,10 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -79,18 +76,19 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     if (ShSettings.I_DO_MIND.equals(shFmtExecutable)) return;
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
+      String groupId = NotificationGroup.createIdWithTitle("Shell Script", ShBundle.message("sh.title.case"));
       Notification notification =
-        new Notification(ShBundle.message("sh.title.case"), "", ShBundle.message("sh.fmt.install.question"),
+        new Notification(groupId, "", ShBundle.message("sh.fmt.install.question"),
                          NotificationType.INFORMATION);
       notification.addAction(
         NotificationAction.createSimple(ShBundle.messagePointer("sh.fmt.install"), () -> {
           notification.expire();
           ShShfmtFormatterUtil.download(project, settings, () -> Notifications.Bus
-            .notify(new Notification(ShBundle.message("sh.title.case"), "",
+            .notify(new Notification(groupId, "",
                                      ShBundle.message("sh.fmt.success.install"),
                                      NotificationType.INFORMATION)), () -> Notifications.Bus
             .notify(
-              new Notification(ShBundle.message("sh.title.case"), "", ShBundle.message("sh.fmt.cannot.download"),
+              new Notification(groupId, "", ShBundle.message("sh.fmt.cannot.download"),
                                NotificationType.ERROR)));
         }));
       notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.fmt.no.thanks"), () -> {

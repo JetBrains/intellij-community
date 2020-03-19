@@ -17,7 +17,9 @@ object GrazieToastNotifications {
 
   private val shownNotifications = ConcurrentMultiMap<Group, WeakReference<Notification>>()
 
-  private val MISSED_LANGUAGES_GROUP = NotificationGroup(msg("grazie.notification.missing-languages.group"), NotificationDisplayType.STICKY_BALLOON, true)
+  private val MISSED_LANGUAGES_GROUP = NotificationGroup("Proofreading missing languages information",
+                                                         NotificationDisplayType.STICKY_BALLOON, true, null, null,
+                                                         msg("grazie.notification.missing-languages.group"))
 
   fun showMissedLanguages(project: Project) {
     val langs = GrazieConfig.get().missedLanguages

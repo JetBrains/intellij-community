@@ -20,7 +20,7 @@ import java.io.File;
 
 public class DumpThreadsAction extends AnAction implements DumbAware {
   private final NotificationGroup GROUP = new NotificationGroup("Dump Threads Group", NotificationDisplayType.BALLOON, false, null, null,
-                                                                PluginManagerCore.CORE_ID);
+                                                                null, PluginManagerCore.CORE_ID);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

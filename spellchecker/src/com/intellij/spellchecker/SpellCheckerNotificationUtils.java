@@ -10,7 +10,7 @@ import static com.intellij.notification.NotificationType.INFORMATION;
 
 public class SpellCheckerNotificationUtils {
   private static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroup.balloonGroup(SpellCheckerBundle.message("spellchecker"));
+    NotificationGroup.balloonGroup("Spellchecker", SpellCheckerBundle.message("spellchecker"));
 
   static void showNotification(final Project project,
                                @NotNull String title,

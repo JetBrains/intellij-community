@@ -8,10 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,7 +59,7 @@ final class LowMemoryNotifier implements Disposable {
 
   private void onLowMemorySignalReceived() {
     if (myNotificationShown.compareAndSet(false, true)) {
-      Notification notification = new Notification(IdeBundle.message("low.memory.notification.title"),
+      Notification notification = new Notification(NotificationGroup.createIdWithTitle("Low Memory", IdeBundle.message("low.memory.notification.title")),
                                                    IdeBundle.message("low.memory.notification.title"),
                                                    IdeBundle.message("low.memory.notification.content"),
                                                    NotificationType.WARNING);

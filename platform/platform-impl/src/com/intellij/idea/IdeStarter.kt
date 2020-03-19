@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -258,7 +259,8 @@ private fun reportPluginError() {
 
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
-    Notification(title, title, pluginError, NotificationType.ERROR) { notification, event ->
+    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title),
+                 title, pluginError, NotificationType.ERROR) { notification, event ->
       notification.expire()
 
       val description = event.description

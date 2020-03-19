@@ -123,7 +123,8 @@ public class BrowserStarter {
   }
 
   private void showBrowserOpenTimeoutNotification() {
-    NotificationGroup group = NotificationGroup.balloonGroup(XmlBundle.message("browser.notification.timeout.group"));
+    NotificationGroup group =
+      NotificationGroup.balloonGroup("URL does not respond notification", XmlBundle.message("browser.notification.timeout.group"));
     NotificationType type = NotificationType.ERROR;
 
     String title = XmlBundle.message("browser.notification.timeout.title");

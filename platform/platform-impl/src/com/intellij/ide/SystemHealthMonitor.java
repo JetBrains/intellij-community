@@ -37,7 +37,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true, null, null,
-                                                                       PluginManagerCore.CORE_ID);
+                                                                       null, PluginManagerCore.CORE_ID);
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
 

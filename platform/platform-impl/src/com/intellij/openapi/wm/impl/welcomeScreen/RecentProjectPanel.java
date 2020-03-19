@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
@@ -418,7 +419,9 @@ public class RecentProjectPanel extends JPanel {
         ApplicationManager.getApplication().invokeLater(() -> {
           String title = "Tutorials have been removed from the recent list";
           String content = "You can still find them in the Help menu";
-          Notifications.Bus.notify(new Notification(IdeBundle.message("notification.group.tutorials"), title, content, NotificationType.INFORMATION));
+          Notifications.Bus.notify(
+            new Notification(NotificationGroup.createIdWithTitle("Tutorials", IdeBundle.message("notification.group.tutorials")), title,
+                             content, NotificationType.INFORMATION));
         });
       }
     }

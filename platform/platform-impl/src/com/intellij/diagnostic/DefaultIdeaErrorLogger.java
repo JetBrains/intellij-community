@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
@@ -123,7 +124,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       ourMappingFailedNotificationPosted = true;
       String exceptionMessage = event.getThrowable().getMessage();
       String text = DiagnosticBundle.message("notification.content.0.br.possible.cause.unable.to.allocate.memory", exceptionMessage);
-      Notifications.Bus.notify(new Notification(DiagnosticBundle.message("notification.group.memory"),
+      Notifications.Bus.notify(new Notification(NotificationGroup.createIdWithTitle("Memory", DiagnosticBundle.message("notification.group.memory")),
                                                 DiagnosticBundle.message("notification.title.memory.mapping.failed"), text, NotificationType.WARNING), null);
     }
   }

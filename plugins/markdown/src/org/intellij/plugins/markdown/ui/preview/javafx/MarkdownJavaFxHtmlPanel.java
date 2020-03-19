@@ -153,8 +153,9 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
   @SuppressWarnings("unused")
   public static class JavaPanelBridge {
     static final JavaPanelBridge INSTANCE = new JavaPanelBridge();
-    private static final NotificationGroup MARKDOWN_NOTIFICATION_GROUP =
-      NotificationGroup.toolWindowGroup(MarkdownBundle.message("markdown.navigate.to.header.group"), ToolWindowId.MESSAGES_WINDOW);
+    private static final NotificationGroup MARKDOWN_NOTIFICATION_GROUP = NotificationGroup
+      .toolWindowGroup("Markdown headers group", ToolWindowId.MESSAGES_WINDOW, true,
+                       MarkdownBundle.message("markdown.navigate.to.header.group"));
 
     public void openInExternalBrowser(@NotNull String link) {
       SafeOpener.openLink(link);

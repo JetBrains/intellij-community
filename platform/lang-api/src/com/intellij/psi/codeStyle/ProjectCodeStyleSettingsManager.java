@@ -43,7 +43,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   private final Map<String,CodeStyleSettings> mySettingsMap = new HashMap<>();
 
   private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true, null, null, PluginId.getId("com.intellij"));
+    new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginId.getId("com.intellij"));
 
   public ProjectCodeStyleSettingsManager(Project project) {
     myProject = project;
