@@ -35,7 +35,6 @@ To create an EditorConfig file in a directory, right-click this directory and se
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
     <applicationService serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
-    <postStartupActivity implementation="org.editorconfig.plugincomponents.ConfigProjectComponent"/>
     <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
     <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
@@ -463,4 +462,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
         interface="org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider"/>
     <extensionPoint qualifiedName="editorconfig.exportProvider" interface="org.editorconfig.settings.EditorConfigExportProvider"/>
   </extensionPoints>
+
+  <applicationListeners>
+    <listener class="org.editorconfig.plugincomponents.EditorConfigModificationListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
 </idea-plugin>
