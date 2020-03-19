@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -22,6 +23,7 @@ public class EditorSettingsManager implements EditorFactoryListener {
 
   @Override
   public void editorCreated(@NotNull EditorFactoryEvent event) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     applyEditorSettings(event.getEditor());
   }
 

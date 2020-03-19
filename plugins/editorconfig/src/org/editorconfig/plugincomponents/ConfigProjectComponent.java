@@ -18,7 +18,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
 import org.editorconfig.EditorConfigRegistry;
 import org.editorconfig.configmanagement.EditorSettingsManager;
-import org.editorconfig.configmanagement.EncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,9 +29,7 @@ public class ConfigProjectComponent implements StartupActivity.DumbAware {
     // Register project-level config managers
     final EditorFactory editorFactory = EditorFactory.getInstance();
     MessageBus bus = project.getMessageBus();
-    EncodingManager encodingManager = new EncodingManager(project);
     LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
-    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
