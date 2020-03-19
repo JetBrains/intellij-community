@@ -24,9 +24,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.ui.scale.JBUIScale.sysScale;
 import static com.intellij.util.ui.TimerUtil.createNamedTimer;
-import static com.intellij.util.ui.UIUtil.isClientPropertyTrue;
 
 public final class DnDManagerImpl extends DnDManager {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
@@ -51,7 +49,6 @@ public final class DnDManagerImpl extends DnDManager {
 
   private final DragGestureListener myDragGestureListener = new MyDragGestureListener();
   private final DropTargetListener myDropTargetListener = new MyDropTargetListener();
-  private final SmoothAutoScroller mySmoothAutoScroller = new SmoothAutoScroller();
 
   private static final Image EMPTY_IMAGE = ImageUtil.createImage(1, 1, Transparency.TRANSLUCENT);
 
@@ -601,10 +598,10 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  private class MyDropTargetListener extends DropTargetAdapter {
+  private class MyDropTargetListener implements DropTargetListener {
     @Override
     public void drop(final DropTargetDropEvent dtde) {
-      mySmoothAutoScroller.setEvent(null);
+      SmoothAutoScroller.getSharedListener().drop(dtde);
       try {
         final Component component = dtde.getDropTargetContext().getComponent();
 
@@ -658,8 +655,13 @@ public final class DnDManagerImpl extends DnDManager {
     }
 
     @Override
+    public void dragEnter(DropTargetDragEvent dtde) {
+      SmoothAutoScroller.getSharedListener().dragEnter(dtde);
+    }
+
+    @Override
     public void dragOver(DropTargetDragEvent dtde) {
-      mySmoothAutoScroller.setEvent(dtde);
+      SmoothAutoScroller.getSharedListener().dragOver(dtde);
       final DnDEventImpl event = updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(),
                                                     dtde.getCurrentDataFlavors(), dtde.getTransferable());
       if (myCurrentEvent == null) {
@@ -674,7 +676,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dragExit(DropTargetEvent dte) {
-      mySmoothAutoScroller.setEvent(null);
+      SmoothAutoScroller.getSharedListener().dragExit(dte);
       onDragExit();
 
       cleanTargetComponent(dte.getDropTargetContext().getComponent());
@@ -689,6 +691,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
+      SmoothAutoScroller.getSharedListener().dropActionChanged(dtde);
       updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(), dtde.getCurrentDataFlavors(), dtde.getTransferable());
     }
   }
@@ -717,94 +720,5 @@ public final class DnDManagerImpl extends DnDManager {
   @Nullable
   public Component getLastDropHandler() {
     return SoftReference.dereference(myLastDropHandler);
-  }
-
-
-  @Nullable
-  private static JComponent getComponent(@NotNull DropTargetDragEvent event) {
-    assert EventQueue.isDispatchThread();
-    Object source = event.getDropTargetContext().getComponent();
-    JComponent component = source instanceof JComponent ? (JComponent)source : null;
-    if (component == null) return null; // heavyweight components are not supported
-    if (component instanceof Autoscroll) return null; // Swing DnD is used
-    if (component.getAutoscrolls()) return null; // default scroller is used
-    if (!component.isShowing()) return null; // component is not visible on screen
-    return isClientPropertyTrue(component, AUTO_SCROLL) ? component : null;
-  }
-
-  private static int getDelta(int count, int margin, int value, int min, int max) {
-    int offset = Math.min(count * margin, (max - min) / 2);
-    if (value < (min += offset)) {
-      double delta = (min - value) / (double)margin;
-      return count < delta ? 0 : -(int)Math.floor(delta * delta);
-    }
-    if (value > (max -= offset)) {
-      double delta = (value - max) / (double)margin;
-      return count < delta ? 0 : (int)Math.floor(delta * delta);
-    }
-    return 0;
-  }
-
-  private final class SmoothAutoScroller {
-    private DropTargetDragEvent event;
-    private final Point screen = new Point();
-    private final Timer timer = createNamedTimer("DndManagerImpl autoscroll timer", 10, e -> {
-      if (!processOnTimer(this.event)) setEvent(null);
-    });
-
-    private boolean processOnTimer(@Nullable DropTargetDragEvent event) {
-      JComponent component = event == null ? null : getComponent(event);
-      if (component == null) return false;
-
-      Point location = new Point(this.screen);
-      SwingUtilities.convertPointFromScreen(location, component);
-
-      Rectangle bounds = component.getVisibleRect();
-      if (!bounds.contains(location.x, location.y)) return false; // mouse out of component
-
-      int margin = (int)(5 * sysScale(component));
-      int deltaX = getDelta(3, margin, location.x, bounds.x, bounds.x + bounds.width);
-      int deltaY = getDelta(5, margin, location.y, bounds.y, bounds.y + bounds.height);
-      if (deltaX != 0 || deltaY != 0) {
-        LOG.debug("DnD AutoScroller delta X:", deltaX, " Y:", deltaY);
-        bounds.x += deltaX;
-        bounds.y += deltaY;
-        SwingUtilities.convertPointToScreen(location, component);
-        component.scrollRectToVisible(bounds);
-        SwingUtilities.convertPointFromScreen(location, component);
-      }
-      if (!location.equals(event.getLocation())) {
-        LOG.debug("DnD AutoScroller simulate dragOver");
-        myDropTargetListener.dragOver(
-          new DropTargetDragEvent(
-            event.getDropTargetContext(),
-            location,
-            event.getDropAction(),
-            event.getSourceActions())
-        );
-      }
-      return true;
-    }
-
-    void setEvent(@Nullable DropTargetDragEvent event) {
-      JComponent component = event == null ? null : getComponent(event);
-      if (component != null) {
-        Point location = new Point(event.getLocation());
-        SwingUtilities.convertPointToScreen(location, component);
-        this.screen.setLocation(location);
-        this.event = event;
-        if (!timer.isRunning()) {
-          LOG.debug("DnD AutoScroller started");
-          timer.start();
-        }
-      }
-      else {
-        this.event = null;
-        if (timer.isRunning()) {
-          LOG.debug("DnD AutoScroller stopped");
-          timer.stop();
-        }
-      }
-    }
   }
 }

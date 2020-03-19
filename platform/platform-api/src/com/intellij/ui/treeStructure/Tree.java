@@ -2,6 +2,7 @@
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.dnd.SmoothAutoScroller;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
@@ -34,8 +35,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static com.intellij.ide.dnd.DnDManager.AUTO_SCROLL;
-
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
   private final StatusText myEmptyText;
@@ -62,7 +61,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public Tree(TreeModel treemodel) {
     super(treemodel);
     setAutoscrolls(false);
-    putClientProperty(AUTO_SCROLL, true);
+    putClientProperty(SmoothAutoScroller.ENABLED, true);
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
