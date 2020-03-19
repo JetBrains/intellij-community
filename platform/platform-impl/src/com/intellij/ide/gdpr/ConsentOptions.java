@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.google.gson.Gson;
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -175,14 +176,14 @@ public final class ConsentOptions {
     }
   }
 
-  public Pair<List<Consent>, Boolean> getConsents() {
+  public @NotNull Pair<List<Consent>, Boolean> getConsents() {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (myIsEAP) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
     }
     if (allDefaults.isEmpty()) {
-      return Pair.create(Collections.emptyList(), Boolean.FALSE);
+      return new Pair<>(Collections.emptyList(), Boolean.FALSE);
     }
     final Map<String, ConfirmedConsent> allConfirmed = loadConfirmedConsents();
     final List<Consent> result = new ArrayList<>();
@@ -193,9 +194,9 @@ public final class ConsentOptions {
         result.add(confirmed == null? base : base.derive(confirmed.isAccepted()));
       }
     }
-    Collections.sort(result, Comparator.comparing(o -> o.getId()));
-    final Boolean confirmationEnabled = Boolean.valueOf(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
-    return Pair.create(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
+    result.sort(Comparator.comparing(ConsentBase::getId));
+    boolean confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
+    return new Pair<>(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 
   public void setConsents(Collection<Consent> confirmedByUser) {
@@ -264,7 +265,7 @@ public final class ConsentOptions {
     return changes;
   }
 
-  private static boolean applyServerChangesToDefaults(Map<String, Consent> base, Collection<? extends ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToDefaults(Map<String, Consent> base, @NotNull Collection<ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final Consent newConsent = new Consent(update);
@@ -277,10 +278,9 @@ public final class ConsentOptions {
     return changes;
   }
 
-  @NotNull
-  private static Collection<ConsentAttributes> fromJson(String json) {
+  private static @NotNull Collection<ConsentAttributes> fromJson(@Nullable String json) {
     try {
-      final ConsentAttributes[] data = StringUtil.isEmptyOrSpaces(json)? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
+      ConsentAttributes[] data = StringUtilRt.isEmptyOrSpaces(json) ? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
       if (data != null) {
         return Arrays.asList(data);
       }
@@ -292,7 +292,7 @@ public final class ConsentOptions {
   }
 
   private static String consentsToJson(Stream<Consent> consents) {
-    return consentAttributesToJson(consents.map(consent -> consent.toConsentAttributes()));
+    return consentAttributesToJson(consents.map(Consent::toConsentAttributes));
   }
 
   private static String consentAttributesToJson(Stream<ConsentAttributes> attributes) {
@@ -301,7 +301,7 @@ public final class ConsentOptions {
   }
 
   private static String confirmedConsentToExternalString(Stream<ConfirmedConsent> consents) {
-    return StringUtil.join(consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(c -> c.toExternalString()).collect(Collectors.toList()), ";");
+    return StringUtil.join(consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(ConfirmedConsent::toExternalString).collect(Collectors.toList()), ";");
   }
 
   @NotNull
