@@ -25,7 +25,7 @@
   <action id="FileStructurePopup">
     <keyboard-shortcut first-keystroke="control F12"/>
   </action>
-  <action id="GotoClass">
+  <action id="SearchEverywhere">
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
   <action id="GotoChangedFile">
