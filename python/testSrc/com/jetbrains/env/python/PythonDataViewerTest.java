@@ -111,15 +111,33 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   @Staging
-  public void testDataFrameFormatting() {
+  public void testDataFrameFloatFormatting() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
       @Override
       public void testing() throws Exception {
         doTest("df1", 3, 5, (varName, session) -> getChunk(varName, "%.2f", session), arrayChunk -> {
           Object[][] data = arrayChunk.getData();
           assertEquals("'1.10'", data[0][1].toString());
-          assertEquals("'1.20'", data[0][2].toString());
           assertEquals("'1.22'", data[1][4].toString());
+          assertEquals("'2019.00'", data[1][2].toString());
+          assertEquals("'1.00'", data[2][3].toString());
+        });
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testDataFrameDefaultFormatting() {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("df1", 3, 5, (varName, session) -> getChunk(varName, "%", session), arrayChunk -> {
+          Object[][] data = arrayChunk.getData();
+          assertEquals("'1.10000'", data[0][1].toString());
+          assertEquals("'1.22000'", data[1][4].toString());
+          assertEquals("'2019'", data[1][2].toString());
+          assertEquals("'True'", data[2][3].toString());
         });
       }
     });

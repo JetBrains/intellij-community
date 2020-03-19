@@ -1,7 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.completion.EmptyCompletionNotifier;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
@@ -9,13 +14,17 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
@@ -23,6 +32,7 @@ import java.util.stream.Stream;
 
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
+  private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
 
   private LightEditUtil() {
   }
@@ -107,6 +117,28 @@ public final class LightEditUtil {
   }
 
   public static boolean isLightEditEnabled() {
-    return Registry.is(ENABLED_FILE_OPEN_KEY);
+    return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip();
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static EmptyCompletionNotifier createEmptyCompletionNotifier() {
+    return new EmptyCompletionNotifier() {
+      @Override
+      public void showIncompleteHint(@NotNull Editor editor, @NotNull String text, boolean isDumbMode) {
+        HintManager.getInstance().showInformationHint(
+          editor,
+          StringUtil.escapeXmlEntities(text) + CodeInsightBundle.message("completion.incomplete.light.edit.suffix", OPEN_FILE_IN_PROJECT_HREF),
+          e -> {
+            if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())
+                && OPEN_FILE_IN_PROJECT_HREF.equals(e.getDescription())) {
+              VirtualFile file = LightEditService.getInstance().getSelectedFile();
+              if (file != null) {
+                LightEditOpenInProjectIntention.performOn(file);
+              }
+            }
+          });
+      }
+    };
   }
 }

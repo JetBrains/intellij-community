@@ -4,10 +4,7 @@ package com.intellij.find;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.PluggableLafInfo;
-import com.intellij.ide.ui.laf.SearchTextAreaPainter;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -39,7 +36,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.event.DocumentEvent;
-import javax.swing.plaf.TextUI;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
@@ -53,11 +49,10 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.ide.ui.laf.PluggableLafInfo.SearchAreaContext;
 import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
-public class SearchTextArea extends JPanel implements PropertyChangeListener/*, FocusListener*/ {
+public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
@@ -93,8 +88,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
   private final NonOpaquePanel myExtraActionsPanel = new NonOpaquePanel();
   private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
-  private final SearchTextAreaPainter myPainter;
   private boolean myMultilineEnabled = true;
+  private boolean myGrowHorizontallyWithText = false;
 
   public SearchTextArea(boolean searchMode) {
     this(new JBTextArea(), searchMode, false);
@@ -112,22 +107,27 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
 
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
-    myTextArea.registerKeyboardAction(e -> {
-      if (allowInsertTabInMultiline && myTextArea.getText().contains("\n")) {
-        if (myTextArea.isEditable() && myTextArea.isEnabled()) {
-          myTextArea.replaceSelection("\t");
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (allowInsertTabInMultiline && myTextArea.getText().contains("\n")) {
+          if (myTextArea.isEditable() && myTextArea.isEnabled()) {
+            myTextArea.replaceSelection("\t");
+          }
+          else {
+            UIManager.getLookAndFeel().provideErrorFeedback(myTextArea);
+          }
         }
         else {
-          UIManager.getLookAndFeel().provideErrorFeedback(myTextArea);
-        }
+          myTextArea.transferFocus();
+        }      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myTextArea);
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myTextArea.transferFocusBackward();
       }
-      else {
-        myTextArea.transferFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), WHEN_FOCUSED);
-
-    myTextArea.registerKeyboardAction(e -> myTextArea.transferFocusBackward(), KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK),
-                                      WHEN_FOCUSED);
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK)), myTextArea);
     KeymapUtil.reassignAction(myTextArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NEW_LINE_KEYSTROKE, WHEN_FOCUSED);
     myTextArea.setDocument(new PlainDocument() {
       @Override
@@ -147,6 +147,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
         if (e.getType() == DocumentEvent.EventType.INSERT) {
           myTextArea.putClientProperty(JUST_CLEARED_KEY, null);
         }
+        int rows = Math.min(Registry.get("ide.find.max.rows").asInteger(), myTextArea.getLineCount());
+        myTextArea.setRows(Math.max(1, Math.min(25, rows)));
         updateIconsLayout();
       }
     });
@@ -155,24 +157,22 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
-        TextUI ui = myTextArea.getUI();
-        if (ui != null) {
-          d.height = Math.min(d.height, ui.getPreferredSize(myTextArea).height);
-        }
+        if (!myGrowHorizontallyWithText) return d;
+        Insets insets = getInsets();
+        d.width = Math.max(d.width, myTextArea.getPreferredSize().width + insets.left + insets.right) /*+ 5*/;
         return d;
       }
 
       @Override
-      public void doLayout() {
-        super.doLayout();
-        JScrollBar hsb = getHorizontalScrollBar();
-        if (StringUtil.getLineBreakCount(getTextArea().getText()) == 0 && hsb.isVisible()) {
-          Rectangle hsbBounds = hsb.getBounds();
-          hsb.setVisible(false);
-          Rectangle bounds = getViewport().getBounds();
-          bounds = bounds.union(hsbBounds);
-          getViewport().setBounds(bounds);
-        }
+      protected void setupCorners() {
+        super.setupCorners();
+        setBorder(JBUI.Borders.empty(2, 0, 2, 2));
+      }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setBorder(JBUI.Borders.empty(2, 0, 2, 2));
       }
     };
     myTextArea.setBorder(new Border() {
@@ -181,14 +181,14 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
 
       @Override
       public Insets getBorderInsets(Component c) {
-        if (SystemInfo.isMac && !StartupUiUtil.isUnderDarcula()) {
-          return new JBInsets(3, 0, 3, 0);
+        if (SystemInfo.isMac) {
+          return new JBInsets(3, 0, 2, 0);
         }
         else {
-          int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : StartupUiUtil.isUnderDarcula() ? 2 : 1;
+          int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : StartupUiUtil.isUnderDarcula() ? 1 : 0;
           int top = myTextArea.getFontMetrics(myTextArea.getFont()).getHeight() <= 16 ? 2 : 1;
           if (JBUIScale.isUsrHiDPI()) {
-            bottom = 2;
+            bottom = 0;
             top = 2;
           }
           return new JBInsets(top, 0, bottom, 0);
@@ -202,19 +202,20 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
     });
     myScrollPane.getViewport().setBorder(null);
     myScrollPane.getViewport().setOpaque(false);
-    myScrollPane.setBorder(JBUI.Borders.empty(1, 0, 2, 2));
     myScrollPane.setOpaque(false);
 
     myInfoLabel = new JBLabel(UIUtil.ComponentStyle.SMALL);
     myInfoLabel.setForeground(JBColor.GRAY);
-
-    myPainter = createPainter();
 
     myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false);
     myClearButton = new MyActionButton(new ClearAction(), false);
     myNewLineButton = new MyActionButton(new NewLineAction(), false);
 
     updateLayout();
+  }
+
+  public void setGrowHorizontallyWithText(boolean growHorizontallyWithText) {
+    myGrowHorizontallyWithText = growHorizontallyWithText;
   }
 
   @Override
@@ -236,19 +237,22 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
   }
 
   protected void updateLayout() {
-    setBorder(myPainter.getBorder());
-    setLayout(new MigLayout(myPainter.getLayoutConstraints()));
+    Insets i = SystemInfo.isLinux ? JBUI.insets(2) : JBUI.insets(1);
+    setLayout(new MigLayout("flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUIScale.scale(3)));
     removeAll();
-    add(myHistoryPopupButton, myPainter.getHistoryButtonConstraints());
+    add(myHistoryPopupButton, "ay baseline, gaptop " + JBUIScale.scale(1));
     add(myScrollPane, "ay top, growx, push, growy");
     //TODO combine icons/info modes
     if (myInfoMode) {
       add(myInfoLabel, "gapright " + JBUIScale.scale(4));
     }
     JPanel iconsPanelWrapper = new NonOpaquePanel(new BorderLayout());
-    iconsPanelWrapper.add(myIconsPanel, BorderLayout.WEST);
+    iconsPanelWrapper.setBorder(JBUI.Borders.emptyTop(1));
+    JPanel p = new NonOpaquePanel(new BorderLayout());
+    p.add(myIconsPanel, BorderLayout.NORTH);
+    iconsPanelWrapper.add(p, BorderLayout.WEST);
     iconsPanelWrapper.add(myExtraActionsPanel, BorderLayout.CENTER);
-    add(iconsPanelWrapper, myPainter.getIconsPanelConstraints());
+    add(iconsPanelWrapper, "ay top, growy");
     updateIconsLayout();
   }
 
@@ -266,33 +270,23 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
     boolean wrongVisibility =
       ((myClearButton.getParent() == null) == showClearIcon) || ((myNewLineButton.getParent() == null) == showNewLine);
 
-    LayoutManager layout = myIconsPanel.getLayout();
-    boolean wrongLayout = !(layout instanceof GridLayout);
     boolean multiline = StringUtil.getLineBreakCount(myTextArea.getText()) > 0;
-    boolean wrongPositioning = !wrongLayout && (((GridLayout)layout).getRows() > 1) != multiline;
-    if (wrongLayout || wrongVisibility || wrongPositioning) {
+    if (wrongVisibility) {
       myIconsPanel.removeAll();
-      int rows = multiline && showClearIcon && showNewLine ? 2 : 1;
-      int columns = !multiline && showClearIcon && showNewLine ? 2 : 1;
-      myIconsPanel.setLayout(new GridLayout(rows, columns, 8, 8));
-      if (!multiline && showNewLine) {
-        myIconsPanel.add(myNewLineButton);
-      }
-      if (showClearIcon) {
-        myIconsPanel.add(myClearButton);
-      }
-      if (multiline && showNewLine) {
-        myIconsPanel.add(myNewLineButton);
-      }
-      myIconsPanel.setBorder(myPainter.getIconsPanelBorder(rows));
+      myIconsPanel.setLayout(new BorderLayout());
+      myIconsPanel.add(myClearButton, BorderLayout.CENTER);
+      myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
+      myIconsPanel.setPreferredSize(myIconsPanel.getPreferredSize());
+      if (!showClearIcon) myIconsPanel.remove(myClearButton);
+      if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
-      myScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
-      myScrollPane.getHorizontalScrollBar().setVisible(multiline);
-      myScrollPane.revalidate();
-      doLayout();
     }
+    myScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
+    myScrollPane.getHorizontalScrollBar().setVisible(multiline);
+    myScrollPane.revalidate();
+    doLayout();
   }
 
   public List<Component> setExtraActions(AnAction... actions) {
@@ -300,9 +294,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
     myExtraActionsPanel.setBorder(JBUI.Borders.empty());
     ArrayList<Component> addedButtons = new ArrayList<>();
     if (actions != null && actions.length > 0) {
-      JPanel buttonsGrid = new NonOpaquePanel(new GridLayout(1, actions.length, JBUI.scale(4), 0));
-
-
+      JPanel buttonsGrid = new NonOpaquePanel(new GridLayout(1, actions.length, 0, 0));
       for (AnAction action : actions) {
         ActionButton button = new MyActionButton(action, true);
         addedButtons.add(button);
@@ -372,20 +364,6 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
     myInfoLabel.setText(info);
   }
 
-  @Override
-  public void paint(Graphics graphics) {
-    Graphics2D g = (Graphics2D)graphics.create();
-    try {
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      myPainter.paint(g);
-    }
-    finally {
-      g.dispose();
-    }
-    super.paint(graphics);
-  }
-
   private class ShowHistoryAction extends DumbAwareAction {
 
     ShowHistoryAction() {
@@ -422,69 +400,13 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
   private class NewLineAction extends DumbAwareAction {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
+      setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
       getTemplatePresentation().setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       new DefaultEditorKit.InsertBreakAction().actionPerformed(new ActionEvent(myTextArea, 0, "action"));
-    }
-  }
-
-  @NotNull
-  private SearchTextAreaPainter createPainter() {
-    LafManager lafManager = LafManager.getInstance();
-    UIManager.LookAndFeelInfo info = lafManager.getCurrentLookAndFeel();
-
-    SearchAreaContext context = new SearchAreaContext(this, myTextArea, myIconsPanel, myScrollPane);
-    if (info instanceof PluggableLafInfo) {
-      return ((PluggableLafInfo)info).createSearchAreaPainter(context);
-    }
-    return new DefaultPainter(context);
-  }
-
-  private static class DefaultPainter implements SearchTextAreaPainter {
-    private final SearchAreaContext myContext;
-    private DefaultPainter(SearchAreaContext context) {
-      myContext = context;
-    }
-
-    @Override
-    @NotNull
-    public Border getBorder() {
-      return JBUI.Borders.empty(1);
-    }
-
-    @Override
-    @NotNull
-    public String getLayoutConstraints() {
-      Insets i = SystemInfo.isLinux ? JBUI.insets(2) : JBUI.insets(3);
-      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUIScale.scale(3);
-    }
-
-    @Override
-    @NotNull
-    public String getHistoryButtonConstraints() {
-      return "ay baseline, gaptop " + JBUIScale.scale(1);
-    }
-
-    @Override
-    @NotNull
-    public String getIconsPanelConstraints() {
-      return "ay baseline";
-    }
-
-    @Override
-    @NotNull
-    public Border getIconsPanelBorder(int rows) {
-      return JBUI.Borders.empty();
-    }
-
-    @Override
-    public void paint(@NotNull Graphics2D g) {
-      Rectangle r = new Rectangle(myContext.getSearchComponent().getSize());
-      JBInsets.removeFrom(r, myContext.getSearchComponent().getInsets());
-      DarculaTextBorder.paintDarculaSearchArea(g, r, myContext.getTextComponent(), true);
     }
   }
 
@@ -496,6 +418,11 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener/*, 
       setLook(focusable ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
       setFocusable(focusable);
       updateIcon();
+    }
+
+    @Override
+    protected DataContext getDataContext() {
+      return DataManager.getInstance().getDataContext(this);
     }
 
     @Override

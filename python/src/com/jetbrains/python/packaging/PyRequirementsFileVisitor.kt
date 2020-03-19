@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
 
@@ -16,6 +17,11 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
   fun visitRequirementsFile(requirementsFile: PsiFile): PyRequirementsAnalysisResult {
     doVisitFile(requirementsFile, mutableSetOf(requirementsFile.virtualFile))
     val currentFileOutput = collectedOutput.remove(requirementsFile.virtualFile)!!
+
+    importedPackages.values.asSequence()
+      .map { if (settings.specifyVersion) "${it.name}${settings.versionSpecifier.separator}${it.version}" else it.name }
+      .forEach { currentFileOutput.add(it) }
+
     return PyRequirementsAnalysisResult(currentFileOutput, collectedOutput, unmatchedLines, unchangedInBaseFiles)
   }
 
@@ -43,15 +49,9 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
       }
 
       if (settings.modifyBaseFiles && isFileReference(line)) {
+        // collecting requirements from base files for modification
         val filename = line.split(" ")[1]
-        val dir = requirementsFile.containingDirectory.virtualFile
-        val virtualFile = dir.findFileByRelativePath(filename)
-        if (virtualFile != null && virtualFile !in visitedFiles) {
-          visitedFiles.add(virtualFile)
-          val baseRequirementsFile = requirementsFile.manager.findFile(virtualFile)!!
-          doVisitFile(baseRequirementsFile, visitedFiles)
-          visitedFiles.remove(virtualFile)
-        }
+        visitBaseFile(filename, requirementsFile.containingDirectory, visitedFiles)
         outputLines.addAll(lines) // always keeping base file reference
         continue
       }
@@ -63,7 +63,7 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
           continue
         }
 
-        // report those requirements that were not changed in base files
+        // base files cannot be modified, so we report requirements with different version
         parsed.asSequence()
           .filter { it.name.toLowerCase() in importedPackages }
           .map { it to importedPackages.remove(it.name.toLowerCase()) }
@@ -79,20 +79,10 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
       else {
         val requirement = parsed.first()
         val name = requirement.name.toLowerCase()
-        // processing only requirements that are used in the project, discarding others
         if (name in importedPackages) {
           val pkg = importedPackages.remove(name)!!
-          if (requirement.isEditable || vcsPrefixes.any { line.startsWith(it) }) {
-            // keeping editable and vcs requirements
-            outputLines.addAll(lines)
-          }
-          else if (settings.keepMatchingSpecifier && compatibleVersion(requirement, pkg.version, settings.specifyVersion)) {
-            // existing version separators match the current package version, keeping them
-            outputLines.addAll(lines)
-          }
-          else {
-            outputLines.add(convertToRequirementsEntry(requirement, settings, pkg.version))
-          }
+          val formatted = formatRequirement(requirement, pkg, lines)
+          outputLines.addAll(formatted)
         }
         else if (!settings.removeUnused) {
           outputLines.addAll(lines)
@@ -100,6 +90,24 @@ class PyRequirementsFileVisitor(private val importedPackages: MutableMap<String,
       }
     }
     collectedOutput[requirementsFile.virtualFile] = outputLines
+  }
+
+  private fun formatRequirement(requirement: PyRequirement, pkg: PyPackage, lines: List<String>): List<String> = when {
+    // keeping editable and vcs requirements
+    requirement.isEditable || vcsPrefixes.any { lines.first().startsWith(it) } -> lines
+    // existing version separators match the current package version
+    settings.keepMatchingSpecifier && compatibleVersion(requirement, pkg.version, settings.specifyVersion) -> lines
+    // requirement does not match package version and settings
+    else -> listOf(convertToRequirementsEntry(requirement, settings, pkg.version))
+  }
+
+  private fun visitBaseFile(filename: String, directory: PsiDirectory, visitedFiles: MutableSet<VirtualFile>) {
+    val referencedFile = directory.virtualFile.findFileByRelativePath(filename)
+    if (referencedFile != null && visitedFiles.add(referencedFile)) {
+      val baseRequirementsFile = directory.manager.findFile(referencedFile)!!
+      doVisitFile(baseRequirementsFile, visitedFiles)
+      visitedFiles.remove(referencedFile)
+    }
   }
 
   private fun splitByRequirementsEntries(requirementsText: String): MutableList<List<String>> {

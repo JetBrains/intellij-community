@@ -73,9 +73,19 @@ class PersistentThreeComponentSplitter(
   override fun addNotify() {
     super.addNotify()
     addNotifyCalled = true
-    SwingUtilities.invokeLater {
+    invokeLaterWhen({ checkSize() }) {
       addNotifyCalled = false
       restoreProportions()
+    }
+  }
+
+  private fun invokeLaterWhen(condition: () -> Boolean, action: () -> Unit) {
+    SwingUtilities.invokeLater {
+      if (condition()) {
+        action()
+      } else {
+        invokeLaterWhen(condition, action)
+      }
     }
   }
 

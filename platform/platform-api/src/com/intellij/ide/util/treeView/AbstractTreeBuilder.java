@@ -362,7 +362,7 @@ public class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  protected void yield(@NotNull Runnable runnable) {
+  protected void yieldToEDT(@NotNull Runnable runnable) {
     AbstractTreeUi ui = getUi();
     if (ui == null) return;
 

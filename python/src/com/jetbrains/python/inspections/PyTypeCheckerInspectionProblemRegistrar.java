@@ -189,7 +189,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
         "Unexpected type(s):" + separator +
         XmlStringUtil.escapeString(actualTypesRepresentation) + separator +
         "Possible types:" + separator +
-        XmlStringUtil.escapeString(expectedTypesRepresentation)
+        expectedTypesRepresentation
       );
     }
     else {
@@ -258,7 +258,10 @@ class PyTypeCheckerInspectionProblemRegistrar {
                                                                           boolean isOnTheFly) {
     return calleesResults
       .stream()
-      .map(calleeResult -> getMultiCalleeExpectedTypesRepresentation(calleeResult.getResults(), context))
+      .map(calleeResult -> {
+        String expectedTypesRepresentation = getMultiCalleeExpectedTypesRepresentation(calleeResult.getResults(), context);
+        return isOnTheFly ? XmlStringUtil.escapeString(expectedTypesRepresentation) : expectedTypesRepresentation;
+      })
       .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
 

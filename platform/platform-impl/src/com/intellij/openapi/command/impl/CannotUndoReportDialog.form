@@ -25,7 +25,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndentWithoutInsets"/>
         </clientProperties>
-        <border type="none" title="Problem files"/>
+        <border type="none" title-resource-bundle="messages/IdeBundle" title-key="border.title.problem.files"/>
         <children>
           <scrollpane id="2538c" class="com.intellij.ui.components.JBScrollPane">
             <constraints>

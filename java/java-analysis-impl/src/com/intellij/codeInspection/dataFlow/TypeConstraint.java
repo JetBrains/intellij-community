@@ -410,20 +410,38 @@ public interface TypeConstraint {
         if (!that.myNotInstanceOf.containsAll(myNotInstanceOf)) {
           if (that.myInstanceOf.isEmpty()) return false;
           for (Exact thisNotType : this.myNotInstanceOf) {
-            if (!that.myNotInstanceOf.contains(thisNotType) &&
-                that.myInstanceOf.stream().anyMatch(thatType -> thisNotType.isConvertibleFrom(thatType))) {
-              return false;
+            if (!that.myNotInstanceOf.contains(thisNotType)) {
+              for (Exact thatType : that.myInstanceOf) {
+                if (thisNotType.isConvertibleFrom(thatType)) {
+                  return false;
+                }
+              }
             }
           }
         }
         if (that.myInstanceOf.containsAll(myInstanceOf)) return true;
         if (that.myInstanceOf.isEmpty()) return myInstanceOf.isEmpty();
-        return that.myInstanceOf.stream().allMatch(
-          thatType -> this.myInstanceOf.stream().allMatch(thisType -> thisType.isAssignableFrom(thatType)));
+        for (Exact thatType : that.myInstanceOf) {
+          for (Exact thisType : this.myInstanceOf) {
+            if (!thisType.isAssignableFrom(thatType)) {
+              return false;
+            }
+          }
+        }
+        return true;
       } else if (other instanceof Exact) {
         Exact otherType = (Exact)other;
-        return this.myInstanceOf.stream().allMatch(my -> my.isAssignableFrom(otherType)) &&
-               this.myNotInstanceOf.stream().noneMatch(my -> my.isAssignableFrom(otherType));
+        for (Exact thisInstance : this.myInstanceOf) {
+          if (!thisInstance.isAssignableFrom(otherType)) {
+            return false;
+          }
+        }
+        for (Exact thisNotInstance : this.myNotInstanceOf) {
+          if (thisNotInstance.isAssignableFrom(otherType)) {
+            return false;
+          }
+        }
+        return true;
       }
       return false;
     }

@@ -710,7 +710,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     for (int i = src.length - 1; i >= 0; i--) {
       final int o = src[i];
       if (o == obj) {
-          return i;
+        return i;
       }
     }
     return -1;
@@ -721,7 +721,7 @@ public final class ArrayUtil extends ArrayUtilRt {
     for (int i = src.length - 1; i >= 0; i--) {
       final int o = src[i];
       if (o != obj) {
-          return i;
+        return i;
       }
     }
     return -1;

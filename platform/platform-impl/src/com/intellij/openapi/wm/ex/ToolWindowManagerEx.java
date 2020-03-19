@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -17,6 +18,10 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager {
+  /**
+   * @deprecated Use {{@link #registerToolWindow(RegisterToolWindowTask)}}
+   */
+  @Deprecated
   public abstract void initToolWindow(@NotNull ToolWindowEP bean);
 
   @ApiStatus.Internal

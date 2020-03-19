@@ -19,8 +19,6 @@ import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
@@ -343,7 +341,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
-    updateMemoryIndicator();
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();
@@ -361,13 +358,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     BalloonLayout layout = frame.getBalloonLayout();
     if (layout instanceof BalloonLayoutImpl) {
       ((BalloonLayoutImpl)layout).queueRelayout();
-    }
-  }
-
-  private void updateMemoryIndicator() {
-    Project project = myStatusBar.getProject();
-    if (project != null) {
-      project.getService(StatusBarWidgetsManager.class).updateWidget(MemoryIndicatorWidgetFactory.class);
     }
   }
 

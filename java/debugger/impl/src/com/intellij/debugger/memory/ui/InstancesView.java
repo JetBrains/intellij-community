@@ -132,7 +132,7 @@ class InstancesView extends InstancesViewBase {
     list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         list.navigateToSelectedValue(true);
         return true;
       }

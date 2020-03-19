@@ -39,13 +39,12 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
     initModuleExtensions();
 
-    final ModuleRootManagerImpl moduleRootManager =
-      new ModuleRootManagerImpl(this) {
-        @Override
-        public void loadState(@NotNull ModuleRootManagerState object) {
-          loadState(object, false);
-        }
-      };
+    ModuleRootManagerImpl moduleRootManager = new ModuleRootManagerImpl(this) {
+      @Override
+      public void loadState(@NotNull ModuleRootManagerState object) {
+        loadState(object, false);
+      }
+    };
     Disposer.register(parentDisposable, moduleRootManager);
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, createModulePathMacroManager(project));

@@ -21,6 +21,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -310,7 +311,12 @@ public class LambdaRefactoringUtil {
 
       if (qualifierExpression != null) {
         final List<PsiElement> sideEffects = new ArrayList<>();
-        SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
+        if (ExpressionUtils.isNewObject(qualifierExpression)) {
+          sideEffects.add(qualifierExpression);
+        }
+        else {
+          SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
+        } 
         if (!sideEffects.isEmpty()) {
           if (ApplicationManager.getApplication().isUnitTestMode() ||
               Messages.showYesNoDialog(lambdaExpression.getProject(),
@@ -334,7 +340,8 @@ public class LambdaRefactoringUtil {
    */
   public static boolean canConvertToLambdaWithoutSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
     if (!canConvertToLambda(methodReferenceExpression)) return false;
-    final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-    return qualifierExpression == null || !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
+    final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodReferenceExpression.getQualifierExpression());
+    return qualifierExpression == null ||
+           !SideEffectChecker.mayHaveSideEffects(qualifierExpression) && !ExpressionUtils.isNewObject(qualifierExpression);
   }
 }

@@ -52,12 +52,24 @@
     <!--END HG ignore lang-->
     <vcs.actions.ScheduleForAdditionActionExtension implementation="org.zmlx.hg4idea.action.HgAdd"/>
 
-    <statusBarWidgetFactory implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory" order="after selectionModeWidget,before notificationsWidget"/>
+    <statusBarWidgetFactory id="hgWidget"
+                            implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory"
+                            order="after selectionModeWidget,before notificationsWidget"/>
+    <statusBarWidgetFactory id="InHgIncomingOutgoingWidget"
+                            implementation="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$IncomingFactory"
+                            order="after hgWidget"/>
+    <statusBarWidgetFactory id="OutHgIncomingOutgoingWidget"
+                            implementation="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$OutgoingFactory"
+                            order="after InHgIncomingOutgoingWidget"/>
   </extensions>
 
   <projectListeners>
     <listener class="org.zmlx.hg4idea.status.ui.HgStatusWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="org.zmlx.hg4idea.status.ui.HgWidgetUpdater"/>
   </projectListeners>
 
   <actions>

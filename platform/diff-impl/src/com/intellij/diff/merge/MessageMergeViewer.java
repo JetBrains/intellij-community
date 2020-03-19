@@ -2,6 +2,7 @@
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,7 @@ class MessageMergeViewer implements MergeTool.MergeViewer {
 
   @NotNull private final JPanel myPanel;
 
-  MessageMergeViewer(@NotNull MergeContext context, @NotNull String message) {
+  MessageMergeViewer(@NotNull MergeContext context, @NotNull @Nls String message) {
     myMergeContext = context;
 
     myPanel = new JPanel(new BorderLayout());

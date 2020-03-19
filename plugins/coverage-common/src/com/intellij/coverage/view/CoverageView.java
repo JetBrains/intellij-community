@@ -98,7 +98,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myBuilder.setParentTitle(titleLabel);
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         drillDown(structure);
         return true;
       }
@@ -273,7 +273,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private class FlattenPackagesAction extends ToggleAction {
 
     private FlattenPackagesAction() {
-      super(IdeBundle.lazyMessage("action.flatten.packages"), IdeBundle.lazyMessage("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
+      super(IdeBundle.messagePointer("action.flatten.packages"), IdeBundle.messagePointer("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
     }
 
     @Override

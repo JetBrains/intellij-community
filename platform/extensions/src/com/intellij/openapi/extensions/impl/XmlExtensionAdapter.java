@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Attribute;
@@ -84,34 +83,40 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
   boolean isLoadedFromAnyElement(List<Element> candidateElements, Map<String, String> defaultAttributes) {
     SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
+    if (myExtensionElement == null && extensionInstance == null) {
+      // dummy extension with no data; unload based on PluginDescriptor check in calling method
+      return true;
+    }
     Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
-    Map<String, String> serializedAttributes = getExtensionAttributesMap(serializedElement);
+    Map<String, String> serializedData = getSerializedDataMap(serializedElement);
 
     for (Element candidateElement : candidateElements) {
-      Map<String, String> candidateAttributes = getExtensionAttributesMap(candidateElement);
-      for (Iterator<Map.Entry<String, String>> iterator = candidateAttributes.entrySet().iterator(); iterator.hasNext(); ) {
+      Map<String, String> candidateData = getSerializedDataMap(candidateElement);
+      for (Iterator<Map.Entry<String, String>> iterator = candidateData.entrySet().iterator(); iterator.hasNext(); ) {
         Map.Entry<String, String> entry = iterator.next();
         if (Objects.equals(defaultAttributes.get(entry.getKey()), entry.getValue())) {
           iterator.remove();
         }
       }
 
-      if (serializedAttributes.equals(candidateAttributes) &&
-          JDOMUtil.areElementContentsEqual(serializedElement, candidateElement, true)) {
+      if (serializedData.equals(candidateData)) {
         return true;
       }
     }
     return false;
   }
 
-  static Map<String, String> getExtensionAttributesMap(Element serializedElement) {
-    Map<String, String> attributes = new HashMap<>();
+  static Map<String, String> getSerializedDataMap(Element serializedElement) {
+    Map<String, String> data = new HashMap<>();
     for (Attribute attribute : serializedElement.getAttributes()) {
       if (!attribute.getName().equals("id") && !attribute.getName().equals("order")) {
-        attributes.put(attribute.getName(), attribute.getValue());
+        data.put(attribute.getName(), attribute.getValue());
       }
     }
-    return attributes;
+    for (Element child : serializedElement.getChildren()) {
+      data.put(child.getName(), child.getText());
+    }
+    return data;
   }
 
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {

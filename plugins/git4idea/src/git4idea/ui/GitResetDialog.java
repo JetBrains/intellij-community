@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +62,7 @@ public class GitResetDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(GitBundle.getString("reset.title"));
-    setOKButtonText(CommonBundle.getResetButtonText());
+    setOKButtonText(GitBundle.message("git.reset.button"));
     myResetTypeComboBox.addItem(getMixed());
     myResetTypeComboBox.addItem(getSoft());
     myResetTypeComboBox.addItem(getHard());

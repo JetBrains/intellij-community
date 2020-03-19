@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class ParametersListUtil {
+public final class ParametersListUtil {
   public static final Function<String, List<String>> DEFAULT_LINE_PARSER = text -> parse(text, true);
   public static final Function<List<String>, String> DEFAULT_LINE_JOINER = strings -> StringUtil.join(strings, " ");
   public static final Function<String, List<String>> COLON_LINE_PARSER = text -> {

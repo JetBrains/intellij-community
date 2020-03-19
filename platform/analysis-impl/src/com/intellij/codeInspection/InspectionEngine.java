@@ -29,13 +29,11 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionEngine {
@@ -47,9 +45,7 @@ public class InspectionEngine {
                                                                  @NotNull ProblemsHolder holder,
                                                                  boolean isOnTheFly,
                                                                  @NotNull LocalInspectionToolSession session,
-                                                                 @NotNull List<? extends PsiElement> elements,
-                                                                 @NotNull Set<String> elementDialectIds,
-                                                                 @Nullable("null means all accepted") Set<String> dialectIdsSpecifiedForTool) {
+                                                                 @NotNull List<? extends PsiElement> elements) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if (visitor == null) {
@@ -61,16 +57,12 @@ public class InspectionEngine {
     // if inspection returned empty visitor then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, isOnTheFly);
-      acceptElements(elements, visitor, elementDialectIds, dialectIdsSpecifiedForTool);
+      acceptElements(elements, visitor);
     }
     return visitor;
   }
 
-  public static void acceptElements(@NotNull List<? extends PsiElement> elements,
-                                    @NotNull PsiElementVisitor elementVisitor,
-                                    @NotNull Set<String> elementDialectIds,
-                                    @Nullable("null means all accepted") Set<String> dialectIdsSpecifiedForTool) {
-    if (dialectIdsSpecifiedForTool != null && !intersect(elementDialectIds, dialectIdsSpecifiedForTool)) return;
+  public static void acceptElements(@NotNull List<? extends PsiElement> elements, @NotNull PsiElementVisitor elementVisitor) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
@@ -138,14 +130,12 @@ public class InspectionEngine {
     TextRange range = file.getTextRange();
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, range.getStartOffset(), range.getEndOffset());
 
-    Map<LocalInspectionToolWrapper, Set<String>> toolToSpecifiedDialectIds = getToolsToSpecifiedLanguages(toolWrappers);
-    List<Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedDialectIds.entrySet());
+    toolWrappers = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
     final Map<String, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
-    Processor<Entry<LocalInspectionToolWrapper, Set<String>>> processor = entry -> {
+    Processor<LocalInspectionToolWrapper> processor = wrapper -> {
       ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
-      final LocalInspectionTool tool = entry.getKey().getTool();
-      Set<String> dialectIdsSpecifiedForTool = entry.getValue();
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, elementDialectIds, dialectIdsSpecifiedForTool);
+      LocalInspectionTool tool = wrapper.getTool();
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
 
       tool.inspectionFinished(session, holder);
 
@@ -158,14 +148,14 @@ public class InspectionEngine {
 
       return true;
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(toolWrappers, indicator, processor);
 
     return resultDescriptors;
   }
 
   @NotNull
   public static List<ProblemDescriptor> runInspectionOnFile(@NotNull final PsiFile file,
-                                                            @NotNull InspectionToolWrapper toolWrapper,
+                                                            @NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                                             @NotNull final GlobalInspectionContext inspectionContext) {
     final InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
     toolWrapper.initialize(inspectionContext);
@@ -255,20 +245,17 @@ public class InspectionEngine {
     }
   }
 
-  // returns map tool -> set of languages and dialects for that tool specified in plugin.xml
   @NotNull
-  public static Map<LocalInspectionToolWrapper, Set<String>> getToolsToSpecifiedLanguages(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers) {
-    Map<LocalInspectionToolWrapper, Set<String>> toolToLanguages = new THashMap<>();
-    for (LocalInspectionToolWrapper wrapper : toolWrappers) {
-      ProgressManager.checkCanceled();
-      Set<String> specifiedLangIds = getDialectIdsSpecifiedForTool(wrapper);
-      toolToLanguages.put(wrapper, specifiedLangIds);
-    }
-    return toolToLanguages;
+  public static List<LocalInspectionToolWrapper> filterToolsApplicableByLanguage(@NotNull Collection<? extends LocalInspectionToolWrapper> tools,
+                                                                                 @NotNull Set<String> elementDialectIds) {
+    return ContainerUtil.filter(tools, tool -> {
+      Set<String> dialectIdsSpecifiedForTool = getDialectIdsSpecifiedForTool(tool);
+      return dialectIdsSpecifiedForTool == null || intersect(elementDialectIds, dialectIdsSpecifiedForTool);
+    });
   }
 
   @Nullable("null means not specified")
-  public static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
+  private static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
     String langId = wrapper.getLanguage();
     if (langId == null) {
       return null;

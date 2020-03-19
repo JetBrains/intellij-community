@@ -27,7 +27,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   @NotNull
   @Override
   public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
     result.setComponentManager(manager);
     return result;
   }
@@ -48,7 +48,10 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  public void unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
+  public void unregisterExtensions(@NotNull ComponentManager componentManager,
+                                   @NotNull PluginDescriptor pluginDescriptor,
+                                   @NotNull List<Element> elements,
+                                   List<Runnable> listenerCallbacks) {
     Map<String, String> defaultAttributes = new HashMap<>();
     ClassLoader classLoader = myDescriptor.getPluginClassLoader();
     if (classLoader == null) {
@@ -56,8 +59,14 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
     }
     try {
       Class<?> aClass = Class.forName(getClassName(), true, classLoader);
-      Object defaultInstance = ReflectionUtil.newInstance(aClass);
-      defaultAttributes.putAll(XmlExtensionAdapter.getExtensionAttributesMap(XmlSerializer.serialize(defaultInstance)));
+      Object defaultInstance;
+      if (componentManager.getPicoContainer().getParent() == null) {
+        defaultInstance = ReflectionUtil.newInstance(aClass);
+      }
+      else {
+        defaultInstance = componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());
+      }
+      defaultAttributes.putAll(XmlExtensionAdapter.getSerializedDataMap(XmlSerializer.serialize(defaultInstance)));
     }
     catch (ClassNotFoundException ignored) {
     }
@@ -67,7 +76,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
         return true;
       }
       XmlExtensionAdapter xmlExtensionAdapter = (XmlExtensionAdapter)adapter;
-      return !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
+      return xmlExtensionAdapter.getPluginDescriptor() != pluginDescriptor || !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
     }, false, listenerCallbacks);
   }
 }

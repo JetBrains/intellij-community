@@ -184,7 +184,7 @@ public class MarkerType {
   private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
     PsiMethod superMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
     if (superMethod == null) return;
-    PsiElementListNavigator.openTargets(e, new NavigatablePsiElement[]{superMethod},
+    PsiElementListNavigator.openTargets(e, new PsiMethod[]{superMethod},
                                         DaemonBundle.message("navigation.title.super.method", method.getName()),
                                         DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(false));

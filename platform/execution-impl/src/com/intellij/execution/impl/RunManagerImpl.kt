@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
@@ -192,15 +193,16 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-        override fun rootsChanged(event: ModuleRootEvent) {
-          selectedConfiguration?.let {
-            iconCache.remove(it.uniqueID)
-          }
+    project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        selectedConfiguration?.let {
+          iconCache.remove(it.uniqueID)
         }
-      })
-    }
+
+        deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+      }
+    })
+
     BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addExtensionPointListener(
       ExtensionPointChangeListener { stringIdToBeforeRunProvider.drop() },
       true, project)
@@ -318,10 +320,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     return template
   }
 
-  internal fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
+  private fun deleteRunConfigsFromArbitraryFilesNotWithinProjectContent() {
     lock.write {
       val deletedConfigs = rcInArbitraryFileManager.findRunConfigsThatAreNotWithinProjectContent()
-      removeConfigurations(deletedConfigs)
+      // don't delete file just because it has become excluded
+      removeConfigurations(deletedConfigs, false)
     }
   }
 
@@ -331,12 +334,14 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       val oldSelectedId = selectedConfigurationId
 
       val deletedRunConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(deletedFilePaths)
-      removeConfigurations(deletedRunConfigs)
+      // file is already deleted - no need to delete it once again
+      removeConfigurations(deletedRunConfigs, false)
 
       for (filePath in updatedFilePaths) {
         val deletedAndAddedRunConfigs = rcInArbitraryFileManager.loadChangedRunConfigsFromFile(this, filePath)
 
-        removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs)
+        // some VFS event caused RC to disappear (probably manual editing) - but the file itself shouldn't be deleted
+        removeConfigurations(deletedAndAddedRunConfigs.deletedRunConfigs, false)
 
         for (runConfig in deletedAndAddedRunConfigs.addedRunConfigs) {
           addConfiguration(runConfig)
@@ -504,6 +509,13 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
       eventPublisher.runConfigurationSelected(value)
     }
+
+  internal fun selectConfigurationStoredInFile(file: VirtualFile) {
+    val runConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path))
+    if (!runConfigs.isEmpty()) {
+      selectedConfiguration = runConfigs.first()
+    }
+  }
 
   fun requestSort() {
     lock.write {
@@ -1119,7 +1131,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
   }
 
-  fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) {
+  fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>) = removeConfigurations(toRemove, true)
+
+  private fun removeConfigurations(toRemove: Collection<RunnerAndConfigurationSettings>, deleteFileIfStoredInArbitraryFile: Boolean) {
     if (toRemove.isEmpty()) {
       return
     }
@@ -1142,7 +1156,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           settings as RunnerAndConfigurationSettingsImpl
           when {
             settings.isStoredInDotIdeaFolder -> projectSchemeManager.removeScheme(settings)
-            settings.isStoredInArbitraryFileInProject -> rcInArbitraryFileManager.removeRunConfiguration(settings)
+            settings.isStoredInArbitraryFileInProject -> rcInArbitraryFileManager.removeRunConfiguration(settings,
+                                                                                                         false,
+                                                                                                         deleteFileIfStoredInArbitraryFile)
             else -> workspaceSchemeManager.removeScheme(settings)
           }
 

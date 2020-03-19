@@ -48,7 +48,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  public List<PsiMember> getTargets() {
+  public @NotNull List<PsiMember> getTargets() {
     final PsiJavaCodeReferenceElement importReference = myImportStatement.getImportReference();
     if (importReference == null) {
       return Collections.emptyList();
@@ -76,7 +76,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  protected void selectTargets(final List<PsiMember> targets, final Consumer<List<PsiMember>> selectionConsumer) {
+  protected void selectTargets(final @NotNull List<? extends PsiMember> targets, final @NotNull Consumer<? super List<? extends PsiMember>> selectionConsumer) {
     if (targets.isEmpty()) {
       selectionConsumer.consume(Collections.emptyList());
       return;
@@ -120,7 +120,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  public void computeUsages(List<PsiMember> targets) {
+  public void computeUsages(@NotNull List<? extends PsiMember> targets) {
     if (targets.isEmpty()) {
       buildStatusText("import", 0);
       return;

@@ -7,8 +7,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -17,8 +19,9 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -33,7 +36,7 @@ import javax.swing.text.Utilities
 
 object GHPRReviewCommentComponent {
 
-  fun create(reviewService: GHPRReviewServiceAdapter,
+  fun create(reviewDataProvider: GHPRReviewDataProvider,
              thread: GHPRReviewThreadModel, comment: GHPRReviewCommentModel,
              avatarIconsProvider: GHAvatarIconsProvider): JComponent {
 
@@ -45,28 +48,31 @@ object GHPRReviewCommentComponent {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    val href = comment.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
-    //language=HTML
-    val title = """<a $href>${comment.authorUsername ?: "unknown"}</a> commented ${GithubUIUtil.formatActionDate(comment.dateCreated)}"""
-
-    val titlePane: HtmlEditorPane = HtmlEditorPane(title).apply {
+    val titlePane = HtmlEditorPane().apply {
       foreground = UIUtil.getContextHelpForeground()
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
+    val pendingLabel = JBLabel(" Pending ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = JBUI.CurrentTheme.Validator.warningBackgroundColor()
+    }.andOpaque()
+    val resolvedLabel = JBLabel(" Resolved ", UIUtil.ComponentStyle.SMALL).apply {
+      foreground = UIUtil.getContextHelpForeground()
+      background = UIUtil.getPanelBackground()
+    }.andOpaque()
 
-    val textPane: HtmlEditorPane = HtmlEditorPane(comment.body).apply {
+    val textPane = HtmlEditorPane().apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
-    comment.addChangesListener {
-      textPane.setBody(comment.body)
-    }
+
+    Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane)
 
     val editorWrapper = Wrapper()
-    val editButton = createEditButton(reviewService, comment, editorWrapper, textPane).apply {
+    val editButton = createEditButton(reviewDataProvider, comment, editorWrapper, textPane).apply {
       isVisible = comment.canBeUpdated
     }
-    val deleteButton = createDeleteButton(reviewService, thread, comment).apply {
+    val deleteButton = createDeleteButton(reviewDataProvider, comment).apply {
       isVisible = comment.canBeDeleted
     }
 
@@ -80,15 +86,16 @@ object GHPRReviewCommentComponent {
                          AC().gap("${UI.scale(8)}"))
 
       add(avatarLabel, CC().pushY())
-      add(titlePane, CC().minWidth("0").split(3).alignX("left"))
+      add(titlePane, CC().minWidth("0").split(5).alignX("left"))
+      add(pendingLabel, CC().hideMode(3).alignX("left"))
+      add(resolvedLabel, CC().hideMode(3).alignX("left"))
       add(editButton, CC().hideMode(3).gapBefore("${UI.scale(12)}"))
       add(deleteButton, CC().hideMode(3).gapBefore("${UI.scale(8)}"))
       add(contentPanel, CC().newline().skip().grow().push().minWidth("0").minHeight("0"))
     }
   }
 
-  private fun createDeleteButton(reviewService: GHPRReviewServiceAdapter,
-                                 thread: GHPRReviewThreadModel,
+  private fun createDeleteButton(reviewDataProvider: GHPRReviewDataProvider,
                                  comment: GHPRReviewCommentModel): JComponent {
     val icon = GithubIcons.Delete
     val hoverIcon = GithubIcons.DeleteHovered
@@ -96,14 +103,13 @@ object GHPRReviewCommentComponent {
       actionListener = ActionListener {
         if (Messages.showConfirmationDialog(this, "Are you sure you want to delete this comment?", "Delete Comment",
                                             Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
-          reviewService.deleteComment(EmptyProgressIndicator(), comment.id)
-          thread.removeComment(comment)
+          reviewDataProvider.deleteComment(EmptyProgressIndicator(), comment.id)
         }
       }
     }
   }
 
-  private fun createEditButton(reviewService: GHPRReviewServiceAdapter,
+  private fun createEditButton(reviewDataProvider: GHPRReviewDataProvider,
                                comment: GHPRReviewCommentModel,
                                editorWrapper: Wrapper,
                                textPane: JEditorPane): JComponent {
@@ -113,8 +119,8 @@ object GHPRReviewCommentComponent {
       val text = StringUtil.repeatSymbol('\n', linesCount - 1)
 
       val model = GHPRSubmittableTextField.Model { newText ->
-        reviewService.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
-          comment.update(it)
+        reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, newText).successOnEdt {
+          //comment.update(it)
         }.handleOnEdt { _, _ ->
           editorWrapper.setContent(null)
           editorWrapper.revalidate()
@@ -127,7 +133,7 @@ object GHPRReviewCommentComponent {
           setReadOnly(true)
         }
 
-        reviewService.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
+        reviewDataProvider.getCommentMarkdownBody(EmptyProgressIndicator(), comment.id).successOnEdt {
           runWriteAction {
             setReadOnly(false)
             setText(it)
@@ -165,10 +171,44 @@ object GHPRReviewCommentComponent {
     return lineCount
   }
 
-  fun factory(thread: GHPRReviewThreadModel, reviewService: GHPRReviewServiceAdapter, avatarIconsProvider: GHAvatarIconsProvider)
+  private class Controller(private val model: GHPRReviewCommentModel,
+                           private val titlePane: HtmlEditorPane,
+                           private val pendingLabel: JComponent,
+                           private val resolvedLabel: JComponent,
+                           private val bodyPane: HtmlEditorPane) {
+    init {
+      model.addChangesListener {
+        update()
+      }
+      update()
+    }
+
+    private fun update() {
+      bodyPane.setBody(model.body)
+
+      val href = model.authorLinkUrl?.let { """href='${it}'""" }.orEmpty()
+      //language=HTML
+      val authorName = """<a $href>${model.authorUsername ?: "unknown"}</a>"""
+
+      when (model.state) {
+        GHPullRequestReviewCommentState.PENDING -> {
+          pendingLabel.isVisible = true
+          titlePane.text = authorName
+        }
+        GHPullRequestReviewCommentState.SUBMITTED -> {
+          pendingLabel.isVisible = false
+          titlePane.text = authorName + """ commented ${GithubUIUtil.formatActionDate(model.dateCreated)}"""
+        }
+      }
+
+      resolvedLabel.isVisible = model.isFirstInResolvedThread
+    }
+  }
+
+  fun factory(thread: GHPRReviewThreadModel, reviewDataProvider: GHPRReviewDataProvider, avatarIconsProvider: GHAvatarIconsProvider)
     : (GHPRReviewCommentModel) -> JComponent {
     return { comment ->
-      create(reviewService, thread, comment, avatarIconsProvider)
+      create(reviewDataProvider, thread, comment, avatarIconsProvider)
     }
   }
 }

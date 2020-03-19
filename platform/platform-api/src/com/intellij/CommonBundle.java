@@ -27,7 +27,7 @@ public final class CommonBundle extends DynamicBundle {
     return INSTANCE.getMessage(key, params);
   }
 
-  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (!INSTANCE.containsKey(key)) {
       return () -> UtilBundle.message(key, params);
     }
@@ -68,11 +68,6 @@ public final class CommonBundle extends DynamicBundle {
   @NotNull
   public static String getCancelButtonText() {
     return message("button.cancel");
-  }
-
-  @NonNls
-  public static String getResetButtonText() {
-    return message("button.reset");
   }
 
   public static String getHelpButtonText() {

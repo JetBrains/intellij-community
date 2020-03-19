@@ -31,6 +31,7 @@ import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -799,8 +800,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ||
         Registry.is("linux.native.menu.force.disable") ||
         (LoadingState.COMPONENTS_REGISTERED.isOccurred() && !Experiments.getInstance().isFeatureEnabled("linux.native.menu")) ||
-        !JnaLoader.isLoaded() ||
-        isUnderVMWithSwiftPluginInstalled()) {
+        !JnaLoader.isLoaded()) {
       return null;
     }
 
@@ -817,22 +817,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
 
     return null;
-  }
-
-  private static boolean isUnderVMWithSwiftPluginInstalled() {
-    // Workaround OC-18001 OC-18634 CLion crashes after opening Swift project on Linux
-    if (PluginManagerCore.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
-      try {
-        String stdout = StringUtil.toLowerCase(
-          ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout());
-        return stdout.contains("vmware") || stdout.contains("virtualbox");
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-
-    return false;
   }
 
   private static class MenuItemInternal {
@@ -1336,7 +1320,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static void _trace(String fmt, Object... args) {
+  private static void _trace(@NonNls String fmt, Object... args) {
     if (!TRACE_ENABLED) {
       return;
     }
@@ -1344,7 +1328,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     _trace(msg);
   }
 
-  private static void _trace(String msg) {
+  private static void _trace(@NonNls String msg) {
     if (!TRACE_ENABLED) {
       return;
     }

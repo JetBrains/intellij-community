@@ -69,7 +69,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
+  void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor);
 
   /**
    * Adds the given widget on the right.
@@ -85,7 +85,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    * For external usages use {@link StatusBarWidgetFactory}.
    */
   @ApiStatus.Internal
-  void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
+  void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link StatusBarWidgetFactory}
@@ -105,9 +105,9 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    * For external usages use {@link StatusBarWidgetFactory}.
    */
   @ApiStatus.Internal
-  void removeWidget(@NotNull String id);
+  void removeWidget(@NonNls @NotNull String id);
 
-  void updateWidget(@NotNull String id);
+  void updateWidget(@NonNls @NotNull String id);
 
   @Nullable
   StatusBarWidget getWidget(@NonNls String id);

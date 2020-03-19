@@ -2,18 +2,18 @@
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList
-import com.intellij.util.containers.MultiMap
 
 class CheckinHandlersManagerImpl : CheckinHandlersManager() {
-  private val vcsFactories = MultiMap<VcsKey, VcsCheckinHandlerFactory>().apply {
-    VcsCheckinHandlerFactory.EP_NAME.extensions.forEach { putValue(it.key, it) }
-  }
+  override fun getRegisteredCheckinHandlerFactories(vcses: Array<AbstractVcs>): List<BaseCheckinHandlerFactory> {
+    val vcsesKeys = vcses.mapTo(mutableSetOf()) { it.keyInstanceMethod }
 
-  override fun getRegisteredCheckinHandlerFactories(vcses: Array<AbstractVcs>): List<BaseCheckinHandlerFactory> =
-    unmodifiableOrEmptyList(vcses.flatMap { vcsFactories.get(it.keyInstanceMethod) } + CheckinHandlerFactory.EP_NAME.extensions)
+    return unmodifiableOrEmptyList(
+      VcsCheckinHandlerFactory.EP_NAME.extensions.filter { it.key in vcsesKeys } +
+      CheckinHandlerFactory.EP_NAME.extensions
+    )
+  }
 }

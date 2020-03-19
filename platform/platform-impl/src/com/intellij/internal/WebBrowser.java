@@ -53,21 +53,6 @@ public class WebBrowser extends AnAction implements DumbAware {
       }
     });
 
-    JMenuItem item = new JMenuItem("Show Dev Tools");
-    item.addActionListener((event) -> {
-      JBCefBrowser devTools = new JBCefBrowser(browser.getCefBrowser().getDevTools());
-      JDialog dialog = new JDialog(frame, "JCEF Dev Tools");
-      dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-      dialog.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
-      dialog.add(devTools.getComponent());
-      dialog.setVisible(true);
-    });
-
-    JMenu menu = new JMenu("Tools");
-    menu.add(item);
-    frame.setJMenuBar(new JMenuBar());
-    frame.getJMenuBar().add(menu);
-
     JTextField urlBar = new JTextField(URL);
     urlBar.addActionListener(event -> browser.loadURL(urlBar.getText()));
     frame.add(urlBar, BorderLayout.NORTH);

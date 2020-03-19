@@ -142,6 +142,9 @@ public class XmlParsing {
 
         advance();
       }
+      else {
+        error(XmlPsiBundle.message("xml.parsing.closing.tag.name.missing"));
+      }
       footer.drop();
 
       while (token() != XmlTokenType.XML_TAG_END && token() != XmlTokenType.XML_START_TAG_START && token() != XmlTokenType.XML_END_TAG_START && !eof()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
 import com.intellij.notification.Notification;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,13 +79,13 @@ public abstract class GitChangesSaver {
   public void notifyLocalChangesAreNotRestored() {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
-      VcsNotifier.getInstance(myProject).notifyImportantWarning("Local changes were not restored",
-                                                                "Before update your uncommitted changes were saved to <a href='saver'>" +
-                                                                getSaveMethod().getStorageName() +
-                                                                "</a>.<br/>" +
-                                                                "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                                                                "Resolve conflicts, complete update and restore changes manually.",
-                                                                new ShowSavedChangesNotificationListener()
+      VcsNotifier.getInstance(myProject).notifyImportantWarning(
+        GitBundle.getString("restore.notification.failed.title"),
+        getSaveMethod().selectBundleMessage(
+          GitBundle.getString("restore.notification.failed.stash.message"),
+          GitBundle.getString("restore.notification.failed.shelf.message")
+        ),
+        new ShowSavedChangesNotificationListener()
       );
     }
   }

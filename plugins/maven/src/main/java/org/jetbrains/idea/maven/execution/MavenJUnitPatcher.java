@@ -64,12 +64,12 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-failsafe-plugin", "failsafe");
   }
 
-  protected void configureFromPlugin(@NotNull Module module,
-                                     JavaParameters javaParameters,
-                                     MavenProject mavenProject,
-                                     UnaryOperator<String> runtimeProperties,
-                                     String pluginArtifact,
-                                     String pluginName) {
+  private static void configureFromPlugin(@NotNull Module module,
+                                          JavaParameters javaParameters,
+                                          MavenProject mavenProject,
+                                          UnaryOperator<String> runtimeProperties,
+                                          String pluginArtifact,
+                                          String pluginName) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", pluginArtifact);
     if (plugin != null) {
       Element config = mavenProject.getPluginGoalConfiguration(plugin, null);

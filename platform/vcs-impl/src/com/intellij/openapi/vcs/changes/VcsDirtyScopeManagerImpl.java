@@ -147,17 +147,19 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
                               toString(filesConverted), toString(dirsConverted), findFirstInterestingCallerClass()));
     }
 
-    boolean hasSomethingDirty;
-    synchronized (LOCK) {
-      if (!myReady) return;
-      markDirty(myDirtBuilder, filesConverted, false);
-      markDirty(myDirtBuilder, dirsConverted, true);
-      hasSomethingDirty = !myDirtBuilder.isEmpty();
-    }
+    ReadAction.run(() -> {
+      boolean hasSomethingDirty;
+      synchronized (LOCK) {
+        if (!myReady) return;
+        markDirty(myDirtBuilder, filesConverted, false);
+        markDirty(myDirtBuilder, dirsConverted, true);
+        hasSomethingDirty = !myDirtBuilder.isEmpty();
+      }
 
-    if (hasSomethingDirty) {
-      ChangeListManager.getInstance(myProject).scheduleUpdate();
-    }
+      if (hasSomethingDirty) {
+        ChangeListManager.getInstance(myProject).scheduleUpdate();
+      }
+    });
   }
 
   private static void markDirty(@NotNull DirtBuilder dirtBuilder,
@@ -254,18 +256,20 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   @NotNull
   @Override
   public Collection<FilePath> whatFilesDirty(@NotNull final Collection<? extends FilePath> files) {
-    Collection<FilePath> result = new ArrayList<>();
-    synchronized (LOCK) {
-      if (!myReady) return Collections.emptyList();
+    return ReadAction.compute(() -> {
+      Collection<FilePath> result = new ArrayList<>();
+      synchronized (LOCK) {
+        if (!myReady) return Collections.emptyList();
 
-      for (FilePath fp : files) {
-        if (myDirtBuilder.isFileDirty(fp) ||
-            myDirtInProgress != null && myDirtInProgress.isFileDirty(fp)) {
-          result.add(fp);
+        for (FilePath fp : files) {
+          if (myDirtBuilder.isFileDirty(fp) ||
+              myDirtInProgress != null && myDirtInProgress.isFileDirty(fp)) {
+            result.add(fp);
+          }
         }
       }
-    }
-    return result;
+      return result;
+    });
   }
 
   @NotNull

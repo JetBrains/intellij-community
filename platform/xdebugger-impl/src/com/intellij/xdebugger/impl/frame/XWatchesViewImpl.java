@@ -61,6 +61,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   private final boolean myWatchesInVariables;
 
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
+    this(session, watchesInVariables, watchesInVariables);
+
+  }
+  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
     super(session);
     myWatchesInVariables = watchesInVariables;
 
@@ -94,16 +98,16 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
       ActionPlaces.DEBUGGER_TOOLBAR,
       DebuggerSessionTabBase.getCustomizedActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP),
-      !myWatchesInVariables);
+      !vertical);
     toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
-                                           myWatchesInVariables ? 0 : 1,
-                                           myWatchesInVariables ? 1 : 0));
+                                           vertical ? 0 : 1,
+                                           vertical ? 1 : 0));
     toolbar.setTargetComponent(tree);
 
     if (!myWatchesInVariables) {
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
-    getPanel().add(toolbar.getComponent(), myWatchesInVariables ? BorderLayout.WEST : BorderLayout.NORTH);
+    getPanel().add(toolbar.getComponent(), vertical ? BorderLayout.WEST : BorderLayout.NORTH);
 
     installEditListeners();
   }
@@ -139,7 +143,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     };
     final ClickListener mouseEmptySpaceListener = new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         if (!isAboveSelectedItem(event, watchTree, true)) {
           myRootNode.addNewWatch();
           return true;

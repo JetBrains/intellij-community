@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.impl.X11UiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,6 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
     if (SystemInfo.isLinux) {
       Set<MetricEvent> result = new HashSet<>();
       result.add(newMetric("xdg.current.desktop", toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
-      result.add(newMetric("wm.name", toReportedName(X11UiUtil.getWmName())));
       return result;
     }
     return Collections.emptySet();
@@ -97,6 +95,6 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 }

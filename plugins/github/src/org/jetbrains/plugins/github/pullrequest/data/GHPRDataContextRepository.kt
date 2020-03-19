@@ -84,32 +84,33 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     val dataLoader = GHPRDataLoaderImpl {
       GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), securityService, requestExecutor,
-                           gitRemoteCoordinates, repositoryCoordinates, it)
+                           gitRemoteCoordinates, repositoryCoordinates, it,
+                           GHPRReviewDataProviderImpl(reviewService, it))
     }
     requestExecutor.addListener(dataLoader) {
       dataLoader.invalidateAllData()
     }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
-      override fun onPullRequestEdited(number: Long) {
+      override fun onPullRequestEdited(id: GHPRIdentifier) {
         runInEdt {
-          val dataProvider = dataLoader.findDataProvider(number)
+          val dataProvider = dataLoader.findDataProvider(id)
           dataProvider?.reloadDetails()
           dataProvider?.detailsRequest?.let { listLoader.reloadData(it) }
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }
 
-      override fun onPullRequestReviewsEdited(number: Long) {
+      override fun onPullRequestReviewsEdited(id: GHPRIdentifier) {
         runInEdt {
-          val dataProvider = dataLoader.findDataProvider(number)
-          dataProvider?.reloadReviewThreads()
+          val dataProvider = dataLoader.findDataProvider(id)
+          dataProvider?.reviewData?.resetReviewThreads()
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }
 
-      override fun onPullRequestCommentsEdited(number: Long) {
+      override fun onPullRequestCommentsEdited(id: GHPRIdentifier) {
         runInEdt {
-          val dataProvider = dataLoader.findDataProvider(number)
+          val dataProvider = dataLoader.findDataProvider(id)
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }

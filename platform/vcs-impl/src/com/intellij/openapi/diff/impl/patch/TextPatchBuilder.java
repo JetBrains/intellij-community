@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +41,9 @@ import static java.util.Collections.singletonList;
 
 public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
+  /**
+   * @see com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider
+   */
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
 
@@ -118,7 +122,6 @@ public class TextPatchBuilder {
     if (beforeContent.equals(afterContent)) {
       if (beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
       // movement
-      patch.addHunk(new PatchHunk(0, 0, 0, 0));
       return patch;
     }
 
@@ -293,16 +296,22 @@ public class TextPatchBuilder {
   @NotNull
   private TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision) throws VcsException {
     TextFilePatch result = buildPatchHeading(afterRevision, afterRevision);
+    result.setFileStatus(FileStatus.ADDED);
     String content = getContent(afterRevision);
-    result.addHunk(createWholeFileHunk(content, true, false));
+    if(!content.isEmpty()) {
+      result.addHunk(createWholeFileHunk(content, true, false));
+    }
     return result;
   }
 
   @NotNull
   private TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision) throws VcsException {
     TextFilePatch result = buildPatchHeading(beforeRevision, beforeRevision);
+    result.setFileStatus(FileStatus.DELETED);
     String content = getContent(beforeRevision);
-    result.addHunk(createWholeFileHunk(content, false, false));
+    if (!content.isEmpty()) {
+      result.addHunk(createWholeFileHunk(content, false, false));
+    }
     return result;
   }
 

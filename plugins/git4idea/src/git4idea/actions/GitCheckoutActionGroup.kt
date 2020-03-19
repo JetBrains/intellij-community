@@ -1,22 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsLog
-import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.VcsRef
+import com.intellij.vcs.log.*
 import git4idea.branch.GitBrancher
+import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager.LOCAL_BRANCH
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import java.util.*
 
-internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", false) {
+internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.message("git.log.action.checkout.group"), false) {
 
   override fun getChildren(e: AnActionEvent, project: Project, log: VcsLog, repository: GitRepository, commit: CommitId): Array<AnAction> {
     val refNames = getRefNames(e, log, repository)
@@ -25,14 +22,25 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", f
       actions.add(GitCheckoutAction(project, repository, refName, refName))
     }
 
-    val hasMultipleActions = !actions.isEmpty()
-    
-    val checkoutRevisionText = "${if (hasMultipleActions) "" else "Checkout "}Revision '${commit.hash.toShortString()}'"
-    actions.add(GitCheckoutAction(project, repository, commit.hash.asString(), checkoutRevisionText))
+    val hasMultipleActions = actions.isNotEmpty()
 
-    val mainGroup = DefaultActionGroup("Checkout", actions)
+    actions.add(getCheckoutRevisionAction(commit, hasMultipleActions))
+
+    val mainGroup = DefaultActionGroup(GitBundle.message("git.log.action.checkout.group"), actions)
     mainGroup.isPopup = hasMultipleActions
     return arrayOf(mainGroup)
+  }
+
+  private fun getCheckoutRevisionAction(commit: CommitId, useShortText: Boolean): AnAction {
+    val hashString = commit.hash.toShortString()
+    val checkoutRevisionText = if (useShortText) {
+      GitBundle.message("git.log.action.checkout.revision.short.text", hashString)
+    }
+    else {
+      GitBundle.message("git.log.action.checkout.revision.full.text", hashString)
+    }
+    val checkoutRevision = ActionManager.getInstance().getAction("Git.CheckoutRevision")
+    return EmptyAction.wrap(checkoutRevision).also { it.templatePresentation.text = checkoutRevisionText }
   }
 
   private fun getRefNames(e: AnActionEvent, log: VcsLog, repository: GitRepository): List<String> {
@@ -48,15 +56,24 @@ internal class GitCheckoutActionGroup : GitSingleCommitActionGroup("Checkout", f
   }
 }
 
+private fun checkout(project: Project, repository: GitRepository, hashOrRefName: String) {
+  GitBrancher.getInstance(project).checkout(hashOrRefName, false, listOf(repository), null)
+}
+
 private class GitCheckoutAction(private val project: Project,
                                 private val repository: GitRepository,
                                 private val hashOrRefName: String,
-                                actionText: String) : DumbAwareAction() {
+                                actionText: @Nls String) : DumbAwareAction() {
+
   init {
     templatePresentation.setText(actionText, false)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    GitBrancher.getInstance(project).checkout(hashOrRefName, false, listOf(repository), null)
+    checkout(project, repository, hashOrRefName)
   }
+}
+
+class GitCheckoutRevisionAction : GitLogSingleCommitAction() {
+  override fun actionPerformed(repository: GitRepository, commit: Hash) = checkout(repository.project, repository, commit.asString())
 }

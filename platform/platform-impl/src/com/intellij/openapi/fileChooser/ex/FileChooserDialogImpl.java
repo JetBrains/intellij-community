@@ -376,7 +376,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       final String text = myPathTextField.getTextFieldText();
       final LookupFile file = myPathTextField.getFile();
       if (text == null || file == null || !file.exists()) {
-        setErrorText(IdeBundle.message("message.specified.path.cannot.be.found"), myPathTextField.getField());
+        setErrorText(IdeBundle.message("dialog.message.specified.path.cannot.be.found"), myPathTextField.getField());
         return;
       }
     }

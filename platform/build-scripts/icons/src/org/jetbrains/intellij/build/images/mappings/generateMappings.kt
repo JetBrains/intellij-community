@@ -10,7 +10,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
 import kotlin.streams.toList
 
 fun main() = generateMappings()
@@ -24,7 +23,11 @@ private fun generateMappings() {
                      ?.map(String::trim)
                    ?: emptyList()
   val context = Context()
-  val mappings = (loadIdeaGeneratedIcons(context) + loadNonGeneratedIcons(context, "idea")).groupBy {
+  val mappings = (loadIdeaGeneratedIcons(context) {
+    exclusions.none { excluded ->
+      path.startsWith(excluded)
+    }
+  } + loadNonGeneratedIcons(context, "idea")).groupBy {
     "${it.product}#${it.set}"
   }.toSortedMap().values.flatMap {
     if (it.size > 1) {
@@ -62,12 +65,12 @@ private fun generateMappings() {
     val jsonFile = path.toRelativeString(repo)
     stageFiles(listOf(jsonFile), repo)
     commitAndPush(repo, "refs/heads/$branch", "$jsonFile automatic update",
-                                                           "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
-                                                           force = true)
+                  "MappingsUpdater", "mappings-updater-no-reply@jetbrains.com",
+                  force = true)
   }
 }
 
-private class Mapping(val product: String, val set: String, val path: String): Comparable<Mapping> {
+private class Mapping(val product: String, val set: String, val path: String) : Comparable<Mapping> {
   override fun toString(): String {
     val productName = when (product) {
       "kotlin", "mps" -> product
@@ -86,7 +89,7 @@ private class Mapping(val product: String, val set: String, val path: String): C
   override fun compareTo(other: Mapping): Int = path.compareTo(other.path)
 }
 
-private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
+private fun loadIdeaGeneratedIcons(context: Context, filter: Mapping.() -> Boolean): Collection<Mapping> {
   val home = context.devRepoDir
   val homePath = home.absolutePath
   val project = jpsProject(homePath)
@@ -95,16 +98,17 @@ private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {
     project.modules.parallelStream()
       .flatMap { generator.getIconsClassInfo(it).stream() }
       .filter { it.images.isNotEmpty() }
-      .map { info ->
+      .flatMap { info ->
         val icons = info.images.asSequence()
           .filter { it.file != null && Icon(it.file!!.toFile()).isValid }
-          .map { it.sourceRoot.file }.toSet()
-        when {
-          icons.isEmpty() -> null
-          icons.size > 1 -> error("${info.className}: ${icons.joinToString()}")
-          else -> Mapping("idea", info.className, "idea/${icons.first().toRelativeString(home)}")
+          .map { it.sourceRoot.file }.distinct()
+          .map { Mapping("idea", info.className, "idea/${it.toRelativeString(home)}") }
+          .filter(filter).toList()
+        if (icons.size > 1) {
+          error("Expected single source root for ${info.className} mapping but found: ${icons.joinToString()}")
         }
-      }.filter(Objects::nonNull).map { it!! }.toList()
+        icons.stream()
+      }.toList()
   }
 }
 

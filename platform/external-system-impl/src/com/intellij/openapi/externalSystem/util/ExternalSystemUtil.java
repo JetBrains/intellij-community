@@ -449,32 +449,26 @@ public final class ExternalSystemUtil {
                 }
               };
               String systemId = id.getProjectSystemId().getReadableName();
-              rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.lazyMessage("action.refresh.project.text", systemId));
+              rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.project.text", systemId));
               rerunImportAction.getTemplatePresentation()
-                .setDescription(ExternalSystemBundle.lazyMessage("action.refresh.project.description", systemId));
+                .setDescription(ExternalSystemBundle.messagePointer("action.refresh.project.description", systemId));
               rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
 
               if (isPreviewMode) return;
-              String message = "syncing...";
-              eventDispatcher.onEvent(id,
-                new StartBuildEventImpl(new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime), message)
-                  .withProcessHandler(processHandler, null)
-                  .withRestartAction(rerunImportAction)
-                  .withContentDescriptorSupplier(() -> {
-                    if (consoleView == null) {
-                      return null;
-                    }
-                    else {
-                      boolean activateToolWindow = isNewProject(project);
-                      BuildContentDescriptor contentDescriptor = new BuildContentDescriptor(
-                        consoleView, processHandler, consoleView.getComponent(), "Sync");
-                      contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
-                      contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
-                      contentDescriptor.setAutoFocusContent(reportRefreshError);
-                      return contentDescriptor;
-                    }
-                  })
-              );
+              DefaultBuildDescriptor buildDescriptor = new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime)
+                .withProcessHandler(processHandler, null)
+                .withRestartAction(rerunImportAction)
+                .withContentDescriptor(() -> {
+                  if (consoleView == null) return null;
+                  boolean activateToolWindow = isNewProject(project);
+                  BuildContentDescriptor contentDescriptor =
+                    new BuildContentDescriptor(consoleView, processHandler, consoleView.getComponent(), "Sync");
+                  contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
+                  contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                  contentDescriptor.setAutoFocusContent(reportRefreshError);
+                  return contentDescriptor;
+                });
+              eventDispatcher.onEvent(id, new StartBuildEventImpl(buildDescriptor, "syncing..."));
             }
 
             @Override

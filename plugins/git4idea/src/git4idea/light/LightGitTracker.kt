@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -22,6 +23,8 @@ import git4idea.config.GitVersionIdentificationException
 import git4idea.index.GitFileStatus
 import git4idea.index.getFileStatus
 import java.util.*
+
+private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
 
 class LightGitTracker : Disposable {
   private val lightEditService = LightEditService.getInstance()
@@ -55,6 +58,10 @@ class LightGitTracker : Disposable {
     highlighterManager = LightGitEditorHighlighterManager(this)
 
     singleTaskController.request(Request.CheckGit)
+    runInEdt(this) {
+      sendRequests(locationRequest(lightEditService.selectedFile),
+                   statusRequest(lightEditorManager.openFiles))
+    }
   }
 
   fun getFileStatus(file: VirtualFile): GitFileStatus {
@@ -94,8 +101,36 @@ class LightGitTracker : Disposable {
       hasGit = version.isSupported
     }
     catch (e: GitVersionIdentificationException) {
+      LOG.warn(e)
       hasGit = false
     }
+  }
+
+  private fun locationRequest(file: VirtualFile?): Request? {
+    if (file != null && file.parent != null) {
+      return Request.Location(file)
+    }
+    return null
+  }
+
+  private fun statusRequest(files: Collection<VirtualFile?>): Request? {
+    val filesForRequest = mutableListOf<VirtualFile>()
+    for (file in files) {
+      if (file?.parent != null) {
+        filesForRequest.add(file)
+      }
+    }
+    if (filesForRequest.isEmpty()) return null
+    return Request.Status(filesForRequest)
+  }
+
+  private fun sendRequests(vararg requests: Request?): Boolean {
+    val notNullRequests = requests.filterNotNullTo(mutableListOf())
+    if (notNullRequests.isNotEmpty()) {
+      singleTaskController.request(*notNullRequests.toTypedArray())
+      return true
+    }
+    return false
   }
 
   fun addUpdateListener(listener: LightGitTrackerListener, parent: Disposable) {
@@ -110,30 +145,15 @@ class LightGitTracker : Disposable {
       if (!hasGit) return
 
       val targetFiles = events.filter { it.isFromSave || it.isFromRefresh }.mapNotNullTo(mutableSetOf()) { it.file }
-      val lightTargetFiles = lightEditorManager.openFiles.intersect(targetFiles).filter { it.parent != null }
-      if (lightTargetFiles.isNotEmpty()) {
-        singleTaskController.request(Request.Status(lightTargetFiles))
-      }
+      sendRequests(statusRequest(lightEditorManager.openFiles.intersect(targetFiles)))
     }
   }
 
   private inner class MyFrameStateListener : FrameStateListener {
     override fun onFrameActivated() {
-      val requests = mutableListOf<Request>(Request.CheckGit)
-
-      val selectedFile = lightEditService.selectedFile
-      if (selectedFile != null && selectedFile.parent != null) {
-        requests.add(Request.Location(selectedFile))
-      }
-
-      val openFiles = lightEditorManager.openFiles.filter { it.parent != null }
-      if (openFiles.isNotEmpty()) {
-        requests.add(Request.Status(openFiles))
-      }
-
-      if (requests.isNotEmpty()) {
-        singleTaskController.request(*requests.toTypedArray())
-      }
+      sendRequests(Request.CheckGit,
+                   locationRequest(lightEditService.selectedFile),
+                   statusRequest(lightEditorManager.openFiles))
     }
   }
 
@@ -144,10 +164,7 @@ class LightGitTracker : Disposable {
       state = state.copy(location = null)
 
       val selectedFile = editorInfo?.file
-      if (selectedFile != null && selectedFile.parent != null) {
-        singleTaskController.request(Request.Location(selectedFile))
-      }
-      else {
+      if (!sendRequests(locationRequest(selectedFile), statusRequest(listOf(selectedFile)))) {
         runInEdt(this@LightGitTracker) { eventDispatcher.multicaster.update() }
       }
     }
@@ -201,17 +218,40 @@ class LightGitTracker : Disposable {
     companion object {
       val Blank = State()
     }
+
+    override fun toString(): String {
+      return "State(location=$location, statuses=${statuses.toShortenedString()})"
+    }
   }
 
   private sealed class StateUpdater(val state: State) {
-    object Clear : StateUpdater(State.Blank)
-    class Update(s: State, val updateLocation: Boolean) : StateUpdater(s)
+    object Clear : StateUpdater(State.Blank) {
+      override fun toString(): String = "Clear"
+    }
+
+    class Update(s: State, val updateLocation: Boolean) : StateUpdater(s) {
+      override fun toString(): String {
+        return "Update(state=$state, updateLocation=$updateLocation)"
+      }
+    }
   }
 
   private sealed class Request {
-    class Location(val file: VirtualFile) : Request()
-    class Status(val files: Collection<VirtualFile>) : Request()
-    object CheckGit : Request()
+    class Location(val file: VirtualFile) : Request() {
+      override fun toString(): String {
+        return "Location(file=$file)"
+      }
+    }
+
+    class Status(val files: Collection<VirtualFile>) : Request() {
+      override fun toString(): String {
+        return "Status(files=${files.toShortenedString()}"
+      }
+    }
+
+    object CheckGit : Request() {
+      override fun toString(): String = "CheckGit"
+    }
   }
 
   companion object {
@@ -239,4 +279,22 @@ fun <R> List<*>.lastInstance(klass: Class<R>): R? {
     if (klass.isInstance(element)) return element as R
   }
   return null
+}
+
+private fun <T> Collection<T>.toShortenedString(num: Int = 20): String {
+  if (size < num) return toString()
+  return "${take(num)} ... +${size - num} more"
+}
+
+private fun <K, V> Map<K, V>.toShortenedString(num: Int = 20): String {
+  if (size < num) return toString()
+  return "${asIterable().take(num).toMap()} ... +${size - num} more"
+}
+
+private fun <K, V> Iterable<Map.Entry<K, V>>.toMap(): Map<K, V> {
+  val result = mutableMapOf<K, V>()
+  for (entry in this) {
+    result[entry.key] = entry.value
+  }
+  return result
 }

@@ -350,4 +350,16 @@ class C {
     myFixture.assertPreferredCompletionItems 0, 'undefinedType', 'type'
   }
 
+  void "test class-based suggestions for exception type"() {
+    myFixture.configureByText 'a.java', '''
+class C {
+    { 
+      try { } catch (java.io.IOException <caret>)
+    }
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'e', 'ioException', 'exception'
+  }
+
 }

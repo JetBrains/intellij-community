@@ -3,10 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.util.handleOnEdt
 
-class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GHPRDataProvider,
+class GHPRReviewsThreadsModelsProviderImpl(private val reviewDataProvider: GHPRReviewDataProvider,
                                            private val parentDisposable: Disposable)
   : GHPRReviewsThreadsModelsProvider {
 
@@ -16,10 +16,8 @@ class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GHPRDataPro
   private var threadsUpdateRequired = false
 
   init {
-    dataProvider.addRequestsChangesListener(parentDisposable, object : GHPRDataProvider.RequestsChangedListener {
-      override fun reviewThreadsRequestChanged() {
-        if (threadsModelsByReview.isNotEmpty()) requestUpdateReviewsThreads()
-      }
+    reviewDataProvider.addReviewThreadsListener(parentDisposable, {
+      if (threadsModelsByReview.isNotEmpty()) requestUpdateReviewsThreads()
     })
   }
 
@@ -44,7 +42,7 @@ class GHPRReviewsThreadsModelsProviderImpl(private val dataProvider: GHPRDataPro
   private fun requestUpdateReviewsThreads() {
     loading = true
     threadsUpdateRequired = false
-    dataProvider.reviewThreadsRequest.handleOnEdt(parentDisposable) { threads, _ ->
+    reviewDataProvider.loadReviewThreads().handleOnEdt(parentDisposable) { threads, _ ->
       if (threads != null) {
         updateReviewsThreads(threads)
         loading = false

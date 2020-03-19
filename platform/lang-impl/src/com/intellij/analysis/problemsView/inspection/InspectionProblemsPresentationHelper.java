@@ -3,6 +3,7 @@ package com.intellij.analysis.problemsView.inspection;
 
 import com.intellij.analysis.problemsView.AnalysisErrorSeverity;
 import com.intellij.analysis.problemsView.AnalysisProblem;
+import com.intellij.analysis.problemsView.AnalysisProblemBundle;
 import com.intellij.analysis.problemsView.AnalysisProblemsPresentationHelper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,7 @@ class InspectionProblemsPresentationHelper extends AnalysisProblemsPresentationH
   public void resetAllFilters() {
     mySettings.showErrors = InspectionProblemsViewSettings.SHOW_ERRORS_DEFAULT;
     mySettings.showWarnings = InspectionProblemsViewSettings.SHOW_WARNINGS_DEFAULT;
-    mySettings.showHints = InspectionProblemsViewSettings.SHOW_ERRORS_DEFAULT;
+    mySettings.showHints = InspectionProblemsViewSettings.SHOW_HINTS_DEFAULT;
 
     assert !areFiltersApplied();
   }
@@ -96,7 +97,6 @@ class InspectionProblemsPresentationHelper extends AnalysisProblemsPresentationH
     return mySettings.showHints;
   }
 
-
   @Override
   @Nullable
   public VirtualFile getCurrentFile() {
@@ -104,28 +104,19 @@ class InspectionProblemsPresentationHelper extends AnalysisProblemsPresentationH
   }
 
   @Override
-  public boolean shouldShowProblem(@NotNull final AnalysisProblem problem) {
+  public boolean shouldShowProblem(@NotNull AnalysisProblem problem) {
     if (!isShowErrors() && AnalysisErrorSeverity.ERROR.equals(problem.getSeverity())) return false;
     if (!isShowWarnings() && AnalysisErrorSeverity.WARNING.equals(problem.getSeverity())) return false;
     if (!isShowHints() && AnalysisErrorSeverity.INFO.equals(problem.getSeverity())) return false;
 
-
     return true;
   }
-
 
   @Override
   @NotNull
   public String getFilterTypeText() {
-    final StringBuilder builder = new StringBuilder();
-
-    builder.append("filtering by current file");
-
-    if (!isShowErrors() || !isShowWarnings() || !isShowHints()) {
-      builder.append(builder.length() == 0 ? "filtering by severity" : " and severity");
-    }
-
-    return builder.toString();
+    String filters = !isShowErrors() || !isShowWarnings() || !isShowHints() ? AnalysisProblemBundle.message("tab.caption.filter.severity") : "";
+    return AnalysisProblemBundle.message("tab.caption.filter", filters);
   }
 
   void updateFromFilterSettingsUI(@NotNull InspectionProblemsFilterForm form) {

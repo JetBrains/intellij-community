@@ -510,11 +510,11 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
       // TODO hash
       val newChildren = replaceWith.referrers[newId]
-                          ?.filter { !entitiesToAdd.contains(it) && !replaceMap.containsKey(it) }
+                          ?.filter { it !in entitiesToAdd && !replaceMap.containsKey(it) }
                           ?.map { replaceWith.entityById.getValue(it) }
                         ?: emptyList()
       val oldChildren = referrers[oldId]
-                          ?.filter { !entitiesToRemove.contains(it) && !replaceMap.containsValue(it) }
+                          ?.filter { it !in entitiesToRemove && !replaceMap.containsValue(it) }
                           ?.map { entityById.getValue(it) }
                         ?: emptyList()
 
@@ -525,8 +525,8 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
         equalsFunc = { v1, v2 -> shallowEquals(v1, v2, replaceMap) })
 
       for ((oldChildData, newChildData) in eq.equal) {
-        if (entitiesToAdd.contains(newChildData.id)) error("id=${newChildData.id} already exists in entriesToAdd")
-        if (entitiesToRemove.contains(oldChildData.id)) error("id=${oldChildData.id} already exists in entitiesToRemove")
+        if (newChildData.id in entitiesToAdd) error("id=${newChildData.id} already exists in entriesToAdd")
+        if (oldChildData.id in entitiesToRemove) error("id=${oldChildData.id} already exists in entitiesToRemove")
 
         queue.add(oldChildData.id to newChildData.id)
         replaceMap[oldChildData.id] = newChildData.id
@@ -605,7 +605,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
     for (idToAdd in entitiesToAdd) {
       if (!replaceMap.containsValue(idToAdd)) {
-        recursiveAddEntity(idToAdd, replaceWithBackReferrers, replaceWith, replaceMap)
+        recursiveAddEntity(idToAdd, replaceWithBackReferrers, replaceWith, replaceMap, sourceFilter)
       }
     }
   }
@@ -737,10 +737,18 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     }
   }
 
-  private fun recursiveAddEntity(id: Long, backReferrers: MultiMap<Long, Long>, storage: ProxyBasedEntityStorage, replaceMap: BiMap<Long, Long>) {
+  private fun recursiveAddEntity(id: Long,
+                                 backReferrers: MultiMap<Long, Long>,
+                                 storage: ProxyBasedEntityStorage,
+                                 replaceMap: BiMap<Long, Long>,
+                                 sourceFilter: (EntitySource) -> Boolean) {
     backReferrers[id].forEach { parentId ->
       if (!replaceMap.containsValue(parentId)) {
-        recursiveAddEntity(parentId, backReferrers, storage, replaceMap)
+        if (sourceFilter(storage.entityById.getValue(parentId).entitySource)) {
+          recursiveAddEntity(parentId, backReferrers, storage, replaceMap, sourceFilter)
+        } else {
+          replaceMap[parentId] = parentId
+        }
       }
     }
 

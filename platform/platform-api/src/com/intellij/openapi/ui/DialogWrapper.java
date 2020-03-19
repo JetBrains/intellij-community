@@ -39,14 +39,12 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -98,6 +96,9 @@ public abstract class DialogWrapper {
   }
 
   public enum DialogStyle {NO_STYLE, COMPACT}
+
+  @ApiStatus.Internal
+  public static final @NotNull String IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY = "isVisualPaddingCompensatedOnComponentLevel";
 
   /**
    * The default exit code for "OK" action.
@@ -1334,7 +1335,8 @@ public abstract class DialogWrapper {
       }
     }
 
-    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    boolean isVisualPaddingCompensatedOnComponentLevel =
+      centerPanel == null || centerPanel.getClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY) == null;
     if (isVisualPaddingCompensatedOnComponentLevel) {
       // see comment about visual paddings in the MigLayoutBuilder.build
       root.setBorder(createContentPaneBorder());
@@ -1510,7 +1512,7 @@ public abstract class DialogWrapper {
   @Deprecated
   protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
-  protected final void setCancelButtonText(@Nls @NotNull String text) {
+  protected final void setCancelButtonText(@Nls @NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
 
@@ -1539,7 +1541,7 @@ public abstract class DialogWrapper {
    *             {@link AbstractButton#setText(String)}
    *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
    */
-  protected final void setOKButtonText(@Nls @NotNull String text) {
+  protected final void setOKButtonText(@Nls @NlsContexts.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
   }
 
@@ -1604,7 +1606,7 @@ public abstract class DialogWrapper {
    * @param title title
    * @see JDialog#setTitle
    */
-  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public void setTitle(@Nls @NlsContexts.DialogTitle String title) {
     myPeer.setTitle(title);
   }
 

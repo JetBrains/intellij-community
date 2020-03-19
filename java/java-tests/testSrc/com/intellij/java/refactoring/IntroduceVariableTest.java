@@ -134,7 +134,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testPatternVariableNotUsedAfterwards() {
     doTest("temp", true, false, false, "boolean");
   }
-  public void testPatternVariableDeclarationJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testPatternVariableDeclarationJava14Preview() {
+    doTestWithVarType(new MockIntroduceVariableHandler("temp", true, false, false, JAVA_LANG_STRING));
+  }
   public void testPatternVariableDeclarationUsedInLocalJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
   public void testPatternVariableDeclarationAfterIfJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
   public void testNonPatternDeclarationJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
@@ -143,7 +145,9 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testIfConditionAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testReturnAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testReturnOrChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testReturnOrAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testReturnTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testFieldInitializer() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testAssignTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testEnsureCodeBlockAroundBreakStatementJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testEnsureCodeBlockForThrowsJava13Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING); }

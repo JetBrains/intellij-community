@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.index.SharedIndexExtensions;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -36,7 +35,6 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.hash.MergedInvertedIndex;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
@@ -78,7 +76,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
-  @NotNull private CompletableFuture<AsyncState> myStateFuture = new CompletableFuture<>();
+  private volatile CompletableFuture<AsyncState> myStateFuture;
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
@@ -104,6 +102,9 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
   private AsyncState getAsyncState() {
     AsyncState state = myState; // memory barrier
     if (state == null) {
+      if (myStateFuture == null) {
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
+      }
       myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
     }
     return state;
@@ -190,6 +191,17 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
       else registrationResultSink.registerIndexAsInitiallyBuilt(indexKey);
       if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
       IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
+
+      try {
+        if (needRebuild) {
+          for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+            ex.onStubIndexVersionChanged(indexKey);
+          }
+        }
+      } catch (Exception e) {
+        LOG.error(e);
+      }
+
     } else {
       registrationResultSink.registerIndexAsUptoDate(indexKey);
     }
@@ -209,8 +221,11 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
         final MemoryIndexStorage<K, Void> memStorage = new MemoryIndexStorage<>(storage, indexKey);
         UpdatableIndex<K, Void, FileContent> index = new VfsAwareMapReduceIndex<>(wrappedExtension, memStorage, null, null, null, lock);
 
-        if (SharedIndexExtensions.areSharedIndexesEnabled()) {
-          index = new MergedInvertedIndex<>(wrappedExtension.getName(), ((MergedInvertedIndex<Integer, SerializedStubTree>)stubUpdatingIndex).getHashIndex(), index);
+        for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+          UpdatableIndex<K, Void, FileContent> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
+          if (intermediateIndex != null) {
+            index = intermediateIndex;
+          }
         }
 
         TObjectHashingStrategy<K> keyHashingStrategy = new TObjectHashingStrategy<K>() {
@@ -584,6 +599,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     assert !myInitialized;
     // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
     FileBasedIndex.getInstance();
+    myStateFuture = new CompletableFuture<>();
     Future<AsyncState> future = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization());
 
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
@@ -608,7 +624,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
 
   private void clearState() {
     myCachedStubIds.clear();
-    myStateFuture = new CompletableFuture<>();
+    myStateFuture = null;
     myState = null;
     myInitialized = false;
     LOG.info("StubIndexExtension-s were unloaded");

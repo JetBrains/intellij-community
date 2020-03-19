@@ -45,6 +45,11 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   }
 
   @Override
+  public boolean isValid() {
+    return !myEditor.isDisposed() && super.isValid();
+  }
+
+  @Override
   public void update() {
     EditorImpl.assertIsDispatchThread();
     int oldWidth = getWidthInPixels();

@@ -40,11 +40,8 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    Key<Boolean> userDataKey = ShBeforeRunTaskProvider.getRunBeforeUserDataKey(myRunConfiguration);
-    Boolean userDataValue = myProject.getUserData(userDataKey);
-    boolean isRunBeforeConfig = userDataValue != null && userDataValue.booleanValue();
     ShRunner shRunner = ServiceManager.getService(myProject, ShRunner.class);
-    if (shRunner == null || !shRunner.isAvailable(myProject) || isRunBeforeConfig) {
+    if (shRunner == null || !shRunner.isAvailable(myProject) || isRunBeforeConfig()) {
       return buildExecutionResult();
     }
     shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName());
@@ -111,6 +108,14 @@ public class ShRunConfigurationProfileState implements RunProfileState {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getScriptOptions()));
     }
     return commandLine;
+  }
+
+  private boolean isRunBeforeConfig() {
+    Key<Boolean> userDataKey = ShBeforeRunProviderDelegate.getRunBeforeUserDataKey(myRunConfiguration);
+    Boolean userDataValue = myProject.getUserData(userDataKey);
+    boolean isRunBeforeConfig = userDataValue != null && userDataValue.booleanValue();
+    myRunConfiguration.getProject().putUserData(userDataKey, false);
+    return isRunBeforeConfig;
   }
 
   @NotNull

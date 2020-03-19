@@ -37,7 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
+public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
@@ -106,9 +106,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
 
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, PlatformComponentManagerImpl.getFakeCorePluginDescriptor());
-
-    myPicoContainer.registerComponentInstance(Application.class, this);
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     boolean strictMode = isUnitTestMode || isInternal;
     BundleBase.assertOnMissedKeys(strictMode);
@@ -589,9 +589,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       doExit(flags, restart, beforeRestart);
     }
     else {
-      invokeLater(() -> {
-        doExit(flags, restart, beforeRestart);
-      }, ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(flags, restart, beforeRestart), ModalityState.NON_MODAL);
     }
   }
 
@@ -952,7 +950,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       .submitAndGet();
 
     if (result.getThrowable() instanceof RuntimeException) {
-      throw ((RuntimeException)result.getThrowable());
+      throw (RuntimeException)result.getThrowable();
     }
 
     return !(result.getThrowable() instanceof ProcessCanceledException);
@@ -1258,11 +1256,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     private String id() {
       Class<?> aClass = getClass();
       String name = aClass.getName();
-      while (name == null) {
-        aClass = aClass.getSuperclass();
-        name = aClass.getName();
-      }
-
       name = name.substring(name.lastIndexOf('.') + 1);
       name = name.substring(name.lastIndexOf('$') + 1);
       if (!name.equals("AccessToken")) {
@@ -1391,7 +1384,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public String toString() {
-    return "Application (containerState=" + containerState.get().name() + ") " +
+    return "Application (containerState=" + getContainerStateName() + ") " +
            (isUnitTestMode() ? " (Unit test)" : "") +
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +

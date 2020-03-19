@@ -19,6 +19,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
@@ -28,6 +30,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.task.ProjectTaskManager
+import com.intellij.util.Restarter
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
@@ -233,7 +236,7 @@ internal open class UpdateIdeFromSourcesAction
          removal of the script file is performed in separate process to avoid errors while executing the script */
       FileUtil.writeToFile(updateScript, """
         @echo off
-        SET count=30
+        SET count=20
         SET time_to_wait=1
         :DELETE_DIR
         RMDIR /Q /S "$workHomePath"
@@ -254,8 +257,7 @@ internal open class UpdateIdeFromSourcesAction
         :CLEANUP_AND_EXIT
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
       """.trimIndent())
-      // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
-      return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
+      return arrayOf("cmd", "/c", updateScript.absolutePath, ">${restartLogFile.absolutePath}", "2>&1")
     }
 
     val command = arrayOf(
@@ -267,6 +269,7 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun restartWithCommand(command: Array<String>) {
+    Restarter.doNotLockInstallFolderOnRestart()
     (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
   }
 
@@ -336,7 +339,15 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = PsiUtil.isIdeaProject(e.project)
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null && isIdeaProject(project)
+  }
+
+  private fun isIdeaProject(project: Project) = try {
+    DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, RuntimeException> { PsiUtil.isIdeaProject(project) }
+  }
+  catch (e: IndexNotReadyException) {
+    false
   }
 }
 

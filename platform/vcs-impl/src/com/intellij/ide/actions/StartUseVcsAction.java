@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class StartUseVcsAction extends DumbAwareAction {
   public StartUseVcsAction() {
-    super(VcsBundle.lazyMessage("action.enable.version.control.integration.text"));
+    super(VcsBundle.messagePointer("action.enable.version.control.integration.text"));
   }
 
   @Override
@@ -23,7 +23,7 @@ public class StartUseVcsAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(enabled);
     if (enabled) {
-      presentation.setText(VcsBundle.lazyMessage("action.enable.version.control.integration.text"));
+      presentation.setText(VcsBundle.messagePointer("action.enable.version.control.integration.text"));
     }
   }
 

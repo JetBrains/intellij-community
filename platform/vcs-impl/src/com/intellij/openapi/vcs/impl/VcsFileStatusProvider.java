@@ -6,7 +6,6 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
@@ -27,7 +26,6 @@ import java.nio.charset.Charset;
 @Service
 public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContentProvider {
   private final Project myProject;
-  private final ExtensionPointImpl<VcsBaseContentProvider> myAdditionalProviderPoint;
 
   private static final Logger LOG = Logger.getInstance(VcsFileStatusProvider.class);
 
@@ -37,7 +35,6 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
 
   VcsFileStatusProvider(@NotNull Project project) {
     myProject = project;
-    myAdditionalProviderPoint = (ExtensionPointImpl<VcsBaseContentProvider>)VcsBaseContentProvider.EP_NAME.getPoint(project);
 
     project.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, new ChangeListAdapter() {
       @Override
@@ -55,6 +52,8 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
         fileStatusesChanged();
       }
     });
+
+    VcsBaseContentProvider.EP_NAME.addExtensionPointListener(myProject, () -> fileStatusesChanged(), myProject);
   }
 
   private void fileStatusesChanged() {
@@ -149,7 +148,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
     Change change = changeListManager.getChange(file);
     if (change != null) {
       ContentRevision beforeRevision = change.getBeforeRevision();
-      return beforeRevision == null ? null : new BaseContentImpl(beforeRevision);
+      return beforeRevision == null ? null : new BaseContentImpl(myProject, beforeRevision);
     }
 
     FileStatus status = changeListManager.getStatus(file);
@@ -158,7 +157,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
       if (diffProvider != null) {
         VcsRevisionNumber currentRevision = diffProvider.getCurrentRevision(file);
-        return currentRevision == null ? null : new HijackedBaseContent(diffProvider, file, currentRevision);
+        return currentRevision == null ? null : new HijackedBaseContent(myProject, diffProvider, file, currentRevision);
       }
     }
 
@@ -167,16 +166,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
 
   @Nullable
   private VcsBaseContentProvider findProviderFor(@NotNull VirtualFile file) {
-    for (VcsBaseContentProvider support : myAdditionalProviderPoint) {
-      if (support == null) {
-        break;
-      }
-
-      if (support.isSupported(file)) {
-        return support;
-      }
-    }
-    return null;
+    return VcsBaseContentProvider.EP_NAME.findFirstSafe(myProject, it -> it.isSupported(file));
   }
 
   @Override
@@ -189,9 +179,11 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
   }
 
   private static class BaseContentImpl implements BaseContent {
+    @Nullable private final Project myProject;
     @NotNull private final ContentRevision myContentRevision;
 
-    BaseContentImpl(@NotNull ContentRevision contentRevision) {
+    BaseContentImpl(@NotNull Project project, @NotNull ContentRevision contentRevision) {
+      myProject = project;
       myContentRevision = contentRevision;
     }
 
@@ -204,18 +196,21 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
     @Nullable
     @Override
     public String loadContent() {
-      return loadContentRevision(myContentRevision);
+      return loadContentRevision(myProject, myContentRevision);
     }
   }
 
   private static class HijackedBaseContent implements BaseContent {
+    @Nullable private final Project myProject;
     @NotNull private final DiffProvider myDiffProvider;
     @NotNull private final VirtualFile myFile;
     @NotNull private final VcsRevisionNumber myRevision;
 
-    HijackedBaseContent(@NotNull DiffProvider diffProvider,
+    HijackedBaseContent(@Nullable Project project,
+                        @NotNull DiffProvider diffProvider,
                         @NotNull VirtualFile file,
                         @NotNull VcsRevisionNumber revision) {
+      myProject = project;
       myDiffProvider = diffProvider;
       myFile = file;
       myRevision = revision;
@@ -232,19 +227,19 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
     public String loadContent() {
       ContentRevision contentRevision = myDiffProvider.createFileContent(myRevision, myFile);
       if (contentRevision == null) return null;
-      return loadContentRevision(contentRevision);
+      return loadContentRevision(myProject, contentRevision);
     }
   }
 
   @Nullable
-  private static String loadContentRevision(@NotNull ContentRevision contentRevision) {
+  private static String loadContentRevision(@Nullable Project project, @NotNull ContentRevision contentRevision) {
     try {
       if (contentRevision instanceof ByteBackedContentRevision) {
         byte[] revisionContent = ((ByteBackedContentRevision)contentRevision).getContentAsBytes();
         FilePath filePath = contentRevision.getFile();
 
         if (revisionContent != null) {
-          Charset charset = DiffContentFactoryImpl.guessCharset(revisionContent, filePath);
+          Charset charset = DiffContentFactoryImpl.guessCharset(project, revisionContent, filePath);
           return CharsetToolkit.decodeString(revisionContent, charset);
         }
         else {

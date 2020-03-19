@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -59,7 +60,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
     String suffix = "";
     if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
-      suffix = canExtractSideEffect(subExpression) ? " extracting side effects" : " (may change semantics)";
+      suffix = canExtractSideEffect(subExpression) ? QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects")
+                                                   : JavaBundle.message("quickfix.text.suffix.may.change.semantics");
     }
     return getIntentionText(subExpression, mySubExpressionValue) + suffix;
   }
@@ -73,7 +75,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   private boolean canExtractSideEffect(PsiExpression subExpression) {
-    if (ControlFlowUtils.canExtractStatement(subExpression)) return true;
+    if (CodeBlockSurrounder.canSurround(subExpression)) return true;
     if (!mySubExpressionValue) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
       if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
@@ -176,7 +178,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     simplifyExpression(expression);
   }
 
-  public PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
+  private PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
     if (!mySubExpressionValue) {
       // Prevent extracting while condition to internal 'if'
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
@@ -200,7 +202,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         }
       }
     }
-    return RefactoringUtil.ensureCodeBlock(subExpression);
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(subExpression);
+    return surrounder == null ? null : surrounder.surround().getExpression();
   }
 
   @Nullable

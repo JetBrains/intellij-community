@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalRecorderConfig;
+import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -21,11 +22,14 @@ public class EventLogUploader {
   }
 
   private static void execute(String[] args) {
+    ExternalEventsLogger eventsLogger = new ExternalEventsLogger();
     DataCollectorDebugLogger logger = new ExternalDataCollectorLogger();
     logger.info("Process started with '" + String.join(" ", args) + "'");
 
+    eventsLogger.logSendingLogsStarted();
     if (args.length == 0) {
       logger.warn("No arguments were found");
+      eventsLogger.logSendingLogsFinished("NO_ARGUMENTS");
       return;
     }
 
@@ -33,23 +37,27 @@ public class EventLogUploader {
     DeviceConfiguration device = newDeviceConfig(options);
     if (device == null) {
       logger.warn("Failed creating device config from arguments");
+      eventsLogger.logSendingLogsFinished("NO_DEVICE_CONFIG");
       return;
     }
 
     EventLogRecorderConfig recorder = newRecorderConfig(options);
     if (recorder == null) {
       logger.warn("Failed creating recorder config from arguments");
+      eventsLogger.logSendingLogsFinished("NO_RECORDER_CONFIG");
       return;
     }
 
-    EventLogApplicationInfo appInfo = newApplicationInfo(options, logger);
+    EventLogApplicationInfo appInfo = newApplicationInfo(options, logger, eventsLogger);
     if (appInfo == null) {
       logger.warn("Failed creating application info from arguments");
+      eventsLogger.logSendingLogsFinished("NO_APPLICATION_CONFIG");
       return;
     }
 
     if (!waitForIde(logger, options, 20)) {
       logger.warn("Cannot send logs because IDE didn't close during " + (10 * WAIT_FOR_IDE_MS) + "ms");
+      eventsLogger.logSendingLogsFinished("IDE_NOT_CLOSING");
       return;
     }
 
@@ -62,9 +70,15 @@ public class EventLogUploader {
     logger.info("{recorder:" + recorder.getRecorderId() + ", files:" + logs + "}");
     logger.info("{device:" + device.getDeviceId() + ", bucket:" + device.getBucket() + "}");
     try {
-      //TODO: save the number of uploaded files and log it during the next IDE session
-      EventLogStatisticsService service = new EventLogStatisticsService(device, recorder, appInfo, null);
+      EventLogStatisticsService service = new EventLogStatisticsService(device, recorder, appInfo, new EventLogSendListener() {
+        @Override
+        public void onLogsSend(int succeed, int failed, int totalLocalFiles) {
+          eventsLogger.logSendingLogsSucceed(succeed, failed, totalLocalFiles);
+        }
+      });
+
       StatisticsResult result = service.send();
+      eventsLogger.logSendingLogsFinished(result.getCode());
       if (logger.isTraceEnabled()) {
         logger.trace("Uploading finished with " + result.getCode().name());
         logger.trace(result.getDescription());
@@ -72,6 +86,7 @@ public class EventLogUploader {
     }
     catch (Exception e) {
       logger.warn("Failed sending files: " + e.getMessage());
+      eventsLogger.logSendingLogsFinished("ERROR_ON_SEND");
     }
   }
 
@@ -105,14 +120,16 @@ public class EventLogUploader {
   }
 
   @Nullable
-  private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options, DataCollectorDebugLogger logger) {
+  private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
+                                                            DataCollectorDebugLogger logger,
+                                                            DataCollectorSystemEventLogger eventLogger) {
     String url = options.get(EventLogUploaderOptions.URL_OPTION);
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
-      return new EventLogExternalApplicationInfo(url, productCode, userAgent, isInternal, isTest, logger);
+      return new EventLogExternalApplicationInfo(url, productCode, userAgent, isInternal, isTest, logger, eventLogger);
     }
     return null;
   }

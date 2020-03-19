@@ -48,7 +48,6 @@ private val lafManager get() = LafManager.getInstance()
 private val cdAnimateWindows                          get() = CheckboxDescriptor(message("checkbox.animate.windows"), settings::animateWindows, groupName = windowOptionGroupName)
 private val cdShowToolWindowBars                      get() = CheckboxDescriptor(message("checkbox.show.tool.window.bars"), PropertyBinding({ !settings.hideToolStripes }, { settings.hideToolStripes = !it }), groupName = windowOptionGroupName)
 private val cdShowToolWindowNumbers                   get() = CheckboxDescriptor(message("checkbox.show.tool.window.numbers"), settings::showToolWindowsNumbers, groupName = windowOptionGroupName)
-private val cdShowMemoryIndicator                     get() = CheckboxDescriptor(message("checkbox.show.memory.indicator"), settings::showMemoryIndicator, groupName = windowOptionGroupName)
 private val cdDisableMenuMnemonics                    get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.menu.check.box"), settings::disableMnemonics, groupName = windowOptionGroupName)
 private val cdDisableControlsMnemonics                get() = CheckboxDescriptor(KeyMapBundle.message("disable.mnemonic.in.controls.check.box"), settings::disableMnemonicsInControls, groupName = windowOptionGroupName)
 private val cdAllowMergingButtons                     get() = CheckboxDescriptor(message("allow.merging.dialog.buttons"), settings::allowMergeButtons, groupName = windowOptionGroupName)
@@ -75,7 +74,6 @@ internal val appearanceOptionDescriptors: List<OptionDescription> = listOf(
   cdAnimateWindows,
   cdShowToolWindowBars,
   cdShowToolWindowNumbers,
-  cdShowMemoryIndicator,
   cdDisableMenuMnemonics,
   cdDisableControlsMnemonics,
   cdAllowMergingButtons,
@@ -137,6 +135,9 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
                    comment = if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
                    else null)
             .enabled(!isOverridden)
+
+          commentNoWrap(message("support.screen.readers.comment"))
+            .withLargeLeftGap()
         }
         fullRow { checkBox(cdUseContrastToolbars) }
 
@@ -151,6 +152,7 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
           fullRow {
             if (supportedValues.size == 1) {
               component(JBCheckBox(UIBundle.message("color.blindness.checkbox.text")))
+                .comment(UIBundle.message("color.blindness.checkbox.comment"))
                 .withBinding({ if (it.isSelected) supportedValues.first() else null },
                              { it, value -> it.isSelected = value != null },
                              modelBinding)
@@ -162,6 +164,7 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
               component(ComboBox(supportedValues.toTypedArray()))
                 .enableIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { PlatformEditorBundle.message(it.key) } }
+                .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .withBinding({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                              { it, value -> it.selectedItem = value ?: supportedValues.first() },
                              modelBinding)
@@ -247,31 +250,28 @@ class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appear
           { checkBox(cdShowToolWindowBars) }
         )
         twoColumnRow(
-          { checkBox(cdShowMemoryIndicator) },
-          { checkBox(cdShowToolWindowNumbers) }
+          { checkBox(cdShowToolWindowNumbers) },
+          { checkBox(cdDisableMenuMnemonics) }
         )
         twoColumnRow(
-          { checkBox(cdDisableMenuMnemonics) },
-          { checkBox(cdAllowMergingButtons) }
+          { checkBox(cdAllowMergingButtons) },
+          { checkBox(cdDisableControlsMnemonics) }
         )
         twoColumnRow(
-          { checkBox(cdDisableControlsMnemonics) },
           {
             checkBox(cdSmoothScrolling)
             ContextHelpLabel.create(message("checkbox.smooth.scrolling.description"))()
-          }
-        )
-        twoColumnRow(
-          { checkBox(cdShowMenuIcons) },
-          { checkBox(cdWidescreenToolWindowLayout) }
+          },
+          { checkBox(cdShowMenuIcons) }
         )
         twoColumnRow(
           { checkBox(cdLeftToolWindowLayout) },
           { checkBox(cdRightToolWindowLayout) }
         )
-        fullRow {
-          checkBox(cdFullPathsInTitleBar)
-        }
+        twoColumnRow(
+          { checkBox(cdWidescreenToolWindowLayout) },
+          { checkBox(cdFullPathsInTitleBar) }
+        )
       }
       titledRow(message("group.presentation.mode")) {
         fullRow {

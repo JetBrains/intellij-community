@@ -197,7 +197,7 @@ public class ExistingTemplatesComponent {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
+      protected boolean onDoubleClick(@NotNull MouseEvent event) {
         if (patternTree.isVisible() && getSelectedConfiguration() != null) {
           owner.close(DialogWrapper.OK_EXIT_CODE);
         }

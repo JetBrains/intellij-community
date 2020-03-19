@@ -4,7 +4,8 @@ package com.intellij.ide.startup;
 import com.intellij.openapi.progress.ProcessCanceledException;
 
 /**
- * If thrown during startup process, indicates incorrect service calling.
+ * If thrown during startup process, indicates that a given service (e.g. index) isn't yet available,
+ * and the query should be re-attempted later.
  */
 public class ServiceNotReadyException extends ProcessCanceledException {
 }

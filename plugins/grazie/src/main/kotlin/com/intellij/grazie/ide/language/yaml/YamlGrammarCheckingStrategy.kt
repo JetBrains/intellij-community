@@ -13,7 +13,7 @@ class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
 
   override fun isMyContextRoot(element: PsiElement) = getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
-  override fun getContextRootTextDomain(root: PsiElement) = when(root.node.elementType) {
+  override fun getContextRootTextDomain(root: PsiElement) = when (root.node.elementType) {
     COMMENT -> TextDomain.COMMENTS
     in YAML_LITERAL_TYPES -> TextDomain.LITERALS
     else -> TextDomain.NON_TEXT

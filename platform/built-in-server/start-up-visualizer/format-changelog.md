@@ -1,8 +1,21 @@
+# 19
+
+* add `eua showing` (to separate `showUserAgreementAndConsentsIfNeeded` from `config importing`).
+
+# 18
+
+* rename `plugin descriptors loading` in application loader to `plugin descriptor init waiting`.
+* change `cds` field type from `string` to `boolean`.
+
+# 17
+
+* add `plugin descriptor loading`.
+
 # 16
 
-* add `RunManager initialization` 
-* add `projectComponentCreated event handling` 
-* add `projectComponentCreated` 
+* add `RunManager initialization`.
+* add `projectComponentCreated event handling`.
+* add `projectComponentCreated`.
 
 ## 15
 

@@ -118,8 +118,6 @@ public class PluginManagerConfigurable
     }
   };
 
-  private Runnable myShutdownCallback;
-
   private PluginUpdatesService myPluginUpdatesService;
 
   private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
@@ -754,7 +752,6 @@ public class PluginManagerConfigurable
     }
 
     myInstalledTab = new PluginsTab() {
-      @SuppressWarnings("HardCodedStringLiteral")
       @Override
       protected void createSearchTextField(int flyDelay) {
         super.createSearchTextField(flyDelay);
@@ -807,7 +804,7 @@ public class PluginManagerConfigurable
         Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
         int downloadedEnabled = 0;
-        boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
+        boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
         String otherCategoryTitle = IdeBundle.message("plugins.configurable.other.bundled");
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
@@ -835,7 +832,7 @@ public class PluginManagerConfigurable
         if (!downloaded.descriptors.isEmpty()) {
           myUpdateAll.setListener(new LinkListener<Object>() {
             @Override
-            public void linkSelected(LinkLabel aSource, Object aLinkData) {
+            public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
               myUpdateAll.setEnabled(false);
 
               for (UIPluginGroup group : myInstalledPanel.getGroups()) {
@@ -1011,8 +1008,13 @@ public class PluginManagerConfigurable
 
         myInstalledSearchPanel = new SearchResultPanel(installedController, panel, 0, 0) {
           @Override
-          protected void setEmptyText() {
+          protected void setEmptyText(@NotNull String query) {
             myPanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.nothing.found"));
+            if (query.contains("/downloaded") || query.contains("/outdated") ||
+                query.contains("/enabled") || query.contains("/disabled") ||
+                query.contains("/invalid") || query.contains("/bundled")) {
+              return;
+            }
             myPanel.getEmptyText().appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
           }
@@ -1608,8 +1610,8 @@ public class PluginManagerConfigurable
   private void addGroup(@NotNull List<? super PluginsGroup> groups,
                         @NotNull Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap,
                         @NotNull @Nls String name,
-                        @NotNull String query,
-                        @NotNull String showAllQuery) throws IOException {
+                        @NotNull @NonNls String query,
+                        @NotNull @NonNls String showAllQuery) throws IOException {
     addGroup(groups, name, showAllQuery, descriptors -> PluginRepositoryRequests.loadPlugins(descriptors, allRepositoriesMap, query));
   }
 
@@ -1623,7 +1625,7 @@ public class PluginManagerConfigurable
   public void disposeUIResources() {
     if (myPluginModel.toBackground()) {
       InstallPluginInfo.showRestart();
-      myShutdownCallback = null;
+      InstalledPluginsState.getInstance().clearShutdownCallback();
     }
 
     myMarketplaceTab.dispose();
@@ -1639,10 +1641,7 @@ public class PluginManagerConfigurable
     myPluginUpdatesService.dispose();
     PluginPriceService.cancel();
 
-    if (myShutdownCallback != null) {
-      myShutdownCallback.run();
-      myShutdownCallback = null;
-    }
+    InstalledPluginsState.getInstance().runShutdownCallback();
 
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
   }
@@ -1661,8 +1660,8 @@ public class PluginManagerConfigurable
   public void apply() throws ConfigurationException {
     if (myPluginModel.apply(myCardPanel)) return;
 
-    if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
-      myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp());
+    if (myPluginModel.createShutdownCallback) {
+      InstalledPluginsState.getInstance().setShutdownCallback(() -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp()));
     }
   }
 
@@ -1731,7 +1730,7 @@ public class PluginManagerConfigurable
   }
 
   private class InstallFromDiskAction extends DumbAwareAction {
-    private InstallFromDiskAction() {super(IdeBundle.lazyMessage("action.InstallFromDiskAction.text"));}
+    private InstallFromDiskAction() {super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"));}
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

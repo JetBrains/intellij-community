@@ -40,13 +40,13 @@ public class ComplementaryFontsRegistry {
   private static FallBackInfo ourLastFallBackInfo = DEFAULT_FONT_INFO;
 
   // This matches style detection in JDK (class sun.font.Font2D)
-  private static final String[] BOLD_NAMES = {"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi" };
-  private static final String[] ITALIC_NAMES = {"italic", "cursiva", "oblique", "inclined"};
-  private static final String[] BOLD_ITALIC_NAMES = {"bolditalic", "bold-italic", "bold italic", "boldoblique", "bold-oblique",
+  private static final @NonNls String[] BOLD_NAMES = {"bold", "demibold", "demi-bold", "demi bold", "negreta", "demi" };
+  private static final @NonNls String[] ITALIC_NAMES = {"italic", "cursiva", "oblique", "inclined"};
+  private static final @NonNls String[] BOLD_ITALIC_NAMES = {"bolditalic", "bold-italic", "bold italic", "boldoblique", "bold-oblique",
     "bold oblique", "demibold italic", "negreta cursiva","demi oblique"};
 
   // Explicit mapping fontName->style for cases where generic rules (given above) don't work.
-  private static final Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<>();
+  private static final @NonNls Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<>();
   static {
     FONT_NAME_TO_STYLE.put("AnkaCoder-b",           Font.BOLD);
     FONT_NAME_TO_STYLE.put("AnkaCoder-i",           Font.ITALIC);

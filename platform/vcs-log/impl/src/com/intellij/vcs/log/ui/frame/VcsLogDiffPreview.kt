@@ -15,10 +15,12 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
@@ -105,8 +107,8 @@ class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties
     return preview
   }
 
-  override fun getEditorTabName(): String {
-    return "Repository Diff"
+  override fun getEditorTabName(): @Nls String {
+    return VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name")
   }
 
   override fun getOwnerComponent(): JComponent = mainFrame.changesBrowser.preferredFocusedComponent

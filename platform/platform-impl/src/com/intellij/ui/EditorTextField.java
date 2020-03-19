@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -43,6 +44,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
@@ -61,11 +63,12 @@ import java.util.List;
 public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
+  private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
 
   private Document myDocument;
   private final Project myProject;
   private FileType myFileType;
-  private EditorEx myEditor;
+  protected EditorEx myEditor;
   private Component myNextFocusable;
   private boolean myWholeTextSelected;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -93,19 +96,20 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   public EditorTextField(@NotNull String text) {
-    this(EditorFactory.getInstance().createDocument(text), null, FileTypes.PLAIN_TEXT);
+    this(text, null, FileTypes.PLAIN_TEXT);
   }
 
   public EditorTextField(@NotNull String text, Project project, FileType fileType) {
-    this(EditorFactory.getInstance().createDocument(text), project, fileType, false, true);
+    this(EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text)), project, fileType);
+    LINE_SEPARATOR_KEY.set(myDocument, detectLineSeparators(myDocument, text));
   }
 
   public EditorTextField(Document document, Project project, FileType fileType) {
-    this(document, project, fileType, false, true);
+    this(document, project, fileType, false);
   }
 
   public EditorTextField(Project project, FileType fileType) {
-    this(null, project, fileType, false, true);
+    this((Document)null, project, fileType);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
@@ -151,7 +155,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @NotNull
   @Override
   public String getText() {
-    return myDocument.getText();
+    String text = myDocument.getText();
+    LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+    if (separator != null) {
+      return StringUtil.convertLineSeparators(text, separator.getSeparatorString());
+    }
+    return text;
   }
 
   @Override
@@ -250,14 +259,32 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void setText(@Nullable final String text) {
     CommandProcessor.getInstance().executeCommand(getProject(), () ->
       ApplicationManager.getApplication().runWriteAction(() -> {
-      myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));
-      if (myEditor != null) {
-        final CaretModel caretModel = myEditor.getCaretModel();
-        if (caretModel.getOffset() >= myDocument.getTextLength()) {
-          caretModel.moveToOffset(myDocument.getTextLength());
+        LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+        if (separator == null) {
+          separator = detectLineSeparators(myDocument, text);
         }
-      }
-    }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
+        LINE_SEPARATOR_KEY.set(myDocument, separator);
+        myDocument.replaceString(0, myDocument.getTextLength(), normalize(text, separator));
+        if (myEditor != null) {
+          final CaretModel caretModel = myEditor.getCaretModel();
+          if (caretModel.getOffset() >= myDocument.getTextLength()) {
+            caretModel.moveToOffset(myDocument.getTextLength());
+          }
+        }
+      }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
+  }
+
+  private static @NotNull String normalize(@Nullable String text, @Nullable LineSeparator separator) {
+    if (text == null || separator == null) return StringUtil.notNullize(text);
+    return StringUtil.convertLineSeparators(text);
+  }
+
+  @Nullable
+  private static LineSeparator detectLineSeparators(@Nullable Document document, @Nullable String text) {
+    if (text == null) return null;
+    boolean doNotNormalizeDetect = document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR();
+    if (doNotNormalizeDetect) return null;
+    return StringUtil.detectSeparators(text);
   }
 
   /**

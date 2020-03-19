@@ -65,6 +65,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -1445,10 +1446,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       ApplicationManager.getApplication().invokeLater(() -> {
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           ApplicationManager.getApplication().invokeLater(() -> {
-            long currentTime = System.nanoTime();
             Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
             if (startTime != null) {
-              long time = (currentTime - startTime.longValue()) / 1000000;
+              long time = TimeoutUtil.getDurationMillis(startTime.longValue());
               LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
               LOG.info("Project opening took " + time + " ms");
@@ -1807,13 +1807,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
-      List<EditorWithProviderComposite> allEditors = StreamEx.of(getWindows()).flatArray(EditorWindow::getEditors).toList();
-      ReadAction
-        .nonBlocking(() -> calcEditorReplacements(allEditors))
-        .inSmartMode(myProject)
-        .finishOnUiThread(ModalityState.defaultModalityState(), this::replaceEditors)
-        .coalesceBy(this)
-        .submit(AppExecutorUtil.getAppExecutorService());
+      AppUIExecutor
+        .onUiThread(ModalityState.any())
+        .expireWith(myProject)
+        .submit(() -> StreamEx.of(getWindows()).flatArray(EditorWindow::getEditors).toList())
+        .onSuccess(allEditors -> ReadAction
+          .nonBlocking(() -> calcEditorReplacements(allEditors))
+          .inSmartMode(myProject)
+          .finishOnUiThread(ModalityState.defaultModalityState(), this::replaceEditors)
+          .coalesceBy(this)
+          .submit(AppExecutorUtil.getAppExecutorService()));
     }
 
     private Map<EditorWithProviderComposite, Pair<VirtualFile, Integer>> calcEditorReplacements(List<EditorWithProviderComposite> allEditors) {

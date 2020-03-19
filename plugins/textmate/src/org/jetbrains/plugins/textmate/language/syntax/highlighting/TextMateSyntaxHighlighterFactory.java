@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,8 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       if (languageDescriptor != null) {
         Logger.getInstance(getClass()).debug("Textmate highlighting: " + virtualFile.getPath());
         return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor.getScopeName(),
-                                                                     languageDescriptor.getRootSyntaxNode()));
+                                                                     languageDescriptor.getRootSyntaxNode(),
+                                                                     Registry.get("textmate.line.highlighting.limit").asInteger()));
       }
     }
     return PLAIN_SYNTAX_HIGHLIGHTER;

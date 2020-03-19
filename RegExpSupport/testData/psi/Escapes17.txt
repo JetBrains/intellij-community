@@ -3,14 +3,12 @@ REGEXP_FILE
     RegExpBranchImpl: <[\ud800\udc00-\udbff\udfff]>
       RegExpClassImpl: <[\ud800\udc00-\udbff\udfff]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpCharImpl: <\ud800>
-          PsiElement(UNICODE_CHAR)('\ud800')
-        RegExpCharRangeImpl: <\udc00-\udbff>
-          RegExpCharImpl: <\udc00>
+        RegExpCharRangeImpl: <\ud800\udc00-\udbff\udfff>
+          RegExpCharImpl: <\ud800\udc00>
+            PsiElement(UNICODE_CHAR)('\ud800')
             PsiElement(UNICODE_CHAR)('\udc00')
           PsiElement(MINUS)('-')
-          RegExpCharImpl: <\udbff>
+          RegExpCharImpl: <\udbff\udfff>
             PsiElement(UNICODE_CHAR)('\udbff')
-        RegExpCharImpl: <\udfff>
-          PsiElement(UNICODE_CHAR)('\udfff')
+            PsiElement(UNICODE_CHAR)('\udfff')
         PsiElement(CLASS_END)(']')

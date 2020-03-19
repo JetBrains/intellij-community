@@ -40,17 +40,20 @@ public abstract class BundleBase {
                                         @NotNull Object... params) {
     if (bundle == null) return defaultValue;
 
+    boolean resourceFound = true;
+    
     String value;
     try {
       value = bundle.getString(key);
     }
     catch (MissingResourceException e) {
+      resourceFound = false;
       value = useDefaultValue(bundle, key, defaultValue);
     }
 
     String result = postprocessValue(bundle, value, params);
 
-    if (SHOW_LOCALIZED_MESSAGES) {
+    if (SHOW_LOCALIZED_MESSAGES && resourceFound) {
       return appendLocalizationMarker(result);
     }
     return result;

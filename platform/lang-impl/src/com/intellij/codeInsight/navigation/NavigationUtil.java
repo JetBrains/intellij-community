@@ -71,21 +71,18 @@ public final class NavigationUtil {
   public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements,
                                            @NotNull final PsiElementListCellRenderer<? super PsiElement> renderer,
                                            final String title) {
-    return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
-      @Override
-      public boolean execute(@NotNull final PsiElement element) {
-        Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-        if (descriptor != null && descriptor.canNavigate()) {
-          descriptor.navigate(true);
-        }
-        return true;
+    return getPsiElementPopup(elements, renderer, title, element -> {
+      Navigatable descriptor = EditSourceUtil.getDescriptor(element);
+      if (descriptor != null && descriptor.canNavigate()) {
+        descriptor.navigate(true);
       }
+      return true;
     });
   }
 
   @NotNull
   public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
-                                                                  @NotNull final PsiElementListCellRenderer<T> renderer,
+                                                                  @NotNull final PsiElementListCellRenderer<? super T> renderer,
                                                                   final String title,
                                                                   @NotNull final PsiElementProcessor<? super T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
@@ -93,25 +90,25 @@ public final class NavigationUtil {
 
   @NotNull
   public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
-                                                                  @NotNull final PsiElementListCellRenderer<T> renderer,
+                                                                  @NotNull final PsiElementListCellRenderer<? super T> renderer,
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<? super T> processor,
-                                                                  @Nullable final T selection) {
+                                                                  @Nullable final T initialSelection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
       .setRenderer(renderer)
       .setFont(EditorUtil.getEditorFont())
       .withHintUpdateSupply();
-    if (selection != null) {
-      builder.setSelectedValue(selection, true);
+    if (initialSelection != null) {
+      builder.setSelectedValue(initialSelection, true);
     }
     if (title != null) {
       builder.setTitle(title);
     }
     renderer.installSpeedSearch(builder, true);
 
-    JBPopup popup = builder.setItemsChosenCallback((selectedValues) -> {
+    JBPopup popup = builder.setItemsChosenCallback(selectedValues -> {
       for (T element : selectedValues) {
         if (element != null) {
           processor.execute(element);
@@ -120,7 +117,7 @@ public final class NavigationUtil {
     }).createPopup();
 
     if (builder instanceof PopupChooserBuilder) {
-      JScrollPane pane = ((PopupChooserBuilder)builder).getScrollPane();
+      JScrollPane pane = ((PopupChooserBuilder<?>)builder).getScrollPane();
       pane.setBorder(null);
       pane.setViewportBorder(null);
     }
@@ -258,12 +255,9 @@ public final class NavigationUtil {
 
   /**
    * Returns navigation popup that shows list of related items from {@code items} list
-   * @param items
-   * @param title
    * @param showContainingModules Whether the popup should show additional information that aligned at the right side of the dialog.<br>
    *                              It's usually a module name or library name of corresponding navigation item.<br>
    *                              {@code false} by default
-   * @return
    */
   @NotNull
   public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean showContainingModules) {
@@ -304,7 +298,7 @@ public final class NavigationUtil {
       @Override
       public String getElementText(PsiElement element) {
         String customName = itemsMap.get(element).getCustomName();
-        return (customName != null ? customName : super.getElementText(element));
+        return customName != null ? customName : super.getElementText(element);
       }
 
       @Override

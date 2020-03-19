@@ -26,8 +26,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
@@ -222,6 +224,20 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     checkResult();
   }
 
+  public void testEmptyEditorWithGutterIcon() throws Exception {
+    initText("");
+    addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
+    checkResultWithGutter();
+  }
+
+  public void testBlockInlaysInAnEmptyEditor() throws Exception {
+    initText("");
+    addRangeHighlighter(0, 0, 0, null).setGutterIconRenderer(new ColorGutterIconRenderer(Color.green));
+    getEditor().getInlayModel().addBlockElement(0, false, true, 0, new ColorBlockElementRenderer(Color.red));
+    getEditor().getInlayModel().addBlockElement(0, false, false, 0, new ColorBlockElementRenderer(Color.blue));
+    checkResultWithGutter();
+  }
+
   private void runIndentsPass() {
     IndentsPass indentsPass = new IndentsPass(getProject(), getEditor(), getFile());
     indentsPass.doCollectInformation(new EmptyProgressIndicator());
@@ -232,5 +248,49 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     RangeHighlighter highlighter = addRangeHighlighter(offset, offset, 0, null);
     highlighter.setLineSeparatorColor(color);
     highlighter.setLineSeparatorPlacement(placement);
+  }
+
+  private static class ColorGutterIconRenderer extends GutterIconRenderer {
+    private final Icon myIcon;
+
+    private ColorGutterIconRenderer(@NotNull Color color) {
+      myIcon = new ColorIcon(TEST_LINE_HEIGHT, color);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    @Override
+    public @NotNull Icon getIcon() {
+      return myIcon;
+    }
+  }
+
+  private static class ColorBlockElementRenderer implements EditorCustomElementRenderer {
+    private final GutterIconRenderer myGutterIconRenderer;
+
+    private ColorBlockElementRenderer(@NotNull Color color) {
+      myGutterIconRenderer = new ColorGutterIconRenderer(color);
+    }
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      return 0;
+    }
+
+    @Override
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {}
+
+    @Override
+    public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
+      return myGutterIconRenderer;
+    }
   }
 }

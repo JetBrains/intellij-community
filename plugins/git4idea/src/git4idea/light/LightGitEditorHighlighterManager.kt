@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
@@ -105,7 +106,8 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     override fun process(requests: List<Request>, previousResult: BaseVersion?): BaseVersion {
       val request = requests.last()
       try {
-        return BaseVersion(request.file, getFileContentAsString(request.file, request.repositoryPath, tracker.gitExecutable))
+        val content = getFileContentAsString(request.file, request.repositoryPath, tracker.gitExecutable)
+        return BaseVersion(request.file, StringUtil.convertLineSeparators(content))
       } catch (e: VcsException) {
         LOG.warn("Could not read base version for ${request.file}", e)
         return BaseVersion(request.file, null)
@@ -116,5 +118,9 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   }
 
   private data class Request(val file: VirtualFile, val repositoryPath: String)
-  private data class BaseVersion(val file: VirtualFile, val text: String?)
+  private data class BaseVersion(val file: VirtualFile, val text: String?) {
+    override fun toString(): String {
+      return "BaseVersion(file=$file, text=${text?.take(10) ?: "null"}"
+    }
+  }
 }

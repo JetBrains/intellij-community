@@ -18,6 +18,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.Processor
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -137,5 +138,5 @@ private class EditorTabDiffPreviewProvider(
 
   override fun getOwner(): Any = this
 
-  override fun getEditorTabName(): String = tabNameProvider().orEmpty()
+  override fun getEditorTabName(): @Nls String = tabNameProvider().orEmpty()
 }

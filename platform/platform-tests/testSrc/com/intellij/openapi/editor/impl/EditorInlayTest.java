@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -424,6 +425,26 @@ public class EditorInlayTest extends AbstractEditorTest {
     verifySoftWrapPositions(7);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> ((EditorEx)getEditor()).getDocument().moveText(0, 1, 7));
     verifySoftWrapPositions(7, 16);
+  }
+
+  public void testInlineElementAtDocumentEnd() {
+    initText("");
+    addInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
+  public void testAfterLineEndElementAtDocumentEnd() {
+    initText("");
+    addAfterLineEndInlay(0, 10);
+    assertNull(getEditor().getInlayModel().getElementAt(new Point(TEST_CHAR_WIDTH + 5, getEditor().getLineHeight() * 3 / 2)));
+  }
+
+  public void testInlayForDisposedEditor() {
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+    Inlay inlay = EditorTestUtil.addInlay(editor, 0);
+    assertTrue(inlay.isValid());
+    EditorFactory.getInstance().releaseEditor(editor);
+    assertFalse(inlay.isValid());
   }
 
   private void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

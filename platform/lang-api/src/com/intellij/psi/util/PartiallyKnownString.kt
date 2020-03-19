@@ -9,34 +9,13 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.toHeadAndTail
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-sealed class StringEntry {
-  abstract val sourcePsi: PsiElement? // maybe it should be PsiLanguageInjectionHost and only for `Known` values
-  abstract val range: TextRange
-
-  class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
-    override fun toString(): String = "StringEntry.Known('$value' at $range in $sourcePsi)"
-  }
-
-  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
-    override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
-  }
-
-  val host: PsiLanguageInjectionHost? get() = sourcePsi as? PsiLanguageInjectionHost ?: sourcePsi?.parent as? PsiLanguageInjectionHost
-
-  val rangeAlignedToHost: Pair<PsiLanguageInjectionHost, TextRange>?
-    get() {
-      val entry = this
-      val sourcePsi = entry.sourcePsi ?: return null
-      if (sourcePsi is PsiLanguageInjectionHost) return sourcePsi to entry.range
-      val parent = sourcePsi.parent
-      if (parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
-        return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent)
-      }
-      return null
-    }
-}
-
+/**
+ * Represents string which value is only partially known because of some variables concatenated with or interpolated into the string.
+ *
+ * For UAST languages it could be obtained from [UStringConcatenationsFacade.asPartiallyKnownString].
+ *
+ * The common use case is a search for a place in partially known content to inject a reference.
+ */
 @ApiStatus.Experimental
 class PartiallyKnownString(val segments: List<StringEntry>) {
 
@@ -50,6 +29,17 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           is StringEntry.Known -> stringBuffer.append(segment.value)
           is StringEntry.Unknown -> return null
         }
+      }
+      return stringBuffer.toString()
+    }
+
+  val concatenationOfKnown: String
+    get() {
+      (segments.singleOrNull() as? StringEntry.Known)?.let { return it.value }
+
+      val stringBuffer = StringBuffer()
+      for (segment in segments) {
+        if (segment is StringEntry.Known) stringBuffer.append(segment.value)
       }
       return stringBuffer.toString()
     }
@@ -245,6 +235,34 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     val empty = PartiallyKnownString(emptyList())
   }
 
+}
+
+@ApiStatus.Experimental
+sealed class StringEntry {
+  abstract val sourcePsi: PsiElement? // maybe it should be PsiLanguageInjectionHost and only for `Known` values
+  abstract val range: TextRange
+
+  class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+    override fun toString(): String = "StringEntry.Known('$value' at $range in $sourcePsi)"
+  }
+
+  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+    override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
+  }
+
+  val host: PsiLanguageInjectionHost? get() = sourcePsi as? PsiLanguageInjectionHost ?: sourcePsi?.parent as? PsiLanguageInjectionHost
+
+  val rangeAlignedToHost: Pair<PsiLanguageInjectionHost, TextRange>?
+    get() {
+      val entry = this
+      val sourcePsi = entry.sourcePsi ?: return null
+      if (sourcePsi is PsiLanguageInjectionHost) return sourcePsi to entry.range
+      val parent = sourcePsi.parent
+      if (parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
+        return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent)
+      }
+      return null
+    }
 }
 
 @ApiStatus.Experimental

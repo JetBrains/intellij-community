@@ -23,12 +23,12 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -312,12 +312,12 @@ public final class PushLog extends JPanel implements DataProvider {
 
   private JComponent createStrategyPanel() {
     final JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setBackground(UIUtil.getTreeBackground(myTree));
+    labelPanel.setBackground(RenderingUtil.getBackground(myTree));
     final LinkLabel<String> linkLabel = new LinkLabel<>(DvcsBundle.getString("push.edit.all.targets"), null);
     linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<String>() {
       @Override
-      public void linkSelected(LinkLabel aSource, String aLinkData) {
+      public void linkSelected(LinkLabel<String> aSource, String aLinkData) {
         if (linkLabel.isEnabled()) {
           startSyncEditing();
         }

@@ -4,10 +4,12 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -18,26 +20,28 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.geom.AffineTransform;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 class DocRenderItem {
@@ -67,6 +71,7 @@ class DocRenderItem {
     Collection<DocRenderItem> items;
     Collection<DocRenderItem> existing = editor.getUserData(OUR_ITEMS);
     if (existing == null) {
+      if (itemsToSet.isEmpty()) return;
       editor.putUserData(OUR_ITEMS, items = new ArrayList<>());
     }
     else {
@@ -74,6 +79,7 @@ class DocRenderItem {
     }
     keepScrollingPositionWhile(editor, () -> {
       List<Runnable> foldingTasks = new ArrayList<>();
+      List<DocRenderItem> itemsToUpdateInlays = new ArrayList<>();
       boolean updated = false;
       for (Iterator<DocRenderItem> it = items.iterator(); it.hasNext(); ) {
         DocRenderItem item = it.next();
@@ -82,20 +88,27 @@ class DocRenderItem {
           updated |= item.remove(foldingTasks);
           it.remove();
         }
+        else if (matchingItem.textToRender != null && !matchingItem.textToRender.equals(item.textToRender)) {
+          item.textToRender = matchingItem.textToRender;
+          itemsToUpdateInlays.add(item);
+        }
         else {
-          updated |= item.update(matchingItem.textToRender);
+          item.updateIcon();
         }
       }
       Collection<DocRenderItem> newRenderItems = new ArrayList<>();
       for (DocRenderPassFactory.Item item : itemsToSet) {
-        DocRenderItem newItem = new DocRenderItem(editor, item.textRange, item.textToRender);
+        DocRenderItem newItem = new DocRenderItem(editor, item.textRange, collapseNewItems ? null : item.textToRender);
         newRenderItems.add(newItem);
         if (collapseNewItems) {
           updated |= newItem.toggle(foldingTasks);
+          newItem.textToRender = item.textToRender;
+          itemsToUpdateInlays.add(newItem);
         }
       }
       editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
       newRenderItems.forEach(DocRenderItem::cleanup);
+      updated |= updateInlays(itemsToUpdateInlays);
       items.addAll(newRenderItems);
       return updated;
     });
@@ -125,7 +138,6 @@ class DocRenderItem {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
         connection.setDefaultHandler((event, params) -> updateInlays(editor));
         connection.subscribe(EditorColorsManager.TOPIC);
-        connection.subscribe(LafManagerListener.TOPIC);
         EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
           @Override
           public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -146,8 +158,8 @@ class DocRenderItem {
     }
   }
 
-  static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
-    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor, true);
+  private static void keepScrollingPositionWhile(@NotNull Editor editor, @NotNull BooleanSupplier task) {
+    EditorScrollingPositionKeeper keeper = new EditorScrollingPositionKeeper(editor);
     keeper.savePosition();
     if (task.getAsBoolean()) keeper.restorePosition(false);
   }
@@ -166,13 +178,13 @@ class DocRenderItem {
     }).min(Comparator.comparingInt(i -> i.highlighter.getStartOffset())).orElse(null);
   }
 
-  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @NotNull String textToRender) {
+  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
+    assert editor.getProject() != null;
     highlighter = editor.getMarkupModel()
       .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, null, HighlighterTargetArea.EXACT_RANGE);
-    AnAction toggleAction = new ToggleRenderingAction(this);
-    highlighter.setGutterIconRenderer(new MyGutterIconRenderer(toggleAction));
+    updateIcon();
   }
 
   private int calcFoldStartOffset() {
@@ -221,23 +233,14 @@ class DocRenderItem {
     return updated;
   }
 
-  private boolean update(@NotNull String textToRender) {
-    boolean updated = false;
-    if (!textToRender.equals(this.textToRender)) {
-      this.textToRender = textToRender;
-      if (inlay != null) {
-        inlay.putUserData(DocRenderer.RECREATE_COMPONENT, Boolean.TRUE);
-        inlay.update();
-        updated = true;
-      }
-    }
-    return updated;
-  }
-
   boolean toggle(@Nullable Collection<Runnable> foldingTasks) {
     if (!(editor instanceof EditorEx)) return false;
     FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
     if (foldRegion == null) {
+      if (textToRender == null && foldingTasks == null) {
+        generateHtmlInBackgroundAndToggle();
+        return false;
+      }
       int inlayOffset = calcInlayOffset();
       inlay = editor.getInlayModel().addBlockElement(inlayOffset, true, true, BlockInlayPriority.DOC_RENDER, new DocRenderer(this));
       if (inlay != null) {
@@ -279,32 +282,55 @@ class DocRenderItem {
     return true;
   }
 
-  PsiElement getOwner() {
-    Project project = editor.getProject();
-    if (project != null && highlighter.isValid()) {
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+  private void generateHtmlInBackgroundAndToggle() {
+    ReadAction.nonBlocking(() -> {
+      return DocRenderPassFactory.calcText(getComment());
+    }).withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
+      .coalesceBy(this)
+      .finishOnUiThread(ModalityState.any(), html -> {
+        textToRender = html;
+        toggle(null);
+      }).submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  PsiDocCommentBase getComment() {
+    if (highlighter.isValid()) {
+      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(Objects.requireNonNull(editor.getProject()));
       PsiFile file = psiDocumentManager.getPsiFile(editor.getDocument());
       if (file != null) {
-        PsiDocCommentBase comment = PsiTreeUtil.getParentOfType(file.findElementAt(highlighter.getStartOffset()), PsiDocCommentBase.class,
-                                                                false);
-        if (comment != null) {
-          return comment.getOwner();
-        }
+        return PsiTreeUtil.getParentOfType(file.findElementAt(highlighter.getStartOffset()), PsiDocCommentBase.class, false);
       }
     }
     return null;
   }
 
+  private static boolean updateInlays(@NotNull Collection<DocRenderItem> items) {
+    return DocRenderItemUpdater.getInstance().updateInlays(ContainerUtil.mapNotNull(items, i -> i.inlay));
+  }
+
   private static void updateInlays(@NotNull Editor editor) {
     keepScrollingPositionWhile(editor, () -> {
-      AtomicBoolean updated = new AtomicBoolean();
-      editor.getInlayModel().getBlockElementsInRange(0, editor.getDocument().getTextLength(), DocRenderer.class).forEach(inlay -> {
-        updated.set(true);
-        inlay.putUserData(DocRenderer.RECREATE_COMPONENT, Boolean.TRUE);
-        inlay.update();
-      });
-      return updated.get();
+      Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
+      return items != null && updateInlays(items);
     });
+  }
+
+  private void updateIcon() {
+    boolean iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
+    boolean iconExists = highlighter.getGutterIconRenderer() != null;
+    if (iconEnabled != iconExists) {
+      if (iconEnabled) {
+        highlighter.setGutterIconRenderer(new MyGutterIconRenderer(AllIcons.Gutter.JavadocRead));
+      }
+      else {
+        highlighter.setGutterIconRenderer(null);
+      }
+      if (inlay != null) inlay.update();
+    }
+  }
+
+  AnAction createToggleAction() {
+    return new ToggleRenderingAction(this);
   }
 
   private static class MyCaretListener implements CaretListener {
@@ -357,11 +383,11 @@ class DocRenderItem {
     }
   }
 
-  private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
-    private final AnAction action;
+  class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
+    private final Icon icon;
 
-    private MyGutterIconRenderer(AnAction action) {
-      this.action = action;
+    MyGutterIconRenderer(Icon icon) {
+      this.icon = icon;
     }
 
     @Override
@@ -377,7 +403,7 @@ class DocRenderItem {
     @NotNull
     @Override
     public Icon getIcon() {
-      return AllIcons.Toolwindows.Documentation;
+      return icon;
     }
 
     @NotNull
@@ -394,13 +420,23 @@ class DocRenderItem {
     @Nullable
     @Override
     public String getTooltipText() {
-      return CodeInsightBundle.message("doc.toggle.rendered.presentation");
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC);
+      if (action == null) return null;
+      String actionText = action.getTemplateText();
+      if (actionText == null) return null;
+      return XmlStringUtil.wrapInHtml(actionText + HelpTooltip.getShortcutAsHtml(KeymapUtil.getFirstKeyboardShortcutText(action)));
     }
 
     @Nullable
     @Override
     public AnAction getClickAction() {
-      return action;
+      return createToggleAction();
+    }
+
+    @Override
+    public ActionGroup getPopupMenuActions() {
+      return ObjectUtils.tryCast(ActionManager.getInstance().getAction(IdeActions.GROUP_DOC_COMMENT_GUTTER_ICON_CONTEXT_MENU),
+                                 ActionGroup.class);
     }
   }
 
@@ -422,7 +458,7 @@ class DocRenderItem {
 
   static class ChangeFontSize extends DumbAwareAction {
     ChangeFontSize() {
-      super(CodeInsightBundle.lazyMessage("javadoc.adjust.font.size"));
+      super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

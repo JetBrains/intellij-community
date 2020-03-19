@@ -56,8 +56,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               windowInfo: WindowInfo,
                               private var contentFactory: ToolWindowFactory?,
                               private var isAvailable: Boolean = true,
-                              private var stripeTitle: String? = null) : ToolWindowEx {
+                              private var stripeTitle: String) : ToolWindowEx {
   var windowInfoDuringInit: WindowInfoImpl? = null
+
+  private val focusTask by lazy { FocusTask(this) }
+  val focusAlarm by lazy { SingleAlarm(focusTask, 0, disposable) }
 
   override fun getId() = id
 
@@ -383,7 +386,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun getStripeTitle(): String {
     EDT.assertIsEdt()
-    return stripeTitle ?: id
+    return stripeTitle
   }
 
   override fun setIcon(newIcon: Icon) {
@@ -634,6 +637,13 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       toolWindowManager.setContentUiType(id, if (state) ToolWindowContentUiType.COMBO else ToolWindowContentUiType.TABBED)
     }
+  }
+
+  fun requestFocusInToolWindow() {
+    focusTask.resetStartTime()
+    val alarm = focusAlarm
+    alarm.cancelAllRequests()
+    alarm.request(delay = 0)
   }
 }
 

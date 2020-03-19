@@ -38,8 +38,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 public class CompactReferencesViewAction extends BooleanPropertyToggleAction {
 
   public CompactReferencesViewAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.show.compact.references.view"),
-          VcsLogBundle.lazyMessage("vcs.log.action.description.show.compact.references.view"), null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.compact.references.view"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.compact.references.view"), null);
   }
 
   @Override

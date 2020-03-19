@@ -14,7 +14,7 @@ import com.intellij.util.pico.AssignableToComponentAdapter
 
 internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
                                        pluginDescriptor: PluginDescriptor,
-                                       componentManager: PlatformComponentManagerImpl,
+                                       componentManager: ComponentManagerImpl,
                                        implementationClass: Class<*>? = null,
                                        initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass), AssignableToComponentAdapter {
   override val implementationClassName: String
@@ -24,34 +24,33 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getComponentKey(): String = descriptor.getInterface()
 
-  override fun getActivityCategory(componentManager: PlatformComponentManagerImpl) = getServiceActivityCategory(componentManager)
+  override fun getActivityCategory(componentManager: ComponentManagerImpl) = getServiceActivityCategory(componentManager)
 
-  override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
     if (LOG.isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
           PersistentStateComponent::class.java.isAssignableFrom(implementationClass)) {
-        LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation ${implementationClassName}"))
+        LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation $implementationClassName"))
       }
     }
 
     // heavy to prevent storages from flushing and blocking FS
-    HeavyProcessLatch.INSTANCE.processStarted(implementationClassName).use {
+    HeavyProcessLatch.INSTANCE.processStarted("Creating service $implementationClassName").use {
       if (indicator == null) {
         return createAndInitialize(componentManager, implementationClass)
       }
-      else {
-        // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
-        var instance: T? = null
-        ProgressManager.getInstance().executeNonCancelableSection {
-          instance = createAndInitialize(componentManager, implementationClass)
-        }
-        return instance!!
+
+      // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
+      var instance: T? = null
+      ProgressManager.getInstance().executeNonCancelableSection {
+        instance = createAndInitialize(componentManager, implementationClass)
       }
+      return instance!!
     }
   }
 
-  private fun <T : Any> createAndInitialize(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>): T {
+  private fun <T : Any> createAndInitialize(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
     val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
     if (instance is Disposable) {
       Disposer.register(componentManager.serviceParentDisposable, instance)
@@ -65,7 +64,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override fun toString() = "ServiceAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
 }
 
-internal fun getServiceActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory {
+internal fun getServiceActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory {
   val parent = componentManager.picoContainer.parent
   return when {
     parent == null -> ActivityCategory.APP_SERVICE

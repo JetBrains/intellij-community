@@ -4,6 +4,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.CloudGitAgentDeployment;

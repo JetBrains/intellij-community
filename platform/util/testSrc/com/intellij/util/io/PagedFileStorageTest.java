@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +24,7 @@ public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private final PagedFileStorage.StorageLock lock = new PagedFileStorage.StorageLock();
+  private final PagedFileStorage.StorageLockContext lock = new PagedFileStorage.StorageLockContext(true);
   private Path f;
   private PagedFileStorage s;
 
@@ -33,7 +32,7 @@ public class PagedFileStorageTest {
   public void setUp() throws IOException {
     withLock(lock, () -> {
       f = tempDir.newFile("storage").toPath();
-      s = new PagedFileStorage(f, lock);
+      s = new PagedFileStorage(f, lock, PagedFileStorage.BUFFER_SIZE, false, false);
     });
   }
 
@@ -74,7 +73,7 @@ public class PagedFileStorageTest {
   @Test
   public void testResizeableMappedFile() throws IOException {
     withLock(lock, () -> {
-      ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock);
+      ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock, -1, false);
 
       LOG.debug("writing...");
       long t = System.currentTimeMillis();
@@ -110,7 +109,7 @@ public class PagedFileStorageTest {
   public void testResizeableMappedFile2() throws IOException {
     withLock(lock, () -> {
       int initialSize = 4096;
-      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock.myDefaultStorageLockContext, PagedFileStorage.MB, false);
+      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, PagedFileStorage.MB, false);
       byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(Charsets.UTF_8);
       assertTrue(bytes.length > initialSize);
 
@@ -124,7 +123,7 @@ public class PagedFileStorageTest {
     });
   }
 
-  private static void withLock(PagedFileStorage.StorageLock lock, ThrowableRunnable<IOException> block) throws IOException {
+  private static void withLock(PagedFileStorage.StorageLockContext lock, ThrowableRunnable<IOException> block) throws IOException {
     lock.lock();
     try {
       block.run();

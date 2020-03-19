@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
   public PyRunFileInConsoleAction() {
-    super(PyBundle.lazyMessage("acton.run.file.in.python.console.title"), PyBundle.lazyMessage("action.run.file.in.python.console.description"), PythonIcons.Python.Python);
+    super(PyBundle.messagePointer("acton.run.file.in.python.console.title"), PyBundle.messagePointer("action.run.file.in.python.console.description"), PythonIcons.Python.Python);
   }
 
   @Override

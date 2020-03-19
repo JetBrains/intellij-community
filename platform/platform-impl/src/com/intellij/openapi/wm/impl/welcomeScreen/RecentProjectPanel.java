@@ -85,6 +85,9 @@ public class RecentProjectPanel extends JPanel {
       }
     }
 
+    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
+    myList.setCellRenderer(createRenderer(myPathShortener));
+
     if (Registry.is("autocheck.availability.welcome.screen.projects")) {
       myChecker = new FilePathChecker(new Runnable() {
         @Override
@@ -97,9 +100,6 @@ public class RecentProjectPanel extends JPanel {
       }, pathsToCheck);
       Disposer.register(parentDisposable, myChecker);
     }
-
-    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
-    myList.setCellRenderer(createRenderer(myPathShortener));
 
     new ClickListener(){
       @Override
@@ -205,7 +205,7 @@ public class RecentProjectPanel extends JPanel {
 
     int rc = Messages.showOkCancelDialog(
       this,
-      IdeBundle.message("message.remove.0.from.recent.projects.list",
+      IdeBundle.message("dialog.message.remove.0.from.recent.projects.list",
                         StringUtil.join(selection, action -> action.getTemplatePresentation().getText(), "'\n'")),
       IdeBundle.message("dialog.title.remove.recent.project"),
       CommonBundle.getOkButtonText(), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());

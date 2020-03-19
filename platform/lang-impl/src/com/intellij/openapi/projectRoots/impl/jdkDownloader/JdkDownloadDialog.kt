@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -15,6 +15,7 @@ import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.layout.*
 import java.awt.Component
 import java.awt.event.ItemEvent
+import java.io.File
 import javax.swing.Action
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
@@ -41,11 +42,11 @@ class JdkDownloadDialog(
     title = DIALOG_TITLE
     setResizable(false)
 
-    val defaultItem = items.filter { it.isDefaultItem }.minBy { it } /*pick the newest default JDK */
-                      ?: items.minBy { it } /* pick just the newest JDK is no default was set (aka the JSON is broken) */
+    val defaultItem = items.filter { it.isDefaultItem }.firstOrNull() /*pick the newest default JDK */
+                      ?: items.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
                       ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
-    val vendorComboBox = ComboBox(items.map { it.product }.distinct().sorted().toTypedArray())
+    val vendorComboBox = ComboBox(items.map { it.product }.distinct().toTypedArray())
     vendorComboBox.selectedItem = defaultItem.product
     vendorComboBox.renderer = object: ColoredListCellRenderer<JdkProduct>() {
       override fun customizeCellRenderer(list: JList<out JdkProduct>, value: JdkProduct?, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -68,7 +69,7 @@ class JdkDownloadDialog(
     versionComboBox.isSwingPopup = false
 
     fun selectVersions(newProduct: JdkProduct) {
-      val newVersions = items.filter { it.product == newProduct }.sorted()
+      val newVersions = items.filter { it.product == newProduct }
       versionModel.removeAllElements()
       for (version in newVersions) {
         versionModel.addElement(version)
@@ -82,7 +83,7 @@ class JdkDownloadDialog(
     )
 
     fun selectInstallPath(newVersion: JdkItem) {
-      installDirTextField.text = JdkInstaller.getInstance().defaultInstallDir(newVersion)
+      installDirTextField.text = JdkInstaller.getInstance().defaultInstallDir(newVersion).path
       selectedItem = newVersion
     }
 
@@ -107,17 +108,18 @@ class JdkDownloadDialog(
   override fun doValidate(): ValidationInfo? {
     super.doValidate()?.let { return it }
 
-    val path = selectedPath
-    val (_, error) = JdkInstaller.getInstance().validateInstallDir(path)
+    val (_, error) = JdkInstaller.getInstance().validateInstallDir(selectedPath)
     return error?.let { ValidationInfo(error, installDirTextField) }
   }
 
   override fun createCenterPanel() = panel
 
-  // returns unpacked JDK location (if any) or null if cancelled
-  fun selectJdkAndPath() = when {
-    showAndGet() -> selectedItem to selectedPath //TODO: validate the path!
-    else -> null
+  fun selectJdkAndPath(): Pair<JdkItem, File>? {
+    if (!showAndGet()) return null
+
+    val (selectedFile) = JdkInstaller.getInstance().validateInstallDir(selectedPath)
+    if (selectedFile == null) return null
+    return selectedItem to selectedFile
   }
 
   private inline fun TextFieldWithBrowseButton.onTextChange(crossinline action: (String) -> Unit) {

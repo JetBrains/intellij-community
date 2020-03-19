@@ -24,7 +24,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEv
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadComponent
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.util.*
@@ -32,7 +32,7 @@ import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val reviewService: GHPRReviewServiceAdapter,
+class GHPRTimelineItemComponentFactory(private val reviewDataProvider: GHPRReviewDataProvider,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
@@ -72,7 +72,7 @@ class GHPRTimelineItemComponentFactory(private val reviewService: GHPRReviewServ
         })
       }
       add(GHPRReviewThreadsPanel(reviewThreadsModel) {
-        GHPRReviewThreadComponent.createWithDiff(it, reviewService, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
+        GHPRReviewThreadComponent.createWithDiff(it, reviewDataProvider, reviewDiffComponentFactory, avatarIconsProvider, currentUser)
       })
     }
 
@@ -87,7 +87,8 @@ class GHPRTimelineItemComponentFactory(private val reviewService: GHPRReviewServ
     val actionText = when (review.state) {
       APPROVED -> "approved these changes"
       CHANGES_REQUESTED -> "rejected these changes"
-      COMMENTED, DISMISSED, PENDING -> "reviewed"
+      PENDING -> "started a review"
+      COMMENTED, DISMISSED -> "reviewed"
     }
 
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)

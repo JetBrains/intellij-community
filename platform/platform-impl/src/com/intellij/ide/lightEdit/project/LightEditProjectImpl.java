@@ -5,7 +5,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -15,26 +15,16 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
 
 final class LightEditProjectImpl extends ProjectImpl implements LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(LightEditProjectImpl.class);
   private static final String NAME = "LightEditProject";
-  private static final Set<String> ALLOWED_CLASSES = ContainerUtil.newHashSet(
-    "com.intellij.ui.EditorNotifications",
-    "com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager",
-    "com.intellij.openapi.command.undo.UndoManager",
-    "com.intellij.openapi.fileEditor.FileEditorManager",
-    "com.intellij.dvcs.repo.VcsRepositoryManager",
-    "com.intellij.problems.WolfTheProblemSolver"
-  );
 
   LightEditProjectImpl() {
     this(getProjectPath());
@@ -69,17 +59,13 @@ final class LightEditProjectImpl extends ProjectImpl implements LightEditCompati
 
   @Override
   public void init(@Nullable ProgressIndicator indicator) {
-    createComponents(indicator);
+    createRequiredComponents();
   }
 
-  @Override
-  protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
-    if (!super.isComponentSuitable(componentConfig)) return false;
-    if (componentConfig.isLoadForDefaultProject()) return true;
-    if (ALLOWED_CLASSES.contains(componentConfig.getInterfaceClass())) {
-      return true;
-    }
-    return false;
+  private void createRequiredComponents() {
+    // Create UndoManager at project creation, like it's done for a regular IDE (in ProjectImpl.createComponents method).
+    // Otherwise, undo doesn't work for the first change.
+    UndoManager.getInstance(this);
   }
 
   @Override

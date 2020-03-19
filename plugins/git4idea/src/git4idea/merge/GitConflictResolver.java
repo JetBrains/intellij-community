@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
@@ -11,7 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -24,6 +27,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.CalledInBackground;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -83,17 +87,17 @@ public class GitConflictResolver {
       return this;
     }
 
-    public Params setErrorNotificationTitle(String errorNotificationTitle) {
+    public Params setErrorNotificationTitle(@Nls String errorNotificationTitle) {
       myErrorNotificationTitle = errorNotificationTitle;
       return this;
     }
 
-    public Params setErrorNotificationAdditionalDescription(String errorNotificationAdditionalDescription) {
+    public Params setErrorNotificationAdditionalDescription(@Nls String errorNotificationAdditionalDescription) {
       myErrorNotificationAdditionalDescription = errorNotificationAdditionalDescription;
       return this;
     }
 
-    public Params setMergeDescription(String mergeDescription) {
+    public Params setMergeDescription(@Nls String mergeDescription) {
       myMergeDescription = mergeDescription;
       return this;
     }
@@ -183,8 +187,7 @@ public class GitConflictResolver {
 
   protected void notifyWarning(@NotNull String title, @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
-    notification.addAction(
-      NotificationAction.createSimple(GitBundle.lazyMessage("action.NotificationAction.GitConflictResolver.text.resolve"), () -> {
+    notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
       BackgroundTaskUtil.executeOnPooledThread(myProject, () -> mergeNoProceed());
     }));

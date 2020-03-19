@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -73,8 +74,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
+  void registerLink(VirtualFileSystem fs) {
+    if (fs instanceof LocalFileSystemImpl && is(VFileProperty.SYMLINK) && isValid()) {
+      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getPath(), getCanonicalPath());
+    }
+  }
+
   void updateLinkStatus() {
     setFlagInt(HAS_SYMLINK_FLAG, is(VFileProperty.SYMLINK) || getParent().getFlagInt(HAS_SYMLINK_FLAG));
+    registerLink(getFileSystem());
   }
 
   @Override
@@ -97,6 +105,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public VirtualDirectoryImpl getParent() {
     VirtualDirectoryImpl changedParent = mySegment.vfsData.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
+  }
+
+  public boolean hasSymlink() {
+    return getFlagInt(HAS_SYMLINK_FLAG);
   }
 
   @Override

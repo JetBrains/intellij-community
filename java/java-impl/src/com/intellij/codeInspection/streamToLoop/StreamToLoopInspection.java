@@ -16,8 +16,6 @@ import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -65,7 +63,8 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         super.visitMethodCallExpression(call);
         PsiReferenceExpression expression = call.getMethodExpression();
         PsiElement nameElement = expression.getReferenceNameElement();
-        if (nameElement == null || !SUPPORTED_TERMINALS.contains(nameElement.getText()) || !ControlFlowUtils.canExtractStatement(call)) return;
+        if (nameElement == null || !SUPPORTED_TERMINALS.contains(nameElement.getText())) return;
+        if (!CodeBlockSurrounder.canSurround(call)) return;
         PsiMethod method = call.resolveMethod();
         if(method == null) return;
         PsiClass aClass = method.getContainingClass();
@@ -267,10 +266,10 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       PsiElement element = descriptor.getStartElement();
       if(!(element instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)element;
-      if(!ControlFlowUtils.canExtractStatement(terminalCall)) return;
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      terminalCall = RefactoringUtil.ensureCodeBlock(terminalCall);
-      if (terminalCall == null) return;
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(terminalCall);
+      if (surrounder == null) return;
+      CodeBlockSurrounder.SurroundResult surroundResult = surrounder.surround();
+      terminalCall = (PsiMethodCallExpression)surroundResult.getExpression();
       PsiType resultType = terminalCall.getType();
       if (resultType == null) return;
       List<OperationRecord> operations = extractOperations(ChainVariable.STUB, terminalCall, true);
@@ -282,8 +281,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       }
       TerminalOperation terminal = getTerminal(operations);
       if (terminal == null) return;
-      PsiStatement statement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(terminalCall, false), PsiStatement.class);
-      LOG.assertTrue(statement != null);
+      PsiStatement statement = surroundResult.getAnchor();
       CommentTracker ct = new CommentTracker();
       try {
         StreamToLoopReplacementContext context =
@@ -294,6 +292,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
           replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, context);
         }
         PsiElement firstAdded = null;
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         for (PsiStatement addedStatement : ((PsiBlockStatement)factory.createStatementFromText("{" + replacement + "}", statement))
           .getCodeBlock().getStatements()) {
           PsiElement res = addStatement(project, statement, addedStatement);

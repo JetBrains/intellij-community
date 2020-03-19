@@ -512,7 +512,7 @@ public class EditorImplTest extends AbstractEditorTest {
     initText(StringUtil.repeat("a ", 1000));
     ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes());
     runWriteCommand(() -> getEditor().getDocument().deleteString(0, getEditor().getDocument().getTextLength()));
-    assertEquals(0, ((EditorImpl)getEditor()).getVisibleLineCount());
+    assertEquals(1, ((EditorImpl)getEditor()).getVisibleLineCount());
   }
 
   public void testDragInsideSelectionWithDndDisabled() {
@@ -621,5 +621,27 @@ public class EditorImplTest extends AbstractEditorTest {
     EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
     mouse().pressAtXY(2 * TEST_CHAR_WIDTH, (int)(getEditor().getLineHeight() * 1.5)).dragToXY(-1, -1).release();
     checkResultByText("<selection><caret>te</selection>xt");
+  }
+
+  public void testCaretMovementAtFoldRegionWithEmptyPlaceholder() {
+    initText("<caret>abc");
+    addCollapsedFoldRegion(1, 2, "");
+    right();
+    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
+    assertEquals(1, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 1), caret.getLogicalPosition());
+    assertEquals(new VisualPosition(0, 1), caret.getVisualPosition());
+    right();
+    assertEquals(3, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 3), caret.getLogicalPosition());
+    assertEquals(new VisualPosition(0, 2), caret.getVisualPosition());
+  }
+
+  public void testDragStartingAtBlockInlay() {
+    initText("abc<caret>");
+    addBlockInlay(0, true, 10);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().pressAtXY(0, 0).dragToXY(0, getEditor().getLineHeight()).release();
+    checkResultByText("abc<caret>");
   }
 }

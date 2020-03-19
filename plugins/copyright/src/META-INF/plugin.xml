@@ -28,7 +28,9 @@
 
   <extensions defaultExtensionNs="com.intellij.copyright">
     <updater filetype="XML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
+    <updater filetype="DTD" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
     <updater filetype="HTML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
+    <updater filetype="XHTML" implementationClass="com.maddyhome.idea.copyright.psi.UpdateXmlCopyrightsProvider"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="updater" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
@@ -43,14 +45,12 @@
   </applicationListeners>
 
   <actions>
-    <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..."
-            description="Generate/Update the copyright notice.">
+    <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
       <add-to-group group-id="CodeMenu" anchor="last"/>
       <add-to-group group-id="NavbarPopupMenu" anchor="last"/>
     </action>
-    <action id="GenerateCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Copyright"
-            description="Generate/Update the copyright notice.">
+    <action id="GenerateCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
   </actions>

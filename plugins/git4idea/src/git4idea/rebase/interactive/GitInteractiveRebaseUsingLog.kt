@@ -2,6 +2,7 @@
 package git4idea.rebase.interactive
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -93,7 +94,7 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
   val project = repository.project
   val root = repository.root
 
-  object : Task.Backgroundable(project, GitBundle.message("rebase.preparing.progress.indicator.title")) {
+  object : Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.preparing.title")) {
     private var generatedEntries: List<GitRebaseEntryGeneratedUsingLog>? = null
 
     override fun run(indicator: ProgressIndicator) {
@@ -135,10 +136,22 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
   private val entriesGeneratedUsingLog: List<GitRebaseEntryGeneratedUsingLog>,
   private val newEntries: List<GitRebaseEntryWithEditedMessage>
 ) : GitInteractiveRebaseEditorHandler(repository.project, repository.root) {
-  override fun collectNewEntries(entries: List<GitRebaseEntry>): List<GitRebaseEntry> {
+  private var rebaseFailed = false
+
+  override fun collectNewEntries(entries: List<GitRebaseEntry>): List<GitRebaseEntry>? {
+    if (rebaseFailed) {
+      return super.collectNewEntries(entries)
+    }
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
       val realEntry = entries[i]
       if (!generatedEntry.equalsWithReal(realEntry)) {
+        myRebaseEditorShown = false
+        rebaseFailed = true
+        LOG.error(
+          "Incorrect git-rebase-todo file was generated",
+          Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
+          Attachment("expected.txt", entries.joinToString("\n"))
+        )
         throw VcsException("Couldn't start Rebase using Log")
       }
     }

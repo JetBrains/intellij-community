@@ -63,7 +63,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   private Disposable myListenerDisposable;
 
-  public SpeedSearchBase(Comp component) {
+  public SpeedSearchBase(@NotNull Comp component) {
     myComponent = component;
 
     myComponent.addComponentListener(new ComponentAdapter() {
@@ -245,7 +245,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  private Object findPreviousElement(String s) {
+  private Object findPreviousElement(@NotNull String s) {
     final int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) return null;
     final ListIterator<?> it = getElementIterator(selectedIndex);
@@ -275,7 +275,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  protected Object findElement(String s) {
+  protected Object findElement(@NotNull String s) {
     int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) {
       selectedIndex = 0;
@@ -384,7 +384,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   @Nullable
-  private Object findTargetElement(int keyCode, String searchPrefix) {
+  private Object findTargetElement(int keyCode, @NotNull String searchPrefix) {
     if (keyCode == KeyEvent.VK_UP) {
       return findPreviousElement(searchPrefix);
     }

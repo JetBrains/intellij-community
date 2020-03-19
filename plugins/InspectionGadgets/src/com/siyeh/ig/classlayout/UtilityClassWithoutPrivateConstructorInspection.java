@@ -131,8 +131,10 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         final PsiElement context = element.getParent();
         if (context instanceof PsiNewExpression) {
           SwingUtilities.invokeLater(() -> Messages.showInfoMessage(aClass.getProject(),
-                                                                    "Utility class has instantiations, private constructor will not be created",
-                                                                    "Can't generate constructor"));
+                                                                    InspectionGadgetsBundle.message(
+                                                                      "utility.class.without.private.constructor.cant.generate.constructor.message"),
+                                                                    InspectionGadgetsBundle.message(
+                                                                      "utility.class.without.private.constructor.cant.generate.constructor.title")));
           return;
         }
       }

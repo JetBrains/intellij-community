@@ -7,11 +7,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
-import com.siyeh.ig.psiutils.StatementExtractor;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +59,7 @@ public class DeleteReturnFix extends LocalQuickFixAndIntentionActionOnPsiElement
     if (returnValue == null) return;
     CommentTracker ct = new CommentTracker();
     if (myHasSideEffects) {
-      returnValue = Objects.requireNonNull(RefactoringUtil.ensureCodeBlock(returnValue));
+      returnValue = Objects.requireNonNull(CodeBlockSurrounder.forExpression(returnValue)).surround().getExpression();
       returnStatement = (PsiReturnStatement)returnValue.getParent();
     }
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(returnValue);

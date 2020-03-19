@@ -845,7 +845,15 @@ public final class PsiUtil extends PsiUtilCore {
               if (substitutionMap == null) substitutionMap = new HashMap<>(substitutor.getSubstitutionMap());
               final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
               LOG.assertTrue(capturedWildcard != null);
-              final PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
+              PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
+              PsiType captureUpperBound = upperBound;
+              while (captureUpperBound instanceof PsiCapturedWildcardType) {
+                if (captureUpperBound == capturedWildcard) {
+                  upperBound = null;
+                  break;
+                }
+                captureUpperBound = ((PsiCapturedWildcardType)captureUpperBound).getUpperBound();
+              }
               if (upperBound != null) {
                 capturedWildcard.setUpperBound(upperBound);
               }

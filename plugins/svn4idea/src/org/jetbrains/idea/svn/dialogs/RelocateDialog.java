@@ -9,6 +9,8 @@ import org.jetbrains.idea.svn.api.Url;
 
 import javax.swing.*;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class RelocateDialog extends DialogWrapper {
   private JPanel myMainPanel;
   private JTextField myFromURLTextField;
@@ -17,7 +19,7 @@ public class RelocateDialog extends DialogWrapper {
   public RelocateDialog(@NotNull Project project, @NotNull Url url) {
     super(project, false);
     init();
-    setTitle("Relocate Working Copy");
+    setTitle(message("dialog.title.relocate.working.copy"));
     myFromURLTextField.setText(url.toDecodedString());
     myToURLTextField.setText(url.toDecodedString());
   }

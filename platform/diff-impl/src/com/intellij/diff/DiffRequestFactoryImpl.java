@@ -33,7 +33,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
   public static final String DIFF_TITLE_RENAME_SEPARATOR = " -> ";
@@ -281,7 +283,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     List<DocumentContent> contents = new ArrayList<>(3);
     for (byte[] bytes : byteContents) {
-      contents.add(myContentFactory.createDocumentFromBytes(project, bytes, output));
+      contents.add(myContentFactory.createDocumentFromBytes(project, notNull(bytes, EMPTY_BYTE_ARRAY), output));
     }
 
     return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles);
@@ -315,7 +317,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
       List<DiffContent> contents = new ArrayList<>(3);
       for (byte[] bytes : byteContents) {
-        contents.add(myContentFactory.createFromBytes(project, bytes, output));
+        contents.add(myContentFactory.createFromBytes(project, notNull(bytes, EMPTY_BYTE_ARRAY), output));
       }
 
       return new BinaryMergeRequestImpl(project, outputContent, originalContent, contents, byteContents, title, contentTitles);

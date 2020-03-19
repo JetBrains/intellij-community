@@ -609,7 +609,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
     // read ID and register loaded action
     String id = obtainActionId(element, className);
-    if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() &&
+    if (Boolean.parseBoolean(element.getAttributeValue(INTERNAL_ATTR_NAME)) &&
         !ApplicationManager.getApplication().isInternal()) {
       myNotRegisteredInternalActionIds.add(id);
       return null;
@@ -748,7 +748,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         customClass = true;
       }
       // read ID and register loaded group
-      if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManager.getApplication().isInternal()) {
+      if (Boolean.parseBoolean(element.getAttributeValue(INTERNAL_ATTR_NAME)) && !ApplicationManager.getApplication().isInternal()) {
         myNotRegisteredInternalActionIds.add(id);
         return null;
       }
@@ -786,7 +786,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       // popup
       String popup = element.getAttributeValue(POPUP_ATTR_NAME);
       if (popup != null) {
-        group.setPopup(Boolean.valueOf(popup).booleanValue());
+        group.setPopup(Boolean.parseBoolean(popup));
         if (group instanceof ActionGroupStub) {
           ((ActionGroupStub)group).setPopupDefinedInXml(true);
         }
@@ -1097,13 +1097,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-
   public boolean canUnloadActions(IdeaPluginDescriptor pluginDescriptor) {
     List<Element> elements = pluginDescriptor.getActionDescriptionElements();
     if (elements == null) return true;
     for (Element element : elements) {
       if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
-          !(element.getName().equals(GROUP_ELEMENT_NAME) && element.getAttributeValue(ID_ATTR_NAME) != null) &&
+          !(element.getName().equals(GROUP_ELEMENT_NAME) && canUnloadGroup(element)) &&
           !element.getName().equals(REFERENCE_ELEMENT_NAME)) {
         LOG.info("Plugin " + pluginDescriptor.getPluginId() + " is not unload-safe because of action element " + element.getName());
         return false;
@@ -1112,40 +1111,62 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return true;
   }
 
-  public void unloadActions(IdeaPluginDescriptor pluginDescriptor) {
-    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
-    if (elements == null) return;
-    for (Element element : ContainerUtil.reverse(elements)) {
-      if (element.getName().equals(ACTION_ELEMENT_NAME)) {
-        unloadActionElement(element);
-      }
-      else if (element.getName().equals(GROUP_ELEMENT_NAME)) {
-        String id = element.getAttributeValue(ID_ATTR_NAME);
-        if (id == null) {
-          throw new IllegalStateException("Cannot unload groups with no ID");
-        }
-        for (Element groupChild : element.getChildren()) {
-          if (groupChild.getName().equals(ACTION_ELEMENT_NAME)) {
-            unloadActionElement(groupChild);
-          }
-        }
-        unregisterAction(id);
-      }
-      else if (element.getName().equals(REFERENCE_ELEMENT_NAME)) {
-        PluginId pluginId = pluginDescriptor.getPluginId();
-        AnAction action = processReferenceElement(element, pluginId);
-        if (action == null) return;
-        String actionId = getReferenceActionId(element);
+  private static boolean canUnloadGroup(@NotNull Element element) {
+    if (element.getAttributeValue(ID_ATTR_NAME) == null) {
+      return false;
+    }
+    for (Element child : element.getChildren()) {
+      if (child.getName().equals(GROUP_ELEMENT_NAME) && !canUnloadGroup(child)) return false;
+    }
+    return true;
+  }
 
-        for (Element child : element.getChildren(ADD_TO_GROUP_ELEMENT_NAME)) {
-          String groupId = child.getAttributeValue(GROUPID_ATTR_NAME);
-          final DefaultActionGroup parentGroup = getParentGroup(groupId, actionId, pluginId);
-          if (parentGroup == null) return;
-          parentGroup.remove(action);
-          myId2GroupId.remove(actionId, groupId);
-        }
+  public void unloadActions(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
+    if (elements == null) {
+      return;
+    }
+
+    for (Element element : ContainerUtil.reverse(elements)) {
+      switch (element.getName()) {
+        case ACTION_ELEMENT_NAME:
+          unloadActionElement(element);
+          break;
+        case GROUP_ELEMENT_NAME:
+          unloadGroupElement(element);
+          break;
+        case REFERENCE_ELEMENT_NAME:
+          PluginId pluginId = pluginDescriptor.getPluginId();
+          AnAction action = processReferenceElement(element, pluginId);
+          if (action == null) return;
+          String actionId = getReferenceActionId(element);
+
+          for (Element child : element.getChildren(ADD_TO_GROUP_ELEMENT_NAME)) {
+            String groupId = child.getAttributeValue(GROUPID_ATTR_NAME);
+            final DefaultActionGroup parentGroup = getParentGroup(groupId, actionId, pluginId);
+            if (parentGroup == null) return;
+            parentGroup.remove(action);
+            myId2GroupId.remove(actionId, groupId);
+          }
+          break;
       }
     }
+  }
+
+  private void unloadGroupElement(Element element) {
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    if (id == null) {
+      throw new IllegalStateException("Cannot unload groups with no ID");
+    }
+    for (Element groupChild : element.getChildren()) {
+      if (groupChild.getName().equals(ACTION_ELEMENT_NAME)) {
+        unloadActionElement(groupChild);
+      }
+      else if (groupChild.getName().equals(GROUP_ELEMENT_NAME)) {
+        unloadGroupElement(groupChild);
+      }
+    }
+    unregisterAction(id);
   }
 
   private void unloadActionElement(@NotNull Element element) {
@@ -1261,12 +1282,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           if (customActionSchema != null) {
             customActionSchema.invalidateCustomizedActionGroup(groupId);
           }
-          DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)getActionOrStub(groupId));
+          DefaultActionGroup group = (DefaultActionGroup)getActionOrStub(groupId);
+          if (group == null) {
+            LOG.error("Trying to remove action " + actionId + " from non-existing group " + groupId);
+            continue;
+          }
           group.remove(actionToRemove, actionId);
           if (!(group instanceof ActionGroupStub)) {
             //group can be used as a stub in other actions
             for (String parentOfGroup : myId2GroupId.get(groupId)) {
-              DefaultActionGroup parentOfGroupAction = Objects.requireNonNull((DefaultActionGroup)getActionOrStub(parentOfGroup));
+              DefaultActionGroup parentOfGroupAction = (DefaultActionGroup) getActionOrStub(parentOfGroup);
+              if (parentOfGroupAction == null) {
+                LOG.error("Trying to remove action " + actionId + " from non-existing group " + parentOfGroup);
+                continue;
+              }
               for (AnAction stub : parentOfGroupAction.getChildActionsOrStubs()) {
                 if (stub instanceof ActionGroupStub && ((ActionGroupStub)stub).getId() == groupId) {
                   ((ActionGroupStub)stub).remove(actionToRemove, actionId);
@@ -1277,7 +1306,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
       }
       if (actionToRemove instanceof ActionGroup) {
-        myId2GroupId.values().remove(actionId);
+        for (Map.Entry<String, Collection<String>> entry : myId2GroupId.entrySet()) {
+          entry.getValue().remove(actionId);
+        }
       }
     }
   }

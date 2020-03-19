@@ -5,7 +5,7 @@ REGEXP_FILE
         PsiElement(CLASS_BEGIN)('[')
         RegExpIntersectionImpl: <&&&&a>
           PsiElement(ANDAND)('&&')
-          PsiErrorElement:character class expected
+          PsiErrorElement:Character class expected
             <empty list>
           PsiElement(ANDAND)('&&')
           RegExpCharImpl: <a>

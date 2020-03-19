@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.dnd.TransferableList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -89,8 +90,8 @@ public class DnDAwareTree extends Tree implements DnDAware {
       ((JComponent)c).setOpaque(true);
     }
 
-    c.setForeground(UIUtil.getTreeForeground(tree));
-    c.setBackground(UIUtil.getTreeBackground(tree));
+    c.setForeground(RenderingUtil.getForeground(tree));
+    c.setBackground(RenderingUtil.getBackground(tree));
     c.setFont(tree.getFont());
     c.setSize(c.getPreferredSize());
     final BufferedImage image = UIUtil.createImage(c, c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);

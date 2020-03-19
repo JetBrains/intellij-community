@@ -297,6 +297,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myMultiSelectionInProgress;
   private boolean myRectangularSelectionInProgress;
   private boolean myLastPressCreatedCaret;
+  private boolean myLastPressWasAtBlockInlay;
   // Set when the selection (normal or block one) initiated by mouse drag becomes noticeable (at least one character is selected).
   // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
@@ -393,6 +394,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myDocument.addDocumentListener(new EditorDocumentAdapter(), myCaretModel);
     myDocument.addDocumentListener(mySoftWrapModel, myCaretModel);
+    myDocument.addDocumentListener(myMarkupModel, myCaretModel);
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
@@ -451,6 +453,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myPrimaryCaret.updateVisualPosition();
       }
     });
+
+    myCaretModel.addCaretListener(myMarkupModel, myCaretModel);
 
     myCaretCursor = new CaretCursor();
 
@@ -523,6 +527,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
+    myScrollingModel.addVisibleAreaListener(myMarkupModel);
 
     PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
       @Override
@@ -1004,10 +1009,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
 
     if (myVirtualFile != null && myProject != null) {
-      final EditorNotifications editorNotifications = EditorNotifications.getInstance(myProject);
-      if (editorNotifications != null) {
-        editorNotifications.updateNotifications(myVirtualFile);
-      }
+      EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
     }
 
     if (myFocusModeModel != null) {
@@ -1068,7 +1070,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CodeStyleSettingsManager.removeListener(myProject, this);
 
     Disposer.dispose(myDisposable);
-    myVerticalScrollBar.setUI(null); // clear error panel's cached image
+    myVerticalScrollBar.setPersistentUI(null); // clear error panel's cached image
   }
 
   private void clearCaretThread() {
@@ -2221,7 +2223,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    *         soft wraps appliance) minus number of folded lines
    */
   public int getVisibleLineCount() {
-    return getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber();
+    return Math.max(1, getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber());
   }
 
   /**
@@ -2457,8 +2459,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!columnSelectionDragEvent && toggleCaretEvent && !myLastPressCreatedCaret) {
       return; // ignoring drag after removing a caret
     }
-    if (eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint())) {
-      return; // ignoring drag over block inlay
+    if (myLastPressWasAtBlockInlay) {
+      return; // ignoring drag originating over block inlay
     }
 
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
@@ -3775,6 +3777,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
+      myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = xyToLogicalPosition(e.getPoint());
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
@@ -3940,14 +3943,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (e.getSource() == myGutterComponent) {
-        if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
-            eventArea == EditorMouseEventArea.ANNOTATIONS_AREA ||
-            eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-          if (!tweakSelectionIfNecessary(e)) {
-            myGutterComponent.mousePressed(e);
-          }
-          if (e.isConsumed()) return false;
+        if (!tweakSelectionIfNecessary(e)) {
+          myGutterComponent.mousePressed(e);
         }
+        if (e.isConsumed()) return false;
         x = 0;
       }
 
@@ -3961,12 +3960,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (e.getClickCount() == 1) {
         myLastPressCreatedCaret = false;
       }
+      myLastPressWasAtBlockInlay = eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint());
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
       boolean moveCaret = eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
                   isInsideGutterWhitespaceArea(e) ||
-                  eventArea == EditorMouseEventArea.EDITING_AREA && !hasBlockInlay(e.getPoint());
+                  eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
         VisualPosition visualPosition = getTargetPosition(x, y, true);
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
@@ -4730,7 +4730,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         PsiFile editorFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(getDocument());
         if (editorFile != event.getPsiFile()) return;
       }
-      reinitSettings(false);
+      int oldTabSize = EditorUtil.getTabSize(this);
+      mySettings.reinitSettings();
+      int newTabSize = EditorUtil.getTabSize(this);
+      if (oldTabSize != newTabSize) {
+        reinitSettings(false);
+      }
     }
   }
 
@@ -4855,7 +4860,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private boolean toolWindowIsNotEmpty() {
       if (myProject == null) return false;
       ToolWindowManagerEx m = ToolWindowManagerEx.getInstanceEx(myProject);
-      return m != null && !m.getIdsOn(ToolWindowAnchor.TOP).isEmpty();
+      return !m.getIdsOn(ToolWindowAnchor.TOP).isEmpty();
     }
 
     @Override

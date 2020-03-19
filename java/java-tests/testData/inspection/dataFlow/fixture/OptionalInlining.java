@@ -75,7 +75,7 @@ public class OptionalInlining {
 
   void testFilter(Optional<String> opt, Optional<Integer> intOpt) {
     opt.filter(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
-    Integer integer = intOpt.filter(x -> x > 5).filter(x -> <warning descr="Condition 'x == 5' is always 'false'">x == 5</warning>).orElse(0);
+    Integer integer = <warning descr="Result of 'intOpt.filter(x -> x > 5).filter(x -> x == 5).orElse(0)' is always '0'">intOpt.filter(x -> x > 5).filter(x -> <warning descr="Condition 'x == 5' is always 'false'">x == 5</warning>).orElse(0)</warning>;
     String s1 = opt.filter(s -> false).filter(s -> s.equals("barr")).orElse("baz");
     if (<warning descr="Condition 's1.equals(\"xz\")' is always 'false'">s1.equals("xz")</warning>) {
       System.out.println("never");
@@ -170,7 +170,7 @@ public class OptionalInlining {
     if (<warning descr="Condition 's.equals(\"qux\")' is always 'false'">s.equals("qux")</warning>) {
       System.out.println("Never");
     }
-    boolean res = <warning descr="Result of 'opt.filter(x -> x.isEmpty()).flatMap(x -> x.length() <= 2 ? Optional.empty() : Optional.of(\"foo\")) ...' is always 'false'">opt.filter(x -> x.isEmpty()).flatMap(x -> <warning descr="Condition 'x.length() <= 2' is always 'true'">x.length() <= 2</warning> ? Optional.empty() : Optional.of("foo"))
+    boolean res = <warning descr="Result of 'opt.filter(x -> x.isEmpty()).flatMap(x -> x.length() <= 2 ? Optional.empty() : Optional.of(\"foo\")) ...' is always 'false'">opt.filter(x -> x.isEmpty()).flatMap(x -> <warning descr="Condition 'x.length() <= 2' is always 'true'"><warning descr="Result of 'x.length()' is always '0'">x.length()</warning> <= 2</warning> ? Optional.empty() : Optional.of("foo"))
       .isPresent()</warning>;
   }
 
@@ -237,4 +237,12 @@ public class OptionalInlining {
     }
     return result;
   }
+
+  private static void testPrimitive(int x) {
+    final OptionalInt o = getOptionalInt();
+    if(o.isPresent() && x == o.getAsInt()) {}
+    if(<warning descr="Condition 'o.getAsInt() < 5 && o.getAsInt() > 6' is always 'false'">o.getAsInt() < 5 && <warning descr="Condition 'o.getAsInt() > 6' is always 'false' when reached">o.getAsInt() > 6</warning></warning>) {}
+  }
+
+  native static OptionalInt getOptionalInt();
 }

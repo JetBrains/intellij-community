@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,6 +14,8 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+
+import static com.intellij.ui.render.RenderingUtil.FOCUSABLE_SIBLING;
 
 /**
  * author: lesya
@@ -30,7 +31,7 @@ public class TreeTableTree extends Tree {
     super(model);
     myTreeTable = treeTable;
     setCellRenderer(getCellRenderer());
-    putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, treeTable);
+    putClientProperty(FOCUSABLE_SIBLING, treeTable);
     setBorder(null);
   }
 

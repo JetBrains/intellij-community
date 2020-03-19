@@ -82,7 +82,7 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
       }
       else {
         final BaseListPopupStep<String> step =
-          new BaseListPopupStep<String>("Multiple Usages of the Static Import Found", REPLACE_THIS_OCCURRENCE, REPLACE_ALL_AND_DELETE_IMPORT) {
+          new BaseListPopupStep<String>(JavaBundle.message("multiple.usages.of.static.import.found"), REPLACE_THIS_OCCURRENCE, REPLACE_ALL_AND_DELETE_IMPORT) {
             @Override
             public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
               WriteCommandAction.writeCommandAction(project).withName(ExpandStaticImportAction.this.getText()).run(() -> {

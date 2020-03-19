@@ -6,9 +6,8 @@ import com.intellij.ide.HelpTooltipManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -23,10 +22,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -48,7 +50,11 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public final class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher, DataProvider {
+  public static final DataKey<String> HOVERED_WIDGET_ID = DataKey.create("HOVERED_WIDGET_ID");
+
+  private static final String WIDGET_ID = "STATUS_BAR_WIDGET_ID";
   private static final int MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1);
+
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   @NotNull
   private final IdeFrame myFrame;
@@ -57,8 +63,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   private static final String uiClassID = "IdeStatusBarUI";
 
-  private final Map<String, WidgetBean> myWidgetMap = new HashMap<>();
-  private final List<String> myOrderedWidgets = new ArrayList<>();
+  private final Map<String, WidgetBean> myWidgetMap = new LinkedHashMap<>();
 
   private JPanel myLeftPanel;
   private JPanel myRightPanel;
@@ -113,14 +118,14 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @NotNull
   @Override
   public StatusBar createChild(@NotNull IdeFrame frame) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     IdeStatusBarImpl bar = new IdeStatusBarImpl(frame, false);
     bar.setVisible(isVisible());
     myChildren.add(bar);
     Disposer.register(this, bar);
     Disposer.register(bar, () -> myChildren.remove(bar));
 
-    for (String eachId : myOrderedWidgets) {
-      WidgetBean eachBean = myWidgetMap.get(eachId);
+    for (WidgetBean eachBean : myWidgetMap.values()) {
       if (eachBean.widget instanceof StatusBarWidget.Multiframe) {
         StatusBarWidget copy = ((StatusBarWidget.Multiframe)eachBean.widget).copy();
         bar.addWidget(copy, eachBean.position, eachBean.anchor);
@@ -154,7 +159,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
-    IdeEventQueue.getInstance().addPostprocessor(this, this);
+    IdeEventQueue.getInstance().addDispatcher(this, this);
   }
 
   @Override
@@ -174,6 +179,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     }
     if (PlatformDataKeys.STATUS_BAR.is(dataId)) {
       return this;
+    }
+    if (HOVERED_WIDGET_ID.is(dataId)) {
+      return myHoveredComponent instanceof JComponent ? ((JComponent)myHoveredComponent).getClientProperty(WIDGET_ID) : null;
     }
     return null;
   }
@@ -245,6 +253,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Set<String> keySet = myWidgetMap.keySet();
     final String[] keys = ArrayUtilRt.toStringArray(keySet);
     for (final String key : keys) {
@@ -276,7 +285,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   private void addWidget(@NotNull StatusBarWidget widget, @NotNull Position position, @NotNull String anchor) {
-    myOrderedWidgets.add(widget.ID());
+    ApplicationManager.getApplication().assertIsDispatchThread();
     JComponent c = wrap(widget);
     JPanel panel = getTargetPanel(position);
     if (position == Position.LEFT && panel.getComponentCount() == 0) {
@@ -456,14 +465,14 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
         component.setBorder(widget instanceof IconLikeCustomStatusBarWidget ? StatusBarWidget.WidgetBorder.ICON
                                                                             : StatusBarWidget.WidgetBorder.INSTANCE);
       }
-      if (component instanceof JLabel) {
-        // wrap with a panel, so it will fill entire status bar height
-        return UI.Panels.simplePanel(component);
-      }
-      return component;
+      // wrap with a panel, so it will fill entire status bar height
+      JComponent result = component instanceof JLabel ? UI.Panels.simplePanel(component) : component;
+      result.putClientProperty(WIDGET_ID, widget.ID());
+      return result;
     }
 
     JComponent wrapper = StatusBarWidgetWrapper.wrap(Objects.requireNonNull(widget.getPresentation()));
+    wrapper.putClientProperty(WIDGET_ID, widget.ID());
     wrapper.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
     return wrapper;
   }
@@ -481,22 +490,42 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof MouseEvent) {
-      dispatchMouseEvent((MouseEvent)e);
+      return dispatchMouseEvent((MouseEvent)e);
     }
     return false;
   }
 
-  private void dispatchMouseEvent(@NotNull MouseEvent e) {
-    if (myRightPanel == null) {
-      return;
+  private boolean dispatchMouseEvent(@NotNull MouseEvent e) {
+    if (myRightPanel == null || myCenterPanel == null) {
+      return false;
     }
     Component component = e.getComponent();
     if (component == null) {
-      return;
+      return false;
     }
     Point point = SwingUtilities.convertPoint(component, e.getPoint(), myRightPanel);
     Component widget = myRightPanel.getComponentAt(point);
-    hoverComponent(widget != myRightPanel ? widget : null);
+    if (e.getClickCount() == 0) {
+      hoverComponent(widget != myRightPanel ? widget : null);
+    }
+    if (e.isConsumed() || widget == null) {
+      return false;
+    }
+    if (e.isPopupTrigger() && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED)) {
+      Project project = getProject();
+      if (project != null) {
+        ActionManager actionManager = ActionManager.getInstance();
+        ActionGroup group = ObjectUtils.tryCast(actionManager.getAction(StatusBarWidgetsActionGroup.GROUP_ID), ActionGroup.class);
+        if (group != null) {
+          ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.STATUS_BAR_PLACE, group);
+          menu.setTargetComponent(this);
+          menu.getComponent().show(myRightPanel, point.x, point.y);
+          e.consume();
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -521,17 +550,16 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
 
   @Override
   public void removeWidget(@NotNull String id) {
-    myOrderedWidgets.remove(id);
-    WidgetBean bean = myWidgetMap.remove(id);
-    if (bean != null) {
-      UIUtil.invokeLaterIfNeeded(() -> {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      WidgetBean bean = myWidgetMap.remove(id);
+      if (bean != null) {
         JPanel targetPanel = getTargetPanel(bean.position);
         targetPanel.remove(bean.component);
         targetPanel.revalidate();
-      });
-      Disposer.dispose(bean.widget);
-    }
-    updateChildren(child -> child.removeWidget(id));
+        Disposer.dispose(bean.widget);
+      }
+      updateChildren(child -> child.removeWidget(id));
+    });
   }
 
   @Override
@@ -563,7 +591,9 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     return bean == null ? null : bean.widget;
   }
 
+  @ApiStatus.Internal
   @Nullable
+  //todo: make private after removing all external usages
   public JComponent getWidgetComponent(@NotNull String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.component;

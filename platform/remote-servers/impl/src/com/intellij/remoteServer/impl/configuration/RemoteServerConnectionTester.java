@@ -7,6 +7,7 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class RemoteServerConnectionTester {
       }
     });
 
-    new Task.Backgroundable(null, "Connecting...", true) {
+    new Task.Backgroundable(null, CloudBundle.message("task.title.connecting"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);

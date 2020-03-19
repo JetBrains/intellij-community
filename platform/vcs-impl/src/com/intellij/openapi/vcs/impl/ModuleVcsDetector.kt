@@ -13,8 +13,10 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vfs.VirtualFile
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) {
@@ -72,24 +74,28 @@ internal class ModuleVcsDetector(private val project: Project) {
   private fun autoDetectVcsMappings(tryMapPieces: Boolean) {
     if (vcsManager.haveDefaultMapping() != null) return
 
-    val roots = ModuleManager.getInstance(project).modules.flatMap { it.rootManager.contentRoots.asIterable() }.distinct()
-    val rootVcses = roots.mapNotNull { root -> vcsManager.findVersioningVcs(root)?.let { root to it } }
-    // this case is only for project <-> one vcs.
-    // Additional check for the case when just content root should be mapped, not all project
-    if (rootVcses.size == 1) {
-      val (root, vcs) = rootVcses.first()
-      val projectBaseDir = project.baseDir
-      if (projectBaseDir != null && projectBaseDir == root) {
-        // here we put the project <-> vcs mapping, and removing all inside-project-roots mappings
-        // (i.e. keeping all other mappings)
-        val rootPaths = roots.map { it.path }.toSet()
-        val additionalMappings = vcsManager.directoryMappings.filter { it.directory !in rootPaths }
+    val usedVcses = mutableSetOf<AbstractVcs?>()
+    val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
-        vcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(vcs.name))
+    val roots = ModuleManager.getInstance(project).modules.flatMap { it.rootManager.contentRoots.asIterable() }.distinct()
+    for (root in roots) {
+      val moduleVcs = vcsManager.findVersioningVcs(root)
+      if (moduleVcs != null) {
+        detectedRoots.add(Pair(root, moduleVcs))
       }
+      usedVcses.add(moduleVcs) // put 'null' for unmapped module
+    }
+
+    val commonVcs = usedVcses.singleOrNull()
+    if (commonVcs != null) {
+      // Remove existing mappings that will duplicate added <Project> mapping.
+      val rootPaths = roots.map { it.path }.toSet()
+      val additionalMappings = vcsManager.directoryMappings.filter { it.directory !in rootPaths }
+
+      vcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(commonVcs.name))
     }
     else if (tryMapPieces) {
-      val newMappings = rootVcses.map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
+      val newMappings = detectedRoots.map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
       vcsManager.setAutoDirectoryMappings(vcsManager.directoryMappings + newMappings)
     }
   }

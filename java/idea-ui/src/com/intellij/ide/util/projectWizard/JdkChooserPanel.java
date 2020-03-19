@@ -299,7 +299,7 @@ public class JdkChooserPanel extends JPanel {
     }
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         dialog.clickDefaultButton();
         return true;
       }

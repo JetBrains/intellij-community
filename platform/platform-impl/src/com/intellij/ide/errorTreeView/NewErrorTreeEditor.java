@@ -4,6 +4,7 @@ package com.intellij.ide.errorTreeView;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -150,7 +151,7 @@ public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEd
         myPanel.setForeground(JBColor.GRAY);
       }
       else {
-        myPanel.setForeground(UIUtil.getTreeForeground(tree));
+        myPanel.setForeground(RenderingUtil.getForeground(tree));
       }
 
       if (WideSelectionTreeUI.isWideSelection(tree)) {

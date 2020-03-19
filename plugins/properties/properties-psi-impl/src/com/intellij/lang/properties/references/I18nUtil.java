@@ -9,6 +9,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertyKeyValueFormat;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -73,10 +74,10 @@ public class I18nUtil {
 
       IProperty existingProperty = file.findPropertyByKey(key);
       if (existingProperty == null) {
-        file.addProperty(key, value);
+        file.addProperty(key, value, PropertyKeyValueFormat.MEMORY);
       }
       else if (replaceIfExist) {
-        existingProperty.setValue(value);
+        existingProperty.setValue(value, PropertyKeyValueFormat.MEMORY);
       }
     }
   }

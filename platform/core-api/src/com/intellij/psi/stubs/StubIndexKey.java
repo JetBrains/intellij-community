@@ -35,7 +35,12 @@ public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
   public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls @NotNull String name) {
     PluginId pluginId = getCallerPluginId();
     ID<?, ?> existing = findByName(name, true, pluginId);
-    if (existing != null) return (StubIndexKey<K, Psi>) existing;
+    if (existing != null) {
+      if (existing instanceof StubIndexKey) {
+        return (StubIndexKey<K, Psi>) existing;
+      }
+      throw new IllegalStateException("key with id " + name + " is already registered", existing.getRegistrationTrace());
+    }
     return new StubIndexKey<>(name, pluginId);
   }
 

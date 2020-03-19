@@ -3,7 +3,6 @@ package com.intellij.grazie.ide.notification
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.ui.components.dsl.msg
-import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -18,25 +17,24 @@ object GrazieToastNotifications {
 
   private val shownNotifications = ConcurrentMultiMap<Group, WeakReference<Notification>>()
 
-  private val MISSED_LANGUAGES_GROUP = NotificationGroup(msg("grazie.languages.group"), NotificationDisplayType.STICKY_BALLOON, true)
+  private val MISSED_LANGUAGES_GROUP = NotificationGroup(msg("grazie.notification.missing-languages.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
   fun showMissedLanguages(project: Project) {
     val langs = GrazieConfig.get().missedLanguages
     MISSED_LANGUAGES_GROUP
-      .createNotification(msg("grazie.languages.title"),
-                          msg("grazie.languages.body", langs.joinToString()),
+      .createNotification(msg("grazie.notification.missing-languages.title"),
+                          msg("grazie.notification.missing-languages.body", langs.joinToString()),
                           NotificationType.WARNING, null)
-      .addAction(object : NotificationAction(msg("grazie.languages.action.download")) {
+      .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.download")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           GrazieRemote.downloadMissing(project)
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction(msg("grazie.languages.action.disable")) {
+      .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.disable")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           GrazieConfig.update { state ->
-            state.copy(enabledLanguages = state.enabledLanguages - state.missedLanguages,
-                       nativeLanguage = if (state.nativeLanguage.jLanguage == null) Lang.AMERICAN_ENGLISH else state.nativeLanguage)
+            state.copy(enabledLanguages = state.enabledLanguages - state.missedLanguages)
           }
           notification.expire()
         }

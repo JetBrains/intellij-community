@@ -4,7 +4,9 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -19,6 +21,7 @@ import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,16 +150,23 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         if (myLogData.getRoots().size() > 1) {
-          return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.commit.in.root", commitId.getHash().toShortString(),
+          return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.hash.in.root", commitId.getHash().toShortString(),
                                       commitId.getRoot().getName());
         }
-        return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.commit", commitId.getHash().toShortString());
-
+        return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.hash", commitId.getHash().toShortString());
       }
       return "";
     }
     else {
-      return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to", CommitPresentationUtil.getShortSummary(details));
+      long time = details.getAuthorTime();
+      String commitMessage = XmlStringUtil.wrapInHtmlTag("\"" +
+                                                         StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...")
+                                                         + "\"", "b");
+      return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.subject.author.date.time",
+                                  commitMessage,
+                                  CommitPresentationUtil.getAuthorPresentation(details),
+                                  DateFormatUtil.formatDate(time),
+                                  DateFormatUtil.formatTime(time));
     }
   }
 

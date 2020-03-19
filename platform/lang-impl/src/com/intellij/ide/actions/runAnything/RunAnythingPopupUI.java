@@ -20,13 +20,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -42,7 +43,11 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -58,8 +63,9 @@ import javax.swing.border.Border;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
@@ -72,7 +78,6 @@ import static java.awt.FlowLayout.RIGHT;
 public class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
-  public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
   static final String RUN_ANYTHING = "RunAnything";
   public static final KeyStroke DOWN_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
   public static final KeyStroke UP_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
@@ -85,15 +90,15 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
-  @Nullable private RunAnythingSearchListModel myListModel;
   private final Project myProject;
   private final Module myModule;
 
   private RunAnythingContext mySelectedExecutingContext;
   private final List<RunAnythingContext> myAvailableExecutingContexts = new ArrayList<>();
   private RunAnythingChooseContextAction myChooseContextAction;
-  private ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
   private final Alarm myListRenderingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final ExecutorService myExecutorService =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Run Anything list building");
 
   @Nullable
   public String getUserInputText() {
@@ -195,7 +200,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (group != null) {
         myCurrentWorker.doWhenProcessed(() -> {
           RunAnythingUsageCollector.Companion.triggerMoreStatistics(myProject, group, model.getClass());
-          myCurrentWorker = insert(group, myListModel, getDataContext(), getSearchPattern(), index, -1);
+          RunAnythingSearchListModel listModel = (RunAnythingSearchListModel)myResultsList.getModel();
+          myCurrentWorker = insert(group, listModel, getDataContext(), getSearchPattern(), index, -1);
           myCurrentWorker.doWhenProcessed(() -> {
             clearSelection();
             ScrollingUtil.selectItem(myResultsList, index);
@@ -348,7 +354,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private void rebuildList() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myProgressIndicator.cancel();
     myListRenderingAlarm.cancelAllRequests();
     myResultsList.getEmptyText().setText("Searching...");
 
@@ -357,30 +362,15 @@ public class RunAnythingPopupUI extends BigPopupUI {
       return;
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (myProgressIndicator.isRunning() || !myProgressIndicator.isCanceled()) {
-        return;
-      }
-      myProgressIndicator = new EmptyProgressIndicator();
-      try {
-        myListModel = ProgressManager.getInstance()
-          .runProcess(new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern()), myProgressIndicator);
-
-        ProgressManager.checkCanceled();
-      }
-      catch (ProcessCanceledException e) {
-        return;
-      }
-
-      myListRenderingAlarm.addRequest(() -> {
-        if (myProgressIndicator.isRunning() || myProgressIndicator.isCanceled()) {
-          return;
-        }
-        addListDataListener(myListModel);
-        myResultsList.setModel(myListModel);
-        myListModel.update();
-      }, 150);
-    });
+    ReadAction.nonBlocking(new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern())::compute)
+      .coalesceBy(this)
+      .finishOnUiThread(ModalityState.defaultModalityState(), model ->
+        myListRenderingAlarm.addRequest(() -> {
+          addListDataListener(model);
+          myResultsList.setModel(model);
+          model.update();
+        }, 150))
+      .submit(myExecutorService);
   }
 
   @Override
@@ -478,7 +468,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     dataMap.put(CommonDataKeys.PROJECT.getName(), getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
     dataMap.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory());
-    dataMap.put(EXECUTOR_KEY.getName(), getExecutor());
+    dataMap.put(RunAnythingAction.EXECUTOR_KEY.getName(), getExecutor());
     dataMap.put(RunAnythingProvider.EXECUTING_CONTEXT.getName(), myChooseContextAction.getSelectedContext());
     return SimpleDataContext.getSimpleContext(dataMap, null);
   }
@@ -706,10 +696,10 @@ public class RunAnythingPopupUI extends BigPopupUI {
   @NotNull
   @Override
   public JBList<Object> createList() {
-    myListModel = new RunAnythingMainListModel();
-    addListDataListener(myListModel);
+    RunAnythingSearchListModel listModel = new RunAnythingMainListModel();
+    addListDataListener(listModel);
 
-    return new JBList<>(myListModel);
+    return new JBList<>(listModel);
   }
 
   private void initSearchActions() {
@@ -813,6 +803,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return IdeBundle.message("run.anything.hint.initial.text",
                              KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
                              KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE));
+  }
+
+  @Override
+  protected @NotNull String getAccessibleName() {
+    return IdeBundle.message("run.anything.accessible.name");
   }
 
   @NotNull

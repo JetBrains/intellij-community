@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.MappingFailedException;
@@ -68,7 +68,7 @@ import java.util.function.Predicate;
 /**
  * @author Eugene Zhuravlev
  */
-public class IncProjectBuilder {
+public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
@@ -937,11 +937,11 @@ public class IncProjectBuilder {
   }
 
   private class BuildParallelizer {
-    private final ExecutorService myParallelBuildExecutor = new BoundedTaskExecutor(
-      "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS, true, (o1, o2) -> {
-      long p1 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o1).priority : 1;
-      long p2 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o2).priority : 1;
-      return Long.compare(p2, p1);
+    private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createCustomPriorityQueueBoundedApplicationPoolExecutor(
+      "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS, (o1, o2) -> {
+      int p1 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o1).priority : 1;
+      int p2 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o2).priority : 1;
+      return Integer.compare(p2, p1);
     });
     private final CompileContext myContext;
     private final BuildProgress myBuildProgress;

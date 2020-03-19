@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaDebugProcess;
-import com.intellij.debugger.engine.RemoteStateState;
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -48,6 +45,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
+import com.sun.jdi.Value;
+import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,6 +226,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return myDebuggerSession;
   }
 
+  protected int getTraceMode() {
+    return VirtualMachine.TRACE_NONE;
+  }
 
   protected DebuggerSession createLocalProcess(int transport, final JavaParameters javaParameters) throws ExecutionException {
     createBreakpoints(javaParameters.getMainClass());
@@ -263,7 +265,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     final DebuggerSession[] debuggerSession = {null};
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
-        debuggerSession[0] = attachVirtualMachine(javaCommandLineState, javaCommandLineState.getEnvironment(), debugParameters, false);
+        ExecutionEnvironment env = javaCommandLineState.getEnvironment();
+        env.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, getTraceMode());
+        debuggerSession[0] = attachVirtualMachine(javaCommandLineState, env, debugParameters, false);
       }
       catch (ExecutionException e) {
         fail(e.getMessage());
@@ -343,6 +347,20 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     });
 
     createBreakpoints(psiFile);
+  }
+
+  protected Value evaluate(CodeFragmentKind kind, String code, EvaluationContext evaluationContext) throws EvaluateException {
+    return ReadAction.compute(() ->
+                                EvaluatorBuilderImpl.build(
+                                  new TextWithImportsImpl(kind, code),
+                                  ContextUtil.getContextElement(evaluationContext),
+                                  ContextUtil.getSourcePosition(evaluationContext),
+                                  myProject))
+      .evaluate(evaluationContext);
+  }
+
+  protected Value evaluate(CodeFragmentKind kind, String code, SuspendContextImpl suspendContext) throws EvaluateException {
+    return evaluate(kind, code, createEvaluationContext(suspendContext));
   }
 
   protected EvaluationContextImpl createEvaluationContext(final SuspendContextImpl suspendContext) {

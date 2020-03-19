@@ -19,6 +19,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -300,7 +301,10 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private void startTracking(long start) {
-    myCurrentEDTEventChecker = new FreezeCheckerTask(start);
+    int delay = getUnresponsiveInterval();
+    if (delay > 0) {
+      myCurrentEDTEventChecker = new FreezeCheckerTask(start, delay);
+    }
   }
 
   private void finishTracking() {
@@ -402,7 +406,7 @@ public final class PerformanceWatcher implements Disposable {
     private Snapshot() {
     }
 
-    public void logResponsivenessSinceCreation(@NotNull String activityName) {
+    public void logResponsivenessSinceCreation(@NonNls @NotNull String activityName) {
       LOG.info(activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
                "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot));
@@ -430,8 +434,8 @@ public final class PerformanceWatcher implements Disposable {
     private boolean myFreezeDuringStartup;
     private volatile SamplingTask myDumpTask;
 
-    FreezeCheckerTask(long start) {
-      myFuture = !myExecutor.isShutdown() ? myExecutor.schedule(this::edtFrozen, getUnresponsiveInterval(), TimeUnit.MILLISECONDS) : null;
+    FreezeCheckerTask(long start, int delay) {
+      myFuture = !myExecutor.isShutdown() ? myExecutor.schedule(this::edtFrozen, delay, TimeUnit.MILLISECONDS) : null;
       myFreezeStart = start;
     }
 

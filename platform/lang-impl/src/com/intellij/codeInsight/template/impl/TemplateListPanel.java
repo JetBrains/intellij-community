@@ -347,13 +347,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
       toSelect.add(new TreePath(registerTemplate(template).getPath()));
     }
-
-    myTree.getSelectionModel().clearSelection();
-    for (TreePath path : toSelect) {
-      myTree.expandPath(path.getParentPath());
-      myTree.addSelectionPath(path);
-      myTree.scrollRowToVisible(myTree.getRowForPath(path));
-    }
+    TreeUtil.selectPaths(myTree, toSelect);
   }
 
   @Nullable
@@ -587,7 +581,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .disableDownAction()
       .disableUpAction()
-      .addExtraAction(new AnActionButton(CodeInsightBundle.lazyMessage("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
+      .addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.Template.list.text.duplicate"), AllIcons.Actions.Copy) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();
@@ -597,7 +591,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         public void updateButton(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
         }
-      }).addExtraAction(new AnActionButton(CodeInsightBundle.lazyMessage("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
+      }).addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.restore.deleted.defaults"), AllIcons.Actions.Rollback) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TemplateSettings.getInstance().reset();
@@ -614,17 +608,18 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private void addTemplateOrGroup(AnActionButton button) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.live.template")) {
+    group.add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.live.template")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         addTemplate();
       }
     });
-    group.add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.template.group")) {
+    group.add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.template.group")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         String newName = Messages
-          .showInputDialog(myTree, "Enter the new group name:", "Create New Group", null, "", new TemplateGroupInputValidator(null));
+          .showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                           CodeInsightBundle.message("dialog.title.create.new.group"), null, "", new TemplateGroupInputValidator(null));
         if (newName != null) {
           TemplateGroup newGroup = new TemplateGroup(newName);
           setSelectedNode(insertNewGroup(newGroup));
@@ -644,7 +639,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void installPopup() {
-    final DumbAwareAction rename = new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.rename")) {
+    final DumbAwareAction rename = new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.rename")) {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -661,7 +656,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     };
     rename.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME).getShortcutSet(), myTree);
 
-    final DefaultActionGroup move = new DefaultActionGroup("Move", true) {
+    final DefaultActionGroup move = new DefaultActionGroup(CodeInsightBundle.message("action.text.move"), true) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         final Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
@@ -684,10 +679,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
             }
           }
           addSeparator();
-          add(new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.new.group")) {
+          add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.new.group")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-              String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Move to a New Group", null, "", new TemplateGroupInputValidator(null));
+              String newName = Messages.showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                                                        CodeInsightBundle.message("dialog.title.move.to.a.new.group"), null, "", new TemplateGroupInputValidator(null));
               if (newName != null) {
                 moveTemplates(templates, newName);
               }
@@ -697,7 +693,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     };
 
-    final DumbAwareAction changeContext = new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.change.context")) {
+    final DumbAwareAction changeContext = new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.change.context")) {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -714,7 +710,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         DialogBuilder builder = new DialogBuilder(TemplateListPanel.this);
         builder.setCenterPanel(pair.first);
         builder.setPreferredFocusComponent(pair.second);
-        builder.setTitle("Change Context Type For Selected Templates");
+        builder.setTitle(CodeInsightBundle.message("dialog.title.change.context.type.for.selected.templates"));
         int result = builder.show();
         if (result == DialogWrapper.OK_EXIT_CODE) {
           for (TemplateImpl template : templates.keySet()) {
@@ -726,8 +722,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     };
     final DumbAwareAction revert =
-      new DumbAwareAction(CodeInsightBundle.lazyMessage("action.DumbAware.TemplateListPanel.text.restore.defaults"),
-                          CodeInsightBundle.lazyMessage("action.DumbAware.TemplateListPanel.description.restore.default.setting"),
+      new DumbAwareAction(CodeInsightBundle.messagePointer("action.DumbAware.TemplateListPanel.text.restore.defaults"),
+                          CodeInsightBundle.messagePointer("action.DumbAware.TemplateListPanel.description.restore.default.setting"),
                           null) {
 
       @Override
@@ -811,7 +807,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     if (templateGroup == null) return;
 
     final String oldName = templateGroup.getName();
-    String newName = Messages.showInputDialog(myTree, "Enter the new group name:", "Rename", null, oldName,
+    String newName = Messages.showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                                              CodeInsightBundle.message("dialog.title.rename"), null, oldName,
                                               new TemplateGroupInputValidator(oldName));
 
     if (newName != null && !newName.equals(oldName)) {
@@ -892,11 +889,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private void setSelectedNode(DefaultMutableTreeNode node) {
-    TreePath path = new TreePath(node.getPath());
-    myTree.expandPath(path.getParentPath());
-    int row = myTree.getRowForPath(path);
-    myTree.setSelectionRow(row);
-    myTree.scrollRowToVisible(row);
+    TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
   }
 
   private void removeNodeFromParent(DefaultMutableTreeNode node) {

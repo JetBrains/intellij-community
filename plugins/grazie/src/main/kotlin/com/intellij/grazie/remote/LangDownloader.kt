@@ -20,7 +20,7 @@ object LangDownloader {
 
     val result = downloader.createDownloader(
       listOf(downloader.createFileDescription(lang.remote.url, lang.remote.fileName)),
-      msg("grazie.ui.settings.language.download.name", lang.displayName)
+      msg("grazie.settings.proofreading.languages.download.name", lang.nativeName)
     ).downloadFilesWithProgress(GrazieDynamic.dynamicFolder.canonicalPath, project, null)
 
     // null if canceled or failed, zero result if nothing found

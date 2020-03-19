@@ -56,10 +56,13 @@ public abstract class ProgressStripeIcon implements Icon {
 
   private static class GradientIcon extends ProgressStripeIcon {
     private static final Color DARK = new ProgressStripeColor(namedColor("ProgressBar.indeterminateStartColor",
-                                                       new JBColor(new Color(0x4d9ff8), new Color(0x6a6a6a))), Gray.xD4);
+                                                                         new JBColor(new Color(0x4d9ff8),
+                                                                                     new Color(0x6a6a6a))), Gray.xD4);
     @SuppressWarnings("UseJBColor")
     private static final Color LIGHT = new ProgressStripeColor(namedColor("ProgressBar.indeterminateEndColor",
-                                                      new JBColor(new Color(0x90c2f8), new Color(0x838383))), new Color(0x989a9e));
+                                                                          new JBColor(new Color(0x90c2f8),
+                                                                                      new Color(0x838383))),
+                                                               new Color(0x989a9e));
     private static final int GRADIENT = 128;
     private static final int GRADIENT_HEIGHT = 2;
 

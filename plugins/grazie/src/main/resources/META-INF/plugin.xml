@@ -13,8 +13,8 @@
         <li>Uses LanguageTool as its proofreading engine.</li>
     </ul>
 
-    <p>English is enabled by default when you install the plugin. To enable other languages, open Settings/Preferences
-       and select <strong>Tools</strong> > <strong>Grazie</strong>.</p>
+    <p>English is enabled by default when you install the plugin. To enable other languages, open <strong>Settings/Preferences</strong>
+       and select <strong>Tools</strong> > <strong>Grazie</strong> (or <strong>Editor</strong> > <strong>Proofreading</strong> for 2020.1 EAP).</p>
 
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>
@@ -41,10 +41,12 @@
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
                      level="WARNING" displayName="Natural language detection"/>
 
-    <applicationConfigurable parentId="proofread" instance="com.intellij.grazie.ide.ui.GrazieConfigurable"
+    <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"/>
+
+    <applicationConfigurable parentId="proofread" instance="com.intellij.grazie.ide.ui.grammar.GrazieConfigurable"
                              id="reference.settingsdialog.project.grazie"/>
 
-    <search.optionContributor implementation="com.intellij.grazie.ide.ui.GrazieSearchableOptionContributor"/>
+    <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>

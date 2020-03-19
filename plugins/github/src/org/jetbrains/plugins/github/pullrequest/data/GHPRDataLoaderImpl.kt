@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.google.common.cache.CacheBuilder
@@ -8,16 +8,16 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 
-internal class GHPRDataLoaderImpl(private val dataProviderFactory: (Long) -> GHPRDataProvider)
+internal class GHPRDataLoaderImpl(private val dataProviderFactory: (GHPRIdentifier) -> GHPRDataProvider)
   : GHPRDataLoader {
 
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
-    .removalListener<Long, GHPRDataProvider> {
+    .removalListener<GHPRIdentifier, GHPRDataProvider> {
       runInEdt { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
     }
     .maximumSize(5)
-    .build<Long, GHPRDataProvider>()
+    .build<GHPRIdentifier, GHPRDataProvider>()
 
   private val invalidationEventDispatcher = EventDispatcher.create(DataInvalidatedListener::class.java)
 
@@ -27,21 +27,21 @@ internal class GHPRDataLoaderImpl(private val dataProviderFactory: (Long) -> GHP
   }
 
   @CalledInAwt
-  override fun getDataProvider(number: Long): GHPRDataProvider {
+  override fun getDataProvider(id: GHPRIdentifier): GHPRDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
 
-    return cache.get(number) {
-      dataProviderFactory(number)
+    return cache.get(id) {
+      dataProviderFactory(id)
     }
   }
 
   @CalledInAwt
-  override fun findDataProvider(number: Long): GHPRDataProvider? = cache.getIfPresent(number)
+  override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache.getIfPresent(id)
 
-  override fun addInvalidationListener(disposable: Disposable, listener: (Long) -> Unit) =
+  override fun addInvalidationListener(disposable: Disposable, listener: (GHPRIdentifier) -> Unit) =
     invalidationEventDispatcher.addListener(object : DataInvalidatedListener {
-      override fun providerChanged(pullRequestNumber: Long) {
-        listener(pullRequestNumber)
+      override fun providerChanged(id: GHPRIdentifier) {
+        listener(id)
       }
     }, disposable)
 
@@ -51,6 +51,6 @@ internal class GHPRDataLoaderImpl(private val dataProviderFactory: (Long) -> GHP
   }
 
   private interface DataInvalidatedListener : EventListener {
-    fun providerChanged(pullRequestNumber: Long)
+    fun providerChanged(id: GHPRIdentifier)
   }
 }

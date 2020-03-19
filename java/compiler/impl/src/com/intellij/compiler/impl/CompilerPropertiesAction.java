@@ -27,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author Eugene Zhuravlev
 */
-class CompilerPropertiesAction extends AnAction {
-  CompilerPropertiesAction() {
-    super(JavaCompilerBundle.lazyMessage("action.compiler.properties.text"), AllIcons.General.Settings);
+public class CompilerPropertiesAction extends AnAction {
+  public CompilerPropertiesAction() {
+    super(JavaCompilerBundle.messagePointer("action.compiler.properties.text"), AllIcons.General.Settings);
   }
 
   @Override

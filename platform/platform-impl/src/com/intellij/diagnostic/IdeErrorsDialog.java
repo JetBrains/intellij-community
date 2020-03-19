@@ -6,6 +6,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
@@ -39,6 +40,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +126,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       setDevelopers(developers);
     }
     else {
-      new Task.Backgroundable(null, IdeBundle.message("progress.title.loading.developers.list"), true) {
+      new Task.Backgroundable(null, DiagnosticBundle.message("progress.title.loading.developers.list"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -208,7 +210,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return panel;
   }
 
-  private static JComponent actionToolbar(String id, AnAction action) {
+  private static JComponent actionToolbar(@NonNls String id, AnAction action) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.getComponent().setBorder(JBUI.Borders.empty());
@@ -277,7 +279,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       });
       myAssigneeCombo.setSwingPopup(false);
       myAssigneePanel = new JPanel();
-      myAssigneePanel.add(new JBLabel(IdeBundle.message("label.assignee")));
+      myAssigneePanel.add(new JBLabel(DiagnosticBundle.message("label.assignee")));
       myAssigneePanel.add(myAssigneeCombo);
     }
 
@@ -477,7 +479,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
-    if (submitter == null && plugin != null && !PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && plugin != null && !PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String vendorUrl = plugin.getVendorUrl();
@@ -536,7 +538,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAssigneePanel(MessageCluster cluster) {
-    if (cluster.submitter instanceof ITNReporter && !(cluster.first.getThrowable() instanceof Freeze)) {
+    if (cluster.submitter instanceof ITNReporter) {
       myAssigneePanel.setVisible(true);
       myAssigneeCombo.setEnabled(cluster.isUnsent());
       Integer assignee = cluster.first.getAssigneeId();
@@ -612,7 +614,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     boolean accepted = submitter.submit(events, message.getAdditionalInfo(), parentComponent, reportInfo -> {
       message.setSubmitted(reportInfo);
-      UIUtil.invokeLaterIfNeeded(() -> updateOnSubmit());
+      UIUtil.invokeLaterIfNeeded(this::updateOnSubmit);
     });
     if (!accepted) {
       message.setSubmitting(false);
@@ -703,7 +705,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /* UI components */
 
-  private class BackAction extends AnAction implements DumbAware {
+  private class BackAction extends AnAction implements DumbAware, LightEditCompatible {
     BackAction() {
       super(IdeBundle.message("button.previous"), null, AllIcons.Actions.Back);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
@@ -724,7 +726,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ForwardAction extends AnAction implements DumbAware {
+  private class ForwardAction extends AnAction implements DumbAware, LightEditCompatible {
     ForwardAction() {
       super(IdeBundle.message("button.next"), null, AllIcons.Actions.Forward);
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
@@ -927,7 +929,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
-    if (plugin == null || PluginManager.isDevelopedByJetBrains(plugin)) {
+    if (plugin == null || PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
         if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {

@@ -6,10 +6,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -28,7 +25,7 @@ public interface StatusBarWidget extends Disposable {
     DEFAULT, MAC
   }
 
-  @NotNull
+  @NonNls @NotNull
   String ID();
 
   @Nullable

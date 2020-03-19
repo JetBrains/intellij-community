@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
@@ -8,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,8 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
@@ -48,13 +50,13 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     updateValidators();
   }
 
-  public void updateValidators() {
+  private void updateValidators() {
     synchronized (myLock) {
       eventsValidators.clear();
       isWhiteListInitialized.set(false);
-      final WLGroups productionGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myWhitelistPersistence);
-      final WLGroups testGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myTestWhitelistPersistence);
-      final Map<String, WhiteListGroupRules> result = createValidators(testGroups, productionGroups);
+      WLGroups productionGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myWhitelistPersistence);
+      WLGroups testGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myTestWhitelistPersistence);
+      final Map<String, WhiteListGroupRules> result = createValidators(testGroups, productionGroups.rules);
 
       eventsValidators.putAll(result);
       isWhiteListInitialized.set(true);
@@ -62,12 +64,54 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   }
 
   @NotNull
-  protected Map<String, WhiteListGroupRules> createValidators(@NotNull WLGroups groups, @NotNull WLGroups productionGroups) {
-    final WLRule rules = merge(groups.rules, productionGroups.rules);
+  public WLGroups loadProductionGroups() {
+    return EventLogTestWhitelistPersistence.loadTestWhitelist(myWhitelistPersistence);
+  }
+
+  @NotNull
+  protected Map<String, WhiteListGroupRules> createValidators(@NotNull WLGroups groups,
+                                                              @Nullable WLRule productionRules) {
+    final WLRule rules = merge(groups.rules, productionRules);
     final EventLogBuildNumber buildNumber = EventLogBuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
       filter(group -> group.accepts(buildNumber)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, rules)));
+  }
+
+  public void addTestGroup(@NotNull LocalWhitelistGroup group) throws IOException {
+    EventLogTestWhitelistPersistence.addTestGroup(myRecorderId, group);
+    updateValidators();
+  }
+
+  protected void cleanup() {
+    synchronized (myLock) {
+      eventsValidators.clear();
+      myTestWhitelistPersistence.cleanup();
+    }
+  }
+
+  @NotNull
+  public List<LocalWhitelistGroup> loadLocalWhitelistGroups() {
+    ArrayList<FUStatisticsWhiteListGroupsService.WLGroup> localWhitelistGroups =
+      EventLogTestWhitelistPersistence.loadTestWhitelist(myTestWhitelistPersistence).groups;
+    ArrayList<LocalWhitelistGroup> groups = new ArrayList<>();
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    for (FUStatisticsWhiteListGroupsService.WLGroup group : localWhitelistGroups) {
+      if (group.id == null || group.rules == null || group.rules.event_id == null) continue;
+      Set<String> eventIds = group.rules.event_id;
+      if (eventIds.contains(EventLogTestWhitelistPersistence.TEST_RULE)) {
+        groups.add(new LocalWhitelistGroup(group.id, false));
+      }
+      else {
+        groups.add(new LocalWhitelistGroup(group.id, true, gson.toJson(group.rules)));
+      }
+    }
+    return groups;
+  }
+
+  public void updateTestGroups(@NotNull List<LocalWhitelistGroup> groups) throws IOException {
+    myTestWhitelistPersistence.updateTestGroups(groups);
+    updateValidators();
   }
 
   @Nullable
@@ -83,10 +127,10 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
 
   private static void copyRules(@NotNull WLRule to, @NotNull WLRule from) {
     if (to.enums == null) {
-      to.enums = ContainerUtil.newHashMap();
+      to.enums = new HashMap<>();
     }
     if (to.regexps == null) {
-      to.regexps = ContainerUtil.newHashMap();
+      to.regexps = new HashMap<>();
     }
 
     if (from.enums != null) {
@@ -94,23 +138,6 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     }
     if (from.regexps != null) {
       to.regexps.putAll(from.regexps);
-    }
-  }
-
-  public void addGroupWithCustomRules(@NotNull String groupId, @NotNull String rules) throws IOException {
-    EventLogTestWhitelistPersistence.addGroupWithCustomRules(myRecorderId, groupId, rules);
-    updateValidators();
-  }
-
-  public void addTestGroup(@NotNull String groupId) throws IOException {
-    EventLogTestWhitelistPersistence.addTestGroup(myRecorderId, groupId);
-    updateValidators();
-  }
-
-  protected void cleanup() {
-    synchronized (myLock) {
-      eventsValidators.clear();
-      myTestWhitelistPersistence.cleanup();
     }
   }
 

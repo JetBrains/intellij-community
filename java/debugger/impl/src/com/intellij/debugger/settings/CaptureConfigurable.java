@@ -139,8 +139,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.duplicate"),
-                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.duplicate"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.duplicate"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.duplicate"),
                                                        PlatformIcons.COPY_ICON) {
       @Override
       public boolean isEnabled() {
@@ -161,8 +161,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.enable.selected"),
-                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.enable.selected"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.enable.selected"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.enable.selected"),
                                                        PlatformIcons.SELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
@@ -175,8 +175,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         table.repaint();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.disable.selected"),
-                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.disable.selected"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.disable.selected"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.disable.selected"),
                                                        PlatformIcons.UNSELECT_ALL_ICON) {
       @Override
       public boolean isEnabled() {
@@ -203,8 +203,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.import"),
-                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.import"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.import"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.import"),
                                                        AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -243,8 +243,8 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         }
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.lazyMessage("action.AnActionButton.text.export"),
-                                                       JavaDebuggerBundle.lazyMessage("action.AnActionButton.description.export"),
+    decorator.addExtraAction(new DumbAwareActionButton(JavaDebuggerBundle.messagePointer("action.AnActionButton.text.export"),
+                                                       JavaDebuggerBundle.messagePointer("action.AnActionButton.description.export"),
                                                        AllIcons.ToolbarDecorator.Export) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {

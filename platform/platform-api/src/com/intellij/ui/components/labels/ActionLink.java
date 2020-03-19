@@ -42,7 +42,7 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
     super(text, icon);
     setListener(new LinkListener<Object>() {
       @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         ActionUtil.invokeAction(myAction, ActionLink.this, place, myEvent, onDone);
       }
     }, null);

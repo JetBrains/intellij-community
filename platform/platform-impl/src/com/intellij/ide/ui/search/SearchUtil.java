@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.SkipSelfSearchComponent;
@@ -344,7 +344,7 @@ public class SearchUtil {
   }
 
   private static void highlightComponent(@NotNull JComponent rootComponent, @NotNull String searchString) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ComponentHighligtingListener.TOPIC).highlight(rootComponent, searchString);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(ComponentHighlightingListener.TOPIC).highlight(rootComponent, searchString);
   }
 
   public static boolean isComponentHighlighted(String text, String option, boolean force, final SearchableConfigurable configurable) {

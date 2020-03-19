@@ -154,11 +154,23 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     });
   }
 
+  protected void cancelWizardRun() {
+    throw new CancelWizardException();
+  }
+
+  private static class CancelWizardException extends RuntimeException {
+  }
+
   private void runWizard(@Nullable Consumer<? super Step> adjuster) {
     while (true) {
       ModuleWizardStep currentStep = myWizard.getCurrentStepObject();
       if (adjuster != null) {
-        adjuster.consume(currentStep);
+        try {
+          adjuster.consume(currentStep);
+        } catch (CancelWizardException e) {
+          myWizard.doCancelAction();
+          return;
+        }
       }
       if (myWizard.isLast()) {
         break;

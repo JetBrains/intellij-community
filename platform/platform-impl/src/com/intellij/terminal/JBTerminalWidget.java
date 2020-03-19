@@ -50,6 +50,7 @@ import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
   public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
+  public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
@@ -174,6 +175,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
       actions.add(TerminalSplitAction.create(true, myListener).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
       actions.add(TerminalSplitAction.create(false, myListener).withMnemonicKey(KeyEvent.VK_H));
+      if (myListener != null && myListener.isGotoNextSplitTerminalAvailable()) {
+        actions.add(mySettingsProvider.getGotoNextSplitTerminalAction(myListener, true));
+        actions.add(mySettingsProvider.getGotoNextSplitTerminalAction(myListener, false));
+      }
       actions.add(new TerminalAction(mySettingsProvider.getPreviousTabActionPresentation(), input -> {
         myListener.onPreviousTabSelected();
         return true;
@@ -302,6 +307,9 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   public Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
       return getSelectedText();
+    }
+    if (TERMINAL_DATA_KEY.is(dataId)) {
+      return this;
     }
     return null;
   }

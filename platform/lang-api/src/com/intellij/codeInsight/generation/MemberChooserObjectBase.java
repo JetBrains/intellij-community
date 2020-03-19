@@ -4,8 +4,8 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ public class MemberChooserObjectBase implements MemberChooserObject {
   }
 
   protected SimpleTextAttributes getTextAttributes(JTree tree) {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground(tree));
+    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, RenderingUtil.getForeground(tree));
   }
 
 }

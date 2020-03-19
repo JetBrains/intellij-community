@@ -254,7 +254,7 @@ public class EditMigrationDialog extends DialogWrapper{
     myTable = new JBTable(dataModel);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myTable.setPreferredScrollableViewportSize(new Dimension(300, myTable.getRowHeight() * 10));
+    myTable.setVisibleRowCount(10);
 
     return myTable;
   }

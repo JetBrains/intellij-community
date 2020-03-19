@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,13 +144,14 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.error"), HintUtil.ERROR_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.recent.locations.selection"), HintUtil.RECENT_LOCATIONS_SELECTION_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.tooltip"), IdeTooltipManager.TOOLTIP_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.promotion"), HintUtil.PROMOTION_PANE_KEY, ColorDescriptor.Kind.BACKGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.highlighted.folding.border"), EditorColors.FOLDED_TEXT_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND)
   };
 
-  private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
+  private static final @NonNls Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
 
   static{
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("folded_text", EditorColors.FOLDED_TEXT_ATTRIBUTES);

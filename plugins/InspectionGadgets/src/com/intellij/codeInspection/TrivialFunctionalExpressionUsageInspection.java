@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -66,23 +65,9 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
             if (!(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement)) {
               return false;
             }
-            if (returnStatements[0].getReturnValue() != null) {
-              if (callParent instanceof PsiLocalVariable) {
-                return true;
-              }
-            }
           }
 
-          if(callParent instanceof PsiExpressionStatement) {
-            PsiElement statementParent = callParent.getParent();
-            // Disable in "for" initialization or update
-            if(statementParent instanceof PsiForStatement && callParent != ((PsiForStatement)statementParent).getBody()) {
-              return false;
-            }
-          }
-
-          return (callParent instanceof PsiStatement && !(callParent instanceof PsiLoopStatement)) ||
-                 callParent instanceof PsiLambdaExpression;
+          return CodeBlockSurrounder.canSurround(call);
         };
         Predicate<PsiMethodCallExpression> checkWrites = call ->
           Arrays.stream(expression.getParameterList().getParameters())
@@ -166,8 +151,9 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
     if (Stream.of(arguments).noneMatch(SideEffectChecker::mayHaveSideEffects)) return lambda;
 
-    lambda = RefactoringUtil.ensureCodeBlock(lambda);
-    if (lambda == null) return null;
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(lambda);
+    if (surrounder == null) return null;
+    lambda = (PsiLambdaExpression)surrounder.surround().getExpression();
     callExpression = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);
     if (callExpression == null) return lambda;
     arguments = callExpression.getArgumentList().getExpressions();
@@ -210,8 +196,10 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
   }
 
   private static void replaceCodeBlock(PsiLambdaExpression element) {
-    element = RefactoringUtil.ensureCodeBlock(element);
-    if (element == null) return;
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(element);
+    if (surrounder == null) return;
+    CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+    element = (PsiLambdaExpression)result.getExpression();
     PsiElement body = element.getBody();
     if (!(body instanceof PsiCodeBlock)) return;
     PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -223,18 +211,16 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
     PsiReturnStatement statement = null;
     if (statements.length > 0) {
-      PsiElement anchor = PsiTreeUtil.getParentOfType(parent, PsiStatement.class, false);
+      PsiElement anchor = result.getAnchor();
       statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
-      if (anchor != null) {
-        PsiElement gParent = anchor.getParent();
-        if (hasNameConflict(statements, anchor, element)) {
-          gParent.addBefore(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(ct.text(body), anchor), anchor);
-        }
-        else {
-          for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
-            if (child != statement && !(child instanceof PsiJavaToken)) {
-              gParent.addBefore(ct.markUnchanged(child), anchor);
-            }
+      PsiElement gParent = anchor.getParent();
+      if (hasNameConflict(statements, anchor, element)) {
+        gParent.addBefore(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(ct.text(body), anchor), anchor);
+      }
+      else {
+        for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
+          if (child != statement && !(child instanceof PsiJavaToken)) {
+            gParent.addBefore(ct.markUnchanged(child), anchor);
           }
         }
       }

@@ -17,9 +17,8 @@ public class SimplifiableIfStatementInspectionFixTest extends LightQuickFixParam
     return "/com/siyeh/igtest/style/simplifiable_if_statement";
   }
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
   }
 

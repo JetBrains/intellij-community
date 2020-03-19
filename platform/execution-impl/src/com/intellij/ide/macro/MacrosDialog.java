@@ -299,7 +299,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         if (getSelectedMacroName() != null) {
           close(OK_EXIT_CODE);
           return true;

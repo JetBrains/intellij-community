@@ -141,7 +141,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     if (model.isOperationsEnabled()) {
-      new DumbAwareAction(DiffBundle.lazyMessage("action.Anonymous.text.change.diff.operation")) {
+      new DumbAwareAction(DiffBundle.messagePointer("action.Anonymous.text.change.diff.operation")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           changeOperationForSelection();
@@ -171,21 +171,21 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
     final TableColumnModel columnModel = myTable.getColumnModel();
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
-      final String name = myModel.getColumnName(i);
-      final TableColumn column = columnModel.getColumn(i);
-      if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
+      DirDiffTableModel.ColumnType type = myModel.getColumnType(i);
+      TableColumn column = columnModel.getColumn(i);
+      if (type == DirDiffTableModel.ColumnType.DATE) {
         column.setPreferredWidth(JBUIScale.scale(110));
         column.setMinWidth(JBUIScale.scale(90));
       }
-      else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
+      else if (type == DirDiffTableModel.ColumnType.SIZE) {
         column.setPreferredWidth(JBUIScale.scale(120));
         column.setMinWidth(JBUIScale.scale(90));
       }
-      else if (DirDiffTableModel.COLUMN_NAME.equals(name)) {
+      else if (type == DirDiffTableModel.ColumnType.NAME) {
         column.setPreferredWidth(JBUIScale.scale(800));
         column.setMinWidth(JBUIScale.scale(120));
       }
-      else if (DirDiffTableModel.COLUMN_OPERATION.equals(name)) {
+      else if (type == DirDiffTableModel.ColumnType.OPERATION) {
         column.setMaxWidth(JBUIScale.scale(25));
         column.setMinWidth(JBUIScale.scale(25));
       }

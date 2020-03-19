@@ -588,6 +588,21 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to perform a method call without inlining
+   * <p>
+   * Stack before: ... qualifier arg1 ... argN
+   * <p>
+   * Stack after: ... method result
+   * 
+   * @param call call to add
+   * @return this builder
+   */
+  public CFGBuilder call(PsiMethodCallExpression call) {
+    myAnalyzer.addBareCall(call, call.getMethodExpression());
+    return this;
+  }
+
+  /**
    * Generate instructions to assign top stack value to the specified variable
    * <p>
    * Stack before: ... value

@@ -28,7 +28,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   static final int IGNORE_MISSING_INCLUDE = 2;
   static final int SKIP_DISABLED_PLUGINS = 4;
 
-  private static final Logger LOG = Logger.getInstance(PluginManager.class);
+  private static final Logger LOG = PluginManagerCore.getLogger();
 
   @NotNull
   private final ExecutorService executorService;
@@ -44,7 +44,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   @NotNull
   final PluginLoadingResult result;
 
-  @NotNull
   final Set<PluginId> disabledPlugins;
 
   private volatile String defaultVersion;
@@ -91,8 +90,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
   }
 
-  @NotNull
-  Logger getLogger() {
+  @NotNull Logger getLogger() {
     return LOG;
   }
 
@@ -168,8 +166,11 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
 
   final Interner<String> stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST,
-                                                                                           IdeaPluginDescriptorImpl.SERVICE_QUALIFIED_ELEMENT_NAMES,
-                                                                                           Collections.singletonList(PluginManagerCore.VENDOR_JETBRAINS))) {
+                                                                                           Arrays.asList("id",
+                                                                                                         PluginManagerCore.VENDOR_JETBRAINS,
+                                                                                                         IdeaPluginDescriptorImpl.APPLICATION_SERVICE,
+                                                                                                         IdeaPluginDescriptorImpl.PROJECT_SERVICE,
+                                                                                                         IdeaPluginDescriptorImpl.MODULE_SERVICE))) {
     @NotNull
     @Override
     public String intern(@NotNull String name) {

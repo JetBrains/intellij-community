@@ -247,21 +247,9 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
                                    StringBuilder indirectRequiredAttrs) {
     if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
       template.addTextSegment(">");
-      boolean toInsertCDataEnd = false;
-
-      if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
-        final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
-
-        if (cDataContainer.requiresCdataBracesInContext(tag)) {
-          template.addTextSegment("<![CDATA[\n");
-          toInsertCDataEnd = true;
-        }
-      }
 
       if (indirectRequiredAttrs != null) template.addTextSegment(indirectRequiredAttrs.toString());
       template.addEndVariable();
-
-      if (toInsertCDataEnd) template.addTextSegment("\n]]>");
 
       if ((!(tag instanceof HtmlTag) || !HtmlUtil.isSingleHtmlTag(tag, true)) && tag.getAttributes().length == 0) {
         if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag()) {

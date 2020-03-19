@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +23,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.EventDispatcher;
@@ -61,6 +61,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private final ActionToolbarImpl mySearchActionsToolbar1;
   private final ActionToolbarImpl mySearchActionsToolbar2;
   private final List<AnAction> myEmbeddedSearchActions = new ArrayList<>();
+  private final List<Component> myExtraSearchButtons = new ArrayList<>();
   @NotNull
   private final ActionToolbarImpl.PopupStateModifier mySearchToolbar1PopupStateModifier;
 
@@ -68,6 +69,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private final ActionToolbarImpl myReplaceActionsToolbar1;
   private final ActionToolbarImpl myReplaceActionsToolbar2;
   private final List<AnAction> myEmbeddedReplaceActions = new ArrayList<>();
+  private final List<Component> myExtraReplaceButtons = new ArrayList<>();
 
   private final JPanel myReplaceToolbarWrapper;
 
@@ -167,48 +169,41 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     mySearchActionsToolbar2 = createSearchToolbar2(searchToolbar2Actions);
     mySearchActionsToolbar2.setForceShowFirstComponent(true);
     Wrapper searchToolbarWrapper2 = new Wrapper(mySearchActionsToolbar2);
-    mySearchActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(16));
-    JPanel searchPair = new NonOpaquePanel(new BorderLayout()).setVerticalSizeReferent(mySearchFieldWrapper);
+    mySearchActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(4));
+    JPanel searchPair = new NonOpaquePanel(new BorderLayout());
     searchPair.add(searchToolbarWrapper1, BorderLayout.WEST);
     searchPair.add(searchToolbarWrapper2, BorderLayout.CENTER);
 
     myReplaceActionsToolbar1 = createReplaceToolbar1(replaceToolbar1Actions);
-    Wrapper replaceToolbarWrapper1 = new Wrapper(myReplaceActionsToolbar1).setVerticalSizeReferent(myReplaceFieldWrapper);
+    Wrapper replaceToolbarWrapper1 = new Wrapper(myReplaceActionsToolbar1);
     myReplaceActionsToolbar2 = createReplaceToolbar2(replaceToolbar2Actions);
     myReplaceActionsToolbar2.setForceShowFirstComponent(true);
-    Wrapper replaceToolbarWrapper2 = new Wrapper(myReplaceActionsToolbar2).setVerticalSizeReferent(myReplaceFieldWrapper);
-    myReplaceActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(16));
+    Wrapper replaceToolbarWrapper2 = new Wrapper(myReplaceActionsToolbar2);
+    myReplaceActionsToolbar2.setBorder(JBUI.Borders.emptyLeft(4));
     myReplaceToolbarWrapper = new NonOpaquePanel(new BorderLayout());
     myReplaceToolbarWrapper.add(replaceToolbarWrapper1, BorderLayout.WEST);
     myReplaceToolbarWrapper.add(replaceToolbarWrapper2, BorderLayout.CENTER);
+    myReplaceToolbarWrapper.setBorder(JBUI.Borders.emptyTop(3));
 
     searchToolbarWrapper1.setHorizontalSizeReferent(replaceToolbarWrapper1);
 
     JLabel closeLabel = new JLabel(null, AllIcons.Actions.Close, SwingConstants.RIGHT);
-    closeLabel.setBorder(JBUI.Borders.empty(2 ));
-    closeLabel.setVerticalAlignment(SwingConstants.TOP);
+    closeLabel.setBorder(JBUI.Borders.empty(2));
     closeLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(final MouseEvent e) {
         close();
       }
     });
-    closeLabel.setToolTipText("Close search bar (Escape)");
-    searchPair.add(new Wrapper.North(closeLabel), BorderLayout.EAST);
+    closeLabel.setToolTipText(FindBundle.message("tooltip.close.search.bar.escape"));
+    searchPair.add(new Wrapper(closeLabel), BorderLayout.EAST);
 
-    myRightPanel = new NonOpaquePanel(new BorderLayout(0, 1)) {
-      @Override
-      public Dimension getMinimumSize() {
-        Dimension size = super.getMinimumSize();
-        size.width += JBUIScale.scale(16);//looks like hack but we need this extra space in case of lack of width
-        return size;
-      }
-    };
-    myRightPanel.add(searchPair, BorderLayout.CENTER);
-    myRightPanel.add(myReplaceToolbarWrapper, BorderLayout.SOUTH);
+    myRightPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+    myRightPanel.add(searchPair);
+    myRightPanel.add(myReplaceToolbarWrapper);
 
     OnePixelSplitter splitter = new OnePixelSplitter(false, .25F);
-    myRightPanel.setBorder(JBUI.Borders.emptyLeft(6));
+    myRightPanel.setBorder(JBUI.Borders.empty(2, 6, 0, 0));
     splitter.setFirstComponent(myLeftPanel);
     splitter.setSecondComponent(myRightPanel);
     splitter.setHonorComponentsMinimumSize(true);
@@ -222,10 +217,21 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     // it's assigned after all action updates so that actions don't get access to uninitialized components
     myDataProviderDelegate = dataProvider;
-
-    setFocusCycleRoot(true);
-
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    // A workaround to suppress editor-specific TabAction
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocus();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+        if (UIUtil.isAncestor(SearchReplaceComponent.this, focusOwner)) focusOwner.transferFocusBackward();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this);
   }
 
   public void resetUndoRedoActions() {
@@ -313,7 +319,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     boolean stateChanged = multiline != myMultilineMode;
     myMultilineMode = multiline;
     if (stateChanged) {
-      multilineStateChanged();
+      myEventDispatcher.getMulticaster().multilineStateChanged();
     }
   }
 
@@ -337,7 +343,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     mySearchTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(() -> searchFieldDocumentChanged());
+        ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().searchFieldDocumentChanged());
       }
     });
 
@@ -384,7 +390,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     myReplaceTextComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        ApplicationManager.getApplication().invokeLater(() -> replaceFieldDocumentChanged());
+        ApplicationManager.getApplication().invokeLater(() -> myEventDispatcher.getMulticaster().replaceFieldDocumentChanged());
       }
     });
 
@@ -425,6 +431,13 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     if (needToResetSearchFocus) mySearchTextComponent.requestFocusInWindow();
     updateBindings();
     updateActions();
+    List<Component> focusOrder = new ArrayList<>();
+    focusOrder.add(mySearchTextComponent);
+    focusOrder.add(myReplaceTextComponent);
+    focusOrder.addAll(myExtraSearchButtons);
+    focusOrder.addAll(myExtraReplaceButtons);
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new ListFocusTraversalPolicy(focusOrder));
     revalidate();
     repaint();
   }
@@ -466,10 +479,13 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     final JTextArea textComponent;
     SearchTextArea textArea = new SearchTextArea(search);
+    textArea.setGrowHorizontallyWithText(true);
     if (search) {
-      textArea.setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY));
+      myExtraSearchButtons.clear();
+      myExtraSearchButtons.addAll(textArea.setExtraActions(myEmbeddedSearchActions.toArray(AnAction.EMPTY_ARRAY)));
     } else {
-      textArea.setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY));
+      myExtraReplaceButtons.clear();
+      myExtraReplaceButtons.addAll(textArea.setExtraActions(myEmbeddedReplaceActions.toArray(AnAction.EMPTY_ARRAY)));
     }
     textComponent = textArea.getTextArea();
     textComponent.setRows(isMultiline() ? 2 : 1);
@@ -497,30 +513,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     });
     installCloseOnEscapeAction(textComponent);
     return true;
-  }
-
-  private void searchFieldDocumentChanged() {
-    if (mySearchTextComponent instanceof JTextArea) {
-      adjustRows((JTextArea)mySearchTextComponent);
-    }
-    myEventDispatcher.getMulticaster().searchFieldDocumentChanged();
-  }
-
-  private void replaceFieldDocumentChanged() {
-    if (myReplaceTextComponent instanceof JTextArea) {
-      adjustRows((JTextArea)myReplaceTextComponent);
-    }
-    myReplaceActionsToolbar2.invalidate();
-    doLayout();
-    myEventDispatcher.getMulticaster().replaceFieldDocumentChanged();
-  }
-
-  private void multilineStateChanged() {
-    myEventDispatcher.getMulticaster().multilineStateChanged();
-  }
-
-  private static void adjustRows(@NotNull JTextArea area) {
-    area.setRows(Math.max(1, Math.min(3, StringUtil.countChars(area.getText(), '\n') + 1)));
   }
 
   private void installCloseOnEscapeAction(@NotNull JTextComponent c) {

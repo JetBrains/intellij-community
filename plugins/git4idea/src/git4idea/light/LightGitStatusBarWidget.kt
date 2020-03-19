@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.util.Consumer
+import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.getPresentation
 import java.awt.Component
@@ -49,8 +50,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
     val selectedFile = LightEditService.getInstance().selectedFile
     if (selectedFile != null) {
       val statusText = lightGitTracker.getFileStatus(selectedFile).getPresentation()
-      @Suppress("HardCodedStringLiteral")
-      if (statusText.isNotBlank()) return "$locationText<br/>$statusText"
+      if (statusText.isNotBlank()) return "$locationText${UIUtil.BR}$statusText"
     }
     return locationText
   }

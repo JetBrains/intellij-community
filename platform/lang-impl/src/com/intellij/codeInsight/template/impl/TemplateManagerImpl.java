@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -58,7 +58,10 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         if (state != null) {
           state.gotoEnd();
         }
-        clearTemplateState(editor);
+        TemplateState prevState = clearTemplateState(editor);
+        if (prevState != null) {
+          Disposer.dispose(prevState);
+        }
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
@@ -101,21 +104,23 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return templateState;
   }
 
-  static void clearTemplateState(@NotNull Editor editor) {
+  @Nullable
+  static TemplateState clearTemplateState(@NotNull Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
       Editor stateEditor = prevState.getEditor();
       if (stateEditor != null) {
         stateEditor.putUserData(TEMPLATE_STATE_KEY, null);
       }
-      Disposer.dispose(prevState);
     }
+    return prevState;
   }
 
   @NotNull
   private TemplateState initTemplateState(@NotNull Editor editor) {
     Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
-    clearTemplateState(topLevelEditor);
+    TemplateState prevState = clearTemplateState(topLevelEditor);
+    if (prevState != null) Disposer.dispose(prevState);
     TemplateState state = new TemplateState(myProject, topLevelEditor);
     Disposer.register(this, state);
     topLevelEditor.putUserData(TEMPLATE_STATE_KEY, state);
@@ -461,8 +466,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@NotNull PsiFile file, int offset) {
     LinkedHashSet<TemplateContextType> set = new LinkedHashSet<>();
-    LinkedList<TemplateContextType> contexts = buildOrderedContextTypes();
-    for (TemplateContextType contextType : contexts) {
+    for (TemplateContextType contextType : getAllContextTypes()) {
       if (contextType.isInContext(file, offset)) {
         set.add(contextType);
       }
@@ -478,19 +482,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
       return set;
     }
-  }
-
-  private static LinkedList<TemplateContextType> buildOrderedContextTypes() {
-    LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<>();
-    for (TemplateContextType contextType : getAllContextTypes()) {
-      if (contextType.getClass().getName().startsWith(Template.class.getPackage().getName())) {
-        userDefinedExtensionsFirst.addLast(contextType);
-      }
-      else {
-        userDefinedExtensionsFirst.addFirst(contextType);
-      }
-    }
-    return userDefinedExtensionsFirst;
   }
 
   @NotNull

@@ -64,6 +64,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
+import javax.swing.JComponent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -405,7 +406,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       return null;  // content manager is made null during dispose; flag is set later
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), false, updateInfoTree);
+    String tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis());
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info",
+                                   VcsBundle.messagePointer("vcs.update.tab.name"), () -> tabName,
+                                   false, updateInfoTree);
     updateInfoTree.expandRootChildren();
     return updateInfoTree;
   }
@@ -675,6 +679,14 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
   }
 
+  /**
+   * Returns 'true' during initial project setup, ie:
+   * <ul>
+   * <li> There are no explicitly configured mappings ({@link #setDirectoryMapping} vs {@link #setAutoDirectoryMappings})
+   * <li> There are no mappings inherited from "Default Project" configuration (excluding &lt;Project&gt; mappings) ({@link #myMappingsLoaded}
+   * <li> Project was not reopened a second time ({@link #ATTRIBUTE_DEFAULT_PROJECT})
+   * </ul>
+   */
   public boolean needAutodetectMappings() {
     return !myHaveLegacyVcsConfiguration && !myMappingsLoaded;
   }
@@ -849,6 +861,35 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     if (myInitialization != null) {
       myInitialization.waitFinished();
     }
+  }
+
+  @Override
+  public void showConsole() {
+    if (!Registry.is("vcs.showConsole")) {
+      return;
+    }
+    ToolWindow vcsToolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    if (vcsToolWindow == null) {
+      return;
+    }
+    if (vcsToolWindow.isVisible()) {
+      showConsoleInternal();
+    }
+    else {
+      vcsToolWindow.show(this::showConsoleInternal);
+    }
+  }
+
+  private void showConsoleInternal() {
+    ContentManager cm = getContentManager();
+    if (cm == null) {
+      return;
+    }
+    Content console = cm.findContent(VcsBundle.message("vcs.console.toolwindow.display.name"));
+    if (console == null) {
+      return;
+    }
+    cm.setSelectedContent(console);
   }
 
   private static class ActionKey {

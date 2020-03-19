@@ -406,7 +406,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   private String getFullCoordinateText() {
-    return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText();
+    return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText().trim();
   }
 
   @NotNull

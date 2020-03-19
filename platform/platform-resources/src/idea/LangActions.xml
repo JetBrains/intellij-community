@@ -21,12 +21,6 @@
       <reference ref="RunContextGroup"/>
     </group>
 
-    <group id="Internal.SharedIndexes" popup="true" internal="true" compact="true">
-      <action id="SharedIndexes.DumpIndex" internal="true" class="com.intellij.util.indexing.hash.building.DumpIndexAction"/>
-
-      <add-to-group group-id="Internal"/>
-    </group>
-
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
@@ -66,6 +60,9 @@
     <action id="BraceOrQuoteOut" class="com.intellij.codeInsight.editorActions.BraceOrQuoteOutAction"/>
 
     <action id="ToggleRenderedDocPresentation" class="com.intellij.codeInsight.documentation.render.ToggleRenderedDocPresentationAction"/>
+    <group id="DocCommentGutterIconContextMenu">
+      <action id="ToggleRenderDocsOnFileOpening" class="com.intellij.codeInsight.documentation.render.ToggleRenderDocsOnFileOpeningAction"/>
+    </group>
 
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>
@@ -94,6 +91,15 @@
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>
+
+    <!-- LightEdit Mode -->
+    <action id="LightEditOpenFileInProject" class="com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction"/>
+
+    <group id="LightEditModePopup">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ShowIntentionsGroup"/>
+      <reference id="LightEditOpenFileInProject"/>
+      <separator/>
+    </group>
 
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
@@ -187,12 +193,13 @@
 
     <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
       <add-to-group group-id="EditorGutterPopupMenu"/>
+      <add-to-group group-id="DocCommentGutterIconContextMenu"/>
     </action>
 
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
-      <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBar" anchor="after"/>
+      <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBarWidgetsGroup" anchor="after"/>
       <override-text place="NavBar"/>
     </action>
 
@@ -526,7 +533,7 @@
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
-      <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
+      <group id="MarkFileAs">
         <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
         <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
       </group>
@@ -1399,5 +1406,10 @@
     </group>
 
     <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
+    <action id="FileChooser.LightEditGotoOpenedFile"
+            class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
+            icon="AllIcons.General.Locate">
+      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
+    </action>
   </actions>
 </idea-plugin>

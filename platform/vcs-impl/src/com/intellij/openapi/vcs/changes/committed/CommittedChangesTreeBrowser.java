@@ -467,7 +467,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   @Override
   public void reportLoadedLists(@NotNull CommittedChangeListsListener listener) {
     List<CommittedChangeList> lists = new ArrayList<>(myChangeLists);
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    BackgroundTaskUtil.executeOnPooledThread(this, () -> {
       listener.onBeforeStartReport();
       for (CommittedChangeList list : lists) {
         listener.report(list);

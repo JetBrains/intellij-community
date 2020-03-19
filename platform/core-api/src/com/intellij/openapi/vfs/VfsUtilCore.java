@@ -272,7 +272,14 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
                                                    @Nullable final VirtualFileFilter filter,
                                                    @NotNull final ContentIterator iterator) {
-    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
+    return iterateChildrenRecursively(root, filter, iterator, new VirtualFileVisitor.Option[0]);
+  }
+
+  public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
+                                                   @Nullable final VirtualFileFilter filter,
+                                                   @NotNull final ContentIterator iterator,
+                                                   VirtualFileVisitor.@NotNull Option... options) {
+    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>(options) {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {

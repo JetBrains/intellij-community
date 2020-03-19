@@ -4,7 +4,8 @@
     <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory"/>
 
     <extensionPoint name="appStarter"
-                    interface="com.intellij.openapi.application.ApplicationStarter"/>
+                    interface="com.intellij.openapi.application.ApplicationStarter"
+                    dynamic="true"/>
 
     <extensionPoint name="defaultProjectTypeProvider"
                     beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
@@ -152,7 +153,6 @@
     <extensionPoint name="additionalTextAttributes" beanClass="com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP" dynamic="true"/>
     <extensionPoint name="bundledColorScheme" beanClass="com.intellij.configurationStore.BundledSchemeEP"/>
     <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider" dynamic="true"/>
-    <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider" dynamic="true"/>
     <extensionPoint name="bundledKeymap" beanClass="com.intellij.openapi.keymap.impl.BundledKeymapBean" dynamic="true"/>
 
     <extensionPoint name="toolWindow" beanClass="com.intellij.openapi.wm.ToolWindowEP" dynamic="true">
@@ -169,7 +169,7 @@
     </extensionPoint>
 
     <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
-    <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider"/>
+    <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider" dynamic="true"/>
 
     <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider"/>
     <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker"/>
@@ -280,8 +280,6 @@
 
     <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider" interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
 
-    <extensionPoint name="runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate"/>
-
     <extensionPoint name="jbProtocolCommand" interface="com.intellij.openapi.application.JBProtocolCommand"/>
 
     <extensionPoint name="vfs.local.pluggableFileWatcher" interface="com.intellij.openapi.vfs.local.PluggableFileWatcher" />
@@ -367,5 +365,8 @@
     <extensionPoint name="lightEditTabAttributesProvider" interface="com.intellij.ide.lightEdit.LightEditTabAttributesProvider" dynamic="true"/>
 
     <extensionPoint name="jdkDownloader.jdkInstallerListener" interface="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerListener" dynamic="true"/>
+    <extensionPoint name="ui.optionEditorProvider" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.options.OptionEditorProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

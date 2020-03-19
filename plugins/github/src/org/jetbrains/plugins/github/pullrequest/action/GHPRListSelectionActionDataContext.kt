@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.openapi.editor.EditorFactory
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -32,12 +33,11 @@ class GHPRListSelectionActionDataContext internal constructor(private val dataCo
     dataContext.dataLoader.invalidateAllData()
   }
 
-  override val pullRequest: Long?
-    get() = selectionHolder.selectionNumber
-
   override val pullRequestDetails: GHPullRequestShort?
-    get() = pullRequest?.let { dataContext.listLoader.findData(it) }
+    get() = selectionHolder.selection?.let { dataContext.listLoader.findData(it) }
 
   override val pullRequestDataProvider: GHPRDataProvider?
-    get() = pullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
+    get() = selectionHolder.selection?.let { dataContext.dataLoader.getDataProvider(it) }
+
+  override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }
 }

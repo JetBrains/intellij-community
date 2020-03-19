@@ -13,7 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
         element instanceof PsiResourceVariable ||
         (element instanceof PsiExpression &&
          !(element instanceof PsiMethodReferenceExpression) &&
-         ControlFlowUtils.canExtractStatement(ExpressionUtils.getTopLevelExpression((PsiExpression)element)))) {
+         CodeBlockSurrounder.canSurround(ExpressionUtils.getTopLevelExpression((PsiExpression)element)))) {
       myElement = element;
     }
   }
@@ -62,10 +62,13 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
     if (myElement instanceof PsiExpression) {
-      myElement = RefactoringUtil.ensureCodeBlock(ExpressionUtils.getTopLevelExpression((PsiExpression)myElement));
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(ExpressionUtils.getTopLevelExpression((PsiExpression)myElement));
+      if (surrounder == null) return;
+      myElement = surrounder.surround().getAnchor();
+    } else {
+      myElement = RefactoringUtil.getParentStatement(myElement, false);
+      if (myElement == null) return;
     }
-    myElement = RefactoringUtil.getParentStatement(myElement, false);
-    if (myElement == null) return;
 
     TextRange range = null;
 

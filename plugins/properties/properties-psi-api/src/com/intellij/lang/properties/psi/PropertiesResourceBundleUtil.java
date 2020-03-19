@@ -40,36 +40,45 @@ public class PropertiesResourceBundleUtil {
   }
 
   /**
-   * Perform reverse operation to {@link #fromPropertyValueToValueEditor(String)}.
-   *
-   * @param text  'user-friendly' text shown to the user at the resource bundle editor
-   * @param delimiter
-   * @return      'raw' value to store at the *.properties file
+   * Converts property value from given {@code valueFormat} to 'raw' format (how it should be stored in *.properties file)
    */
   @NotNull
-  public static String fromValueEditorToPropertyValue(@NotNull String text, char delimiter) {
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
+  public static String convertValueToFileFormat(@NotNull String value, char delimiter,
+                                                @NotNull PropertyKeyValueFormat valueFormat) {
+    if (valueFormat == PropertyKeyValueFormat.FILE) return value;
 
-      if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
-          || c == '\n' || c == '\r' // Multi-line value
-          || (delimiter == ' ' && SYMBOLS_TO_ESCAPE.contains(c)))   // Special symbol
-      {
+    StringBuilder buffer = new StringBuilder();
+    for (int i = 0; i < value.length(); i++) {
+      char c = value.charAt(i);
+
+      if (c == '\n' || c == '\r') {
         buffer.append(ESCAPE_SYMBOL);
-      }
-      else if (c == ESCAPE_SYMBOL) {           // Escaped 'escape' symbol)
-        if (text.length() > i + 1) {
-          final char nextChar = text.charAt(i + 1);
-          if (nextChar != 'n' && nextChar != 'r' && nextChar != 'u' && nextChar != 'U') {
-            buffer.append(ESCAPE_SYMBOL);
-          }
-        } else {
-          buffer.append(ESCAPE_SYMBOL);
+        if (valueFormat == PropertyKeyValueFormat.MEMORY) {
+          buffer.append(c == '\n' ? 'n' : 'r');
+        }
+        else {
+          buffer.append(c);
         }
       }
-      buffer.append(c);
+      else if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
+               || (delimiter == ' ' && SYMBOLS_TO_ESCAPE.contains(c)))   /* Special symbol*/ {
+        buffer.append(ESCAPE_SYMBOL);
+        buffer.append(c);
+      }
+      else if (c == ESCAPE_SYMBOL) {
+        if (i + 1 >= value.length() || !isEscapedChar(value.charAt(i + 1)) || valueFormat == PropertyKeyValueFormat.MEMORY) {
+          buffer.append(ESCAPE_SYMBOL);
+        }
+        buffer.append(c);
+      }
+      else {
+        buffer.append(c);
+      }
     }
     return buffer.toString();
+  }
+
+  private static boolean isEscapedChar(char nextChar) {
+    return nextChar == 'n' || nextChar == 'r' || nextChar == 'u' || nextChar == 'U';
   }
 }

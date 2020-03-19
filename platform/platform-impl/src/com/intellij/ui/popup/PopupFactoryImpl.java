@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -114,18 +115,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @Override
-  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JList list) {
-    return new PopupListAdapter(builder, list);
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JList<T> list) {
+    return new PopupListAdapter<>(builder, list);
   }
 
   @Override
-  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTree tree) {
-    return new PopupTreeAdapter(builder, tree);
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTree tree) {
+    return new PopupTreeAdapter<>(builder, tree);
   }
 
   @Override
-  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTable table) {
-    return new PopupTableAdapter(builder, table);
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTable table) {
+    return new PopupTableAdapter<>(builder, table);
   }
 
   @NotNull
@@ -211,6 +212,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
                             preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, actionPlace, maxRowCount);
+      UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace));
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
@@ -272,7 +274,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       List<ActionItem> items = ActionPopupStep.createActionItems(
           actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
 
-      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, getComponentContextSupplier(dataContext, component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
@@ -349,8 +351,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @NotNull
-  private static Supplier<DataContext> getComponentContextSupplier(Component component) {
-    return () -> DataManager.getInstance().getDataContext(component);
+  private static Supplier<DataContext> getComponentContextSupplier(@NotNull DataContext dataContext, Component component) {
+    return () -> {
+      DataContext componentContext = DataManager.getInstance().getDataContext(component);
+      return (DataContext)dataId -> {
+        Object data = dataContext.getData(dataId);
+        return data != null ? data : componentContext.getData(dataId);
+      };
+    };
   }
 
   @Override
@@ -407,7 +415,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return ActionPopupStep.createActionsStep(
       actionGroup, dataContext, showNumbers, true, showDisabledActions,
       title, honorActionMnemonics, autoSelectionEnabled,
-      getComponentContextSupplier(component),
+      getComponentContextSupplier(dataContext, component),
       actionPlace, null, defaultOptionIndex, null);
   }
 

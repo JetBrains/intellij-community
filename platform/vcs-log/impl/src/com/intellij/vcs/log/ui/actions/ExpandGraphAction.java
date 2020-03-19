@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 public class ExpandGraphAction extends CollapseOrExpandGraphAction {
 
   public ExpandGraphAction() {
-    super(VcsLogBundle.lazyMessage("action.title.expand.linear.branches"),
-          VcsLogBundle.lazyMessage("action.description.expand.linear.branches"),
-          VcsLogBundle.lazyMessage("action.title.expand.merges"),
-          VcsLogBundle.lazyMessage("action.description.expand.merges"));
+    super(VcsLogBundle.messagePointer("action.title.expand.linear.branches"),
+          VcsLogBundle.messagePointer("action.description.expand.linear.branches"),
+          VcsLogBundle.messagePointer("action.title.expand.merges"),
+          VcsLogBundle.messagePointer("action.description.expand.merges"));
   }
 
   @Override

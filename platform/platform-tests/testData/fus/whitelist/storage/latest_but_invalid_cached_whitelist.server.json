@@ -1,0 +1,16 @@
+{
+  "groups" : [ {
+    "id" : "server.test.group",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "3"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum:A|B|C}" ],
+      "event_data" : {
+        "enabled" : [ "{enum#boolean}" ]
+      }
+    }
+  }],
+  "version" : "1"
+}

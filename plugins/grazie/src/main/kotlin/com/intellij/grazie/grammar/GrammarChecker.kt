@@ -90,7 +90,9 @@ object GrammarChecker {
            } + position
   }
 
-  private fun findTextRangesToDelete(rangeInRoot: IntRange, rangeInText: IntRange, shifts: List<ShiftInText>) = ArrayList<IntRange>().apply {
+  private fun findTextRangesToDelete(rangeInRoot: IntRange,
+                                     rangeInText: IntRange,
+                                     shifts: List<ShiftInText>) = ArrayList<IntRange>().apply {
     var start = rangeInRoot.start
     // take all shifts inside typo and invert them
     shifts.filter { it.start > rangeInText.start && it.start <= rangeInText.endInclusive }.forEach { shift ->
@@ -127,7 +129,8 @@ object GrammarChecker {
         } -> null
 
         else -> typo.copy(
-          location = typo.location.copy(errorRange = rangeInRoot, textRanges = textRangesToDelete, pointer = root.toPointer())
+          location = typo.location.copy(errorRange = rangeInRoot, patternRange = patternRangeInRoot,
+                                        textRanges = textRangesToDelete, pointer = root.toPointer())
         )
       }
     }.toSet()

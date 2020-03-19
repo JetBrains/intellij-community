@@ -133,19 +133,17 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
   }
 
   public override fun after() {
-    if (projectOpened.compareAndSet(true, false)) {
-      if (sharedProject != null) {
-        val undoManager = UndoManager.getInstance(sharedProject!!) as UndoManagerImpl
-        ApplicationManager.getApplication().invokeAndWait {
-          undoManager.dropHistoryInTests()
-          undoManager.flushCurrentCommandMerger()
-        }
-      }
-      sharedProject?.let {
-        runInEdtAndWait {
-          (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false)
-        }
-      }
+    if (!projectOpened.compareAndSet(true, false)) {
+      return
+    }
+
+    val project = sharedProject ?: return
+    val undoManager = UndoManager.getInstance(project) as UndoManagerImpl
+    runInEdtAndWait {
+      undoManager.dropHistoryInTests()
+      undoManager.flushCurrentCommandMerger()
+
+      (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, false)
     }
   }
 

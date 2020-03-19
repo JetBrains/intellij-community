@@ -12,7 +12,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -21,6 +20,7 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -83,6 +83,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.intellij.internal.inspector.UiInspectorUtil.collectAnActionInfo;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
@@ -164,7 +165,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (location != null) setLocation(location);
 
       DefaultActionGroup actions = new DefaultActionGroup();
-      actions.addAction(new MyTextAction(IdeBundle.lazyMessage("action.Anonymous.text.highlight")) {
+      actions.addAction(new MyTextAction(IdeBundle.messagePointer("action.Anonymous.text.highlight")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myIsHighlighted = !myIsHighlighted;
@@ -180,7 +181,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       actions.addSeparator();
 
-      actions.add(new MyTextAction(InternalActionsBundle.lazyMessage("action.Anonymous.text.refresh")) {
+      actions.add(new MyTextAction(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -716,7 +717,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       });
       new DoubleClickListener(){
         @Override
-        protected boolean onDoubleClick(MouseEvent event) {
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
           int row = table.rowAtPoint(event.getPoint());
           int column = table.columnAtPoint(event.getPoint());
           if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {
@@ -1222,22 +1223,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
 
-  private static class PropertyBean {
-    final String propertyName;
-    final Object propertyValue;
-    final boolean changed;
-
-    PropertyBean(String name, Object value) {
-      this(name, value, false);
-    }
-
-    PropertyBean(String name, Object value, boolean changed) {
-      propertyName = name;
-      propertyValue = value;
-      this.changed = changed;
-    }
-  }
-
   private static class InspectorTableModel extends AbstractTableModel {
 
     final List<String> PROPERTIES = Arrays.asList(
@@ -1343,6 +1328,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       addToolbarInfo(component);
       addGutterInfo(component);
 
+      UiInspectorContextProvider contextProvider = UiInspectorUtil.getProvider(component);
+      if (contextProvider != null) {
+        myProperties.addAll(contextProvider.getUiInspectorContext());
+      }
+
       StringBuilder classHierarchy = new StringBuilder();
       for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
         if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
@@ -1419,7 +1409,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       } else if (component instanceof JComponent) {
         if (component instanceof ActionMenuItem) {
           action = ((ActionMenuItem)component).getAnAction();
-        } else {
+        }
+        else if (component instanceof ActionMenu) {
+          action = ((ActionMenu)component).getAnAction();
+        }
+        else {
           action = getAction(
             ComponentUtil.findParentByCondition((Component)component, c -> getAction(c) != null)
           );
@@ -1427,44 +1421,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
 
       if (action != null) {
-        myProperties.add(new PropertyBean("action", action.getClass().getName(), true));
+        myProperties.addAll(collectAnActionInfo(action));
       }
     }
 
     private void addToolbarInfo(Object component) {
       if (component instanceof ActionToolbarImpl) {
         ActionToolbarImpl toolbar = (ActionToolbarImpl)component;
-        myProperties.add(new PropertyBean("Toolbar Place", toolbar.getPlace()));
-
-        ActionGroup group = toolbar.getActionGroup();
-        String toolbarId = getActionGroupId(group);
-        myProperties.add(new PropertyBean("Toolbar Group", toolbarId));
-
-        Set<String> ids = new HashSet<>();
-        recursiveCollectGroupIds(group, ids);
-        ContainerUtil.addIfNotNull(ids, toolbarId);
-        if (ids.size() > 1 ||
-            ids.size() == 1 && toolbarId == null) {
-          myProperties.add(new PropertyBean("All Groups", StringUtil.join(ids, ", ")));
-        }
+        myProperties.addAll(UiInspectorUtil.collectActionGroupInfo("Toolbar", toolbar.getActionGroup(), toolbar.getPlace()));
       }
-    }
-
-    private static void recursiveCollectGroupIds(@NotNull ActionGroup group, @NotNull Set<String> result) {
-      for (AnAction action : group.getChildren(null)) {
-        if (action instanceof ActionGroup) {
-          ActionGroup child = (ActionGroup)action;
-          ContainerUtil.addIfNotNull(result, getActionGroupId(child));
-          recursiveCollectGroupIds(child, result);
-        }
-      }
-    }
-
-    private static String getActionGroupId(@NotNull ActionGroup action) {
-      if (action instanceof CustomisedActionGroup) {
-        action = ((CustomisedActionGroup)action).getOrigin();
-      }
-      return ActionManager.getInstance().getId(action);
     }
 
     private void addLayoutProperties(@NotNull Container component) {
@@ -1954,7 +1919,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private static List<PropertyBean> findActionsFor(Object object) {
       if (object instanceof PopupFactoryImpl.ActionItem) {
         AnAction action = ((PopupFactoryImpl.ActionItem)object).getAction();
-        return Collections.singletonList(new PropertyBean("action", action.getClass().getName(), true));
+        return collectAnActionInfo(action);
       }
       if (object instanceof QuickFixWrapper) {
         return findActionsFor(((QuickFixWrapper)object).getFix());

@@ -6,9 +6,10 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -17,7 +18,10 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Rectangle
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
@@ -29,7 +33,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private val myThreadsList = XDebuggerThreadsList.createDefault()
     private val myFramesList = XDebuggerFramesList(project)
 
-    private val mySplitter: Splitter
+    private val mySplitter: NonProportionalOnePixelSplitter
 
     private var myListenersEnabled = false
 
@@ -41,7 +45,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
     companion object {
         private const val splitterProportionKey = "XThreadsFramesViewSplitterKey"
-        private const val splitterProportionDefaultValue = 0.250f
+        private const val splitterProportionDefaultValue = 0.5f
 
         private val Disposable.isDisposed get() = Disposer.isDisposed(this)
         private val Disposable.isDisposing get() = Disposer.isDisposing(this)
@@ -65,14 +69,24 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         }
     }
 
+    fun setThreadsVisible(visible: Boolean) {
+        if (mySplitter.firstComponent.isVisible == visible) return
+
+        mySplitter.firstComponent.isVisible = visible
+        mySplitter.revalidate()
+        mySplitter.repaint()
+    }
+
     init {
         val disposable = myPauseDisposables.next()
         myFramesManager = FramesManager(myFramesList, disposable)
         myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
         myPauseDisposables.terminateCurrent()
 
-        mySplitter = OnePixelSplitter(splitterProportionKey, splitterProportionDefaultValue).apply {
-            firstComponent = myThreadsList.withSpeedSearch().toScrollPane()
+        mySplitter = NonProportionalOnePixelSplitter(false, splitterProportionKey, splitterProportionDefaultValue, this, project).apply {
+            firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
+                minimumSize = Dimension(JBUI.scale(26), 0)
+            }
             secondComponent = myFramesList.toScrollPane()
         }
 
@@ -85,6 +99,29 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
             val session = getSession(e) ?: return@addListSelectionListener
             stack.setActive(session)
         }
+
+        myThreadsList.addMouseListener(object : PopupHandler() {
+            override fun invokePopup(comp: Component, x: Int, y: Int) {
+                val actionManager = ActionManager.getInstance()
+                val group = actionManager.getAction(XDebuggerActions.THREADS_TREE_POPUP_GROUP) as? ActionGroup ?: return
+                actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+            }
+        })
+
+        myThreadsList.addMouseListener(object : MouseAdapter() {
+            // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+            override fun mouseReleased(e: MouseEvent) {
+                if (!myListenersEnabled) return
+
+                val i = myThreadsList.locationToIndex(e.point)
+                if (i == -1 || !myThreadsList.isSelectedIndex(i)) return
+
+                val session = getSession(e) ?: return
+                val stack = myThreadsList.selectedValue?.stack ?: return
+
+                stack.setActive(session)
+            }
+        })
 
         myFramesList.addListSelectionListener {
             if (it.valueIsAdjusting || !myListenersEnabled) return@addListSelectionListener
@@ -103,6 +140,27 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                 actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
             }
         })
+
+        myFramesList.addMouseListener(object : MouseAdapter() {
+            // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+            override fun mouseReleased(e: MouseEvent) {
+                if (!myListenersEnabled) return
+
+                val i = myFramesList.locationToIndex(e.point)
+                if (i == -1 || !myFramesList.isSelectedIndex(i)) return
+
+                val session = getSession(e) ?: return
+                val stack = myThreadsList.selectedValue?.stack ?: return
+                val frame = myFramesList.selectedValue as? XStackFrame ?: return
+
+                session.setCurrentStackFrame(stack, frame)
+            }
+        })
+    }
+
+    fun saveUiState() {
+        if (mySplitter.width < mySplitter.minimumSize.width) return
+        mySplitter.saveProportion()
     }
 
     override fun processSessionEvent(event: SessionEvent, session: XDebugSession) {
@@ -122,7 +180,6 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
                 clear()
 
                 start(session)
-                mySplitter.dividerPositionStrategy = Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE
                 return@invokeLaterIfNeeded
             }
 

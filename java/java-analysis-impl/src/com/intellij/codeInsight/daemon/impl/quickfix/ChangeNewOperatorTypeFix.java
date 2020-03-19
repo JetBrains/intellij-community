@@ -70,29 +70,29 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     if (toType instanceof PsiArrayType) {
       final PsiExpression[] originalExpressionArrayDimensions = originalExpression.getArrayDimensions();
       caretOffset = 0;
-      @NonNls String text = "new " + toType.getDeepComponentType().getCanonicalText() + "[";
+      @NonNls StringBuilder text = new StringBuilder("new " + toType.getDeepComponentType().getCanonicalText() + "[");
       if (originalExpressionArrayDimensions.length > 0) {
-        text += commentTracker.text(originalExpressionArrayDimensions[0]);
+        text.append(commentTracker.text(originalExpressionArrayDimensions[0]));
       }
       else {
-        text += "0";
+        text.append("0");
         caretOffset = -2;
       }
-      text += "]";
+      text.append("]");
       for (int i = 1; i < toType.getArrayDimensions(); i++) {
-        text += "[";
+        text.append("[");
         String arrayDimension = "";
         if (originalExpressionArrayDimensions.length > i) {
           arrayDimension = commentTracker.text(originalExpressionArrayDimensions[i]);
-          text += arrayDimension;
+          text.append(arrayDimension);
         }
-        text += "]";
+        text.append("]");
         if (caretOffset < 0) {
           caretOffset -= arrayDimension.length() + 2;
         }
       }
 
-      newExpression = (PsiNewExpression)factory.createExpressionFromText(text, originalExpression);
+      newExpression = (PsiNewExpression)factory.createExpressionFromText(text.toString(), originalExpression);
       if (caretOffset < 0) {
         selection = new UnfairTextRange(caretOffset, caretOffset+1);
       } else {

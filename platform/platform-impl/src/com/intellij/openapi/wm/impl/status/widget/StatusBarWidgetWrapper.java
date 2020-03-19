@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public interface StatusBarWidgetWrapper {
@@ -58,7 +57,7 @@ public interface StatusBarWidgetWrapper {
           popup.show(new RelativePoint(e.getComponent(), at));
           return true;
         }
-      }.installOn(this);
+      }.installOn(this, true);
     }
 
     @Override
@@ -83,22 +82,16 @@ public interface StatusBarWidgetWrapper {
 
   final class Text extends TextPanel implements StatusBarWidgetWrapper {
     private final StatusBarWidget.TextPresentation myPresentation;
-    private final Consumer<MouseEvent> myClickConsumer;
 
     public Text(@NotNull final StatusBarWidget.TextPresentation presentation) {
       myPresentation = presentation;
-      myClickConsumer = myPresentation.getClickConsumer();
       setTextAlignment(presentation.getAlignment());
       setVisible(!myPresentation.getText().isEmpty());
       setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(final MouseEvent e) {
-          if (myClickConsumer != null && !e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
-            myClickConsumer.consume(e);
-          }
-        }
-      });
+      Consumer<MouseEvent> clickConsumer = myPresentation.getClickConsumer();
+      if (clickConsumer != null) {
+        new StatusBarWidgetClickListener(clickConsumer).installOn(this, true);
+      }
     }
 
     @NotNull
@@ -117,23 +110,17 @@ public interface StatusBarWidgetWrapper {
 
   final class Icon extends TextPanel.WithIconAndArrows implements StatusBarWidgetWrapper {
     private final StatusBarWidget.IconPresentation myPresentation;
-    private final Consumer<MouseEvent> myClickConsumer;
 
     public Icon(@NotNull final StatusBarWidget.IconPresentation presentation) {
       myPresentation = presentation;
-      myClickConsumer = myPresentation.getClickConsumer();
       setTextAlignment(Component.CENTER_ALIGNMENT);
       setIcon(myPresentation.getIcon());
       setVisible(hasIcon());
       setBorder(StatusBarWidget.WidgetBorder.ICON);
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(final MouseEvent e) {
-          if (myClickConsumer != null && !e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
-            myClickConsumer.consume(e);
-          }
-        }
-      });
+      Consumer<MouseEvent> clickConsumer = myPresentation.getClickConsumer();
+      if (clickConsumer != null) {
+        new StatusBarWidgetClickListener(clickConsumer).installOn(this, true);
+      }
     }
 
     @NotNull
@@ -146,6 +133,22 @@ public interface StatusBarWidgetWrapper {
     public void beforeUpdate() {
       setIcon(myPresentation.getIcon());
       setVisible(hasIcon());
+    }
+  }
+
+  class StatusBarWidgetClickListener extends ClickListener {
+    private final Consumer<? super MouseEvent> myClickConsumer;
+
+    public StatusBarWidgetClickListener(@NotNull Consumer<? super MouseEvent> consumer) {
+      myClickConsumer = consumer;
+    }
+
+    @Override
+    public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+      if (!e.isPopupTrigger() && MouseEvent.BUTTON1 == e.getButton()) {
+        myClickConsumer.consume(e);
+      }
+      return true;
     }
   }
 }

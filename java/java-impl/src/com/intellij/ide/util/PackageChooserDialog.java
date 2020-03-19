@@ -393,7 +393,7 @@ public class PackageChooserDialog extends PackageChooser {
 
   private class NewPackageAction extends AnAction {
     NewPackageAction() {
-      super(IdeBundle.lazyMessage("action.new.package"), IdeBundle.lazyMessage("action.description.create.new.package"),
+      super(IdeBundle.messagePointer("action.new.package"), IdeBundle.messagePointer("action.description.create.new.package"),
             AllIcons.Actions.NewFolder);
     }
 

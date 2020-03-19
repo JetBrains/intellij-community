@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,14 +39,6 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
 
     final PsiFile psiFile = element.getContainingFile();
     if (psiFile == null || psiFile instanceof PsiCompiledElement) return emptyResult;
-
-    final TextRange range = element.getTextRange();
-    if (range == null) return emptyResult;
-
-    final String fileText = psiFile.getText();
-    if (fileText == null) return emptyResult;
-
-    if (!range.substring(fileText).contains(PsiKeyword.CLASS)) return emptyResult;
 
     final ArrayList<StructureViewTreeElement> result = new ArrayList<>();
 

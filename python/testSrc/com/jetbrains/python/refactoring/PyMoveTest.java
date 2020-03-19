@@ -443,6 +443,13 @@ public class PyMoveTest extends PyTestCase {
     });
   }
 
+  // PY-23968
+  public void testUpdatingNamesInFromImportsRespectsOrder() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMoveSymbolTest("func", "dst.py");
+  }
+
   private void doComparingDirectories(@NotNull Consumer<VirtualFile> testDirConsumer) {
     final String root = "/refactoring/move/" + getTestName(true);
     final String rootBefore = root + "/before/src";

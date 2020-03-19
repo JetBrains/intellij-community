@@ -23,6 +23,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -67,15 +68,12 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       public void visitExpressionImpl(PsiExpression expression) {
         if (ComplexityCalculator.isDefinitelySimple(expression) ||
             SideEffectCalculator.isDefinitelyWithSideEffect(expression) ||
-            expression instanceof PsiLambdaExpression) {
+            expression instanceof PsiLambdaExpression ||
+            ExpressionUtils.isVoidContext(expression)) {
           return;
         }
         DuplicateExpressionsContext context = DuplicateExpressionsContext.getOrCreateContext(expression, session);
         if (context == null || context.mayHaveSideEffect(expression)) {
-          return;
-        }
-        PsiType type = RefactoringUtil.getTypeByExpressionWithExpectedType(expression);
-        if (type == null || PsiType.VOID.equals(type)) {
           return;
         }
         if (context.getComplexity(expression) > complexityThreshold) {

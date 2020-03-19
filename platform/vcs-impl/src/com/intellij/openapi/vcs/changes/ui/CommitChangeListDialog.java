@@ -716,7 +716,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myWorkflow.getCommitOptions();
   }
 
-  private boolean isDefaultCommitEnabled() {
+  public boolean isDefaultCommitEnabled() {
     return myWorkflow.isDefaultCommitEnabled();
   }
 

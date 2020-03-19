@@ -87,6 +87,7 @@ import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,17 +110,16 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
    * The address that IDE uses to listen for incoming connections from Python
    * Console script started in the "client mode".
    */
-  private static final String LOCALHOST = "localhost";
+  private static final @NonNls String LOCALHOST = "localhost";
 
-  public static final String WORKING_DIR_AND_PYTHON_PATHS = "WORKING_DIR_AND_PYTHON_PATHS";
-  public static final String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
-                                                     "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
-  public static final String STARTED_BY_RUNNER = "startedByRunner";
+  public static final @NonNls String WORKING_DIR_AND_PYTHON_PATHS = "WORKING_DIR_AND_PYTHON_PATHS";
+  public static final @NonNls String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
+                                                             "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
+  public static final @NonNls String STARTED_BY_RUNNER = "startedByRunner";
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class);
   @SuppressWarnings("SpellCheckingInspection")
-  public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
+  public static final @NonNls String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
-  public static final String PYTHON_INTERPRETER_NULL = "Python interpreter is not selected. Please setup Python interpreter first.";
   private final Project myProject;
   private final String myTitle;
   @Nullable private final String myWorkingDir;
@@ -239,7 +239,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public void runSync(boolean requestEditorFocus) {
     try {
       if (mySdk == null) {
-        throw new ExecutionException(PYTHON_INTERPRETER_NULL);
+        throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
       }
       initAndRun(mySdk);
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
@@ -271,7 +271,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           indicator.setText(PyBundle.message("connecting.to.console.progress"));
           try {
             if (mySdk == null) {
-              throw new ExecutionException(PYTHON_INTERPRETER_NULL);
+              throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
             }
             initAndRun(mySdk);
             connect(myStatementsToExecute);
@@ -480,10 +480,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       if (process.exitValue() != 0) {
         String error;
         try {
-          error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream()) + sb.toString();
+          error = PyBundle.message("pydev.console.console.process.terminated.with.error", StreamUtil.readText(process.getErrorStream()), sb.toString());
         }
         catch (Exception ignored) {
-          error = "Console process terminated with exit code " + process.exitValue() + ", output:" + sb.toString();
+          error = PyBundle.message("pydev.console.console.process.terminated.with.exit.code", process.exitValue(), sb.toString());
         }
         throw new ExecutionException(error);
       }
@@ -492,7 +492,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       }
     }
 
-    throw new ExecutionException("Couldn't read integer value from stream");
+    throw new ExecutionException(PyBundle.message("pydev.console.couldnt.read.integer.value.from.stream"));
   }
 
   private PyConsoleProcessHandler createProcessHandler(final Process process, String commandLine, @NotNull Sdk sdk) {
@@ -645,7 +645,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       });
     }
     else {
-      myConsoleView.print("Couldn't connect to console process.", ProcessOutputTypes.STDERR);
+      myConsoleView.print(PyBundle.message("pydev.console.couldnt.connect.to.console.process"), ProcessOutputTypes.STDERR);
       myProcessHandler.destroyProcess();
       myConsoleView.setEditable(false);
     }
@@ -664,8 +664,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private AnAction createStopAction() {
-    return new DumbAwareAction(PyBundle.lazyMessage("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
-                               PyBundle.lazyMessage("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
+    return new DumbAwareAction(PyBundle.messagePointer("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
+                               PyBundle.messagePointer("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
                                AllIcons.Actions.Suspend) {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -885,7 +885,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     private XDebugSession mySession = null;
 
     ConnectDebuggerAction() {
-      super(PyBundle.lazyMessage("console.attach.debugger"), PyBundle.lazyMessage("console.attach.debugger.description"), AllIcons.Actions.StartDebugger);
+      super(PyBundle.messagePointer("console.attach.debugger"), PyBundle.messagePointer("console.attach.debugger.description"), AllIcons.Actions.StartDebugger);
     }
 
     @Override
@@ -927,7 +927,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static class NewConsoleAction extends AnAction implements DumbAware {
     NewConsoleAction() {
-      super(PyBundle.lazyMessage("console.new.console"), PyBundle.lazyMessage("console.new.console.description"), AllIcons.General.Add);
+      super(PyBundle.messagePointer("console.new.console"), PyBundle.messagePointer("console.new.console.description"), AllIcons.General.Add);
     }
 
     @Override
@@ -989,7 +989,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
             LOG.error(e); //TODO
           }
 
-          myProcessHandler.notifyTextAvailable("\nDebugger connected.\n", ProcessOutputTypes.STDERR);
+          myProcessHandler.notifyTextAvailable(PyBundle.message("pydev.console.debugger.connected"), ProcessOutputTypes.STDERR);
 
           return consoleDebugProcess;
         }

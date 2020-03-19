@@ -18,8 +18,8 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowCommitTooltipAction extends DumbAwareAction {
   public ShowCommitTooltipAction() {
-    super(VcsBundle.lazyMessage("action.ShowCommitTooltipAction.text"),
-          VcsBundle.lazyMessage("action.ShowCommitTooltipAction.description"), null);
+    super(VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.text"),
+          VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.description"), null);
   }
 
   @Override

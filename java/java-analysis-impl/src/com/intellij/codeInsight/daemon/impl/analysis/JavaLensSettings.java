@@ -5,6 +5,14 @@ public class JavaLensSettings {
   private boolean showUsages;
   private boolean showImplementations;
 
+  public JavaLensSettings(boolean showUsages, boolean showImplementations) {
+    this.showUsages = showUsages;
+    this.showImplementations = showImplementations;
+  }
+
+  public JavaLensSettings() {
+  }
+
   public boolean isShowUsages() {
     return showUsages;
   }

@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -41,7 +42,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.RangeBlinker;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-class SearchForUsagesRunnable implements Runnable {
+final class SearchForUsagesRunnable implements Runnable {
   @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
   @NonNls private static final String SEARCH_IN_PROJECT_HREF_TARGET = "SearchInProject";
   @NonNls private static final String LARGE_FILES_HREF_TARGET = "LargeFiles";
@@ -268,6 +268,7 @@ class SearchForUsagesRunnable implements Runnable {
     if (!(usage instanceof UsageInfo2UsageAdapter)) {
       return;
     }
+
     UsageInfo2UsageAdapter usageInfo = (UsageInfo2UsageAdapter)usage;
 
     Editor editor = usageInfo.openTextEditor(true);
@@ -284,42 +285,46 @@ class SearchForUsagesRunnable implements Runnable {
 
   private UsageViewEx getUsageView(@NotNull ProgressIndicator indicator) {
     UsageViewEx usageView = myUsageViewRef.get();
-    if (usageView != null) return usageView;
-    int usageCount = myUsageCountWithoutDefinition.get();
-    if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
-      if (myUsageViewRef.compareAndSet(null, usageView)) {
-        // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
-        usageView.associateProgress(indicator);
-        if (myProcessPresentation.isShowFindOptionsPrompt()) {
-          openView(usageView);
-        }
-        else {
-          if (myListener != null) {
-            SwingUtilities.invokeLater(() -> {
-              if (!myProject.isDisposed()) {
-                UsageViewEx uv = myUsageViewRef.get();
-                if (uv != null) {
-                  myListener.usageViewCreated(uv);
-                }
-              }
-            });
-          }
-        }
-        final Usage firstUsage = myFirstUsage.get();
-        if (firstUsage != null) {
-          final UsageViewEx finalUsageView = usageView;
-          ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
-        }
-      }
-      else {
-        UsageViewEx finalUsageView = usageView;
-        // later because dispose does some sort of swing magic e.g. AnAction.unregisterCustomShortcutSet()
-        UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(finalUsageView));
-      }
-      return myUsageViewRef.get();
+    if (usageView != null) {
+      return usageView;
     }
-    return null;
+
+    int usageCount = myUsageCountWithoutDefinition.get();
+    if (usageCount < 2 && (usageCount != 1 || !myProcessPresentation.isShowPanelIfOnlyOneUsage())) {
+      return null;
+    }
+
+    usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
+    if (myUsageViewRef.compareAndSet(null, usageView)) {
+      // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
+      usageView.associateProgress(indicator);
+      if (myProcessPresentation.isShowFindOptionsPrompt()) {
+        openView(usageView);
+      }
+      else if (myListener != null) {
+        SwingUtilities.invokeLater(() -> {
+          if (!myProject.isDisposed()) {
+            UsageViewEx uv = myUsageViewRef.get();
+            if (uv != null) {
+              myListener.usageViewCreated(uv);
+            }
+          }
+        });
+      }
+
+      Usage firstUsage = myFirstUsage.get();
+      if (firstUsage != null) {
+        UsageViewEx finalUsageView = usageView;
+        ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
+      }
+    }
+    else {
+      UsageViewEx finalUsageView = usageView;
+      Disposer.register(myProject, usageView);
+      // UI thread because dispose does some sort of swing magic e.g. AnAction.unregisterCustomShortcutSet()
+      AppUIExecutor.onUiThread(ModalityState.any()).expireWith(myProject).execute(() -> Disposer.dispose(finalUsageView));
+    }
+    return myUsageViewRef.get();
   }
 
   private void openView(@NotNull final UsageViewEx usageView) {
@@ -417,14 +422,9 @@ class SearchForUsagesRunnable implements Runnable {
             findStartedBalloonShown.set(false);
             return;
           }
-
-          final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                         StringUtil.decapitalize(StringUtil.notNullize(myPresentation.getUsagesString())),
-                                                         myPresentation.getScopeText(),
-                                                         myPresentation.getContextText());
-
           List<String> lines = new ArrayList<>();
-          lines.add(StringUtil.escapeXmlEntities(message));
+          lines.add(StringUtil.escapeXmlEntities(myPresentation.getSearchString()));
+          lines.add(UsageViewBundle.message("search.result.nothing.in.0", StringUtil.escapeXmlEntities(myPresentation.getScopeText())));
           if (myOutOfScopeUsages.get() != 0) {
             lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
           }

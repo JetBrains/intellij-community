@@ -211,7 +211,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     AddSdkAction() {
       super(JavaUiBundle.message("add.new.jdk.text"), null, IconUtil.getAddIcon());
 
-      AbstractAddGroup replacedAction = new AbstractAddGroup("text") {
+      AbstractAddGroup replacedAction = new AbstractAddGroup(JavaUiBundle.message("action.name.text")) {
         @Override
         public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           return AnAction.EMPTY_ARRAY;

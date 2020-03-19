@@ -34,7 +34,7 @@ import static com.intellij.diagnostic.RunnablesListener.*;
 import static com.intellij.util.ReflectionUtil.*;
 
 @ApiStatus.Experimental
-public final class EventWatcherImpl implements LoggableEventWatcher, Disposable {
+public final class EventWatcherImpl implements EventWatcher, Disposable {
   private static final int PUBLISHER_INITIAL_DELAY = 100;
   private static final int PUBLISHER_PERIOD = 1000;
 

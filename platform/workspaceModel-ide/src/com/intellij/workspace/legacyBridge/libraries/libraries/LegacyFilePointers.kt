@@ -5,7 +5,9 @@ import com.google.common.collect.ArrayListMultimap
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
+import kotlin.reflect.KClass
 
 /**
  * Container for all legacy file pointers to track the files and update the state of workspace model regarding to it
@@ -14,8 +16,8 @@ import com.intellij.workspace.ide.WorkspaceModel
 class LegacyModelRootsFilePointers(val project: Project) {
   private val pointers = listOf(
     // Library roots
-    LegacyFilePointer(
-      LibraryEntity::class.java, ModifiableLibraryEntity::class.java, containerToUrl = { it.url.url },
+    TypedEntityFileWatcher(
+      LibraryEntity::class, ModifiableLibraryEntity::class, containerToUrl = { it.url.url },
       urlToContainer = { oldContainer, newUrl ->
         LibraryRoot(VirtualFileUrlManager.fromUrl(newUrl), oldContainer.type, oldContainer.inclusionOptions)
       },
@@ -25,53 +27,58 @@ class LegacyModelRootsFilePointers(val project: Project) {
     }
     ),
     // Library excluded roots
-    LegacyVirtualFilePointer(
-      LibraryEntity::class.java, ModifiableLibraryEntity::class.java, containerListGetter = { excludedRoots },
+    TypedEntityWithVfuFileWatcher(
+      LibraryEntity::class, ModifiableLibraryEntity::class, containerListGetter = { excludedRoots },
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
         excludedRoots = excludedRoots - oldVirtualFileUrl
         excludedRoots = excludedRoots + newVirtualFileUrl
       }
     ),
     // Content root urls
-    LegacyVirtualFilePointer(
-      ContentRootEntity::class.java, ModifiableContentRootEntity::class.java, containerGetter = { url },
+    TypedEntityWithVfuFileWatcher(
+      ContentRootEntity::class, ModifiableContentRootEntity::class, containerGetter = { url },
       modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
     ),
     // Content root excluded urls
-    LegacyVirtualFilePointer(
-      ContentRootEntity::class.java, ModifiableContentRootEntity::class.java, containerListGetter = { excludedUrls },
+    TypedEntityWithVfuFileWatcher(
+      ContentRootEntity::class, ModifiableContentRootEntity::class, containerListGetter = { excludedUrls },
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
         excludedUrls = excludedUrls - oldVirtualFileUrl
         excludedUrls = excludedUrls + newVirtualFileUrl
       }
     ),
     // Source roots
-    LegacyVirtualFilePointer(
-      SourceRootEntity::class.java, ModifiableSourceRootEntity::class.java, containerGetter = { url },
+    TypedEntityWithVfuFileWatcher(
+      SourceRootEntity::class, ModifiableSourceRootEntity::class, containerGetter = { url },
       modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
     ),
     // Java module settings entity compiler output
-    LegacyVirtualFilePointer(
-      JavaModuleSettingsEntity::class.java, ModifiableJavaModuleSettingsEntity::class.java, containerGetter = { compilerOutput },
+    TypedEntityWithVfuFileWatcher(
+      JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class, containerGetter = { compilerOutput },
       modificator = { _, newVirtualFileUrl -> compilerOutput = newVirtualFileUrl }
     ),
     // Java module settings entity compiler output for tests
-    LegacyVirtualFilePointer(
-      JavaModuleSettingsEntity::class.java, ModifiableJavaModuleSettingsEntity::class.java, containerGetter = { compilerOutputForTests },
+    TypedEntityWithVfuFileWatcher(
+      JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class, containerGetter = { compilerOutputForTests },
       modificator = { _, newVirtualFileUrl -> compilerOutputForTests = newVirtualFileUrl }
-    )
+    ),
+    EntitySourceFileWatcher(JpsFileEntitySource.ExactFile::class, { it.file.url }, { source, file -> source.copy(file = file) }),
+    EntitySourceFileWatcher(JpsFileEntitySource.FileInDirectory::class, { it.directory.url },
+                            { source, file -> source.copy(directory = file) })
   )
 
   fun onVfsChange(oldUrl: String, newUrl: String) {
     // Here the workspace model updates its state without notification to the message bus
     //   because in the original implementation moving of roots doesn't fire any events.
     WorkspaceModel.getInstance(project).updateProjectModelSilent { diff ->
-      for (i in pointers.indices) {
-        val updateChain: Map<out TypedEntity, TypedEntity> = pointers[i].onVfsChange(oldUrl, newUrl, diff)
-        pointers.forEach {
-          // Update stored entities to the last snapshot
-          if (it.entityClass == pointers[i].entityClass) {
-            it.update(updateChain)
+      for (pointer in pointers) {
+        val updateChain: Map<out TypedEntity, TypedEntity> = pointer.onVfsChange(oldUrl, newUrl, diff)
+        if (pointer is TypedEntityFileWatcher<*, *, *>) {
+          pointers.filterIsInstance<TypedEntityFileWatcher<*, *, *>>().forEach {
+            // Update stored entities to the last snapshot
+            if (it.entityClass == pointer.entityClass) {
+              it.update(updateChain)
+            }
           }
         }
       }
@@ -79,28 +86,53 @@ class LegacyModelRootsFilePointers(val project: Project) {
   }
 
   fun onModelChange(newStorage: TypedEntityStorage) {
-    pointers.forEach { it.onModelChange(newStorage) }
+    pointers.filterIsInstance<TypedEntityFileWatcher<*, *, *>>().forEach { it.onModelChange(newStorage) }
   }
 
   fun clear() {
-    pointers.forEach { it.clear() }
+    pointers.filterIsInstance<TypedEntityFileWatcher<*, *, *>>().forEach { it.clear() }
+  }
+}
+
+private interface LegacyFileWatcher<E : TypedEntity> {
+  fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<E, E>
+}
+
+private class EntitySourceFileWatcher<T : EntitySource>(
+  val entitySource: KClass<T>,
+  val containerToUrl: (T) -> String,
+  val createNewSource: (T, VirtualFileUrl) -> T
+) : LegacyFileWatcher<TypedEntity> {
+  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<TypedEntity, TypedEntity> {
+    val entities = diff.entitiesBySource { it::class == entitySource }
+    for ((entitySource, mapOfEntities) in entities) {
+      @Suppress("UNCHECKED_CAST")
+      val urlFromContainer = containerToUrl(entitySource as T)
+      if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
+
+      val newVfurl = VirtualFileUrlManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
+      val newEntitySource = createNewSource(entitySource, newVfurl)
+
+      mapOfEntities.values.flatten().forEach { diff.changeSource(it, newEntitySource) }
+    }
+    return emptyMap()
   }
 }
 
 /**
- * Legacy file pointer with a [VirtualFileUrl] as a container for url (see the docs for [LegacyFilePointer])
+ * Legacy file pointer with a [VirtualFileUrl] as a container for url (see the docs for [TypedEntityFileWatcher])
  *
  * [containerGetter] - function on how to extract the container from the entity
  * [containerListGetter] - function on how to extract from the entity a list of containers
  * There 2 functions are created for better convenience. You should use only one from them.
  */
-private class LegacyVirtualFilePointer<E : TypedEntity, M : ModifiableTypedEntity<E>>(
-  entityClass: Class<E>,
-  modifiableEntityClass: Class<M>,
+private class TypedEntityWithVfuFileWatcher<E : TypedEntity, M : ModifiableTypedEntity<E>>(
+  entityClass: KClass<E>,
+  modifiableEntityClass: KClass<M>,
   containerGetter: E.() -> VirtualFileUrl? = { null },
   containerListGetter: E.() -> List<VirtualFileUrl> = { this.containerGetter()?.let { listOf(it) } ?: listOf() },
   modificator: M.(VirtualFileUrl, VirtualFileUrl) -> Unit
-) : LegacyFilePointer<VirtualFileUrl, E, M>(
+) : TypedEntityFileWatcher<VirtualFileUrl, E, M>(
   entityClass, modifiableEntityClass,
   { it.url }, { _, newUrl -> VirtualFileUrlManager.fromUrl(newUrl) },
   containerListGetter, modificator
@@ -119,18 +151,18 @@ private class LegacyVirtualFilePointer<E : TypedEntity, M : ModifiableTypedEntit
  *   complicated structure like LibraryEntity -> roots (LibraryRoot) -> url (VirtualFileUrl).
  *     See a LegacyFilePointer for LibraryEntity.roots.url
  */
-private open class LegacyFilePointer<T, E : TypedEntity, M : ModifiableTypedEntity<E>>(
-  val entityClass: Class<E>,
-  val modifiableEntityClass: Class<M>,
+private open class TypedEntityFileWatcher<T, E : TypedEntity, M : ModifiableTypedEntity<E>>(
+  val entityClass: KClass<E>,
+  val modifiableEntityClass: KClass<M>,
   val containerToUrl: (T) -> String,
   val urlToContainer: (T, String) -> T,
   val containerListGetter: E.() -> List<T>,
   val modificator: M.(T, T) -> Unit
-) {
+) : LegacyFileWatcher<E> {
   // A multimap the associates the "url container" to the typed entity
   private val savedContainers = ArrayListMultimap.create<T, E>()
 
-  fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<E, E> {
+  override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder): Map<E, E> {
     val toAdd = mutableListOf<Pair<T, E>>()
     val toRemove = mutableListOf<Pair<T, E>>()
 
@@ -156,7 +188,7 @@ private open class LegacyFilePointer<T, E : TypedEntity, M : ModifiableTypedEnti
         val newTrackedUrl = newUrl + savedUrl.substring(oldUrl.length)
 
         val newContainer = urlToContainer(existingUrlContainer, newTrackedUrl)
-        val modifiedEntity = diff.modifyEntity(modifiableEntityClass, entityCurrentVersion) {
+        val modifiedEntity = diff.modifyEntity(modifiableEntityClass.java, entityCurrentVersion) {
           this.modificator(existingUrlContainer, newContainer)
         }
         updateChain[entity] = modifiedEntity
@@ -170,7 +202,7 @@ private open class LegacyFilePointer<T, E : TypedEntity, M : ModifiableTypedEnti
 
   fun onModelChange(newStorage: TypedEntityStorage) {
     savedContainers.clear()
-    newStorage.entities(entityClass).forEach {
+    newStorage.entities(entityClass.java).forEach {
       for (container in it.containerListGetter()) {
         savedContainers.put(container, it)
       }

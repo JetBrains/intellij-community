@@ -76,7 +76,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
       }
 
       @Override
-      protected String generateText(final I18nizedTextGenerator textGenerator, final String propertyKey, final PropertiesFile propertiesFile,
+      protected String generateText(final I18nizedTextGenerator textGenerator, final @NotNull String propertyKey, final PropertiesFile propertiesFile,
                                     final PsiLiteralExpression literalExpression) {
         return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression);
       }

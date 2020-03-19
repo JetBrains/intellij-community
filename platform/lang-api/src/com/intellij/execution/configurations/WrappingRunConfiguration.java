@@ -15,9 +15,11 @@
  */
 package com.intellij.execution.configurations;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Allow to get before/after steps from wrapped configuration: e.g. to rerun tests with initial tests before options
  */
 public interface WrappingRunConfiguration<T extends RunConfiguration> extends WithoutOwnBeforeRunSteps {
-  T getPeer();
+  @NotNull T getPeer();
 }

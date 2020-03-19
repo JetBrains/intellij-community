@@ -365,7 +365,7 @@ public class LightToolWindow extends JPanel {
   private class HideAction extends AnAction {
     HideAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setText(UIBundle.lazyMessage("tool.window.hide.action.name"));
+      presentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"));
       presentation.setIcon(AllIcons.General.HideToolWindow);
     }
 

@@ -31,7 +31,7 @@ public enum VcsLogColumn {
   COMMIT("Subject", GraphCommitCell.class) {
     @Override
     public String getLocalizedName() {
-      return VcsLogBundle.message("vcs.log.column.subject" );
+      return VcsLogBundle.message("vcs.log.column.subject");
     }
   },
   AUTHOR("Author", String.class) {

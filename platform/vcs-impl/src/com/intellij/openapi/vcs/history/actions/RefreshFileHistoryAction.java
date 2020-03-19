@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RefreshFileHistoryAction extends RefreshAction implements DumbAware {
   public RefreshFileHistoryAction() {
-    super(VcsBundle.lazyMessage("action.name.refresh"), VcsBundle.lazyMessage("action.description.refresh"), AllIcons.Actions.Refresh);
+    super(VcsBundle.messagePointer("action.name.refresh"), VcsBundle.messagePointer("action.description.refresh"), AllIcons.Actions.Refresh);
   }
 
   @Override

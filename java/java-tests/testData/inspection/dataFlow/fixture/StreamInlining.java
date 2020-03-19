@@ -288,7 +288,7 @@ public class StreamInlining {
     long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!<warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning></warning>).count();
     if (<warning descr="Condition 'count7 == 0' is always 'false'">count7 == 0</warning>) {}
     if (<warning descr="Condition 'count7 == 1 || count7 == 2' is always 'true'">count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true' when reached">count7 == 2</warning></warning>) {}
-    long count8 = Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count();
+    long count8 = <warning descr="Result of 'Stream.of(\"foo\", \"bar\").filter(x -> x.isEmpty()).count()' is always '0'">Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count()</warning>;
     if (<warning descr="Condition 'count8 == 0' is always 'true'">count8 == 0</warning>) {}
     long count9 = list.stream().map(String::trim).count();
     if (count9 == 0) {}

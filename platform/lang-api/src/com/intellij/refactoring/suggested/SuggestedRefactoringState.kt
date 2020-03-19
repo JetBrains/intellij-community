@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.util.keyFMap.KeyFMap
 import org.jetbrains.annotations.Nls
 
 private var nextFeatureUsageId = 0
@@ -138,20 +139,13 @@ data class SuggestedRefactoringState(
     return refactoringSupport.declarationByOffset(fileCopy, originalSignatureStart)!!
   }
 
-  class AdditionalData private constructor(private val map: Map<Key<Any>, Any>){
-    @Suppress("UNCHECKED_CAST")
-    operator fun <T : Any> get(key: Key<T>): T? = map[key as Key<Any>] as T?
+  class AdditionalData private constructor(private val map: KeyFMap){
+    operator fun <T : Any> get(key: Key<T>): T? = map[key]
 
-    fun <T : Any> withData(key: Key<T>, data: T): AdditionalData {
-      val newMap = map.toMutableMap().apply {
-        @Suppress("UNCHECKED_CAST")
-        put(key as Key<Any>, data)
-      }
-      return AdditionalData(newMap)
-    }
+    fun <T : Any> withData(key: Key<T>, data: T): AdditionalData = AdditionalData(map.plus(key, data))
 
     companion object {
-      val Empty: AdditionalData = AdditionalData(emptyMap())
+      val Empty: AdditionalData = AdditionalData(KeyFMap.EMPTY_MAP)
     }
   }
 

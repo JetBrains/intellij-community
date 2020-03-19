@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
@@ -34,9 +34,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.*;
@@ -49,11 +51,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class DfaAssist implements DebuggerContextListener, Disposable {
+  private static final int CLEANUP_DELAY_MILLIS = 300;
   private final @NotNull Project myProject;
   private InlaySet myInlays = new InlaySet(null, Collections.emptyList()); // modified from EDT only
-  private volatile CancellablePromise<?> myPromise;
+  private volatile CancellablePromise<?> myComputation;
+  private volatile ScheduledFuture<?> myScheduledCleanup;
   private final DebuggerStateManager myManager;
   private volatile boolean myActive;
   
@@ -97,8 +103,11 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
       cleanUp();
       return;
     }
-    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
+    if (event == DebuggerSession.Event.RESUME || event == DebuggerSession.Event.STEP) {
       cancelComputation();
+      myScheduledCleanup = EdtScheduledExecutorService.getInstance().schedule(this::cleanUp, CLEANUP_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+    }
+    if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
       return;
     }
     SourcePosition sourcePosition = newContext.getSourcePosition();
@@ -127,7 +136,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
           cleanUp();
           return;
         }
-        myPromise = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
+        myComputation = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
           .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints))
           .submit(AppExecutorUtil.getAppExecutorService());
@@ -170,9 +179,13 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
   }
 
   private void cancelComputation() {
-    CancellablePromise<?> promise = myPromise;
+    CancellablePromise<?> promise = myComputation;
     if (promise != null) {
       promise.cancel();
+    }
+    ScheduledFuture<?> cleanup = myScheduledCleanup;
+    if (cleanup != null) {
+      cleanup.cancel(false);
     }
   }
 
@@ -220,11 +233,11 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
     if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
 
     if (!locationMatches(element, frame.location())) return null;
-    PsiStatement statement = getAnchorStatement(element);
-    if (statement == null) return null;
-    PsiElement body = getCodeBlock(statement);
+    PsiElement anchor = getAnchor(element);
+    if (anchor == null) return null;
+    PsiElement body = getCodeBlock(anchor);
     if (body == null) return null;
-    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, statement, frame);
+    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, anchor, frame);
     return runner.isValid() ? runner : null;
   }
 
@@ -237,42 +250,62 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
   private static boolean locationMatches(@NotNull PsiElement element, Location location) {
     Method method = location.method();
     PsiElement context = DebuggerUtilsEx.getContainingMethod(element);
-    try {
-      if (context instanceof PsiMethod) {
-        PsiMethod psiMethod = (PsiMethod)context;
-        String name = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
-        return name.equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.arguments().size();
-      }
-      if (context instanceof PsiLambdaExpression) {
-        return DebuggerUtilsEx.isLambda(method) && 
-               method.arguments().size() >= ((PsiLambdaExpression)context).getParameterList().getParametersCount();
-      }
-      if (context instanceof PsiClassInitializer) {
-        String expectedMethod = ((PsiClassInitializer)context).hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
-        return method.name().equals(expectedMethod);
-      }
+    if (context instanceof PsiMethod) {
+      PsiMethod psiMethod = (PsiMethod)context;
+      String name = psiMethod.isConstructor() ? "<init>" : psiMethod.getName();
+      return name.equals(method.name()) && psiMethod.getParameterList().getParametersCount() == method.argumentTypeNames().size();
     }
-    catch (AbsentInformationException ignored) {
+    if (context instanceof PsiLambdaExpression) {
+      return DebuggerUtilsEx.isLambda(method) &&
+             method.argumentTypeNames().size() >= ((PsiLambdaExpression)context).getParameterList().getParametersCount();
+    }
+    if (context instanceof PsiClassInitializer) {
+      String expectedMethod = ((PsiClassInitializer)context).hasModifierProperty(PsiModifier.STATIC) ? "<clinit>" : "<init>";
+      return method.name().equals(expectedMethod);
     }
     return false;
   }
 
-  private static @Nullable PsiStatement getAnchorStatement(@NotNull PsiElement element) {
+  private static PsiElement getAnchor(@NotNull PsiElement element) {
     while (element instanceof PsiWhiteSpace || element instanceof PsiComment) {
       element = element.getNextSibling();
     }
-    PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false, PsiLambdaExpression.class, PsiMethod.class);
-    if (statement instanceof PsiBlockStatement && ((PsiBlockStatement)statement).getCodeBlock().getRBrace() == element) {
-      statement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+    while (!(element instanceof PsiStatement)) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiStatement) && (parent == null || element.getTextRangeInParent().getStartOffset() > 0)) {
+        if (parent instanceof PsiCodeBlock && ((PsiCodeBlock)parent).getRBrace() == element) {
+          PsiElement grandParent = parent.getParent();
+          if (grandParent instanceof PsiBlockStatement) {
+            return PsiTreeUtil.getNextSiblingOfType(grandParent, PsiStatement.class);
+          }
+        }
+        if (parent instanceof PsiPolyadicExpression) {
+          // If we are inside the expression we can position only at locations where the stack is empty
+          // currently only && and || chains inside if/return/yield are allowed
+          IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+          if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+            PsiElement grandParent = parent.getParent();
+            if (grandParent instanceof PsiIfStatement || grandParent instanceof PsiYieldStatement ||
+                grandParent instanceof PsiReturnStatement) {
+              if (element instanceof PsiExpression) {
+                return element;
+              }
+              return PsiTreeUtil.getNextSiblingOfType(element, PsiExpression.class);
+            }
+          }
+        }
+        return null;
+      }
+      element = parent;
     }
-    return statement;
+    return element;
   }
 
-  private static @Nullable PsiElement getCodeBlock(@NotNull PsiStatement statement) {
-    if (statement instanceof PsiWhileStatement || statement instanceof PsiDoWhileStatement) {
-      return statement;
+  private static @Nullable PsiElement getCodeBlock(@NotNull PsiElement anchor) {
+    if (anchor instanceof PsiWhileStatement || anchor instanceof PsiDoWhileStatement) {
+      return anchor;
     }
-    PsiElement e = statement;
+    PsiElement e = anchor;
     while (e != null && !(e instanceof PsiClass) && !(e instanceof PsiFileSystemItem)) {
       e = e.getParent();
       if (e instanceof PsiCodeBlock) {

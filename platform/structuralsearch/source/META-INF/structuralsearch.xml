@@ -9,8 +9,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <localInspection shortName="SSBasedInspection" bundle="messages.SSRBundle" key="SSRInspection.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
-                     enabledByDefault="false" level="WARNING" dynamicGroup="true"
-                     implementationClass="com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection"/>
+                     enabledByDefault="true" level="NON_SWITCHABLE_WARNING" dynamicGroup="true"
+                     implementationClass="com.intellij.structuralsearch.inspection.SSBasedInspection"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.XmlStructuralSearchProfile"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.StructuralSearchPlugin"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent"/>

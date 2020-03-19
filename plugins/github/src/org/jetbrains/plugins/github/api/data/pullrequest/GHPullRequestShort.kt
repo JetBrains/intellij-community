@@ -4,18 +4,19 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.*
 
 open class GHPullRequestShort(id: String,
                               val url: String,
-                              val number: Long,
+                              override val number: Long,
                               val title: String,
                               val state: GHPullRequestState,
                               val author: GHActor?,
                               val createdAt: Date,
                               @JsonProperty("assignees") assignees: GHNodes<GHUser>,
                               @JsonProperty("labels") labels: GHNodes<GHLabel>,
-                              val viewerDidAuthor: Boolean) : GHNode(id) {
+                              val viewerDidAuthor: Boolean) : GHNode(id), GHPRIdentifier {
 
   @JsonIgnore
   val assignees = assignees.nodes

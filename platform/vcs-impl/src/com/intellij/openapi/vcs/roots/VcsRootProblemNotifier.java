@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +32,6 @@ import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsDirectoryMapping.PROJECT_CONSTANT;
 import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
@@ -121,10 +121,10 @@ public class VcsRootProblemNotifier {
       description = makeDescription(importantUnregisteredRoots, invalidRoots);
 
       NotificationAction enableIntegration = NotificationAction
-        .create(VcsBundle.lazyMessage("action.NotificationAction.VcsRootProblemNotifier.text.enable.integration"),
+        .create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.enable.integration"),
                 (event, notification) -> addMappings(importantUnregisteredRoots));
       NotificationAction ignoreAction = NotificationAction
-        .create(VcsBundle.lazyMessage("action.NotificationAction.VcsRootProblemNotifier.text.ignore"), (event, notification) -> {
+        .create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.ignore"), (event, notification) -> {
         mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, VcsRootError::getMapping));
         notification.expire();
       });
@@ -143,11 +143,11 @@ public class VcsRootProblemNotifier {
 
   @NotNull
   private NotificationAction getConfigureNotificationAction() {
-    return NotificationAction.create(VcsBundle.lazyMessage("action.NotificationAction.VcsRootProblemNotifier.text.configure"), (event, notification) -> {
+    return NotificationAction.create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.configure"), (event, notification) -> {
       if (!myProject.isDisposed()) {
         ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
 
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
           Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
           if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
             notification.expire();

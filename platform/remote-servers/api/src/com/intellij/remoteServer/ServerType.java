@@ -42,7 +42,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)
   public String getDeploymentConfigurationTypePresentableName() {
-    return getPresentableName() + " Deployment";
+    return CloudBundle.message("server.type.deployment.configuration.typ.presentable.name.0.deployment", getPresentableName());
   }
 
   /**
@@ -50,8 +50,8 @@ public abstract class ServerType<C extends ServerConfiguration> {
    */
   @NotNull @NonNls
   public String getDeploymentConfigurationFactoryId() {
-    DeprecatedMethodException.reportDefaultImplementation("ServerType.getDeploymentConfigurationFactoryId",
-                                                          "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized but return value of this method must not be localized.", getClass());
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getDeploymentConfigurationFactoryId",
+      "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized but return value of this method must not be localized.");
     return getDeploymentConfigurationTypePresentableName();
   }
 

@@ -288,10 +288,16 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   private CompletableFuture<R> legacyExec(CompletableFuture<? extends ProgressIndicator> progressFuture,
                                           Semaphore modalityEntered,
                                           Supplier<R> onThreadCallable) {
-    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
+    final CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture);
+    final CompletableFuture<R> resultFuture;
 
     if (isModal) {
-      progressFuture.thenAccept(progressIndicator -> {
+      // Running task with blocking EDT event pumping has the following contract in test mode:
+      //   if a random EDT event processed by blockingPI fails with an exception, the event pumping
+      //   is stopped and the submitted task fails with respective exception.
+      // The task submitted to e.g. POOLED thread might not be able to finish at all because it requires invoke&waits,
+      //   but EDT is broken due an exception. Hence, initial task should be completed exceptionally
+      CompletableFuture<Void> blockingRunFuture = progressFuture.thenAccept(progressIndicator -> {
         if (progressIndicator instanceof BlockingProgressIndicator) {
           ((BlockingProgressIndicator)progressIndicator).startBlocking(modalityEntered::up);
         }
@@ -300,9 +306,15 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
           modalityEntered.up();
         }
       }).exceptionally(throwable -> {
-        resultFuture.completeExceptionally(throwable);
+        taskFuture.completeExceptionally(throwable);
         return null;
       });
+      // `startBlocking` might throw unrelated exceptions execute the submitted task so potential failure should be handled.
+      // Relates to testMode-ish execution: unhandled exceptions on event pumping are `LOG.error`-ed, hence throw exceptions in tests.
+      resultFuture = taskFuture.thenCombine(blockingRunFuture, (r, __) -> r);
+    }
+    else {
+      resultFuture = taskFuture;
     }
 
     if (isSync) {

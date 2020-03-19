@@ -29,12 +29,12 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
    * @param testMode this console will be used to display test output and should support TC messages
    */
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
-    super(consoleView, new PythonConsoleView(project, "Python Console", sdk, testMode));
+    super(consoleView, new PythonConsoleView(project, PyBundle.message("python.console"), sdk, testMode));
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());
 
     getSwitchConsoleActionPresentation().setIcon(PythonIcons.Python.PythonConsole);
-    getSwitchConsoleActionPresentation().setText(PyBundle.lazyMessage("run.configuration.show.command.line.action.name"));
+    getSwitchConsoleActionPresentation().setText(PyBundle.messagePointer("run.configuration.show.command.line.action.name"));
 
     List<AnAction> actions = ContainerUtil.newArrayList(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()));
     actions.add(PyConsoleUtil.createInterruptAction(getPydevConsoleView()));

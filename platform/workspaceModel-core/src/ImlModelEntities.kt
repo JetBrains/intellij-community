@@ -105,8 +105,7 @@ interface JavaSourceRootEntity : TypedEntity {
   val packagePrefix: String
 }
 
-fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? =
-  referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
+fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
 
 interface JavaResourceRootEntity : TypedEntity {
   val sourceRoot: SourceRootEntity
@@ -123,7 +122,7 @@ interface CustomSourceRootPropertiesEntity : TypedEntity {
 
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
 
-interface ContentRootEntity : TypedEntity {
+interface ContentRootEntity : TypedEntity, ReferableTypedEntity {
   val url: VirtualFileUrl
   val excludedUrls: List<VirtualFileUrl>
   val excludedPatterns: List<String>
@@ -139,6 +138,8 @@ interface SourceRootOrderEntity : ModifiableTypedEntity<SourceRootOrderEntity> {
 
   var contentRootEntity: ContentRootEntity
 }
+
+fun ContentRootEntity.getSourceRootOrder() = referrers(SourceRootOrderEntity::contentRootEntity).firstOrNull()
 
 fun ModuleEntity.getModuleLibraries(storage: TypedEntityStorage): Sequence<LibraryEntity> {
   return storage.entities(LibraryEntity::class.java).filter { (it.persistentId().tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId?.name == name }

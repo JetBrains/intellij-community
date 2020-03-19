@@ -531,8 +531,20 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   fun `test checkout with rebase`() {
     repo.`diverge feature and master`()
-    repo.git("checkout master")
+    checkCheckoutAndRebase {
+      "Checked out feature and rebased it on master"
+    }
+  }
 
+  fun `test checkout with fast-forward`() {
+    repo.`place feature below master`()
+    checkCheckoutAndRebase {
+      "Checked out feature and fast-forwarded it to master"
+    }
+  }
+
+  private fun checkCheckoutAndRebase(expectedNotification: () -> String) {
+    repo.git("checkout master")
     refresh()
     updateChangeListManager()
 
@@ -540,7 +552,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
     GitBranchWorker(project, git, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
 
-    assertSuccessfulRebaseNotification("Checked out feature and rebased it on master")
+    assertSuccessfulRebaseNotification(expectedNotification())
     repo.`assert feature rebased on master`()
     assertNoRebaseInProgress(repo)
   }

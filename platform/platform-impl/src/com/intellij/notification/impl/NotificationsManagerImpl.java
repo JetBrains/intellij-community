@@ -143,6 +143,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       return;
     }
 
+
+
     String groupId = notification.getGroupId();
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
@@ -480,7 +482,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
       expandAction = new LinkLabel<>(null, AllIcons.Ide.Notification.Expand, new LinkListener<Void>() {
         @Override
-        public void linkSelected(LinkLabel link, Void ignored) {
+        public void linkSelected(LinkLabel<Void> link, Void ignored) {
           layoutData.showMinSize = !layoutData.showMinSize;
 
           text.setPreferredSize(null);
@@ -740,7 +742,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       actionPanel.addActionLink(
         new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
-          public void linkSelected(LinkLabel aSource, AnAction action) {
+          public void linkSelected(LinkLabel<AnAction> aSource, AnAction action) {
             Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
           }
         }, action));
@@ -772,7 +774,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                                         NotificationActionPanel actionPanel) {
     DropDownAction action = new DropDownAction(notification.getDropDownText(), new LinkListener<Void>() {
       @Override
-      public void linkSelected(LinkLabel link, Void ignored) {
+      public void linkSelected(LinkLabel<Void> link, Void ignored) {
         NotificationActionPanel parent = (NotificationActionPanel)link.getParent();
         DefaultActionGroup group = new DefaultActionGroup();
         for (LinkLabel<AnAction> actionLink : parent.actionLinks) {
@@ -926,7 +928,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       title.toString(), null,
       new LinkListener<BalloonLayoutData>() {
         @Override
-        public void linkSelected(LinkLabel aSource, BalloonLayoutData layoutData) {
+        public void linkSelected(LinkLabel<BalloonLayoutData> aSource, BalloonLayoutData layoutData) {
           EventLog.showNotification(layoutData.project, layoutData.groupId, layoutData.getMergeIds());
         }
       }, layoutData) {

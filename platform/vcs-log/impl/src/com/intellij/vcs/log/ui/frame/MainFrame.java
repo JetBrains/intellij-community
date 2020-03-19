@@ -171,8 +171,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setLayout(new BorderLayout());
     if (withDiffPreview) {
       myDiffPreview = new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
-                                                                  myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION, false,
-                                                                  0.7f) {
+                                                                  myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
+                                                                  Registry.is("vcs.log.diff.preview.vertical"), 0.7f) {
         @Override
         public void updatePreview(boolean state) {
           getPreviewDiff().updatePreview(state);
@@ -450,7 +450,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         String sizeText = VcsLogUtil.getSizeText(maxSize);
         myChangesBrowser.showText(statusText -> {
           statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size(), sizeText));
-          statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"), VcsLogUiUtil.getLinkAttributes(),
+          statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"),
+                                         VcsLogUiUtil.getLinkAttributes(),
                                          e -> myChangesBrowser.setSelectedDetails(detailsList));
         });
       }
@@ -515,7 +516,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       if (dataPack instanceof DataPack.ErrorDataPack) {
         setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(),
                           VcsLogBundle.message("vcs.log.error.loading.status"));
-        appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
+        appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"),
+                                () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
       else if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
         setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), VcsLogBundle.message("vcs.log.error.filtering.status"));

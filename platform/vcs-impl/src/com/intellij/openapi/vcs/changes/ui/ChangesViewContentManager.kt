@@ -21,15 +21,21 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.vcs.commit.CommitWorkflowManager
+import com.intellij.vcs.commit.CommitWorkflowManager.Companion.isNonModalInSettings
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 import kotlin.properties.Delegates.observable
 
-private val isCommitToolWindowRegistryValue = Registry.get("vcs.commit.tool.window")
+private val isCommitToolWindowRegistryValue get() = Registry.get("vcs.commit.tool.window")
 private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
 
 internal val Project.isCommitToolWindow: Boolean
   get() = ChangesViewContentManager.getInstanceImpl(this)?.isCommitToolWindow == true
+
+internal fun ContentManager.selectFirstContent() {
+  val firstContent = getContent(0)
+  if (firstContent != null) setSelectedContent(firstContent)
+}
 
 class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
   private val LOG: Logger = Logger.getInstance(ChangesViewContentManager::class.java)
@@ -52,12 +58,13 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   private fun Content.resolveContentManager(): ContentManager? = resolveToolWindow()?.contentManager
 
-  var isCommitToolWindow: Boolean by observable(isCommitToolWindowRegistryValue.asBoolean()) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
+  var isCommitToolWindow: Boolean
+    by observable(isCommitToolWindowRegistryValue.asBoolean() && isNonModalInSettings()) { _, oldValue, newValue ->
+      if (oldValue == newValue) return@observable
 
-    remapContents()
-    project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-  }
+      remapContents()
+      project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+    }
 
   init {
     isCommitToolWindowRegistryValue.addListener(object : RegistryValueListener {
@@ -93,8 +100,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     addedContents.removeAll(contents)
 
     // Ensure that first tab is selected after tabs reordering
-    val firstContent = contentManager.getContent(0)
-    if (firstContent != null) contentManager.setSelectedContent(firstContent)
+    contentManager.selectFirstContent()
   }
 
   override fun dispose() {

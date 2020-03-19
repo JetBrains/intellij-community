@@ -75,7 +75,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
     })
 
     object : DoubleClickListener() {
-      override fun onDoubleClick(event: MouseEvent?): Boolean {
+      override fun onDoubleClick(event: MouseEvent): Boolean {
         if (list.selectedValue == null) return true
         install(project, list.selectedValue, popup)
         return true

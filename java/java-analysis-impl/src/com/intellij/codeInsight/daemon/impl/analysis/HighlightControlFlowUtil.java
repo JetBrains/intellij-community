@@ -30,6 +30,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,14 +75,12 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  @NotNull
-  public static ControlFlow getControlFlowNoConstantEvaluate(@NotNull PsiElement body) throws AnalysisCanceledException {
+  public static @NotNull ControlFlow getControlFlowNoConstantEvaluate(@NotNull PsiElement body) throws AnalysisCanceledException {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
     return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy, false, false);
   }
 
-  @NotNull
-  private static ControlFlow getControlFlow(@NotNull PsiElement context) throws AnalysisCanceledException {
+  private static @NotNull ControlFlow getControlFlow(@NotNull PsiElement context) throws AnalysisCanceledException {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
     return ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, policy);
   }
@@ -560,9 +559,8 @@ public class HighlightControlFlowUtil {
     return false;
   }
 
-  @NotNull
-  private static Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(@NotNull Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
-                                                                                          @NotNull PsiElement codeBlock) {
+  private static @NotNull Collection<ControlFlowUtil.VariableInfo> getFinalVariableProblemsInBlock(@NotNull Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
+                                                                                                   @NotNull PsiElement codeBlock) {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
@@ -680,7 +678,7 @@ public class HighlightControlFlowUtil {
       if (variable instanceof PsiParameter) {
         final PsiElement parent = variable.getParent();
         if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression &&
-            notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()))) {
+            !VariableAccessUtils.variableIsAssigned(variable, ((PsiParameter)variable).getDeclarationScope())) {
           return null;
         }
       }
@@ -719,7 +717,7 @@ public class HighlightControlFlowUtil {
   public static boolean isEffectivelyFinal(@NotNull PsiVariable variable, @NotNull PsiElement scope, @Nullable PsiJavaCodeReferenceElement context) {
     boolean effectivelyFinal;
     if (variable instanceof PsiParameter) {
-      effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));
+      effectivelyFinal = !VariableAccessUtils.variableIsAssigned(variable, ((PsiParameter)variable).getDeclarationScope());
     }
     else {
       final ControlFlow controlFlow;
@@ -741,7 +739,7 @@ public class HighlightControlFlowUtil {
             return PsiUtil.isAccessedForReading(expression);
           }
         }
-        effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
+        effectivelyFinal = !VariableAccessUtils.variableIsAssigned(variable, scope);
         if (effectivelyFinal) {
           return ReferencesSearch.search(variable).allMatch(ref -> {
             PsiElement element = ref.getElement();
@@ -754,16 +752,6 @@ public class HighlightControlFlowUtil {
       }
     }
     return effectivelyFinal;
-  }
-
-  private static boolean notAccessedForWriting(@NotNull PsiVariable variable, @NotNull LocalSearchScope searchScope) {
-    for (PsiReference reference : ReferencesSearch.search(variable, searchScope)) {
-      final PsiElement element = reference.getElement();
-      if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public static PsiElement getInnerClassVariableReferencedFrom(@NotNull PsiVariable variable, @NotNull PsiElement context) {

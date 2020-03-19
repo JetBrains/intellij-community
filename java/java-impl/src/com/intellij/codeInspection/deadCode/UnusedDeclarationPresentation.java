@@ -4,10 +4,7 @@ package com.intellij.codeInspection.deadCode;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.GlobalJavaInspectionContext;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
@@ -681,7 +678,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
       if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation()
         .isSuppressed(getElement())) {
-        HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+        HighlightSeverity severity = InspectionToolResultExporter.getSeverity(getElement(), null, getPresentation());
         HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
         if (!counter.adjustValue(level, 1)) {
           counter.put(level, 1);

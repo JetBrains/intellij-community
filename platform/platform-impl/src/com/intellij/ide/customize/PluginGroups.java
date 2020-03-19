@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import icons.PlatformImplIcons;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,8 +148,7 @@ public class PluginGroups {
       "com.jetbrains.restWebServices," +
       "Web Services (JAX-WS)," +
       "com.intellij.javaee.webSocket," +
-      "com.intellij.jsp," +
-      "com.intellij.persistence",
+      "com.intellij.jsp",
 
       "com.intellij.hibernate",
       "com.intellij.reactivestreams",
@@ -492,7 +492,7 @@ public class PluginGroups {
     private final String myDescription;
     private final List<String> myPluginIdDescription;
 
-    public Group(@NotNull String name, @Nullable Icon icon, @Nullable String description, @NotNull List<String> pluginIdDescription) {
+    public Group(@NonNls @NotNull String name, @Nullable Icon icon, @Nullable String description, @NonNls @NotNull List<String> pluginIdDescription) {
       myName = name;
       myIcon = icon;
       myDescription = description;

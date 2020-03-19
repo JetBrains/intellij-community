@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.project.ProjectBundle;
@@ -55,7 +55,7 @@ public class SdkAppearanceServiceImpl extends SdkAppearanceService {
 
     SimpleTextAttributes attributes = getTextAttributes(hasValidPath, selected);
     CompositeAppearance.DequeEnd ending = appearance.getEnding();
-    ending.addText(name, attributes);
+    ending.addText(StringUtil.shortenTextWithEllipsis(name, 50, 0), attributes);
 
     if (versionString != null && !versionString.equals(name) && !StringUtil.isEmptyOrSpaces(versionString)) {
       SimpleTextAttributes textAttributes = isInComboBox && !selected
@@ -64,7 +64,7 @@ public class SdkAppearanceServiceImpl extends SdkAppearanceService {
                                               ? new SimpleTextAttributes(STYLE_PLAIN, JBColor.WHITE)
                                               : GRAY_ATTRIBUTES;
 
-      ending.addComment(versionString, textAttributes);
+      ending.addComment(StringUtil.shortenTextWithEllipsis(versionString, 30, 0), textAttributes);
     }
 
     return ending.getAppearance();

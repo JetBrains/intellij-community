@@ -13,7 +13,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -37,6 +36,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
@@ -74,11 +74,10 @@ internal class GHPRComponentFactory(private val project: Project) {
                       parentDisposable: Disposable): JComponent {
 
     val contextDisposable = Disposer.newDisposable()
-    val contextValue = object : LazyCancellableBackgroundProcessValue<GHPRDataContext>(progressManager) {
-      override fun compute(indicator: ProgressIndicator) =
-        dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
-          Disposer.register(contextDisposable, it)
-        }
+    val contextValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
+      dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
+        Disposer.register(contextDisposable, it)
+      }
     }
     Disposer.register(parentDisposable, contextDisposable)
     Disposer.register(parentDisposable, Disposable { contextValue.drop() })
@@ -86,7 +85,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val uiDisposable = Disposer.newDisposable()
     Disposer.register(parentDisposable, uiDisposable)
 
-    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>()
+    val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable)
     val contentContainer = JBPanelWithEmptyText(null).apply {
       background = UIUtil.getListBackground()
     }
@@ -187,8 +186,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     val changesModel = GHPRChangesModelImpl(project)
-    val diffHelper = GHPRChangesDiffHelperImpl(dataContext.reviewService,
-                                               avatarIconsProviderFactory, dataContext.securityService.currentUser)
+    val diffHelper = GHPRChangesDiffHelperImpl(avatarIconsProviderFactory, dataContext.securityService.currentUser)
     val changesLoadingModel = createChangesLoadingModel(changesModel, diffHelper,
                                                         dataProviderModel, projectUiSettings, disposable)
     val changesBrowser = GHPRChangesBrowser(changesModel, diffHelper, project)
@@ -329,14 +327,14 @@ internal class GHPRComponentFactory(private val project: Project) {
   }
 
   private fun installSelectionSaver(list: GHPRList, listSelectionHolder: GithubPullRequestsListSelectionHolder) {
-    var savedSelectionNumber: Long? = null
+    var savedSelection: GHPRIdentifier? = null
 
     list.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
       if (!e.valueIsAdjusting) {
         val selectedIndex = list.selectedIndex
         if (selectedIndex >= 0 && selectedIndex < list.model.size) {
-          listSelectionHolder.selectionNumber = list.model.getElementAt(selectedIndex).number
-          savedSelectionNumber = null
+          listSelectionHolder.selection = list.model.getElementAt(selectedIndex)
+          savedSelection = null
         }
       }
     }
@@ -344,13 +342,13 @@ internal class GHPRComponentFactory(private val project: Project) {
     list.model.addListDataListener(object : ListDataListener {
       override fun intervalAdded(e: ListDataEvent) {
         if (e.type == ListDataEvent.INTERVAL_ADDED)
-          (e.index0..e.index1).find { list.model.getElementAt(it).number == savedSelectionNumber }
+          (e.index0..e.index1).find { list.model.getElementAt(it) == savedSelection }
             ?.run { ApplicationManager.getApplication().invokeLater { ScrollingUtil.selectItem(list, this) } }
       }
 
       override fun contentsChanged(e: ListDataEvent) {}
       override fun intervalRemoved(e: ListDataEvent) {
-        if (e.type == ListDataEvent.INTERVAL_REMOVED) savedSelectionNumber = listSelectionHolder.selectionNumber
+        if (e.type == ListDataEvent.INTERVAL_REMOVED) savedSelection = listSelectionHolder.selection
       }
     })
   }
@@ -379,7 +377,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createDetailsLoadingModel(dataProviderModel: SingleValueModel<GHPRDataProvider?>,
                                         parentDisposable: Disposable): GHCompletableFutureLoadingModel<GHPullRequest> {
-    val model = GHCompletableFutureLoadingModel<GHPullRequest>()
+    val model = GHCompletableFutureLoadingModel<GHPullRequest>(parentDisposable)
 
     var listenerDisposable: Disposable? = null
 
@@ -430,7 +428,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     fun setNewProvider(provider: GHPRDataProvider?) {
       val oldValue = model.value
-      if (oldValue != null && provider != null && oldValue.number != provider.number) {
+      if (oldValue != null && provider != null && oldValue.id != provider.id) {
         model.value = null
       }
       model.value = provider
@@ -440,11 +438,11 @@ internal class GHPRComponentFactory(private val project: Project) {
     })
 
     listSelectionHolder.addSelectionChangeListener(parentDisposable) {
-      setNewProvider(listSelectionHolder.selectionNumber?.let(dataContext.dataLoader::getDataProvider))
+      setNewProvider(listSelectionHolder.selection?.let(dataContext.dataLoader::getDataProvider))
     }
 
     dataContext.dataLoader.addInvalidationListener(parentDisposable) {
-      val selection = listSelectionHolder.selectionNumber
+      val selection = listSelectionHolder.selection
       if (selection != null && selection == it) {
         setNewProvider(dataContext.dataLoader.getDataProvider(selection))
       }

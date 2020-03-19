@@ -61,7 +61,7 @@ enum class ColorFormat {
   }
 }
 
-class ColorValuePanel(private val model: ColorPickerModel)
+class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false)
   : JPanel(GridBagLayout()), DocumentListener, ColorListener {
 
   /**
@@ -75,7 +75,7 @@ class ColorValuePanel(private val model: ColorPickerModel)
   private val alphaHexDocument = DigitColorDocument(alphaField, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val alphaPercentageDocument = DigitColorDocument(alphaField, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   @get:TestOnly
-  val hexField = ColorValueField(hex = true)
+  val hexField = ColorValueField(hex = true, showAlpha = showAlpha)
 
   private val alphaLabel = ColorLabel()
   private val colorLabel1 = ColorLabel()
@@ -126,12 +126,14 @@ class ColorValuePanel(private val model: ColorPickerModel)
     val c = GridBagConstraints()
     c.fill = GridBagConstraints.HORIZONTAL
 
-    c.weightx = 0.12
-    c.gridx = 0
-    c.gridy = 0
-    add(alphaButtonPanel, c)
-    c.gridy = 1
-    add(alphaField, c)
+    if (showAlpha) {
+      c.weightx = 0.12
+      c.gridx = 0
+      c.gridy = 0
+      add(alphaButtonPanel, c)
+      c.gridy = 1
+      add(alphaField, c)
+    }
 
     c.weightx = 0.36
     c.gridwidth = 3
@@ -168,7 +170,7 @@ class ColorValuePanel(private val model: ColorPickerModel)
     model.addListener(this)
   }
 
-  override fun requestFocusInWindow() = alphaField.requestFocusInWindow()
+  override fun requestFocusInWindow() = colorField1.requestFocusInWindow()
 
   private fun updateAlphaFormat() {
     when (currentAlphaFormat) {
@@ -242,7 +244,11 @@ class ColorValuePanel(private val model: ColorPickerModel)
       colorField2.setTextIfNeeded((hsb[1] * 100).roundToInt().toString(), source)
       colorField3.setTextIfNeeded((hsb[2] * 100).roundToInt().toString(), source)
     }
-    hexField.setTextIfNeeded(String.format("%08X", color.rgb), source)
+    var hexStr = String.format("%08X", color.rgb)
+    if (!showAlpha) {
+      hexStr = hexStr.substring(2)
+    }
+    hexField.setTextIfNeeded(hexStr, source)
     // Cleanup the update requests which triggered by setting text in this function
     updateAlarm.cancelAllRequests()
   }
@@ -458,7 +464,7 @@ private class ColorLabel(text: String = ""): JLabel(text, SwingConstants.CENTER)
 private const val ACTION_UP = "up"
 private const val ACTION_DOWN = "down"
 
-class ColorValueField(private val hex: Boolean = false): JTextField(if (hex) 8 else 3) {
+class ColorValueField(private val hex: Boolean = false, private val showAlpha: Boolean = false): JTextField(fieldLength(hex, showAlpha)) {
 
   init {
     horizontalAlignment = JTextField.CENTER
@@ -510,6 +516,9 @@ class ColorValueField(private val hex: Boolean = false): JTextField(if (hex) 8 e
       return if (rawText.isBlank()) 0 else Integer.parseInt(rawText, if (hex) 16 else 10)
     }
 }
+
+private fun fieldLength(hex: Boolean, showAlpha: Boolean) = if (hex && showAlpha) 8
+                                                            else if (hex) 6 else 3
 
 private abstract class ColorDocument(internal val src: JTextField) : PlainDocument() {
 

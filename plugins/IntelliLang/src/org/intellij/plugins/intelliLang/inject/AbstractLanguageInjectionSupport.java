@@ -34,6 +34,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
@@ -134,7 +135,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
         consumer.consume(injection);
       }
     });
-    action.getTemplatePresentation().setText("Generic " + supportTitle);
+    action.getTemplatePresentation().setText(IntelliLangBundle.message("action.text.generic.0", supportTitle));
     action.getTemplatePresentation().setIcon(icon);
     return action;
   }
@@ -167,7 +168,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
       catch (Exception e) {
         final Throwable cause = e.getCause();
         final String message = e.getMessage() + (cause != null? "\n  "+cause.getMessage():"");
-        Messages.showErrorDialog(project, message, "Unable to Save");
+        Messages.showErrorDialog(project, message, IntelliLangBundle.message("dialog.title.unable.to.save"));
       }
     });
     return builder.show() == DialogWrapper.OK_EXIT_CODE;

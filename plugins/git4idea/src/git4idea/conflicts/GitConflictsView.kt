@@ -1,24 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
-import com.intellij.ui.ComponentUtil
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JButtonAction
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -77,11 +73,11 @@ class GitConflictsView(
   }
 
   private inner class ResolveAction
-    : ButtonAction("Resolve") {
+    : JButtonAction("Resolve") {
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canShowMergeWindowForSelection()
-      updateButtonPresentation(e)
+      updateButtonFromPresentation(e)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -90,45 +86,15 @@ class GitConflictsView(
   }
 
   private inner class AcceptSideAction(val takeTheirs: Boolean)
-    : ButtonAction(if (takeTheirs) "Accept Theirs" else "Accept Yours") {
+    : JButtonAction(if (takeTheirs) "Accept Theirs" else "Accept Yours") {
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canAcceptConflictSideForSelection()
-      updateButtonPresentation(e)
+      updateButtonFromPresentation(e)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       conflictsPanel.acceptConflictSideForSelection(takeTheirs)
-    }
-  }
-
-  private abstract class ButtonAction(text: String) : DumbAwareAction(text), CustomComponentAction {
-    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      val button = JButton(presentation.text)
-      button.isFocusable = false
-      button.addActionListener {
-        val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)
-        val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
-        actionPerformed(AnActionEvent.createFromAnAction(this@ButtonAction, null, place, dataContext))
-      }
-
-      updateButtonPresentation(button, presentation)
-
-      val buttonInsets = button.insets
-      val leftRight = JBUI.scale(if (SystemInfo.isWindows) 4 else 6) - (buttonInsets.left + buttonInsets.right) / 2
-      val topBottom = JBUI.scale(4) - (buttonInsets.top + buttonInsets.bottom) / 2
-      val border = JBEmptyBorder(JBInsets.create(topBottom.coerceAtLeast(0), leftRight.coerceAtLeast(0)))
-      return JBUI.Panels.simplePanel(button).withBorder(border)
-    }
-
-    fun updateButtonPresentation(e: AnActionEvent) {
-      val button = UIUtil.findComponentOfType(e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), JButton::class.java)
-      if (button != null) updateButtonPresentation(button, e.presentation)
-    }
-
-    fun updateButtonPresentation(button: JButton, presentation: Presentation) {
-      button.isEnabled = presentation.isEnabled
-      button.isVisible = presentation.isVisible
     }
   }
 }

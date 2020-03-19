@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -17,12 +18,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -49,9 +48,20 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @NotNull
   @Override
   public List<AnAction> getActions(SingleInspectionProfilePanel panel) {
-    if (!Registry.is("ssr.separate.inspections")) return Collections.emptyList();
-
     final InspectionProfileModifiableModel profile = panel.getProfile();
+    if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
+        !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
+      // enable SSBasedInspection if it was manually disabled
+      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true);
+
+      for (ScopeToolState tool : profile.getAllTools()) {
+        final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
+        if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
+          tool.setEnabled(false);
+        }
+      }
+    }
+
     for (ScopeToolState tool : profile.getAllTools()) {
       final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
       if (wrapper instanceof StructuralSearchInspectionToolWrapper) {
@@ -67,7 +77,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
-    presentation.setText(SSRBundle.lazyMessage("add.inspection.button"));
+    presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
     return Arrays.asList(actionGroup, new RemoveTemplateAction(panel));
   }
 
@@ -91,11 +101,8 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
       final String shortName = selectedTool.getShortName();
       myPanel.removeSelectedRow();
-      final Project project = e.getData(CommonDataKeys.PROJECT);
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
-      assert wrapper != null;
-      final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
+      final SSBasedInspection inspection = getStructuralSearchInspection(profile);
       inspection.removeConfigurationWithUuid(UUID.fromString(shortName));
       profile.removeTool(shortName);
       profile.getProfileManager().fireProfileChanged(profile);
@@ -126,19 +133,27 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Project project = e.getData(CommonDataKeys.PROJECT);
       assert project != null;
       final Configuration configuration = dialog.getConfiguration();
-      if (!createNewInspection(configuration, profile, project)) {
+      if (!createNewInspection(configuration, project, profile)) {
         return;
       }
       myPanel.selectInspectionTool(configuration.getUuid().toString());
     }
-
   }
 
-  public static boolean createNewInspection(Configuration configuration, InspectionProfileImpl profile, Project project) {
-    final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, project);
+  static SSBasedInspection getStructuralSearchInspection(InspectionProfileImpl profile) {
+    final InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, (Project)null);
     assert wrapper != null;
-    final SSBasedInspection inspection = (SSBasedInspection)wrapper.getTool();
+    return (SSBasedInspection)wrapper.getTool();
+  }
 
+  public static void createNewInspection(@NotNull Configuration configuration, @NotNull Project project) {
+    createNewInspection(configuration, project, InspectionProfileManager.getInstance(project).getCurrentProfile());
+  }
+
+  static boolean createNewInspection(@NotNull Configuration configuration,
+                                     @NotNull Project project,
+                                     @NotNull InspectionProfileImpl profile) {
+    final SSBasedInspection inspection = getStructuralSearchInspection(profile);
     configuration.setUuidFromName();
     if (!saveInspection(project, inspection, configuration)) {
       return false;
@@ -155,7 +170,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       // already added
       return;
     }
-    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration, true);
+    final StructuralSearchInspectionToolWrapper wrapped = new StructuralSearchInspectionToolWrapper(configuration);
     wrapped.setProfile(profile);
     profile.addTool(project, wrapped, null);
 
@@ -166,6 +181,10 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   }
 
   public static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      inspection.addConfiguration(configuration);
+      return true;
+    }
     final InspectionDataDialog dialog = new InspectionDataDialog(project, inspection, configuration);
     final boolean result = dialog.showAndGet();
     if (result) {
@@ -198,6 +217,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       myInspection = inspection;
 
       myConfiguration = configuration;
+      assert myConfiguration.getOrder() == 0;
       myNameTextField = new JTextField(configuration.getName());
       myProblemDescriptorTextField = new JTextField(configuration.getProblemDescriptor());
       myDescriptionTextArea = new EditorTextField(ObjectUtils.notNull(configuration.getDescription(), ""), project, StdFileTypes.HTML);

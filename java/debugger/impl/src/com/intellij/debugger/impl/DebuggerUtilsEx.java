@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -58,6 +58,7 @@ import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
+import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -536,6 +537,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static String signatureToName(String s) {
     return new SigReader(s).getSignature();
+  }
+
+  public static List<Method> declaredMethodsByName(@NotNull ReferenceType type, @NotNull String name) {
+    return StreamEx.of(type.methods()).filter(m -> name.equals(m.name())).toList();
   }
 
   @Nullable

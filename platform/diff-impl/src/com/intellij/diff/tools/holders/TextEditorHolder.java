@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +44,7 @@ public class TextEditorHolder extends EditorHolder {
     DataManager.registerDataProvider(myPanel, (dataId) -> {
       if (project != null && !project.isDisposed()) {
         VirtualFile file = editor.getVirtualFile();
-        if (Registry.is("diff.pass.rich.editor.context") ||
-            file != null && file.isInLocalFileSystem()) {
+        if (file != null && file.isInLocalFileSystem()) {
           final Object o = FileEditorManager.getInstance(project).getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
           if (o != null) return o;
         }

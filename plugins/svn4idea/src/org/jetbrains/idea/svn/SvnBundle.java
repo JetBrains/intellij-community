@@ -27,7 +27,9 @@ public class SvnBundle extends DynamicBundle {
 
   private static final SvnBundle INSTANCE = new SvnBundle();
 
-  private SvnBundle() { super(BUNDLE); }
+  private SvnBundle() {
+    super(BUNDLE);
+  }
 
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
@@ -35,10 +37,14 @@ public class SvnBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 
+  /**
+   * @deprecated use {@link #message(String, Object...)}
+   */
+  @Deprecated
   @NotNull
   public static String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);

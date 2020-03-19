@@ -239,14 +239,28 @@ public class PlatformTestUtil {
     }
   }
 
-  public static void assertTreeEqual(JTree tree, @NonNls String expected) {
+  public static void assertTreeEqual(@NotNull JTree tree, @NonNls String expected) {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
-    String treeStringPresentation = print(tree, checkSelected);
-    assertEquals(expected.trim(), treeStringPresentation.trim());
+  public static void assertTreeEqual(@NotNull JTree tree, String expected, boolean checkSelected) {
+    assertTreeEqual(tree, expected, checkSelected, false);
   }
+
+  public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
+    String treeStringPresentation = print(tree, checkSelected);
+    if (ignoreOrder) {
+      String[] lines = treeStringPresentation.split("\n");
+      for (String line : lines) {
+        if (!expected.contains(line + "\n")) {
+          fail("Missing node: " + line);
+        }
+      }
+    } else {
+      assertEquals(expected.trim(), treeStringPresentation.trim());
+    }
+  }
+
 
   public static void expand(JTree tree, int... rows) {
     for (int row : rows) {

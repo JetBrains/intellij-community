@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -37,12 +37,12 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
     }
 
     if (log.getSelectedCommits().size() >= 2) {
-      e.getPresentation().setText(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
-      e.getPresentation().setDescription(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
+      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
+      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
     }
     else {
-      e.getPresentation().setText(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
-      e.getPresentation().setDescription(VcsBundle.lazyMessage("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
+      e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.show.diff"));
+      e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.show.diff"));
     }
     e.getPresentation().setVisible(true);
 

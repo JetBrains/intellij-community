@@ -140,7 +140,7 @@ public class VcsCachingHistory {
                                                                              @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText2("Checking last revision");
+      indicator.setText2(VcsBundle.message("file.history.checking.last.revision.process"));
     }
     VcsAbstractHistorySession cached = myVcsHistoryCache.getFull(filePath, vcsKey, cacheableFactory);
     if (cached == null || cached.getRevisionList().isEmpty()) return null;

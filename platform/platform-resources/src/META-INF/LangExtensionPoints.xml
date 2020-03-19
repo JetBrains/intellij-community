@@ -229,9 +229,13 @@
     <!-- File-Based Index-->
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider" dynamic="true"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter" dynamic="true"/>
+    <extensionPoint name="indexableFilesFilter" interface="com.intellij.util.indexing.IndexableFilesFilter"/>
     <extensionPoint name="indexImporterFactory" interface="com.intellij.index.IndexImporterFactory"/>
-    <extensionPoint name="sharedIndexChunkLocator" interface="com.intellij.util.indexing.provided.SharedIndexChunkLocator"/>
 
+    <extensionPoint name="symbolPresentation" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="forClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.model.presentation.SymbolPresentationProvider"/>
+    </extensionPoint>
     <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
 
     <extensionPoint name="structureViewBuilder" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
@@ -257,6 +261,7 @@
     <extensionPoint name="executor" interface="com.intellij.execution.Executor" dynamic="true"/>
     <extensionPoint name="executionTargetProvider" interface="com.intellij.execution.ExecutionTargetProvider" dynamic="true"/>
     <extensionPoint name="stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate" dynamic="true"/>
 
     <extensionPoint name="executionTargetType"
                     interface="com.intellij.execution.target.TargetEnvironmentType" dynamic="true"/>
@@ -301,7 +306,7 @@
     <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension" dynamic="true"/>
     <extensionPoint name="elementsToHighlightFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
-    <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>
+    <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType" dynamic="true"/>
     <extensionPoint name="sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder"/>
     <extensionPoint name="projectSdkSetupValidator" interface="com.intellij.codeInsight.daemon.ProjectSdkSetupValidator" dynamic="true"/>
     <extensionPoint name="library.presentationProvider" interface="com.intellij.openapi.roots.libraries.LibraryPresentationProvider" dynamic="true"/>

@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,8 +93,9 @@ public final class IdeBackgroundUtil {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  private static final Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
+  private static final @NonNls Set<String> ourKnownNames = ContainerUtil.newHashSet("navbar", "terminal");
 
+  @NonNls
   private static String getComponentType(JComponent component) {
     return component instanceof JTree ? "tree" :
            component instanceof JList ? "list" :

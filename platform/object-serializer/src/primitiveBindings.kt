@@ -8,10 +8,12 @@ private fun resolved(binding: Binding): NestedBindingFactory = { binding }
 internal fun registerPrimitiveBindings(classToRootBindingFactory: MutableMap<Class<*>, RootBindingFactory>, classToNestedBindingFactory: MutableMap<Class<*>, NestedBindingFactory>) {
   classToRootBindingFactory.put(java.lang.String::class.java) { StringBinding() }
 
-  val numberAsObjectBinding = NumberAsObjectBinding()
-  classToRootBindingFactory.put(java.lang.Integer::class.java) { numberAsObjectBinding }
-  classToRootBindingFactory.put(java.lang.Long::class.java) { numberAsObjectBinding }
-  classToRootBindingFactory.put(java.lang.Short::class.java) { numberAsObjectBinding }
+  val intNumberBinding = IntNumberAsObjectBinding()
+  val longNumberBinding = LongNumberAsObjectBinding()
+  val shortNumberBinding = ShortNumberAsObjectBinding()
+  classToRootBindingFactory.put(java.lang.Integer::class.java) { intNumberBinding }
+  classToRootBindingFactory.put(java.lang.Long::class.java) { longNumberBinding }
+  classToRootBindingFactory.put(java.lang.Short::class.java) { shortNumberBinding }
 
   // java.lang.Float cannot be cast to java.lang.Double
   classToRootBindingFactory.put(java.lang.Float::class.java) { FloatAsObjectBinding() }
@@ -52,7 +54,17 @@ private class DoubleAsObjectBinding : Binding {
   override fun deserialize(context: ReadContext, hostObject: Any?) = context.reader.doubleValue()
 }
 
-internal class NumberAsObjectBinding : Binding {
+internal class ShortNumberAsObjectBinding : Binding {
+  override fun createCacheKey(aClass: Class<*>?, type: Type) = aClass!!
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeInt((obj as Number).toLong())
+  }
+
+  override fun deserialize(context: ReadContext, hostObject: Any?) = context.reader.intValue().toShort()
+}
+
+internal class IntNumberAsObjectBinding : Binding {
   override fun createCacheKey(aClass: Class<*>?, type: Type) = aClass!!
 
   override fun serialize(obj: Any, context: WriteContext) {
@@ -60,6 +72,16 @@ internal class NumberAsObjectBinding : Binding {
   }
 
   override fun deserialize(context: ReadContext, hostObject: Any?) = context.reader.intValue()
+}
+
+internal class LongNumberAsObjectBinding : Binding {
+  override fun createCacheKey(aClass: Class<*>?, type: Type) = aClass!!
+
+  override fun serialize(obj: Any, context: WriteContext) {
+    context.writer.writeInt((obj as Number).toLong())
+  }
+
+  override fun deserialize(context: ReadContext, hostObject: Any?) = context.reader.longValue()
 }
 
 private class BooleanAsObjectBinding : Binding {

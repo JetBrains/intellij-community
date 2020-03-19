@@ -478,23 +478,21 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-16688
   public void testPkgResourcesNamespace() {
-    myFixture.copyDirectoryToProject("pkgResourcesNamespace", "");
-    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
-      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
-      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
-      assertInstanceOf(ref, PsiPolyVariantReference.class);
-      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
-      assertEquals(1, elements.size());
-      PsiFile root1 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root1/pkg/__init__.py"));
-      PsiFile root2 = myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("root2/pkg/__init__.py"));
-      assertNotParsed(root1);
-      assertNotParsed(root2);
-    });
+    doTestResolveInNamespacePackage(getTestName(true));
   }
 
   // PY-23087
   public void testPkgutilNamespace() {
-    myFixture.copyDirectoryToProject("pkgutilNamespace", "");
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-38434
+  public void testPkgutilNamespaceWithComments() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  private void doTestResolveInNamespacePackage(String namespace) {
+    myFixture.copyDirectoryToProject(namespace, "");
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
@@ -599,5 +597,20 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   // EA-121262
   public void testIncompleteFromImport() {
     assertUnresolved();
+  }
+
+  // PY-38322
+  public void testDunderAllDynamicallyBuiltInHelperFunction() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
+  }
+
+  // PY-38322 PY-39171
+  public void testImportOfNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        assertResolvesTo(PyFunction.class, "func");
+      });
+    });
   }
 }

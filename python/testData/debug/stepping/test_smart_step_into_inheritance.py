@@ -2,7 +2,7 @@ from __future__ import print_function
 
 
 def make_class(x):
-    class C(A):
+    class C:
         p = x
 
     return C

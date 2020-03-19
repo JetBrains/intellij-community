@@ -71,6 +71,10 @@ public interface StatusBarWidgetFactory {
    * @return Returns whether the widget can be enabled on the given status bar right now.
    * Status bar's context menu with enable/disable action depends on the result of this method.
    * <p>
+   * It's better to have this method aligned with {@link com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState#HIDDEN},
+   * whenever state is HIDDEN, this method should return false.
+   * Otherwise enabling widget via context menu won't take any visual effect.
+   * <p>
    * E.g. {@link com.intellij.openapi.wm.impl.status.EditorBasedWidget} are available if editor is opened in a frame that given status bar is attached to
    * <p>
    * For creating editor based widgets see also {@link com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory}

@@ -275,6 +275,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     final boolean noSinceBuildXml = !DomUtil.hasXml(sinceBuild);
     if (noSinceBuildXml ||
         sinceBuild.getValue() == null) {
+
+      // Gradle setups usually do not specify it in plugin.xml
+      if (!PluginModuleType.isPluginModuleOrDependency(module)) return;
+
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            "Must specify <idea-version> 'since-build'", null,
                            noSinceBuildXml ? new AddDomElementQuickFix<>(ideaPlugin.getIdeaVersion()) : null)
@@ -283,7 +287,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     final int baselineVersion = sinceBuild.getValue().getBaselineVersion();
-    
+
     boolean canHaveOsAttribute = baselineVersion >= LISTENERS_OS_ATTRIBUTE_PLATFORM_VERSION;
     if (!canHaveOsAttribute) {
       for (Listeners.Listener listener : listeners.getListeners()) {
@@ -692,7 +696,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
           vendor.getValue();
-          if (DomUtil.hasXml(vendor) && PluginManager.isDevelopedByJetBrains(vendor.getValue())) {
+          if (DomUtil.hasXml(vendor) && PluginManager.getInstance().isDevelopedByJetBrains(vendor.getValue())) {
             highlightRedundant(extension,
                                DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);

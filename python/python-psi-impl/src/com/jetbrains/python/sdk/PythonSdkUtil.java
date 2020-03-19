@@ -489,13 +489,29 @@ public class PythonSdkUtil {
     return envs == null;
   }
 
-  // Conda virtual environment and system conda
+  // Conda virtual environment and base conda
   public static boolean isConda(@NotNull Sdk sdk) {
     return isConda(sdk.getHomePath());
   }
 
   public static boolean isConda(@Nullable String sdkPath) {
     return findCondaMeta(sdkPath) != null;
+  }
+
+  public static boolean isBaseConda(@Nullable String sdkPath) {
+    final VirtualFile condaMeta = findCondaMeta(sdkPath);
+    if (condaMeta == null) {
+      return false;
+    }
+    final VirtualFile parent = condaMeta.getParent();
+    if (parent == null) {
+      return false;
+    }
+    final VirtualFile condaBin = parent.findChild("condabin");
+    if (condaBin != null) {
+      return true;
+    }
+    return parent.findChild("envs") != null;
   }
 
   @Nullable

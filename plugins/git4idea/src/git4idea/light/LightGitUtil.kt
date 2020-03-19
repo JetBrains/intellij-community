@@ -52,6 +52,6 @@ fun getFileContent(directory: VirtualFile,
 @Throws(VcsException::class)
 fun getFileContentAsString(file: VirtualFile, repositoryPath: String, executable: String, revisionOrBranch: String = GitUtil.HEAD): String {
   val vcsContent = getFileContent(file.parent, repositoryPath, executable, revisionOrBranch)
-  val charset: Charset = DiffContentFactoryImpl.guessCharset(vcsContent, VcsUtil.getFilePath(file))
+  val charset: Charset = DiffContentFactoryImpl.guessCharset(null, vcsContent, VcsUtil.getFilePath(file))
   return CharsetToolkit.decodeString(vcsContent, charset)
 }

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public abstract class StatusBarEditorBasedWidgetFactory implements StatusBarWidgetFactory {
   @Override
   public boolean isAvailable(@NotNull Project project) {

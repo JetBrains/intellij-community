@@ -24,7 +24,7 @@ public final class ClasspathCache {
 
   private static final double PROBABILITY = 0.005d;
 
-  static class LoaderData {
+  static final class LoaderData {
     private final int[] myResourcePackageHashes;
     private final int[] myClassPackageHashes;
     private final NameFilter myNameFilter;

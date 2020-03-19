@@ -22,8 +22,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 public class ShowChangesFromParentsAction extends BooleanPropertyToggleAction {
 
   public ShowChangesFromParentsAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.show.all.changes.from.parent"),
-          VcsLogBundle.lazyMessage("vcs.log.action.description.show.all.changes.from.parent"), null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.all.changes.from.parent"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.all.changes.from.parent"), null);
   }
 
   @Override

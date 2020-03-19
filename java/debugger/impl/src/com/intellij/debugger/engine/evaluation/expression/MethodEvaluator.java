@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class MethodEvaluator
@@ -239,9 +239,9 @@ public class MethodEvaluator implements Evaluator {
     ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class, evaluationContext);
 
     if (invokerClass != null) {
-      List<Method> methods = invokerClass.methodsByName("invoke");
-      if (!methods.isEmpty()) {
-        return debugProcess.invokeMethod(evaluationContext, invokerClass, methods.get(0),
+      Method method = DebuggerUtils.findMethod(invokerClass, "invoke", null);
+      if (method != null) {
+        return debugProcess.invokeMethod(evaluationContext, invokerClass, method,
                Arrays.asList(obj, ((VirtualMachineProxyImpl)debugProcess.getVirtualMachineProxy()).mirrorOf(name)));
       }
     }

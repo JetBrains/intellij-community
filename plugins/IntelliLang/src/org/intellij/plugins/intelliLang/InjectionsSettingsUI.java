@@ -88,7 +88,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     myRoot = new JPanel(new BorderLayout());
 
     myInjectionsTable = new InjectionsTable(getInjInfoList(myInfos));
-    myInjectionsTable.getEmptyText().setText("No injections configured");
+    myInjectionsTable.getEmptyText().setText(IntelliLangBundle.message("table.empty.text.no.injections.configured2"));
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myInjectionsTable);
     createActions(decorator);
@@ -138,8 +138,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       return edit != null && edit.getTemplatePresentation().isEnabled();
     });
     decorator.setEditAction(button -> performEditAction());
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.lazyMessage("action.AnActionButton.text.duplicate"),
-                                                       IntelliLangBundle.lazyMessage("action.AnActionButton.description.duplicate"),
+    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
+                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.duplicate"),
                                                        PlatformIcons.COPY_ICON) {
 
       @Override
@@ -158,8 +158,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     });
 
     decorator.addExtraAction(
-      new DumbAwareActionButton(IntelliLangBundle.lazyMessage("action.AnActionButton.text.enable.selected.injections"),
-                                IntelliLangBundle.lazyMessage("action.AnActionButton.description.enable.selected.injections"),
+      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.enable.selected.injections"),
+                                IntelliLangBundle.messagePointer("action.AnActionButton.description.enable.selected.injections"),
                                 PlatformIcons.SELECT_ALL_ICON) {
 
       @Override
@@ -168,8 +168,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
     });
     decorator.addExtraAction(
-      new DumbAwareActionButton(IntelliLangBundle.lazyMessage("action.AnActionButton.text.disable.selected.injections"),
-                                IntelliLangBundle.lazyMessage("action.AnActionButton.description.disable.selected.injections"),
+      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.disable.selected.injections"),
+                                IntelliLangBundle.messagePointer("action.AnActionButton.description.disable.selected.injections"),
                                 PlatformIcons.UNSELECT_ALL_ICON) {
 
         @Override
@@ -178,7 +178,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         }
       });
 
-    new DumbAwareAction(IdeBundle.lazyMessage("action.Anonymous.text.toggle")) {
+    new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myInjectionsTable);
@@ -193,12 +193,13 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
     if (myInfos.length > 1) {
       AnActionButton shareAction =
-        new DumbAwareActionButton(IntelliLangBundle.lazyMessage("action.AnActionButton.text.move.to.ide.scope"),
+        new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.move.to.ide.scope"),
                                   PlatformIcons.IMPORT_ICON) {
         {
           addCustomUpdater(e -> {
             CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
-            e.getPresentation().setText(cfg == getDefaultCfgInfo() ? "Move to IDE Scope" : "Move to Project Scope");
+            e.getPresentation().setText(cfg == getDefaultCfgInfo() ? IntelliLangBundle.message("label.text.move.to.ide.scope")
+                                                                   : IntelliLangBundle.message("label.text.move.to.project.scope"));
             return cfg != null;
           });
         }
@@ -239,8 +240,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       shareAction.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK)));
       decorator.addExtraAction(shareAction);
     }
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.lazyMessage("action.AnActionButton.text.import"),
-                                                       IntelliLangBundle.lazyMessage("action.AnActionButton.description.import"),
+    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.import"),
+                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.import"),
                                                        AllIcons.Actions.Install) {
 
       @Override
@@ -249,15 +250,15 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         updateCountLabel();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.lazyMessage("action.AnActionButton.text.export"),
-                                                       IntelliLangBundle.lazyMessage("action.AnActionButton.description.export"),
+    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.export"),
+                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.export"),
                                                        AllIcons.ToolbarDecorator.Export) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         final List<BaseInjection> injections = getInjectionList(getSelectedInjections());
         final VirtualFileWrapper wrapper = FileChooserFactory.getInstance().createSaveFileDialog(
-          new FileSaverDescriptor("Export Selected Injections to File...", "", "xml"), myProject).save(null, null);
+          new FileSaverDescriptor(IntelliLangBundle.message("dialog.title.export.selected.injections.to.file"), "", "xml"), myProject).save(null, null);
         if (wrapper == null) return;
         final Configuration configuration = new Configuration();
         configuration.setInjections(injections);
@@ -266,7 +267,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         }
         catch (IOException ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+          Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(),
+                                   IntelliLangBundle.message("dialog.title.export.failed"));
         }
       }
 
@@ -301,11 +303,12 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
           if (place.isEnabled()) enablePlacesCount++;
         }
       }
-      myCountLabel.setText(items.size() + " injection" + (items.size() > 1 ? "s" : "") + " (" + enablePlacesCount + " of " +
-                           placesCount + " place" + (placesCount > 1 ? "s" : "") + " enabled) ");
+      myCountLabel.setText(IntelliLangBundle
+                             .message("label.text.0.injection.1.2.of.3.place.4.enabled", items.size(), items.size() > 1 ? "s" : "",
+                                      enablePlacesCount, placesCount, placesCount > 1 ? "s" : ""));
     }
     else {
-      myCountLabel.setText("no injections configured ");
+      myCountLabel.setText(IntelliLangBundle.message("label.text.no.injections.configured"));
     }
   }
 
@@ -468,7 +471,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
 
       new DoubleClickListener() {
         @Override
-        protected boolean onDoubleClick(MouseEvent e) {
+        protected boolean onDoubleClick(@NotNull MouseEvent e) {
           final int row = rowAtPoint(e.getPoint());
           if (row < 0) return false;
           if (columnAtPoint(e.getPoint()) <= 0) return false;
@@ -543,7 +546,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       public TableCellRenderer getRenderer(final InjInfo injection) {
         return booleanCellRenderer;
       }
-    }, new ColumnInfo<InjInfo, InjInfo>("Name") {
+    }, new ColumnInfo<InjInfo, InjInfo>(IntelliLangBundle.message("column.info.name")) {
       @Override
       public InjInfo valueOf(final InjInfo info) {
         return info;
@@ -558,7 +561,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       public TableCellRenderer getRenderer(final InjInfo injection) {
         return displayNameCellRenderer;
       }
-    }, new ColumnInfo<InjInfo, InjInfo>("Language") {
+    }, new ColumnInfo<InjInfo, InjInfo>(IntelliLangBundle.message("column.info.language")) {
       @Override
       public InjInfo valueOf(final InjInfo info) {
         return info;
@@ -576,7 +579,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }};
     if (myInfos.length > 1) {
       final TableCellRenderer typeRenderer = createTypeRenderer();
-      return ArrayUtil.append(columnInfos, new ColumnInfo<InjInfo, String>("Scope") {
+      return ArrayUtil.append(columnInfos, new ColumnInfo<InjInfo, String>(IntelliLangBundle.message("column.info.scope")) {
         @Override
         public String valueOf(final InjInfo info) {
           return info.bundled ? "Built-in" : info.cfgInfo.title;
@@ -703,8 +706,8 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         return FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
       }
     };
-    descriptor.setDescription("Please select the configuration file (usually named IntelliLang.xml) to import.");
-    descriptor.setTitle("Import Configuration");
+    descriptor.setDescription(IntelliLangBundle.message("dialog.file.chooser.description.please.select.the.configuration.file"));
+    descriptor.setTitle(IntelliLangBundle.message("dialog.file.chooser.title.import.configuration"));
 
     descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, LangDataKeys.MODULE.getData(dataContext));
 
@@ -716,7 +719,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     try {
       final Configuration cfg = Configuration.load(file.getInputStream());
       if (cfg == null) {
-        Messages.showWarningDialog(myProject, "The selected file does not contain any importable configuration.", "Nothing to Import");
+        Messages.showWarningDialog(myProject,
+                                   IntelliLangBundle.message("dialog.message.the.selected.file"),
+                                   IntelliLangBundle.message("dialog.title.nothing.to.import"));
         return;
       }
       final CfgInfo info = getDefaultCfgInfo();
@@ -750,20 +755,24 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       myInjectionsTable.getListTableModel().setItems(getInjInfoList(myInfos));
       final int n = newInjections.size();
       if (n > 1) {
-        Messages.showInfoMessage(myProject, n + " entries have been successfully imported", "Import Successful");
+        Messages.showInfoMessage(myProject, IntelliLangBundle.message("dialog.message.0.entries.have.been.successfully.imported", n),
+                                 IntelliLangBundle.message("dialog.title.import.successful"));
       }
       else if (n == 1) {
-        Messages.showInfoMessage(myProject, "One entry has been successfully imported", "Import Successful");
+        Messages.showInfoMessage(myProject, IntelliLangBundle.message("dialog.message.one.entry.has.been.successfully.imported"),
+                                 IntelliLangBundle.message("dialog.title.import.successful"));
       }
       else {
-        Messages.showInfoMessage(myProject, "No new entries have been imported", "Import");
+        Messages.showInfoMessage(myProject, IntelliLangBundle.message("dialog.message.no.new.entries.have.been.imported"),
+                                 IntelliLangBundle.message("dialog.title.import"));
       }
     }
     catch (Exception ex) {
       Configuration.LOG.error(ex);
 
       final String msg = ex.getLocalizedMessage();
-      Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(), "Import Failed");
+      Messages.showErrorDialog(myProject, msg != null && msg.length() > 0 ? msg : ex.toString(),
+                               IntelliLangBundle.message("dialog.title.import.failed"));
     }
   }
 

@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public static class Holder {
     public static String getDisplayName() {
-      return XmlBundle.message("title.html");
+      return "HTML";
     }
   }
 

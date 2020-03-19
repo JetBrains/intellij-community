@@ -37,6 +37,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public final class EventLog {
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>");
-  private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
+  private static final @NonNls Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
   private static final String DEFAULT_CATEGORY = "";
 
   private final LogModel myModel = new LogModel(null);
@@ -318,7 +319,7 @@ public final class EventLog {
     return hasHtml;
   }
 
-  private static final String[] HTML_TAGS =
+  private static final @NonNls String[] HTML_TAGS =
     {"a", "abbr", "acronym", "address", "applet", "area", "article", "aside", "audio", "b", "base", "basefont", "bdi", "bdo", "big",
       "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd",
       "del", "details", "dfn", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form",
@@ -328,7 +329,7 @@ public final class EventLog {
       "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td",
       "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"};
 
-  private static final String[] SKIP_TAGS = {"html", "body", "b", "i", "font"};
+  private static final @NonNls String[] SKIP_TAGS = {"html", "body", "b", "i", "font"};
 
   private static boolean isTag(String @NotNull [] tags, @NotNull String tag) {
     tag = tag.substring(1, tag.length() - 1); // skip <>

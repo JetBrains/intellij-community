@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -22,6 +21,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.log.Hash;
@@ -31,6 +31,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
@@ -61,7 +62,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   public static final Topic<GitIncomingOutgoingListener> GIT_INCOMING_OUTGOING_CHANGED =
     Topic.create("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
 
-  private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd";
+  private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd"; //NON-NLS
 
   private static final boolean HAS_EXTERNAL_SSH_AGENT = hasExternalSSHAgent();
 
@@ -107,11 +108,15 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   public boolean hasOutgoingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
-    return getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
+    return shouldCheckIncomingOutgoing() && getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
   }
 
   public boolean shouldCheckIncoming() {
     return Registry.is("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
+  }
+
+  private static boolean shouldCheckIncomingOutgoing() {
+    return Registry.is("git.update.incoming.outgoing.info");
   }
 
   @NotNull
@@ -161,7 +166,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     if (!myIsUpdating.compareAndSet(false, true)) return;
     updateBranchesWithIncoming(false);
     updateBranchesWithOutgoing();
-    new Task.Backgroundable(myProject, "Update Branches Info...") {
+    new Task.Backgroundable(myProject, GitBundle.message("branches.update.info.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Semaphore semaphore = new Semaphore(0);
@@ -195,7 +200,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void scheduleUpdate() {
-    myQueue.queue(Update.create("update", () -> {
+    myQueue.queue(DisposableUpdate.createDisposable(myProject, "update", () -> {
       List<GitRepository> withIncoming;
       List<GitRepository> withOutgoing;
 
@@ -210,18 +215,16 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
         myShouldRequestRemoteInfo = false;
       }
 
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-        for (GitRepository r : withOutgoing) {
-          myLocalBranchesWithOutgoing.put(r, calculateBranchesWithOutgoing(r));
+      for (GitRepository r : withOutgoing) {
+        myLocalBranchesWithOutgoing.put(r, calculateBranchesWithOutgoing(r));
+      }
+      for (GitRepository r : withIncoming) {
+        if (shouldRequestRemoteInfo) {
+          myLocalBranchesToFetch.put(r, calculateBranchesToFetch(r));
         }
-        for (GitRepository r : withIncoming) {
-          if (shouldRequestRemoteInfo) {
-            myLocalBranchesToFetch.put(r, calculateBranchesToFetch(r));
-          }
-          myLocalBranchesWithIncoming.put(r, calcBranchesWithIncoming(r));
-        }
-        myProject.getMessageBus().syncPublisher(GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
-      });
+        myLocalBranchesWithIncoming.put(r, calcBranchesWithIncoming(r));
+      }
+      myProject.getMessageBus().syncPublisher(GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
     }));
   }
 
@@ -245,6 +248,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void updateBranchesWithOutgoing() {
+    if(!shouldCheckIncomingOutgoing()) return;
     synchronized (LOCK) {
       myDirtyReposWithOutgoing.addAll(GitRepositoryManager.getInstance(myProject).getRepositories());
     }
@@ -342,7 +346,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     }
 
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
-      List<String> params = newArrayList("--heads", remote.getName());
+      List<String> params = newArrayList("--heads", remote.getName()); //NON-NLS
       params.addAll(refs);
       GitCommandResult lsRemoteResult =
         Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
@@ -423,6 +427,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @Override
   public void repositoryChanged(@NotNull GitRepository repository) {
+    if (!shouldCheckIncomingOutgoing()) return;
     synchronized (LOCK) {
       myDirtyReposWithOutgoing.add(repository);
       myDirtyReposWithIncoming.add(repository);

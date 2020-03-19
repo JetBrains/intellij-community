@@ -40,6 +40,7 @@
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
+    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" icon="AllIcons.Actions.Rollback"/>
@@ -179,6 +180,7 @@
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction" internal="true"/>
     <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider">
       <add-to-group group-id="CopyFileReference"/>
+      <add-to-group group-id="CopyGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
   </actions>
 
@@ -231,7 +233,6 @@
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
     <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
-    <projectService serviceImplementation="git4idea.ignore.GitIgnoreInStoreDirGenerator"/>
     <projectService serviceImplementation="git4idea.ui.branch.dashboard.BranchesTreeStateHolder"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -303,7 +304,9 @@
 
     <statusBarWidgetFactory implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
     <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
-    <statusBarWidgetFactory implementation="git4idea.ui.branch.GitBranchWidget$Factory" order="after selectionModeWidget,before notificationsWidget"/>
+    <statusBarWidgetFactory id="gitWidget"
+                            implementation="git4idea.ui.branch.GitBranchWidget$Factory"
+                            order="after selectionModeWidget,before notificationsWidget"/>
   </extensions>
 
   <extensionPoints>

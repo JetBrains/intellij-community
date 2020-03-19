@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -739,7 +738,7 @@ public final class UIUtil {
   }
 
   public static String @NotNull [] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
-    ArrayList<String> lines = new ArrayList<>();
+    List<String> lines = new ArrayList<>();
     StringBuilder currentLine = new StringBuilder();
     StringBuilder currentAtom = new StringBuilder();
 
@@ -1772,7 +1771,7 @@ public final class UIUtil {
   }
 
   /**
-   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
+   * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
    * @see #pump()
    */
@@ -1967,50 +1966,55 @@ public final class UIUtil {
   @Nullable
   public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
     Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
-    if (component != null && component.getParent() instanceof JRootPane) {//GlassPane case
+    if (component != null && component.getParent() instanceof JRootPane) { // GlassPane case
       JRootPane rootPane = (JRootPane)component.getParent();
-      Point point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getLayeredPane());
-      component = SwingUtilities.getDeepestComponentAt(rootPane.getLayeredPane(), point.x, point.y);
+      component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getLayeredPane());
       if (component == null) {
-        point = SwingUtilities.convertPoint(parent, new Point(x, y), rootPane.getContentPane());
-        component = SwingUtilities.getDeepestComponentAt(rootPane.getContentPane(), point.x, point.y);
+        component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
+      }
+    }
+    if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
+      Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
+      if (components.length == 1 && ArrayUtil.indexOf(components, component) == -1) {
+        component = getDeepestComponentAtForComponent(parent, x, y, components[0]);
       }
     }
     return component;
+  }
+
+  private static Component getDeepestComponentAtForComponent(@NotNull Component parent, int x, int y, @NotNull Component component) {
+    Point point = SwingUtilities.convertPoint(parent, new Point(x, y), component);
+    return SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
   }
 
   public static void layoutRecursively(@NotNull Component component) {
     if (!(component instanceof JComponent)) {
       return;
     }
-    forEachComponentInHierarchy(component, c -> {
-      component.doLayout();
-    });
+    forEachComponentInHierarchy(component, __ -> component.doLayout());
   }
 
   @NotNull
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font) {
-    return getCssFontDeclaration(font, null, null, null);
+    return getCssFontDeclaration(font, getLabelForeground(), JBUI.CurrentTheme.Link.linkColor(), null);
   }
 
   @NotNull
   @Language("HTML")
   public static String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
-    StringBuilder builder = new StringBuilder().append("<style>\n");
+    @Language("HTML")
     String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
-
-    builder.append("body, div, td, p {").append(familyAndSize);
-    if (fgColor != null) builder.append(" color:#").append(ColorUtil.toHex(fgColor)).append(';');
-    builder.append("}\n");
-
-    builder.append("a {").append(familyAndSize);
-    if (linkColor != null) builder.append(" color:#").append(ColorUtil.toHex(linkColor)).append(';');
-    builder.append("}\n");
-
-    builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
-    builder.append("ul {list-style:disc; margin-left:15px;}\n");
-    return builder.append("</style>").toString();
+    return "<style>\n"
+    +"body, div, td, p {" + familyAndSize
+    + (fgColor != null ? " color:#" + ColorUtil.toHex(fgColor)+';' : "")
+    +"}\n"
+    +"a {" + familyAndSize
+    + (linkColor != null ? " color:#"+ColorUtil.toHex(linkColor)+';' : "")
+    +"}\n"
+    +"code {font-size:"+font.getSize()+"pt;}\n"
+    +"ul {list-style:disc; margin-left:15px;}\n"
+    +"</style>";
   }
 
   @NotNull
@@ -2229,10 +2233,14 @@ public final class UIUtil {
     return toRender;
   }
 
+  /**
+   * @deprecated This method is a hack. Please avoid it and create borderless {@code JScrollPane} manually using
+   * {@link com.intellij.ui.ScrollPaneFactory#createScrollPane(Component, boolean)}.
+   */
+  @Deprecated
   public static void removeScrollBorder(final Component c) {
     JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
       .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
-      .expand(o -> !(o instanceof Splitter)) // temp solution for jruby facet ui
       .filter(JScrollPane.class);
     for (JScrollPane scrollPane : scrollPanes) {
       Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
@@ -2806,12 +2814,10 @@ public final class UIUtil {
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
-    forEachComponentInHierarchy(component, c -> {
-      c.setBackground(bg);
-    });
+    forEachComponentInHierarchy(component, c -> c.setBackground(bg));
   }
 
-  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<Component> action) {
+  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
     action.consume(component);
     if (component instanceof Container) {
       for (Component c : ((Container)component).getComponents()) {
@@ -2948,13 +2954,13 @@ public final class UIUtil {
 
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
   @NotNull
-  public static String getDebugText(Component c) {
+  public static String getDebugText(@NotNull Component c) {
     StringBuilder builder  = new StringBuilder();
-    getAllTextsRecursivelyImpl(c, builder);
+    getAllTextsRecursively(c, builder);
     return builder.toString();
   }
 
-  private static void getAllTextsRecursivelyImpl(Component component, @NotNull StringBuilder builder) {
+  private static void getAllTextsRecursively(@NotNull Component component, @NotNull StringBuilder builder) {
     String candidate = "";
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
@@ -2967,7 +2973,7 @@ public final class UIUtil {
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
       for (Component child : components) {
-        getAllTextsRecursivelyImpl(child, builder);
+        getAllTextsRecursively(child, builder);
       }
     }
   }
@@ -3274,7 +3280,6 @@ public final class UIUtil {
 
   private static final class FocusedSelection {
     private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
-    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.selectionBackground", BACKGROUND);
     private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionBackground", BACKGROUND);
     private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionBackground", BACKGROUND);
   }
@@ -3296,13 +3301,6 @@ public final class UIUtil {
   }
 
   // background
-
-  @NotNull
-  public static Color getListBackground(@NotNull JList<?> list, boolean selected) {
-    if (selected) return getListSelectionBackground(list.hasFocus());
-    Color background = list.getBackground();
-    return background != null ? background : getListBackground();
-  }
 
   @NotNull
   public static Color getListBackground() {
@@ -3361,13 +3359,6 @@ public final class UIUtil {
   // foreground
 
   @NotNull
-  public static Color getListForeground(@NotNull JList<?> list, boolean selected) {
-    if (selected) return getListSelectionForeground(list.hasFocus());
-    Color foreground = list.getForeground();
-    return foreground != null ? foreground : getListForeground();
-  }
-
-  @NotNull
   public static Color getListForeground() {
     return UIManager.getColor("List.foreground");
   }
@@ -3414,17 +3405,6 @@ public final class UIUtil {
   // background
 
   @NotNull
-  public static Color getTreeBackground(@NotNull JTree tree, boolean selected) {
-    return !selected ? getTreeBackground(tree) : getTreeSelectionBackground(tree.hasFocus());
-  }
-
-  @NotNull
-  public static Color getTreeBackground(@NotNull JTree tree) {
-    Color background = tree.getBackground();
-    return background != null ? background : getTreeBackground();
-  }
-
-  @NotNull
   public static Color getTreeBackground() {
     return TREE_BACKGROUND;
   }
@@ -3458,17 +3438,6 @@ public final class UIUtil {
   }
 
   // foreground
-
-  @NotNull
-  public static Color getTreeForeground(@NotNull JTree tree, boolean selected) {
-    return !selected ? getTreeForeground(tree) : getTreeSelectionForeground(tree.hasFocus());
-  }
-
-  @NotNull
-  public static Color getTreeForeground(@NotNull JTree tree) {
-    Color foreground = tree.getForeground();
-    return foreground != null ? foreground : getTreeForeground();
-  }
 
   @NotNull
   public static Color getTreeForeground() {
@@ -3710,9 +3679,7 @@ public final class UIUtil {
     assert !SwingUtilities.isEventDispatchThread();
     Semaphore lock = new Semaphore(1);
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      lock.up();
-    });
+    SwingUtilities.invokeLater(() -> lock.up());
     lock.waitFor();
   }
 

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -61,7 +62,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   }
 
   @Override
-  public List<PsiLiteralExpression> getTargets() {
+  public @NotNull List<PsiLiteralExpression> getTargets() {
     final List<PsiLiteralExpression> result = new ArrayList<>();
     if (mySuppressedExpression != null) {
       result.add(mySuppressedExpression);
@@ -84,11 +85,12 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   }
 
   @Override
-  protected void selectTargets(List<PsiLiteralExpression> targets, final Consumer<List<PsiLiteralExpression>> selectionConsumer) {
+  protected void selectTargets(@NotNull List<? extends PsiLiteralExpression> targets, final @NotNull Consumer<? super List<? extends PsiLiteralExpression>> selectionConsumer) {
     if (targets.size() == 1) {
       selectionConsumer.consume(targets);
     } else {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiLiteralExpression>("Choose Inspections to Highlight Suppressed Problems from", targets){
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiLiteralExpression>(
+        JavaBundle.message("highlight.suppressed.warnings.choose.inspections"), targets){
         @Override
         public PopupStep onChosen(PsiLiteralExpression selectedValue, boolean finalChoice) {
           selectionConsumer.consume(Collections.singletonList(selectedValue));
@@ -107,7 +109,7 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
   }
 
   @Override
-  public void computeUsages(List<PsiLiteralExpression> targets) {
+  public void computeUsages(@NotNull List<? extends PsiLiteralExpression> targets) {
     final Project project = myTarget.getProject();
     final PsiElement parent = myTarget.getParent().getParent();
     final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(),

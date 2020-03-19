@@ -180,8 +180,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new DumbAwareAction(CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.add"),
-                                   CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.add"),
+    result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.add"),
+                                   CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.add"),
                                    IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
@@ -194,8 +194,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
     });
     result.add(new MyDeleteAction());
     result.add(new DumbAwareAction(
-      CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.copy"),
-      CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.copy"),
+      CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.copy"),
+      CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.copy"),
       PlatformIcons.COPY_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
@@ -220,8 +220,8 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
-    result.add(new DumbAwareAction(CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.text.import"),
-                                   CopyrightBundle.lazyMessage("action.DumbAware.CopyrightProfilesPanel.description.import"),
+    result.add(new DumbAwareAction(CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.text.import"),
+                                   CopyrightBundle.messagePointer("action.DumbAware.CopyrightProfilesPanel.description.import"),
                                    PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
@@ -230,7 +230,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
             final FileType fileType = file.getFileType();
             return fileType != PlainTextFileType.INSTANCE && (fileType == StdFileTypes.IDEA_MODULE || fileType == StdFileTypes.XML);
           })
-          .withTitle("Choose File Containing Copyright Notice");
+          .withTitle(CopyrightBundle.message("dialog.file.chooser.title.choose.file.containing.copyright.notice"));
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
           if (profiles == null) return;
@@ -240,7 +240,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
             }
             else {
               JBPopupFactory.getInstance()
-                .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", profiles) {
+                .createListPopup(new BaseListPopupStep<CopyrightProfile>(CopyrightBundle.message("popup.title.choose.profile.to.import"), profiles) {
                   @Override
                   public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
                     return doFinalStep(() -> importProfile(selectedValue));
@@ -256,7 +256,9 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
             }
           }
           else {
-            Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
+            Messages.showWarningDialog(myProject,
+                                       CopyrightBundle.message("dialog.message.the.selected.file.copyright.settings"),
+                                       CopyrightBundle.message("dialog.title.import.failure"));
           }
         });
       }
@@ -266,7 +268,9 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
         if (profileName == null) return;
         copyrightProfile.setName(profileName);
         addProfileNode(copyrightProfile);
-        Messages.showInfoMessage(myProject, "The copyright settings have been successfully imported.", "Import Complete");
+        Messages.showInfoMessage(myProject,
+                                 CopyrightBundle.message("dialog.message.the.copyright.settings.imported"),
+                                 CopyrightBundle.message("dialog.title.import.complete"));
       }
     });
     return result;
@@ -275,7 +279,7 @@ class CopyrightProfilesPanel extends MasterDetailsComponent implements Searchabl
 
   @Nullable
   private String askForProfileName(String title, String initialName) {
-    return Messages.showInputDialog("New copyright profile name:", title, Messages.getQuestionIcon(), initialName, new InputValidator() {
+    return Messages.showInputDialog(CopyrightBundle.message("dialog.message.new.copyright.profile.name"), title, Messages.getQuestionIcon(), initialName, new InputValidator() {
       @Override
       public boolean checkInput(String s) {
         return !getAllProfiles().containsKey(s) && s.length() > 0;

@@ -164,7 +164,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
     @NotNull private final Collection<String> myVariants;
 
     SelectMultipleValuesAction() {
-      super(VcsLogBundle.lazyMessage("vcs.log.filter.action.select"));
+      super(VcsLogBundle.messagePointer("vcs.log.filter.action.select"));
       myVariants = getAllValues();
     }
 

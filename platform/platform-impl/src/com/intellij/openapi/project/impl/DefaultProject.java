@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
@@ -17,12 +18,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectStoreOwner;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.List;
@@ -49,6 +50,11 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
           return true; // no startup activities, never opened
         }
 
+        @Override
+        protected @NotNull ComponentManager getActualContainerInstance() {
+          return DefaultProject.this;
+        }
+
         @Nullable
         @Override
         public String activityNamePrefix() {
@@ -65,9 +71,8 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
 
         @Override
         public void init(@Nullable ProgressIndicator indicator) {
-          MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
-          picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
+          registerServiceInstance(Project.class, DefaultProject.this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
           //noinspection unchecked
           registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);

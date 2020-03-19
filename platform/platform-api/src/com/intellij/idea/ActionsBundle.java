@@ -36,7 +36,7 @@ public class ActionsBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static Supplier<String> lazyMessage(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getLazyMessage(key, params);
   }
 

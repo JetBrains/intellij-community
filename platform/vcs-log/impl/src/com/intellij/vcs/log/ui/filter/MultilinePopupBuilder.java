@@ -82,7 +82,8 @@ class MultilinePopupBuilder {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField)
       .setCancelOnClickOutside(true)
       .setAdText(
-        VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text", KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts())))
+        VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text",
+                             KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts())))
       .setRequestFocus(true)
       .setResizable(true)
       .setMayBeParent(true);

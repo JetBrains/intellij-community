@@ -137,6 +137,9 @@
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.io.File File(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.io.File File(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -458,8 +461,20 @@
   <item name='java.io.PrintStream void print(char[]) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.io.PrintStream void print(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.io.PrintStream void print(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.io.PrintStream void println(char[]) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.PrintStream void println(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.io.PrintStream void println(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.io.PrintStream void write(byte[], int, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

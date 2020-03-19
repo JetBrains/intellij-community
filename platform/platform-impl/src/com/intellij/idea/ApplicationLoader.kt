@@ -24,7 +24,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.MacOSApplicationProvider
@@ -60,7 +60,6 @@ private fun executeInitAppInEdt(args: List<String>,
   val app = runActivity("create app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
   }
-
   val registerFuture = registerAppComponents(pluginDescriptorFuture, app)
 
   if (args.isEmpty()) {
@@ -73,7 +72,13 @@ private fun executeInitAppInEdt(args: List<String>,
     .thenRun {
       val starter = findStarter(args.first()) ?: IdeStarter()
       if (Main.isHeadless() && !starter.isHeadless) {
-        Main.showMessage("Startup Error", "Application cannot start in a headless mode", true)
+        val commandName = starter.commandName
+        val message = "Application cannot start in a headless mode" + when {
+          starter is IdeStarter -> ""
+          commandName != null -> ", for command: $commandName"
+          else -> ", for starter: " + starter.javaClass.name
+        }
+        Main.showMessage("Startup Error", message, true)
         exitProcess(Main.NO_GRAPHICS)
       }
 
@@ -239,13 +244,13 @@ private fun startApp(app: ApplicationImpl,
 
 @ApiStatus.Internal
 fun createExecutorToPreloadServices(): Executor {
-  return AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+  return AppExecutorUtil.createBoundedApplicationPoolExecutor("Preload Services", Runtime.getRuntime().availableProcessors(), false)
 }
 
 @ApiStatus.Internal
 @JvmOverloads
 fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
-                    container: PlatformComponentManagerImpl,
+                    container: ComponentManagerImpl,
                     activityPrefix: String,
                     onlyIfAwait: Boolean = false,
                     executor: Executor = createExecutorToPreloadServices()): CompletableFuture<Void?> {
@@ -346,15 +351,14 @@ private fun addActivateAndWindowsCliListeners() {
   })
 }
 
-@JvmOverloads
-fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = CompletableFuture.completedFuture(null)) {
+fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
   val initAppActivity = MainRunner.startupStart.endAndStart(Activities.INIT_APP)
-  val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
+  val loadAndInitPluginFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
   initUiTask
     .thenRunAsync(Runnable {
       val args = processProgramArguments(rawArgs)
       EventQueue.invokeLater {
-        executeInitAppInEdt(args, initAppActivity, pluginDescriptorsFuture)
+        executeInitAppInEdt(args, initAppActivity, loadAndInitPluginFuture)
       }
 
       if (!Main.isHeadless()) {
@@ -370,19 +374,25 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
           DragSource.getDefaultDragSource()
         }
       }
-    }, AppExecutorUtil.getAppExecutorService())  // must not be executed neither in IDE main thread nor in EDT
+    }, AppExecutorUtil.getAppExecutorService()) // must not be executed neither in IDE main thread nor in EDT
 
-  val plugins = try {
-    initAppActivity.runChild("plugin descriptors loading") {
-      PluginManagerCore.getLoadedPlugins(MainRunner::class.java.classLoader)
-    }
+  try {
+    val activity = initAppActivity.startChild("plugin descriptor init waiting")
+    PluginManagerCore.initPlugins(MainRunner::class.java.classLoader)
+      .whenComplete { result, error ->
+        activity.end()
+        if (error == null) {
+          loadAndInitPluginFuture.complete(result)
+        }
+        else {
+          loadAndInitPluginFuture.completeExceptionally(error)
+        }
+      }
   }
   catch (e: Throwable) {
-    pluginDescriptorsFuture.completeExceptionally(e)
+    loadAndInitPluginFuture.completeExceptionally(e)
     return
   }
-
-  pluginDescriptorsFuture.complete(plugins)
 }
 
 private fun loadSystemFonts() {

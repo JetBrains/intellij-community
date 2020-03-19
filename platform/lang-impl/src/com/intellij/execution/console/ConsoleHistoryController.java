@@ -4,6 +4,7 @@ package com.intellij.execution.console;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.console.ConsoleHistoryModel.Entry;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.idea.ActionsBundle;
@@ -499,8 +500,8 @@ public class ConsoleHistoryController implements Disposable {
     catch (final IOException e) {
       LOG.warn(e);
       ApplicationManager.getApplication().invokeLater(() -> {
-        String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
-        Messages.showErrorDialog(message, "Unable to Open File");
+        String message = ExecutionBundle.message("dialog.message.unable.to.open.file", rootType.getId(), pathName, e.getLocalizedMessage());
+        Messages.showErrorDialog(message, ExecutionBundle.message("dialog.title.unable.to.open.file"));
       });
       return null;
     }

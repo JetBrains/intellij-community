@@ -347,10 +347,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static Provider getProvider(AnActionEvent e) {
-    for (Provider provider : EP_NAME.getExtensions()) {
-      if (provider.isEnabled(e)) return provider;
-    }
-    return null;
+    return EP_NAME.findFirstSafe(provider -> provider.isEnabled(e));
   }
 
   public interface Provider {

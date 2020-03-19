@@ -1,6 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
-
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -23,12 +22,30 @@ import org.junit.Test
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+
+private fun testLoadDescriptorsFromDir(dir: Path, buildNumber: BuildNumber): PluginManagerState {
+  val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), buildNumber))
+  context.usePluginClassLoader = true
+
+  // constant order in tests
+  var paths: List<Path>? = null
+  Files.newDirectoryStream(dir).use { dirStream -> paths = dirStream.sorted() }
+  context.use {
+    for (file in paths!!) {
+      val descriptor = PluginManagerCore.loadDescriptor(file, false, context) ?: continue
+      context.result.add(descriptor, context, false)
+    }
+  }
+  context.result.finishLoading()
+  return PluginManagerCore.initializePlugins(context, UrlClassLoader.build().get(), false)
+}
 
 class PluginDescriptorTest {
   @Rule
@@ -92,7 +109,7 @@ class PluginDescriptorTest {
   @Test
   fun testProductionPlugins() {
     assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
+    val descriptors = testLoadDescriptorsFromDir(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
     assertThat(descriptors).isNotEmpty()
     assertThat(descriptors.find { it!!.pluginId.idString == "com.intellij.java" }).isNotNull
   }
@@ -114,7 +131,7 @@ class PluginDescriptorTest {
   @Test
   fun testProduction2() {
     assumeTrue(SystemInfo.isMac && !UsefulTestCase.IS_UNDER_TEAMCITY)
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
+    val descriptors = testLoadDescriptorsFromDir(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
     assertThat(descriptors).isNotEmpty()
   }
 
@@ -168,7 +185,7 @@ class PluginDescriptorTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val result = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber())
+    val result = testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber())
     val plugins = result.sortedEnabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -176,7 +193,7 @@ class PluginDescriptorTest {
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
     assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
+    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
   }
 
   @Suppress("PluginXmlValidity")
@@ -198,7 +215,7 @@ class PluginDescriptorTest {
         <idea-version since-build="2.0" until-build="4.*"/>
       </idea-plugin>""")
 
-    val result = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir, BuildNumber.fromString("3.12"))
+    val result = testLoadDescriptorsFromDir(pluginDir, BuildNumber.fromString("3.12")!!)
 
     val plugins = result.sortedEnabledPlugins
     assertThat(plugins).hasSize(1)
@@ -227,7 +244,7 @@ class PluginDescriptorTest {
         <version>1.0</version>
       </idea-plugin>""")
 
-    val result = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber())
+    val result = testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber())
     val plugins = result.sortedEnabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -235,7 +252,7 @@ class PluginDescriptorTest {
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
     assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
+    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
   }
 
   @Suppress("PluginXmlValidity")
@@ -285,7 +302,7 @@ class PluginDescriptorTest {
   }
 
   private fun checkClassLoader(pluginDir: Path) {
-    val list = PluginManagerCore.testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber()).sortedEnabledPlugins
+    val list = testLoadDescriptorsFromDir(pluginDir, PluginManagerCore.getBuildNumber()).sortedEnabledPlugins
     assertThat(list).hasSize(2)
 
     val bar = list[0]

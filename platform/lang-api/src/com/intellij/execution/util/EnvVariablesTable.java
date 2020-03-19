@@ -16,6 +16,7 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
@@ -48,7 +49,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   private boolean myPasteEnabled = false;
 
   public EnvVariablesTable() {
-    getTableView().getEmptyText().setText("No variables");
+    getTableView().getEmptyText().setText(ExecutionBundle.message("empty.text.no.variables"));
     AnAction copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
     if (copyAction != null) {
       copyAction.registerCustomShortcutSet(copyAction.getShortcutSet(), getTableView()); // no need to add in popup menu
@@ -118,7 +119,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
   protected class NameColumnInfo extends ElementsColumnInfoBase<EnvironmentVariable> {
     public NameColumnInfo() {
-      super("Name");
+      super(ExecutionBundle.message("env.variable.column.name.title"));
     }
     @Override
     public String valueOf(EnvironmentVariable environmentVariable) {
@@ -151,7 +152,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
   protected class ValueColumnInfo extends ElementsColumnInfoBase<EnvironmentVariable> {
     public ValueColumnInfo() {
-      super("Value");
+      super(ExecutionBundle.message("env.variable.column.value.title"));
     }
     @Override
     public String valueOf(EnvironmentVariable environmentVariable) {
@@ -255,12 +256,15 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         if (row >= 0 && column >= 0) {
           TableCellEditor editor = view.getCellEditor();
           if (editor != null) {
-            JTextField textField = (JTextField)((DefaultCellEditor)editor).getComponent();
-            try {
-              textField.getDocument().insertString(textField.getCaretPosition(), content, null);
-            }
-            catch (BadLocationException e) {
-              //just ignore, paste failed
+            Component component = ((DefaultCellEditor)editor).getComponent();
+            if (component instanceof JTextField) {
+              JTextField textField = (JTextField)component;
+              try {
+                textField.getDocument().insertString(textField.getCaretPosition(), content, null);
+              }
+              catch (BadLocationException e) {
+                //just ignore, paste failed
+              }
             }
           }
         }

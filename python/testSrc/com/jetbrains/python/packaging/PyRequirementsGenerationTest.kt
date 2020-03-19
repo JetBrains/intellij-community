@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -11,6 +16,14 @@ import org.easymock.EasyMock
 class PyRequirementsGenerationTest : PyTestCase() {
 
   private var oldPackageManagers: PyPackageManagers? = null
+  private val installedPackages = mapOf("Django" to "3.0.0",
+                                        "requests" to "2.22.0",
+                                        "Jinja2" to "2.11.1",
+                                        "pandas" to "1.0.1" ,
+                                        "cookiecutter" to "1.7.0",
+                                        "numpy" to "1.18.1",
+                                        "tox" to "3.14.4",
+                                        "docker-py" to "1.10.6")
 
   fun testNewFileGeneration() = doTest()
   fun testNewFileWithoutVersion() = doTest(PyRequirementsVersionSpecifierType.NO_VERSION)
@@ -27,11 +40,16 @@ class PyRequirementsGenerationTest : PyTestCase() {
   fun testRemoveUnused() = doTest(removeUnused = true)
   fun testUpdateVersionKeepInstallOptions() = doTest()
   fun testCompatibleFileReference() = doTest()
+  fun testDifferentTopLevelImport() = doTest()
+  fun testDifferentTopLevelImportWithOriginalPackage() = doTest(packages = installedPackages + mapOf("docker" to "3.7.0"))
+  fun testBaseFileUnchanged() = doTest()
+  fun testBaseFileUpdate() = doTest(modifyBaseFiles = true)
+  fun testBaseFileCleanup() = doTest(modifyBaseFiles = true, removeUnused = true)
 
   private fun doTest(versionSpecifier: PyRequirementsVersionSpecifierType = PyRequirementsVersionSpecifierType.STRONG_EQ,
                      removeUnused: Boolean = false,
                      modifyBaseFiles: Boolean = false,
-                     block: ((PyRequirementsAnalysisResult) -> Unit)? = null) {
+                     packages: Map<String, String> = installedPackages) {
     val settings = PyPackageRequirementsSettings.getInstance(myFixture.module)
     val oldRequirementsPath = settings.requirementsPath
     val oldVersionSpecifier = settings.versionSpecifier
@@ -39,15 +57,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
     val oldModifyBaseFiles = settings.modifyBaseFiles
 
     try {
-      overrideInstalledPackages(
-        "Django" to "3.0.0",
-        "requests" to "2.22.0",
-        "Jinja2" to "2.11.1",
-        "pandas" to "1.0.1" ,
-        "cookiecutter" to "1.7.0",
-        "numpy" to "1.18.1",
-        "tox" to "3.14.4"
-      )
+      overrideInstalledPackages(packages)
 
       settings.requirementsPath = "requirements.txt"
       settings.versionSpecifier = versionSpecifier
@@ -57,12 +67,15 @@ class PyRequirementsGenerationTest : PyTestCase() {
       val testName = getTestName(true)
       myFixture.copyDirectoryToProject(testName, "")
       myFixture.configureFromTempProjectFile(settings.requirementsPath)
-      if (block != null) {
-        block(prepareRequirementsText(myFixture.module, settings)!!)
-      }
-      else {
-        syncWithImports(myFixture.module)
-        myFixture.checkResultByFile("$testName/new_${settings.requirementsPath}")
+
+      val action = ActionManager.getInstance().getAction("PySyncPythonRequirements")
+      val parentContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
+      val context = SimpleDataContext.getSimpleContext(LangDataKeys.MODULE.name, myFixture.module, parentContext)
+      val event = AnActionEvent.createFromAnAction(action, null, "", context)
+      action.actionPerformed(event)
+      myFixture.checkResultByFile("$testName/new_${settings.requirementsPath}", true)
+      if (modifyBaseFiles) {
+        myFixture.checkResultByFile("base_${settings.requirementsPath}", "$testName/new_base_${settings.requirementsPath}", true)
       }
       assertProjectFilesNotParsed(myFixture.file)
     }
@@ -93,15 +106,15 @@ class PyRequirementsGenerationTest : PyTestCase() {
 
   override fun getTestDataPath(): String = super.getTestDataPath() + "/requirement/generation"
 
-  private fun overrideInstalledPackages(vararg packages: Pair<String, String>) {
-    ApplicationManager.getApplication().registerServiceInstance(PyPackageManagers::class.java, MockPyPackageManagers(packages.toMap()))
+  private fun overrideInstalledPackages(packages: Map<String, String>) {
+    ApplicationManager.getApplication().registerServiceInstance(PyPackageManagers::class.java, MockPyPackageManagers(packages))
   }
 
   private class MockPyPackageManagers(val packages: Map<String, String>) : PyPackageManagers() {
     override fun forSdk(sdk: Sdk): PyPackageManager {
       val packageManager = EasyMock.createMock<PyPackageManager>(PyPackageManager::class.java)
       EasyMock
-        .expect(packageManager.packages)
+        .expect(packageManager.refreshAndGetPackages(false))
         .andReturn(packages.map { PyPackage(it.key, it.value, null, emptyList()) })
 
       EasyMock.replay(packageManager)

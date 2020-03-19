@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
@@ -6,14 +6,13 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -52,20 +51,6 @@ public final class EnvironmentUtil {
 
   private static final AtomicReference<CompletableFuture<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
-  private static final NotNullLazyValue<Map<String, String>> ourEnvironment = NotNullLazyValue.createValue(() -> {
-    try {
-      Future<Map<String, String>> getter = ourEnvGetter.get();
-      if (getter == null) {
-        getter = loadEnv();
-      }
-      return getter.get();
-    }
-    catch (Throwable t) {
-      LOG.warn("can't get shell environment", t);
-      return getSystemEnv();
-    }
-  });
-
   private static Map<String, String> getSystemEnv() {
     if (SystemInfo.isWindows) {
       return unmodifiableMap(new THashMap<>(System.getenv(), CaseInsensitiveStringHashingStrategy.INSTANCE));
@@ -78,15 +63,13 @@ public final class EnvironmentUtil {
   private EnvironmentUtil() { }
 
   @ApiStatus.Internal
-  public static synchronized CompletableFuture<Map<String, String>> loadEnv() {
+  public static synchronized CompletableFuture<Map<String, String>> loadEnv(boolean macEnvUnlocked) {
     CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
     if (getter != null) {
       return getter;
     }
 
-    if (SystemInfo.isMac &&
-        "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
-        SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
+    if (macEnvUnlocked && SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.fix.mac.env", "true"))) {
       getter = CompletableFuture.supplyAsync(() -> {
         try {
           return unmodifiableMap(setCharsetVar(getShellEnv()));
@@ -127,9 +110,18 @@ public final class EnvironmentUtil {
    *
    * @return unmodifiable map of the process environment.
    */
-  @NotNull
-  public static Map<String, String> getEnvironmentMap() {
-    return ourEnvironment.getValue();
+  public static @NotNull Map<String, String> getEnvironmentMap() {
+    try {
+      CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
+      if (getter == null) {
+        getter = loadEnv("unlocked".equals(System.getProperty("__idea.mac.env.lock")));
+      }
+      return getter.join();
+    }
+    catch (Throwable t) {
+      LOG.warn("can't get shell environment", t);
+      return getSystemEnv();
+    }
   }
 
   /**
@@ -335,7 +327,8 @@ public final class EnvironmentUtil {
                                                       boolean isLogin,
                                                       boolean isInteractive,
                                                       boolean isCommand) {
-    List<String> commands = ContainerUtil.newArrayList(shellScript);
+    List<String> commands = new ArrayList<>();
+    commands.add(shellScript);
     if (isLogin && !shellScript.endsWith("/tcsh") && !shellScript.endsWith("/csh")) {
       // *csh do not allow to use -l with any other options
       commands.add(SHELL_LOGIN_ARGUMENT);
@@ -351,7 +344,7 @@ public final class EnvironmentUtil {
 
   @NotNull
   public static Map<String, String> parseEnv(String... lines) {
-    Set<String> toIgnore = ContainerUtil.set("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER);
+    Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<>();
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.notification.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.ui.NotificationsConfigurablePanel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -37,7 +38,7 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
   @Override
   @Nls
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return IdeBundle.message("notification.configurable.display.name.notifications");
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.psi.refResolve;
 
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +21,10 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -43,6 +47,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -405,7 +410,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
         if (!resolveProcess.isDone()) return;
         log("Started to resolve " + files.size() + " files");
 
-        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, PsiBundle.message("resolving.files"), false) {
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, JavaBundle.message("resolving.files"), false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             if (!ApplicationManagerEx.getApplicationEx().isDisposed()) {
@@ -445,7 +450,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
         if (!file.isDirectory() && toResolve(file, myProject)) {
           int fileId = getAbsId(file);
           int i = totalSize - toProcess.size();
-          indicator.setText(PsiBundle.message("0.1.resolving.2", i, totalSize, file.getPresentableUrl()));
+          indicator.setText(JavaBundle.message("0.1.resolving.2", i, totalSize, file.getPresentableUrl()));
           int[] forwardIds = processFile(file, fileId, indicator);
           if (forwardIds == null) {
             //queueUpdate(file);
@@ -491,7 +496,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
     // fine but grabs all CPUs
     //return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(fileList, indicator, false, false, processor);
 
-    int parallelism = CacheUpdateRunner.indexingThreadCount();
+    int parallelism = UnindexedFilesUpdater.getNumberOfIndexingThreads();
     final Callable<Boolean> processFileFromSet = () -> {
       final boolean[] result = {true};
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {

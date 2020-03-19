@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
+
 /**
  * A wrapper over {@link CefApp}.
  * <p>
@@ -62,7 +64,7 @@ public abstract class JBCefApp {
     Color bg = JBColor.background();
     config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     if (ApplicationManager.getApplication().isInternal()) {
-      config.mySettings.remote_debugging_port = 9229;
+      config.mySettings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
     }
     CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
     myCefApp = CefApp.getInstance(config.mySettings);
@@ -244,10 +246,10 @@ public abstract class JBCefApp {
       }
       ourSchemeHandlerFactoryList.clear(); // no longer needed
 
-      getInstance().myCefApp.registerSchemeHandlerFactory("file", "", new CefSchemeHandlerFactory() {
+      getInstance().myCefApp.registerSchemeHandlerFactory(FILE_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
         @Override
         public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
-          return "file".equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
+          return FILE_SCHEME_NAME.equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
         }
       });
     }

@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 /**
  * Utilities for working with {@link File}.
  */
-@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class FileUtil extends FileUtilRt {
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
@@ -144,11 +144,8 @@ public class FileUtil extends FileUtilRt {
     return !ThreeState.NO.equals(startsWith(path, start, strict, caseSensitive, false));
   }
 
-  @NotNull
-  private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean caseSensitive,
-                                       boolean checkImmediateParent) {
-    final int pathLength = path.length();
-    final int prefixLength = prefix.length();
+  private static ThreeState startsWith(String path, String prefix, boolean strict, boolean caseSensitive, boolean checkImmediateParent) {
+    int pathLength = path.length(), prefixLength = prefix.length();
     if (prefixLength == 0) return pathLength == 0 ? ThreeState.YES : ThreeState.UNSURE;
     if (prefixLength > pathLength) return ThreeState.NO;
     if (!path.regionMatches(!caseSensitive, 0, prefix, 0, prefixLength)) return ThreeState.NO;
@@ -160,13 +157,12 @@ public class FileUtil extends FileUtilRt {
     if (lastPrefixChar == '/' || lastPrefixChar == File.separatorChar) {
       slashOrSeparatorIdx = prefixLength - 1;
     }
-    char next1 = path.charAt(slashOrSeparatorIdx);
-    if (next1 == '/' || next1 == File.separatorChar) {
+    char next = path.charAt(slashOrSeparatorIdx);
+    if (next == '/' || next == File.separatorChar) {
       if (!checkImmediateParent) return ThreeState.YES;
-
       if (slashOrSeparatorIdx == pathLength - 1) return ThreeState.YES;
-      int idxNext = path.indexOf(next1, slashOrSeparatorIdx + 1);
-      idxNext = idxNext == -1 ? path.indexOf(next1 == '/' ? '\\' : '/', slashOrSeparatorIdx + 1) : idxNext;
+      int idxNext = path.indexOf(next, slashOrSeparatorIdx + 1);
+      idxNext = idxNext == -1 ? path.indexOf(next == '/' ? '\\' : '/', slashOrSeparatorIdx + 1) : idxNext;
       return idxNext == -1 ? ThreeState.YES : ThreeState.UNSURE;
     }
     else {
@@ -1189,14 +1185,20 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
+  /** @deprecated does not support UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  @Deprecated
   public static boolean isAbsolutePlatformIndependent(@NotNull String path) {
     return isUnixAbsolutePath(path) || isWindowsAbsolutePath(path);
   }
 
+  /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  @Deprecated
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");
   }
 
+  /** @deprecated does not support UNC paths; consider using {@link PathUtil} or {@link java.nio.file NIO2} instead */
+  @Deprecated
   public static boolean isWindowsAbsolutePath(@NotNull String path) {
     boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
     if (ok && path.length() > 2) {
@@ -1291,18 +1293,17 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(File dir, @NotNull String prefix, @Nullable String suffix) throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix);
   }
 
   @NotNull
-  public static File createTempFile(File dir, @NotNull String prefix, @Nullable String suffix, boolean create)
-    throws IOException {
+  public static File createTempFile(@NotNull File dir, @NotNull String prefix, @Nullable String suffix, boolean create) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix, create);
   }
 
   @NotNull
-  public static File createTempFile(File dir,
+  public static File createTempFile(@NotNull File dir,
                                     @NotNull String prefix,
                                     @Nullable String suffix,
                                     boolean create,
@@ -1444,15 +1445,6 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
-  }
-
-  public static boolean isRootPath(@NotNull String path) {
-    if (path.equals("/")) return true;
-    if (path.length() == 3 && path.charAt(1) == ':') {
-      char ch = path.charAt(0);
-      return 'A' <= ch && ch <= 'Z' || 'a' <= ch && ch <= 'z';
-    }
-    return false;
   }
 
   public static boolean deleteWithRenaming(@NotNull File file) {

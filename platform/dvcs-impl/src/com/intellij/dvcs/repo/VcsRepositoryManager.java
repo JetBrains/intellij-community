@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
 
@@ -43,7 +42,6 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @NotNull private final Map<VirtualFile, Repository> myRepositories = new HashMap<>();
   @NotNull private final Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
-  @NotNull private final List<VcsRepositoryCreator> myRepositoryCreators;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile boolean myDisposed;
@@ -56,7 +54,6 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   public VcsRepositoryManager(@NotNull Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myRepositoryCreators = Arrays.asList(VcsRepositoryCreator.EXTENSION_POINT_NAME.getExtensions(project));
     project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     ((ProjectLevelVcsManagerImpl)myVcsManager).addInitializationRequest(VcsInitObject.OTHER_INITIALIZATION,
                                                                         () -> checkAndUpdateRepositoriesCollection(null));
@@ -320,7 +317,8 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   @Nullable
   private VcsRepositoryCreator getRepositoryCreator(@Nullable final AbstractVcs vcs) {
     if (vcs == null) return null;
-    return ContainerUtil.find(myRepositoryCreators, creator -> creator.getVcsKey().equals(vcs.getKeyInstanceMethod()));
+    return VcsRepositoryCreator.EXTENSION_POINT_NAME.findFirstSafe(myProject, creator
+      -> creator.getVcsKey().equals(vcs.getKeyInstanceMethod()));
   }
 
   @NotNull

@@ -4,10 +4,11 @@ package com.intellij.internal.statistic.actions
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
+import com.intellij.internal.statistic.StatisticsDevKitUtil
+import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,7 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import java.io.File
 
-class OpenWhitelistFileAction(private val myRecorderId: String = "FUS")
+class OpenWhitelistFileAction(private val myRecorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
   : DumbAwareAction(StatisticsBundle.message("stats.open.0.whitelist.file", myRecorderId),
                     ActionsBundle.message("group.OpenWhitelistFileAction.description"),
                     AllIcons.FileTypes.Config) {
@@ -38,11 +39,7 @@ class OpenWhitelistFileAction(private val myRecorderId: String = "FUS")
     fun openFileInEditor(file: File, project: Project) {
       val virtualFile = VfsUtil.findFileByIoFile(file, true)
       if (virtualFile == null) {
-        val notification = Notification("FeatureUsageStatistics",
-                                        StatisticsBundle.message("stats.feature.usage.statistics"),
-                                        StatisticsBundle.message("stats.file.0.does.not.exist", file.absolutePath),
-                                        NotificationType.WARNING)
-        notification.notify(project)
+        showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.file.0.does.not.exist", file.absolutePath))
         return
       }
       FileEditorManager.getInstance(project).openFile(virtualFile, true)

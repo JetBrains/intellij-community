@@ -39,12 +39,11 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
   @Nullable("null means disabled")
   @Override
   public String getName() {
-    return "Code preview";
+    return EditorConfigBundle.message("line.marker.name.code.preview");
   }
 
-  @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     if (element instanceof EditorConfigHeader) {
       ActionGroup actionGroup = createActions((EditorConfigHeader)element);
       PsiElement child = element.getFirstChild();

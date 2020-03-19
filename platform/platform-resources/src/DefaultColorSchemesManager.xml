@@ -24,6 +24,8 @@
       <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
       <option name="RECENT_LOCATIONS_SELECTION" value="e9eef5"/>
+      <option name="DOC_COMMENT_GUIDE" value="e8e8e8"/>
+      <option name="DOC_COMMENT_LINK" value="4585be"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
@@ -90,6 +92,9 @@
       <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="00000080"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="00000080"/>
+      <option name="ActionButton.hoverBackground" value="dfdfdf"/>
+      <option name="ActionButton.pressedBackground" value="cfcfcf"/>
+      <option name="ActionButton.iconTextForeground" value="787878"/>
     </colors>
 
     <attributes>
@@ -1263,6 +1268,8 @@
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
       <option name="RECENT_LOCATIONS_SELECTION" value="383838"/>
+      <option name="DOC_COMMENT_GUIDE" value="3b4b38"/>
+      <option name="DOC_COMMENT_LINK" value="4f86cd"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>
@@ -1295,6 +1302,9 @@
       <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="8080801A"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="8080808C"/>
       <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="2626268C"/>
+      <option name="ActionButton.hoverBackground" value="4c5052"/>
+      <option name="ActionButton.pressedBackground" value="5c6164"/>
+      <option name="ActionButton.iconTextForeground" value="8c8c8c"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
@@ -1457,16 +1467,6 @@
         <value>
           <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="CSS.KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
-      <option name="CSS.TAG_NAME">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="CSS.URL">
@@ -1934,16 +1934,6 @@
       <option name="INJECTED_LANGUAGE_FRAGMENT">
         <value>
           <option name="BACKGROUND" value="364135" deuteranopia="1f2433" protanopia="1f2433"/>
-        </value>
-      </option>
-      <option name="JAVA_KEYWORD">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
-      <option name="JAVA_VALID_STRING_ESCAPE">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="JSP_DIRECTIVE_NAME">

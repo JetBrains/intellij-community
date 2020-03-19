@@ -2,7 +2,6 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -29,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.Properties;
@@ -39,7 +39,9 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.IndentedIcon;
+import com.intellij.util.ui.UIUtil;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +66,7 @@ import java.util.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class PropertyInspectorTable extends Table implements DataProvider{
+public final class PropertyInspectorTable extends JBTable implements DataProvider {
   private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 
   public static final DataKey<PropertyInspectorTable> DATA_KEY = DataKey.create(PropertyInspectorTable.class.getName());
@@ -171,7 +173,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent e) {
+      protected boolean onDoubleClick(@NotNull MouseEvent e) {
         int row = rowAtPoint(e.getPoint());
         int column = columnAtPoint(e.getPoint());
         if (row >= 0 && column == 0) {

@@ -4,7 +4,6 @@ package com.intellij.structuralsearch.inspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.structuralsearch.inspection.highlightTemplate.StructuralSearchFakeInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +11,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
-  public StructuralSearchInspectionToolWrapper(Configuration configuration, boolean enabled) {
-    super(new StructuralSearchFakeInspection(configuration, enabled));
+
+  public StructuralSearchInspectionToolWrapper(Configuration configuration) {
+    super(new StructuralSearchFakeInspection(configuration));
   }
 
   private StructuralSearchInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
@@ -34,7 +34,7 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
 
   @Override
   public boolean isEnabledByDefault() {
-    return getTool().isEnabledByDefault();
+    return true;
   }
 
   @Override

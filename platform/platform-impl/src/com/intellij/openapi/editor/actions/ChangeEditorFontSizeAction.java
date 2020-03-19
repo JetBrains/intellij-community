@@ -66,13 +66,13 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
 
   public static class IncreaseEditorFontSize extends ChangeEditorFontSizeAction {
     protected IncreaseEditorFontSize() {
-      super(EditorBundle.lazyMessage("increase.editor.font"), 1);
+      super(EditorBundle.messagePointer("increase.editor.font"), 1);
     }
   }
 
   public static class DecreaseEditorFontSize extends ChangeEditorFontSizeAction {
     protected DecreaseEditorFontSize() {
-      super(EditorBundle.lazyMessage("decrease.editor.font"), -1);
+      super(EditorBundle.messagePointer("decrease.editor.font"), -1);
     }
   }
 }

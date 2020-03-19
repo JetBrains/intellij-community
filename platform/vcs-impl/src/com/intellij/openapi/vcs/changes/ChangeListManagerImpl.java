@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -137,6 +136,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
         scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
     });
+
+    VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addExtensionPointListener(myProject, () -> {
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    }, myProject);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {

@@ -21,7 +21,7 @@
           <grid row="0" column="1" row-span="1" col-span="5" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <component id="95ea7" class="com.intellij.ui.components.JBLabel" binding="myHeapSizeLabel">
@@ -30,7 +30,7 @@
         </constraints>
         <properties>
           <labelFor value="a44a9"/>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <component id="a44a9" class="javax.swing.JTextField" binding="myHeapSizeField" default-binding="true">
@@ -46,7 +46,7 @@
           <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="MB"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="label.megabytes"/>
         </properties>
       </component>
       <component id="1027f" class="com.intellij.ui.components.JBLabel" binding="myHeapCurrentValueLabel">
@@ -55,7 +55,7 @@
         </constraints>
         <properties>
           <font style="2"/>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <component id="11e32" class="com.intellij.ui.components.JBLabel" binding="myMetaspaceSizeLabel">
@@ -64,7 +64,7 @@
         </constraints>
         <properties>
           <labelFor value="2cb23"/>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <component id="2cb23" class="javax.swing.JTextField" binding="myMetaspaceSizeField" default-binding="true">
@@ -80,7 +80,7 @@
           <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="MB"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="label.megabytes"/>
         </properties>
       </component>
       <component id="59bf8" class="com.intellij.ui.components.JBLabel" binding="myMetaspaceCurrentValueLabel">
@@ -89,7 +89,7 @@
         </constraints>
         <properties>
           <font style="2"/>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <component id="5ee44" class="com.intellij.ui.components.JBLabel" binding="myCodeCacheSizeLabel">
@@ -98,7 +98,7 @@
         </constraints>
         <properties>
           <labelFor value="2cb23"/>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <component id="eb10f" class="javax.swing.JTextField" binding="myCodeCacheSizeField">
@@ -114,7 +114,7 @@
           <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="MB"/>
+          <text resource-bundle="messages/DiagnosticBundle" key="label.megabytes"/>
         </properties>
       </component>
       <component id="b5c11" class="com.intellij.ui.components.JBLabel" binding="myCodeCacheCurrentValueLabel">
@@ -123,7 +123,7 @@
         </constraints>
         <properties>
           <font style="2"/>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <hspacer id="e110f">
@@ -136,7 +136,7 @@
           <grid row="4" column="1" row-span="1" col-span="5" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
         </properties>
       </component>
       <component id="3a803" class="com.intellij.ui.components.JBLabel" binding="myDumpMessageLabel">
@@ -144,7 +144,7 @@
           <grid row="5" column="1" row-span="1" col-span="5" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Label"/>
+          <text value="Label" noi18n="true"/>
           <visible value="false"/>
         </properties>
       </component>

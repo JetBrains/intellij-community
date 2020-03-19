@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
@@ -49,16 +50,21 @@ public class FUStatisticsWhiteListGroupsService {
   //private static final Logger LOG = Logger.getInstance(FUStatisticsWhiteListGroupsService.class);
 
   /**
-   * @return null if error happened during groups fetching
+   * @return empty whitelist if error happened during groups fetching or parsing
    */
-  @Nullable
+  @NotNull
   public static FUSWhitelist getApprovedGroups(@NotNull String userAgent, @NotNull String serviceUrl) {
-    final String content = getFUSWhiteListContent(userAgent, serviceUrl);
-    return content != null ? parseApprovedGroups(content) : null;
+    try {
+      String content = getFUSWhiteListContent(userAgent, serviceUrl);
+      return parseApprovedGroups(content);
+    }
+    catch (EventLogWhitelistParseException | EventLogWhitelistLoadException e) {
+      return FUSWhitelist.empty();
+    }
   }
 
-  @Nullable
-  public static String loadWhiteListFromServer(@NotNull EventLogUploadSettingsService settingsService) {
+  @NotNull
+  public static String loadWhiteListFromServer(@NotNull EventLogUploadSettingsService settingsService) throws EventLogWhitelistLoadException {
     String userAgent = settingsService.getApplicationInfo().getUserAgent();
     return getFUSWhiteListContent(userAgent, settingsService.getWhiteListProductUrl());
   }
@@ -68,22 +74,30 @@ public class FUStatisticsWhiteListGroupsService {
     return lastModifiedWhitelist(userAgent, settingsService.getWhiteListProductUrl());
   }
 
-  @Nullable
-  private static String getFUSWhiteListContent(@NotNull String userAgent, @Nullable String serviceUrl) {
-    if (StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) return null;
+  @NotNull
+  private static String getFUSWhiteListContent(@NotNull String userAgent, @Nullable String serviceUrl) throws EventLogWhitelistLoadException {
+    if (StatisticsEventLogUtil.isEmptyOrSpaces(serviceUrl)) {
+      throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.EMPTY_SERVICE_URL);
+    }
 
-    String content = null;
     try (CloseableHttpClient client = StatisticsEventLogUtil.create(userAgent);
          CloseableHttpResponse response = client.execute(new HttpGet(serviceUrl))) {
-      HttpEntity entity = response.getEntity();
-      if (entity != null) {
-        content = EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8);
+      StatusLine statusLine = response.getStatusLine();
+      int code = statusLine != null ? statusLine.getStatusCode() : -1;
+      if (code != HttpStatus.SC_OK) {
+        throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.UNREACHABLE_SERVICE, code);
       }
+
+      HttpEntity entity = response.getEntity();
+      String content = entity != null ? EntityUtils.toString(entity, StatisticsEventLogUtil.UTF8) : null;
+      if (content == null) {
+        throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.EMPTY_RESPONSE_BODY);
+      }
+      return content;
     }
-    catch (IOException e) {
-      //LOG.info(e);
+    catch (Exception e) {
+      throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.ERROR_ON_LOAD, e);
     }
-    return content;
   }
 
   private static long lastModifiedWhitelist(@NotNull String userAgent, @Nullable String serviceUrl) {
@@ -104,27 +118,31 @@ public class FUStatisticsWhiteListGroupsService {
     return 0;
   }
 
-  @Nullable
-  public static WLGroups parseWhiteListContent(@Nullable String content) {
-    if (StatisticsEventLogUtil.isEmptyOrSpaces(content)) return null;
-    WLGroups groups = null;
+  @NotNull
+  public static WLGroups parseWhiteListContent(@Nullable String content) throws EventLogWhitelistParseException {
+    if (StatisticsEventLogUtil.isEmptyOrSpaces(content)) {
+      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.EMPTY_CONTENT);
+    }
+
     try {
-      groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
+      WLGroups groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
+      if (groups != null) {
+        return groups;
+      }
+      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.INVALID_JSON);
+    }
+    catch (JsonSyntaxException e) {
+      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.INVALID_JSON, e);
     }
     catch (Exception e) {
-      //LOG.info(e);
+      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.UNKNOWN, e);
     }
-    return groups;
   }
 
   @NotNull
-  public static FUSWhitelist parseApprovedGroups(@Nullable String content) {
-    final WLGroups groups = parseWhiteListContent(content);
-    if (groups == null) {
-      return FUSWhitelist.empty();
-    }
-
-    final Map<String, GroupFilterCondition> groupToCondition = new HashMap<>();
+  public static FUSWhitelist parseApprovedGroups(@Nullable String content) throws EventLogWhitelistParseException {
+    WLGroups groups = parseWhiteListContent(content);
+    Map<String, GroupFilterCondition> groupToCondition = new HashMap<>();
     for (WLGroup group : groups.groups) {
       if (group.isValid()) {
         groupToCondition.put(group.id, toCondition(group.builds, group.versions));

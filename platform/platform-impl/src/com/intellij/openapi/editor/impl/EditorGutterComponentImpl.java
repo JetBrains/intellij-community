@@ -465,18 +465,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
 
         int annotationSize = myTextAnnotationGutterSizes.get(i);
-        if (startVisualLine == 0 && endVisualLine == 0) { //allow paining gutters for empty documents
-          paintAnnotationLine(g, gutterProvider, 0, x, 0, annotationSize, lineHeight);
-        }
-        else {
-          VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
-          while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-            int logLine = visLinesIterator.getStartLogicalLine();
-            int y = visLinesIterator.getY();
-            paintAnnotationLine(g, gutterProvider, logLine, x, y, annotationSize, lineHeight);
 
-            visLinesIterator.advance();
-          }
+        VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
+        while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
+          int logLine = visLinesIterator.getStartLogicalLine();
+          int y = visLinesIterator.getY();
+          paintAnnotationLine(g, gutterProvider, logLine, x, y, annotationSize, lineHeight);
+
+          visLinesIterator.advance();
         }
 
         x += annotationSize;
@@ -1705,8 +1701,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                                                                                          : Balloon.Position.atRight;
     AtomicReference<String> tooltip = new AtomicReference<>();
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(),
-                                                                                               IdeBundle.message(
-                                                                                                 "progress.title.constructing.tooltip")) {
+                                                                                               IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         tooltip.set(ReadAction.compute(() -> renderer.getTooltipText()));
@@ -1986,7 +1981,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class CloseAnnotationsAction extends DumbAwareAction {
     CloseAnnotationsAction() {
-      super(EditorBundle.lazyMessage("close.editor.annotations.action.name"));
+      super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
 
     @Override
@@ -2087,7 +2082,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       if (!addActions.isEmpty()) {
-        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.lazyMessage("editor.annotations.action.group.name"));
+        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.messagePointer("editor.annotations.action.group.name"));
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }

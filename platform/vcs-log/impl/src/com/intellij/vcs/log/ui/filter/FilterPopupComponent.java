@@ -19,7 +19,7 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   /**
    * Special value that indicates that no filtering is on.
    */
-  protected static final Supplier<@Nls String> ALL = VcsBundle.lazyMessage("vcs.log.filter.all");
+  protected static final Supplier<@Nls String> ALL = VcsBundle.messagePointer("vcs.log.filter.all");
   @NotNull protected final Model myFilterModel;
 
   FilterPopupComponent(@NotNull Supplier<String> displayName, @NotNull Model filterModel) {

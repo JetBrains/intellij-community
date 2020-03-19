@@ -53,7 +53,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)infos[0];
-    final boolean onTheFly = ((Boolean)infos[1]).booleanValue();
+    final boolean onTheFly = (Boolean)infos[1];
     if (LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression)) {
       return new MethodRefToLambdaFix();
     }

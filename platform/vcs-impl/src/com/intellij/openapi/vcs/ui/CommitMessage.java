@@ -9,10 +9,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -320,11 +318,28 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       HighlightSeverity minSeverity = notNull(HighlightDisplayLevel.find("TYPO"), HighlightDisplayLevel.DO_NOT_SHOW).getSeverity();
 
       for (int i = 0; i < errorCount.length; i++) {
-        if (errorCount[i] > 0 && getSeverityRegistrar().compare(getSeverityRegistrar().getSeverityByIndex(i), minSeverity) > 0) {
+        if (errorCount[i] > 0 && getSeverityRegistrar().compare(getSeverityRegistrar().getSeverityByIndex(i), minSeverity) >= 0) {
           return true;
         }
       }
       return false;
+    }
+
+    @Override
+    @NotNull
+    protected UIController createUIController() {
+      return new DefaultUIController() {
+        @Override
+        @NotNull
+        protected List<AnAction> initActions() {
+          return Collections.emptyList();
+        }
+
+        @Override
+        public boolean enableToolbar() {
+          return false;
+        }
+      };
     }
   }
 }

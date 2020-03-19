@@ -26,16 +26,19 @@ import java.util.concurrent.TimeUnit
 @CompileStatic
 class CompilationOutputsUploader {
   private final String commitHistoryFile = "commit_history.json"
+  private final int commitsLimit = 200
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
+  private final String tmpDir
   private final Map<String, String> remotePerCommitHash
   private final SourcesStateProcessor sourcesStateProcessor
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
-                             String agentPersistentStorage) {
+                             String agentPersistentStorage, String tmpDir) {
     this.agentPersistentStorage = agentPersistentStorage
+    this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
     this.remotePerCommitHash = remotePerCommitHash
@@ -70,12 +73,16 @@ class CompilationOutputsUploader {
         File zipFile = new File(dataStorageRoot.parent, commitHash)
         zipBinaryData(zipFile, dataStorageRoot)
         uploader.upload(sourcePath, zipFile)
+        File zipCopy = new File(tmpDir, sourcePath)
+        FileUtil.copy(zipFile, zipCopy)
         FileUtil.delete(zipFile)
 
         // Upload compilation metadata
         sourcePath = "metadata/$commitHash"
         if (uploader.isExist(sourcePath)) return
         uploader.upload(sourcePath, sourceStateFile)
+        File sourceStateFileCopy = new File(tmpDir, sourcePath)
+        FileUtil.copy(sourceStateFile, sourceStateFileCopy)
         return
       }
 
@@ -109,11 +116,14 @@ class CompilationOutputsUploader {
   private void uploadCompilationOutput(CompilationOutput compilationOutput, JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
     executor.submit {
       def sourcePath = "${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}"
-      if (uploader.isExist(sourcePath)) return
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
-      uploader.upload(sourcePath, zipFile)
+      if (!uploader.isExist(sourcePath)) {
+        uploader.upload(sourcePath, zipFile)
+      }
+      File zipCopy = new File(tmpDir, sourcePath)
+      FileUtil.copy(zipFile, zipCopy)
       FileUtil.delete(zipFile)
     }
   }
@@ -130,12 +140,11 @@ class CompilationOutputsUploader {
   }
 
   private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
-    if (remotePerCommitHash.size() == 1) return
     Map<String, List<String>> commitHistory = new HashMap<>()
     if (uploader.isExist(commitHistoryFile)) {
       def content = uploader.getAsString(commitHistoryFile)
       if (!content.isEmpty()) {
-        Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+        Type type = new TypeToken<Map<String, List<String>>>(){}.getType()
         commitHistory = new Gson().fromJson(content, type) as Map<String, List<String>>
       }
     }
@@ -149,6 +158,7 @@ class CompilationOutputsUploader {
       }
       else {
         listOfCommits.add(value)
+        if (listOfCommits.size() > commitsLimit) commitHistory.put(key, listOfCommits.takeRight(commitsLimit))
       }
     }
 
@@ -158,6 +168,8 @@ class CompilationOutputsUploader {
     file.write(jsonAsString)
     messages.artifactBuilt(file.absolutePath)
     uploader.upload(commitHistoryFile, file)
+    File commitHistoryFileCopy = new File(tmpDir, commitHistoryFile)
+    FileUtil.copy(file, commitHistoryFileCopy)
     FileUtil.delete(file)
   }
 

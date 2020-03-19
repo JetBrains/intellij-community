@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, FilterModel<VcsLogDateFilter>> {
 
   DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
-    super(VcsLogBundle.lazyMessage("vcs.log.date.filter.label"), filterModel);
+    super(VcsLogBundle.messagePointer("vcs.log.date.filter.label"), filterModel);
   }
 
   @NotNull
@@ -63,8 +63,8 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
 
     return new DefaultActionGroup(createAllAction(),
                                   new SelectAction(),
-                                  new DateAction(oneDayBefore, VcsLogBundle.lazyMessage("vcs.log.date.filter.action.last.day")),
-                                  new DateAction(oneWeekBefore, VcsLogBundle.lazyMessage("vcs.log.date.filter.action.last.week")));
+                                  new DateAction(oneDayBefore, VcsLogBundle.messagePointer("vcs.log.date.filter.action.last.day")),
+                                  new DateAction(oneWeekBefore, VcsLogBundle.messagePointer("vcs.log.date.filter.action.last.week")));
   }
 
   private class DateAction extends DumbAwareAction {
@@ -85,7 +85,7 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
   private class SelectAction extends DumbAwareAction {
 
     SelectAction() {
-      super(VcsLogBundle.lazyMessage("vcs.log.filter.action.select"));
+      super(VcsLogBundle.messagePointer("vcs.log.filter.action.select"));
     }
 
     @Override

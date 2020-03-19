@@ -116,8 +116,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     doRegisterExtension(extension, LoadingOrder.ANY, parentDisposable);
   }
 
+  @Override
   @NotNull
-  final PluginDescriptor getDescriptor() {
+  public final PluginDescriptor getPluginDescriptor() {
     return myDescriptor;
   }
 
@@ -141,7 +142,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
     }
 
-    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, getDescriptor(), order);
+    ObjectComponentAdapter<T> adapter = new ObjectComponentAdapter<>(extension, getPluginDescriptor(), order);
     addExtensionAdapter(adapter);
     notifyListeners(ExtensionEvent.ADDED, extension, adapter.getPluginDescriptor(), myListeners);
 
@@ -180,7 +181,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     List<ExtensionComponentAdapter> newAdapters = new ArrayList<>(extensions.size());
     for (T extension : extensions) {
-      newAdapters.add(new ObjectComponentAdapter<>(extension, getDescriptor(), LoadingOrder.ANY));
+      newAdapters.add(new ObjectComponentAdapter<>(extension, getPluginDescriptor(), LoadingOrder.ANY));
     }
 
     if (myAdapters == Collections.<ExtensionComponentAdapter>emptyList()) {
@@ -533,10 +534,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     if (fireEvents && myListeners.length > 0) {
       if (oldList != null) {
         notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(oldList, extension ->
-          Pair.create(extension, getDescriptor())), myListeners);
+          Pair.create(extension, getPluginDescriptor())), myListeners);
       }
       notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(list, extension ->
-        Pair.create(extension, getDescriptor())), myListeners);
+        Pair.create(extension, getPluginDescriptor())), myListeners);
     }
 
     Disposer.register(parentDisposable, new Disposable() {
@@ -549,11 +550,11 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
           if (fireEvents && myListeners.length > 0) {
             notifyListeners(ExtensionEvent.REMOVED, () -> ContainerUtil.map(list, extension ->
-              Pair.create(extension, getDescriptor())), myListeners);
+              Pair.create(extension, getPluginDescriptor())), myListeners);
 
             if (oldList != null) {
               notifyListeners(ExtensionEvent.ADDED, () -> ContainerUtil.map(oldList, extension ->
-                Pair.create(extension, getDescriptor())), myListeners);
+                Pair.create(extension, getPluginDescriptor())), myListeners);
             }
           }
         }
@@ -638,7 +639,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return found;
   }
 
-  public abstract void unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks);
+  public abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
+                                            @NotNull PluginDescriptor pluginDescriptor,
+                                            @NotNull List<Element> elements,
+                                            List<Runnable> listenerCallbacks);
 
   private void notifyListeners(@NotNull ExtensionEvent event,
                                @NotNull T extensionObject,
@@ -867,13 +871,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     for (Element extensionElement : extensionElements) {
       adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, componentManager));
     }
+    int newSize = myAdapters.size();
 
     if (listenerCallbacks != null) {
       clearCache();
 
       listenerCallbacks.add(() -> {
         notifyListeners(ExtensionEvent.ADDED, () -> {
-          return ContainerUtil.map(myAdapters.subList(oldSize, myAdapters.size()),
+          return ContainerUtil.map(myAdapters.subList(oldSize, newSize),
                                    adapter -> Pair.create(processAdapter(adapter), pluginDescriptor));
         }, myListeners);
       });

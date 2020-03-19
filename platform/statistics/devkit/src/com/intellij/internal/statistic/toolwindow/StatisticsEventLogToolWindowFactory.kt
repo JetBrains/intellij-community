@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.toolwindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
+import com.intellij.internal.statistic.StatisticsDevKitUtil.DEFAULT_RECORDER
 import com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction
 import com.intellij.internal.statistic.eventLog.getEventLogProviders
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
@@ -17,7 +18,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.ContentFactory
 
-private const val DEFAULT_RECORDER = "FUS"
 
 /**
  * Creates a toolwindow with feature usage statistics event log

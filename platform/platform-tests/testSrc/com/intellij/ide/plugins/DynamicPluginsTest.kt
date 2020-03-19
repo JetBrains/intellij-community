@@ -3,8 +3,11 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
+import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -19,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.PluginId
@@ -27,6 +31,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
@@ -54,6 +59,7 @@ class DynamicPluginsTest {
     val projectRule = ProjectRule()
 
     val receivedNotifications = mutableListOf<UISettings>()
+    val receivedNotifications2 = mutableListOf<UISettings>()
   }
 
   @Rule
@@ -166,6 +172,46 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun unloadGroupWithActionReferences() {
+    ActionManager.getInstance()
+    val disposable = loadPluginWithText("""
+      <idea-plugin>
+        <id>foo</id>
+        <actions>
+          <action id="foo.bar" class="${MyAction::class.java.name}"/>
+          <action id="foo.bar2" class="${MyAction2::class.java.name}"/>
+          <group id="Foo">
+            <reference ref="foo.bar"/>
+            <reference ref="foo.bar2"/>
+          </group>
+        </actions>
+      </idea-plugin>
+    """.trimIndent(), DynamicPlugins::class.java.classLoader)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
+    Disposer.dispose(disposable)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
+  }
+
+  @Test
+  fun unloadNestedGroupWithActions() {
+    val disposable = loadPluginWithText("""
+      <idea-plugin>
+        <id>foo</id>
+        <actions>
+          <group id="Foo">
+            <group id="Bar">
+              <action id="foo.bar" class="${MyAction::class.java.name}"/>
+            </group>  
+          </group>
+        </actions>
+      </idea-plugin>
+    """.trimIndent(), DynamicPlugins::class.java.classLoader)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
+    Disposer.dispose(disposable)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
+  }
+
+  @Test
   fun loadOptionalDependency() {
     val plugin1Disposable = loadPluginWithOptionalDependency(
       """
@@ -195,6 +241,36 @@ class DynamicPluginsTest {
     finally {
       Disposer.dispose(plugin1Disposable)
     }
+  }
+
+  @Test
+  fun loadOptionalDependencyDuplicateNotification() {
+    InspectionToolRegistrar.getInstance().createTools()
+
+    val barDisposable = loadPluginWithText("<idea-plugin><id>bar</id></idea-plugin>", DynamicPluginsTest::class.java.classLoader)
+    val fooDisposable = loadPluginWithOptionalDependency(
+      """
+        <idea-plugin>
+          <id>foo</id>
+          <depends optional="true" config-file="bar.xml">bar</depends>
+          <extensions defaultExtensionNs="com.intellij">
+            <globalInspection implementationClass="${MyInspectionTool::class.java.name}"/>
+          </extensions>
+        </idea-plugin>  
+      """,
+      """
+        <idea-plugin>
+          <extensions defaultExtensionNs="com.intellij">
+            <globalInspection implementationClass="${MyInspectionTool2::class.java.name}"/>
+          </extensions>
+        </idea-plugin>
+      """
+    )
+    assertThat(InspectionEP.GLOBAL_INSPECTION.extensions.count {
+      it.implementationClass == MyInspectionTool::class.java.name || it.implementationClass == MyInspectionTool2::class.java.name
+    }).isEqualTo(2)
+    Disposer.dispose(fooDisposable)
+    Disposer.dispose(barDisposable)
   }
 
   @Test
@@ -306,6 +382,55 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun loadOptionalDependencyListener() {
+    receivedNotifications.clear()
+    receivedNotifications2.clear()
+
+    val plugin1Disposable = loadPluginWithOptionalDependency(
+      """
+            <idea-plugin>
+                <id>foo</id>
+                <depends optional="true" config-file="bar.xml">bar</depends>
+                <applicationListeners>
+                  <listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>
+                </applicationListeners>  
+            </idea-plugin>
+          """,
+      """
+                    <idea-plugin>
+                      <applicationListeners>
+                        <listener class="${MyUISettingsListener2::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>
+                      </applicationListeners>  
+                    </idea-plugin>
+                """)
+    try {
+      ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(receivedNotifications).hasSize(1)
+
+      val plugin2Disposable = loadPluginWithText("""
+        <idea-plugin>
+          <id>bar</id>
+        </idea-plugin>
+      """.trimIndent(), DynamicPluginsTest::class.java.classLoader)
+      try {
+        ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+        assertThat(receivedNotifications).hasSize(2)
+        assertThat(receivedNotifications2).hasSize(1)
+      }
+      finally {
+        Disposer.dispose(plugin2Disposable)
+      }
+
+      ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
+      assertThat(receivedNotifications).hasSize(3)
+      assertThat(receivedNotifications2).hasSize(1)
+    }
+    finally {
+      Disposer.dispose(plugin1Disposable)
+    }
+  }
+
+  @Test
   fun testProjectService() {
     val project = projectRule.project
     val disposable = loadExtensionWithText("""
@@ -346,6 +471,25 @@ class DynamicPluginsTest {
       Disposer.dispose(disposable)
     }
     assertThat(InspectionEP.GLOBAL_INSPECTION.extensions.any { it.implementationClass == MyInspectionTool::class.java.name }).isFalse()
+  }
+
+  @Test
+  fun unloadEPWithTags() {
+    val disposable = loadExtensionWithText(
+      """
+          <intentionAction>
+            <bundleName>foo</bundleName>
+            <categoryKey>bar</categoryKey>
+            <className>${MyIntentionAction::class.java.name}</className>
+          </intentionAction>""",
+      DynamicPlugins::class.java.classLoader)
+    try {
+      assertThat(IntentionManager.EP_INTENTION_ACTIONS.extensions.any { it.className == MyIntentionAction::class.java.name }).isTrue()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
+    assertThat(IntentionManager.EP_INTENTION_ACTIONS.extensions.any { it.className == MyIntentionAction::class.java.name }).isFalse()
   }
 
   @Test
@@ -425,7 +569,7 @@ class DynamicPluginsTest {
 
     return Disposable {
       val unloadDescriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
-      val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
+      val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
       DynamicPlugins.unloadPlugin(unloadDescriptor, false)
       assertThat(canBeUnloaded).isTrue()
     }
@@ -434,6 +578,12 @@ class DynamicPluginsTest {
   private class MyUISettingsListener : UISettingsListener {
     override fun uiSettingsChanged(uiSettings: UISettings) {
       receivedNotifications.add(uiSettings)
+    }
+  }
+
+  private class MyUISettingsListener2 : UISettingsListener {
+    override fun uiSettingsChanged(uiSettings: UISettings) {
+      receivedNotifications2.add(uiSettings)
     }
   }
 
@@ -474,6 +624,7 @@ class DynamicPluginsTest {
   }
 
   private class MyInspectionTool : GlobalInspectionTool()
+  private class MyInspectionTool2 : GlobalInspectionTool()
 
   private class MyConfigurable : Configurable {
     override fun isModified(): Boolean = TODO()
@@ -484,6 +635,20 @@ class DynamicPluginsTest {
 
   private class MyAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
+    }
+  }
+
+  private class MyAction2 : AnAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+    }
+  }
+
+  private class MyIntentionAction : IntentionAction {
+    override fun startInWriteAction() = false
+    override fun getFamilyName() = TODO()
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = false
+    override fun getText(): String = TODO()
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     }
   }
 }

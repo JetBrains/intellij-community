@@ -184,12 +184,6 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
 
   @Override
   @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.XML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "XmlUnboundNsPrefix";

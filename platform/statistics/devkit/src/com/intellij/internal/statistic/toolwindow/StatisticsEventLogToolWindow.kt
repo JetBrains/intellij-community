@@ -8,6 +8,8 @@ import com.intellij.diagnostic.logging.LogFilterModel
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.*
+import com.intellij.internal.statistic.actions.localWhitelist.AddTestGroupToLocalWhitelistAction
+import com.intellij.internal.statistic.actions.localWhitelist.EditLocalWhitelistAction
 import com.intellij.internal.statistic.eventLog.EventLogNotificationService
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
@@ -62,9 +64,9 @@ class StatisticsEventLogToolWindow(project: Project, private val recorderId: Str
     topToolbarActions.add(UpdateWhitelistAction(recorderId))
     topToolbarActions.add(OpenWhitelistFileAction(recorderId))
     topToolbarActions.addSeparator(StatisticsBundle.message("stats.local.whitelist"))
-    topToolbarActions.add(AddTestGroupToLocalWhitelistAction())
+    topToolbarActions.add(AddTestGroupToLocalWhitelistAction(recorderId))
     topToolbarActions.add(CleanupLocalWhitelistAction())
-    topToolbarActions.add(OpenLocalWhitelistFileAction(recorderId))
+    topToolbarActions.add(EditLocalWhitelistAction(recorderId))
     val toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true)
     toolbar.setShowSeparatorTitles(true)
     return toolbar.component

@@ -2610,15 +2610,24 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Map V compute(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Map V computeIfAbsent(K, java.util.function.Function&lt;? super K,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Map V computeIfAbsent(K, java.util.function.Function&lt;? super K,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Map V computeIfPresent(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+  </item>
+  <item name='java.util.Map V computeIfPresent(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Map V get(java.lang.Object)'>
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -2630,6 +2639,12 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+  </item>
+  <item name='java.util.Map V merge(K, V, java.util.function.BiFunction&lt;? super V,? super V,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Map V merge(K, V, java.util.function.BiFunction&lt;? super V,? super V,? extends V&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Map V put(K, V)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -2707,13 +2722,23 @@
     </annotation>
   </item>
   <item name="java.util.Map java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Map void clear()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map void putAll(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Map void putAll(java.util.Map&lt;? extends K,? extends V&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.Map void replaceAll(java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -2801,6 +2826,18 @@
   <item name='java.util.NavigableSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.Objects T requireNonNullElse(T, T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;!null, _ -&gt; param1; null, !null -&gt; param2; null, null -&gt; fail&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Objects T requireNonNullElseGet(T, java.util.function.Supplier&lt;? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;!null, _ -&gt; param1; null, _ -&gt; !null&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Objects java.lang.String toString(java.lang.Object, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;null, _ -&gt; param2&quot;"/>
@@ -2818,6 +2855,15 @@
       <val name="value" val="&quot;!null -&gt; !null&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
+  </item>
+  <item name='java.util.Properties java.lang.String getProperty(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.util.Properties java.lang.String getProperty(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.util.Properties java.lang.String getProperty(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Properties void store(java.io.OutputStream, java.lang.String) 1'>
     <annotation name='org.jetbrains.annotations.Nullable'/>

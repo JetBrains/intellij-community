@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 df1 = pd.DataFrame({'row': [0, 1, 2],
                     'One_X': [1.1, 1.1, 1.1],
-                    'One_Y': [1.2, 1.2, 1.2],
-                    'Two_X': [1.11, 1.11, 1.11],
+                    'Year': [2018, 2019, 2020],
+                    'Winner': [True, False, True],
                     'Two_Y': [1.22, 1.22, 1.22]})
 print(df1)  ###line 8
 

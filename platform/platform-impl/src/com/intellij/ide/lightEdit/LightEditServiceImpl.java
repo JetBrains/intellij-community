@@ -72,7 +72,7 @@ public final class LightEditServiceImpl implements LightEditService,
       myFrameWrapper = LightEditFrameWrapper.allocate(() -> closeEditorWindow());
       LOG.info("Frame created");
     }
-    else {
+    if (!myFrameWrapper.getFrame().isVisible()) {
       myFrameWrapper.getFrame().setVisible(true);
       LOG.info("Window opened");
     }
@@ -139,10 +139,8 @@ public final class LightEditServiceImpl implements LightEditService,
     LightEditorInfo openEditorInfo = myEditorManager.findOpen(file);
     if (openEditorInfo == null) {
       LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
-      if (newEditorInfo != null) {
-        addEditorTab(newEditorInfo);
-        LOG.info("Opened new tab for " + file.getPresentableUrl());
-      }
+      addEditorTab(newEditorInfo);
+      LOG.info("Opened new tab for " + file.getPresentableUrl());
     }
     else {
       selectEditorTab(openEditorInfo);
@@ -210,6 +208,10 @@ public final class LightEditServiceImpl implements LightEditService,
         catch (Throwable t) {
           System.exit(1);
         }
+      }
+      else {
+        myFrameWrapper.releaseFrame();
+        myFrameWrapper = null;
       }
     }
     else {
@@ -289,8 +291,33 @@ public final class LightEditServiceImpl implements LightEditService,
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
     if (myFrameWrapper != null) {
-      myFrameWrapper.getFrame().setTitle(getAppName() + (editorInfo != null ? ": " + editorInfo.getFile().getPresentableUrl() : ""));
+      myFrameWrapper.getFrame().setTitle(editorInfo == null ? getAppName() : getFileTitle(editorInfo.getFile()));
     }
+  }
+
+  private static String getFileTitle(@NotNull VirtualFile file) {
+    StringBuilder titleBuilder = new StringBuilder();
+    titleBuilder.append(file.getPresentableName());
+    VirtualFile parent = file.getParent();
+    if (parent != null) {
+      titleBuilder.append(" - ").append(truncateUrl(parent.getPresentableUrl()));
+    }
+    return titleBuilder.toString();
+  }
+
+  private static String truncateUrl(@NotNull String url) {
+    int slashPos = Math.max(url.lastIndexOf('\\'), url.lastIndexOf('/'));
+    if (slashPos >= 0) {
+      String withoutLast = url.substring(0, slashPos);
+      int prevSlashPos = Math.max(withoutLast.lastIndexOf('\\'), withoutLast.lastIndexOf('/'));
+      if (prevSlashPos >= 0) {
+        String truncated = url.substring(prevSlashPos);
+        if (!url.equals(truncated)) {
+          return "..." + url.substring(prevSlashPos);
+        }
+      }
+    }
+    return url;
   }
 
   @Override

@@ -22,11 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Alarm
+import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import git4idea.GitUtil
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
@@ -69,7 +70,19 @@ class GitConflictsPanel(
       add(ScrollPaneFactory.createScrollPane(conflictsTree), BorderLayout.CENTER)
     }
 
-    conflictsTree.setDoubleClickAndEnterKeyHandler { showMergeWindowForSelection() }
+    conflictsTree.setDoubleClickHandler { e ->
+      when {
+        EditSourceOnDoubleClickHandler.isToggleEvent(conflictsTree, e) -> false
+        else -> {
+          showMergeWindowForSelection()
+          true
+        }
+      }
+    }
+    conflictsTree.setEnterKeyHandler {
+      showMergeWindowForSelection()
+      true
+    }
 
     val connection = project.messageBus.connect(this)
     connection.subscribe(GitConflictsHolder.CONFLICTS_CHANGE, GitConflictsHolder.ConflictsListener { updateConflicts() })
@@ -94,7 +107,7 @@ class GitConflictsPanel(
   }
 
   private fun updateConflicts() {
-    updateQueue.queue(Update.create("update") {
+    updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
       val description = mergeHandler.loadMergeDescription()
 
       val newConflicts = ArrayList<GitConflict>()
@@ -121,7 +134,7 @@ class GitConflictsPanel(
           TreeUtil.promiseSelectFirstLeaf(conflictsTree)
         }
       }
-    })
+    }))
   }
 
   fun canShowMergeWindowForSelection(): Boolean {
@@ -278,4 +291,6 @@ private class MyChangesTree(project: Project)
     })
     return groupingSupport
   }
+
+  override fun getToggleClickCount(): Int = 2
 }

@@ -42,6 +42,13 @@ public class JarFileSystemImpl extends JarFileSystem {
     return myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
+  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(super::list);
+
+  @Override
+  public String @NotNull [] list(@NotNull VirtualFile file) {
+    return myChildrenGetter.accessDiskWithCheckCanceled(file);
+  }
+
   @Override
   public void setNoCopyJarForPath(@NotNull String pathInJar) {
     if (myNoCopyJarPaths == null) return;

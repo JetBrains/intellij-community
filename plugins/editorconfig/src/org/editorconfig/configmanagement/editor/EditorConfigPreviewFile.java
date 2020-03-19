@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
             myDocument.replaceString(0, myDocument.getTextLength(), psiFile.getText());
           }
         }),
-      "reformat", null);
+      EditorConfigBundle.message("command.name.reformat"), null);
   }
 
   @Nullable

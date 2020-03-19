@@ -52,25 +52,6 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  public static String getShortSummary(@NotNull VcsShortCommitDetails details) {
-    return getShortSummary(details, true, 50);
-  }
-
-  @NotNull
-  @Nls
-  public static String getShortSummary(@NotNull VcsShortCommitDetails details, boolean useHtml, int maxMessageLength) {
-    long time = details.getAuthorTime();
-    return VcsLogBundle
-      .message(useHtml ?
-               "vcs.log.details.html.commit.by.author.on.date.at.time" :
-               "vcs.log.details.commit.by.author.on.date.at.time",
-               StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "..."),
-               getAuthorPresentation(details),
-               DateFormatUtil.formatDate(time),
-               DateFormatUtil.formatTime(time));
-  }
-
-  @NotNull
   public static String getAuthorPresentation(@NotNull VcsShortCommitDetails details) {
     String authorString = VcsUserUtil.getShortPresentation(details.getAuthor());
     return authorString + (VcsUserUtil.isSamePerson(details.getAuthor(), details.getCommitter()) ? "" : "*");

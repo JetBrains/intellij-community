@@ -31,7 +31,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   private final Executor myExecutor;
 
   public RunContextAction(@NotNull Executor executor) {
-    super(ExecutionBundle.lazyMessage("perform.action.with.context.configuration.action.name", executor.getStartActionText()), Presentation.NULL_STRING, IconLoader.createLazy(() -> executor.getIcon()));
+    super(ExecutionBundle.messagePointer("perform.action.with.context.configuration.action.name", executor.getStartActionText()), Presentation.NULL_STRING, IconLoader.createLazy(() -> executor.getIcon()));
     myExecutor = executor;
   }
 

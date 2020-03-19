@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,14 +145,11 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  private String reportWriteUnsafeContext(@NotNull ModalityState modality) {
+  private static String reportWriteUnsafeContext(@NotNull ModalityState modality) {
     return "Write-unsafe context! Model changes are allowed from write-safe contexts only. " +
            "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
            "See TransactionGuard documentation for details." +
-           "\n  current modality=" + modality +
-           "\n  known modalities:\n" +
-           StringUtil.join(myWriteSafeModalities.entrySet(),
-                           entry -> String.format("    %s, writingAllowed=%s", entry.getKey(), entry.getValue()), ";\n");
+           "\n  current modality=" + modality;
   }
 
   @Override

@@ -132,7 +132,7 @@ internal class GHPRStatePanel(private val project: Project,
       override fun createButtons(errorHandler: (String) -> Unit): List<JComponent> {
         return if (canReopen) {
           val action = GHPRReopenAction(SingleValueModel(false), errorHandler,
-                                        stateService, dataProvider.number)
+                                        stateService, dataProvider.id)
           listOf(JButton(action))
         }
         else emptyList()
@@ -272,7 +272,7 @@ internal class GHPRStatePanel(private val project: Project,
 
         if (canClose) {
           val action = GHPRCloseAction(SingleValueModel(false), errorHandler,
-                                       stateService, dataProvider.number)
+                                       stateService, dataProvider.id)
           list.add(JButton(action))
         }
         return list

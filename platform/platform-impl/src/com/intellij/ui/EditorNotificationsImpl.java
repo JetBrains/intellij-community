@@ -211,10 +211,17 @@ public final class EditorNotificationsImpl extends EditorNotifications {
 
   @Override
   public void updateAllNotifications() {
+    if (myProject.isDefault()) {
+      throw new UnsupportedOperationException("Editor notifications aren't supported for default project");
+    }
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    if (fileEditorManager == null) {
+      throw new IllegalStateException("No FileEditorManager for " + myProject);
+    }
     myUpdateMerger.queue(new Update("update") {
       @Override
       public void run() {
-        for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+        for (VirtualFile file : fileEditorManager.getOpenFiles()) {
           updateNotifications(file);
         }
       }

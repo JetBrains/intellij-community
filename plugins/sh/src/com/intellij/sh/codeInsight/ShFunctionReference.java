@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
-  private final CachedValueProvider<PsiElement> provider = () -> CachedValueProvider.Result.create(resolveInner(),
-                                                                                                   myElement.getContainingFile());
-
   public ShFunctionReference(@NotNull PsiElement element) {
     super(element, TextRange.create(0, element.getTextLength()));
   }
@@ -23,13 +20,24 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
   @Nullable
   @Override
   public PsiElement resolve() {
-    return CachedValuesManager.getCachedValue(myElement, provider);
+    return CachedValuesManager.getCachedValue(myElement, new ShFunctionCachedValueProvider(myElement));
   }
 
-  @Nullable
-  private PsiElement resolveInner() {
-    ShFunctionDeclarationProcessor functionProcessor = new ShFunctionDeclarationProcessor(myElement.getText());
-    PsiTreeUtil.treeWalkUp(functionProcessor, myElement , myElement.getContainingFile(), ResolveState.initial());
-    return functionProcessor.getFunction();
+  private static class ShFunctionCachedValueProvider implements CachedValueProvider<PsiElement> {
+    private final PsiElement myElement;
+
+    private ShFunctionCachedValueProvider(PsiElement element) {myElement = element;}
+
+    @Override
+    public @Nullable Result<PsiElement> compute() {
+      return CachedValueProvider.Result.create(resolveInner(), myElement.getContainingFile());
+    }
+
+    @Nullable
+    private PsiElement resolveInner() {
+      ShFunctionDeclarationProcessor functionProcessor = new ShFunctionDeclarationProcessor(myElement.getText());
+      PsiTreeUtil.treeWalkUp(functionProcessor, myElement, myElement.getContainingFile(), ResolveState.initial());
+      return functionProcessor.getFunction();
+    }
   }
 }

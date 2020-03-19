@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
@@ -210,7 +211,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   public void updateArchetypesList(final MavenArchetype selected) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myLoadingIcon.setBackground(UIUtil.getTreeBackground(myArchetypesTree));
+    myLoadingIcon.setBackground(RenderingUtil.getBackground(myArchetypesTree));
 
     ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "loading");
 

@@ -41,7 +41,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
     if (file == null) return WidgetState.HIDDEN;
     PsiFile psiFile = getPsiFile();
-    if (psiFile == null || !psiFile.isWritable()) return WidgetState.HIDDEN;
+    if (psiFile == null) return WidgetState.HIDDEN;
     CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
     IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
     if (settings instanceof TransientCodeStyleSettings) {
@@ -94,7 +94,6 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
       return new MyWidgetState(tooltip, indentInfo, psiFile, indentOptions, null);
     }
   }
-
 
   @Nullable
   private PsiFile getPsiFile() {

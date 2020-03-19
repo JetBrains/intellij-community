@@ -55,7 +55,7 @@
     <mouse-shortcut keystroke="control button2"/>
   </action>
   <action id="ToggleRenderedDocPresentation">
-    <keyboard-shortcut first-keystroke="control F1"/>
+    <keyboard-shortcut first-keystroke="control alt Q"/>
   </action>
   <action id="ExpressionTypeInfo">
     <keyboard-shortcut first-keystroke="control shift P"/>
@@ -246,6 +246,11 @@
   </action>
   <action id="Exit">
     <keyboard-shortcut first-keystroke="meta Q"/>
+  </action>
+  <action id="GotoDeclaration">
+    <keyboard-shortcut first-keystroke="meta B"/>
+    <mouse-shortcut keystroke="meta button1"/>
+    <mouse-shortcut keystroke="Force touch" />
   </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="meta shift B"/>

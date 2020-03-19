@@ -2,13 +2,14 @@
 package com.intellij.ide.instrument;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.AdviceAdapter;
 
 import java.util.Set;
 
 class LockWrappingClassVisitor extends ClassVisitor {
-  private static final Set<String> METHODS_TO_WRAP = ContainerUtil.set(
+  private static final @NonNls Set<String> METHODS_TO_WRAP = ContainerUtil.set(
     "paint",
     "paintComponent",
     "paintChildren",

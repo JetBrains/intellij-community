@@ -40,7 +40,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
   }
 
   @Override
-  public List<PsiClass> getTargets() {
+  public @NotNull List<PsiClass> getTargets() {
     PsiReferenceList list = PsiKeyword.EXTENDS.equals(myTarget.getText()) ? myClass.getExtendsList() : myClass.getImplementsList();
     if (list == null) return Collections.emptyList();
     final PsiClassType[] classTypes = list.getReferencedTypes();
@@ -48,7 +48,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
   }
 
   @Override
-  protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
+  protected void selectTargets(final @NotNull List<? extends PsiClass> targets, final @NotNull Consumer<? super List<? extends PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(targets, myEditor, JavaBundle.message("highlight.overridden.classes.chooser.title")) {
       @Override
       protected void selected(PsiClass @NotNull ... classes) {
@@ -58,7 +58,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
   }
 
   @Override
-  public void computeUsages(final List<PsiClass> classes) {
+  public void computeUsages(final @NotNull List<? extends PsiClass> classes) {
     for (PsiMethod method : myClass.getMethods()) {
       List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
       for (HierarchicalMethodSignature superSignature : superSignatures) {

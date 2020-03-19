@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -6,6 +6,7 @@ import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
+import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.*
@@ -62,7 +63,7 @@ private enum class NotificationUniqueType {
  */
 object UpdateChecker {
   private val notificationGroupRef by lazy {
-    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true)
+    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, PluginManagerCore.CORE_ID)
   }
 
   @JvmField
@@ -85,7 +86,7 @@ object UpdateChecker {
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   private val updateUrl: String
-    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
+    get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
 
   /**
    * For scheduled update checks.
@@ -456,7 +457,7 @@ object UpdateChecker {
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
-      if (showDialog) {
+      if (showDialog || !canEnableNotifications()) {
         PluginUpdateDialog(updatedPlugins).show()
       }
       else {
@@ -468,8 +469,7 @@ object UpdateChecker {
         }
         else {
           val title = IdeBundle.message("updates.plugins.ready.short.title.available")
-          val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
-          val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
+          val message = updatedPlugins.joinToString { downloader -> downloader.pluginName }
           showNotification(project, title, message, runnable, { notification ->
             notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.title")
             notification.actions.add(0, object : NotificationAction(
@@ -522,6 +522,14 @@ object UpdateChecker {
         showNotification(project, title, "", {}, { notification -> notification.actions.clear()}, NotificationUniqueType.PLUGINS)
       }
     }
+  }
+
+  private fun canEnableNotifications(): Boolean {
+    if (WelcomeFrame.getInstance() is WelcomeFrameUpdater) {
+      return true
+    }
+    return NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS && NotificationsConfigurationImpl.getSettings(
+      getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
   }
 
   private fun showNotification(project: Project?,

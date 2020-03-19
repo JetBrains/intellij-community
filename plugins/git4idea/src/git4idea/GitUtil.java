@@ -851,7 +851,7 @@ public class GitUtil {
 
   @NotNull
   public static String joinToHtml(@NotNull Collection<? extends GitRepository> repositories) {
-    return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), "<br/>");
+    return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), UIUtil.BR);
   }
 
   @NotNull
@@ -861,13 +861,8 @@ public class GitUtil {
 
   @NotNull
   public static String mention(@NotNull Collection<? extends GitRepository> repositories) {
-    return mention(repositories, -1);
-  }
-
-  @NotNull
-  public static String mention(@NotNull Collection<? extends GitRepository> repositories, int limit) {
     if (repositories.isEmpty()) return "";
-    return " in " + joinShortNames(repositories, limit);
+    return " in " + joinShortNames(repositories, -1);
   }
 
   public static void updateRepositories(@NotNull Collection<? extends GitRepository> repositories) {

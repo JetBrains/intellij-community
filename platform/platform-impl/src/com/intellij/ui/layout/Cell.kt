@@ -156,7 +156,9 @@ fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
   return this
 }
 
-fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBuilder<T> = also { task(component) }
+fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBuilder<T> {
+  return also { task(component) }
+}
 
 internal interface ScrollPaneCellBuilder {
   fun noGrowY()
@@ -345,11 +347,13 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> =
-    intTextField(prop.toBinding(), columns, range)
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(prop.toBinding(), columns, range)
+  }
 
-  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> =
-    intTextField(PropertyBinding(getter, setter), columns, range)
+  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(PropertyBinding(getter, setter), columns, range)
+  }
 
   fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
     return textField(
@@ -358,11 +362,11 @@ abstract class Cell : BaseBuilder {
       columns
     ).withValidationOnInput {
       val value = it.text.toIntOrNull()
-      if (value == null)
-        error("Please enter a number")
-      else if (range != null && value !in range)
-        error("Please enter a number from ${range.first} to ${range.last}")
-      else null
+      when {
+        value == null -> error("Please enter a number")
+        range != null && value !in range -> error("Please enter a number from ${range.first} to ${range.last}")
+        else -> null
+      }
     }
   }
 

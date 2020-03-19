@@ -5,10 +5,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -28,7 +25,9 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -998,4 +997,73 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(called.get());
   }
 
+  public void test_performWhenAllCommitted_works_eventually_despite_nonPhysical_uncommitted() {
+    Document ftDocument = createFreeThreadedDocument();
+    CompletableFuture<Boolean> called = new CompletableFuture<>();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      ftDocument.insertString(0, " ");
+      getPsiDocumentManager().performWhenAllCommitted(() -> called.complete(true));
+    });
+    assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
+  }
+
+  public void test_performLaterWhenAllCommitted_works_eventually_despite_nonPhysical_uncommitted() {
+    Document ftDocument = createFreeThreadedDocument();
+    CompletableFuture<Boolean> called = new CompletableFuture<>();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      ftDocument.insertString(0, " ");
+      getPsiDocumentManager().performLaterWhenAllCommitted(() -> called.complete(true));
+    });
+    assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
+  }
+
+  public void test_AppUIExecutor_withDocumentsCommitted_works_eventually_despite_nonPhysical_uncommitted() {
+    Document ftDocument = createFreeThreadedDocument();
+    CompletableFuture<Boolean> called = new CompletableFuture<>();
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      ftDocument.insertString(0, " ");
+      AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).submit(() -> called.complete(true));
+    });
+    assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
+  }
+
+  public void test_performWhenAllCommitted_may_be_invoked_from_writeUnsafe_modality() {
+    Document document = getDocument(findFile(createFile()));
+
+    CompletableFuture<Boolean> called = new CompletableFuture<>();
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(0, " ");
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        LaterInvocator.enterModal(this);
+        assertFalse(TransactionGuard.getInstance().isWriteSafeModality(ModalityState.defaultModalityState()));
+        getPsiDocumentManager().performWhenAllCommitted(() -> called.complete(true));
+        waitForCommits();
+        assertFalse(called.isDone());
+      }, ModalityState.any());
+    });
+
+    UIUtil.dispatchAllInvocationEvents();
+
+    LaterInvocator.leaveModal(this);
+
+    assertTrue(PlatformTestUtil.waitForFuture(called, 10_000));
+  }
+
+  public void test_commitAndRunReadAction_commits_documents_in_needed_modality() {
+    Document document = getDocument(findFile(createFile()));
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(0, " ");
+    });
+    ProgressManager.getInstance().run(new Task.Modal(myProject, "", true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        assertFalse(getPsiDocumentManager().isCommitted(document));
+        getPsiDocumentManager().commitAndRunReadAction(() -> {
+          assertTrue(getPsiDocumentManager().isCommitted(document));
+        });
+      }
+    });
+  }
 }

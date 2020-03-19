@@ -24,6 +24,6 @@ import com.intellij.util.LineSeparator;
 public class ConvertToUnixLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
 
   public ConvertToUnixLineSeparatorsAction() {
-    super(ApplicationBundle.lazyMessage("combobox.crlf.unix"), LineSeparator.LF);
+    super(ApplicationBundle.messagePointer("combobox.crlf.unix"), LineSeparator.LF);
   }
 }

@@ -33,8 +33,8 @@ internal class LegacyBridgeModuleImpl(
 
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: EntityStoreChanged) {
-          event.getChanges(ModuleEntity::class.java).filter { it is EntityChange.Removed }
-            .forEach{ if ((it as EntityChange.Removed).entity.persistentId() == moduleEntityId) entityStore = EntityStoreOnStorage(entityStore.current) }
+          event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>()
+            .forEach{ if (it.entity.persistentId() == moduleEntityId) entityStore = EntityStoreOnStorage(entityStore.current) }
         }
       })
     }
@@ -63,5 +63,5 @@ internal class LegacyBridgeModuleImpl(
     return LocalFileSystem.getInstance().findFileByIoFile(File(moduleFilePath))
   }
 
-  override fun getModuleFilePath(): String =  directoryPath?.let { "$it/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}" } ?: ""
+  override fun getModuleFilePath(): String = directoryPath?.let { "$it/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}" } ?: ""
 }

@@ -678,21 +678,27 @@ public class HighlightClassUtil {
           QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
         }
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, aClass));
-      } else if (aClass instanceof PsiAnonymousClass) {
-        final PsiClass baseClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)aClass).getBaseClassType());
-        if (baseClass != null && baseClass.isInterface()) {
-          info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-            .descriptionAndTooltip("Anonymous class implements interface; cannot have qualifier for new").create();
-        }
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, aClass));
       } else {
-        PsiElement refQualifier = Objects.requireNonNull(expression.getClassReference()).getQualifier();
-        if (refQualifier != null) {
-          info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refQualifier)
-            .descriptionAndTooltip("Qualified class reference is not allowed in qualified new")
-            .create();
-          QuickFixAction
-            .registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(refQualifier, QuickFixBundle.message("remove.qualifier.fix")));
+        if (aClass instanceof PsiAnonymousClass) {
+          final PsiClass baseClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)aClass).getBaseClassType());
+          if (baseClass != null && baseClass.isInterface()) {
+            info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
+              .descriptionAndTooltip("Anonymous class implements interface; cannot have qualifier for new").create();
+          }
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveNewQualifierFix(expression, aClass));
+        }
+        if (info == null) {
+          PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+          if (reference != null) {
+            PsiElement refQualifier = reference.getQualifier();
+            if (refQualifier != null) {
+              info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refQualifier)
+                .descriptionAndTooltip("Qualified class reference is not allowed in qualified new")
+                .create();
+              QuickFixAction
+                .registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(refQualifier, QuickFixBundle.message("remove.qualifier.fix")));
+            }
+          }
         }
       }
     }

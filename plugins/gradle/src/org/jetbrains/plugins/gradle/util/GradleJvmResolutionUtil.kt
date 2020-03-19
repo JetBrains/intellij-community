@@ -1,5 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GradleJvmResolutionUtil")
+@file:ApiStatus.Internal
 
 package org.jetbrains.plugins.gradle.util
 
@@ -10,10 +11,11 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Success
 
 const val JAVA_HOME = "JAVA_HOME"
 
@@ -55,8 +57,9 @@ private class GradleJvmResolutionContext(
   val projectSdk: Sdk? by lazy { projectSdk ?: ProjectRootManager.getInstance(project).projectSdk }
 }
 
-private fun GradleJvmResolutionContext.resolveReference(sdk: Sdk): String {
+private fun GradleJvmResolutionContext.resolveReference(sdk: Sdk?): String? {
   return when (sdk) {
+    null -> null
     projectSdk -> ExternalSystemJdkUtil.USE_PROJECT_JDK
     else -> sdk.name
   }
@@ -66,25 +69,13 @@ private fun GradleJvmResolutionContext.isValidAndSupported(homePath: String): Bo
   if (!ExternalSystemJdkUtil.isValidJdk(homePath)) return false
   val javaSdkType = ExternalSystemJdkUtil.getJavaSdkType()
   val versionString = javaSdkType.getVersionString(homePath) ?: return false
-  return isSupported(versionString)
+  return isSupported(gradleVersion, versionString)
 }
 
 private fun GradleJvmResolutionContext.isValidAndSupported(sdk: Sdk): Boolean {
   if (!ExternalSystemJdkUtil.isValidJdk(sdk)) return false
   val versionString = sdk.versionString ?: return false
-  return isSupported(versionString)
-}
-
-private fun GradleJvmResolutionContext.isSupported(versionString: String): Boolean {
-  val version = JavaVersion.tryParse(versionString) ?: return false
-  return when {
-    gradleVersion >= GradleVersion.version("6.0") -> version.feature in 8..13
-    gradleVersion >= GradleVersion.version("5.4.1") -> version.feature in 8..12
-    gradleVersion >= GradleVersion.version("5.0") -> version.feature in 8..11
-    gradleVersion >= GradleVersion.version("4.1") -> version.feature in 7..9
-    gradleVersion >= GradleVersion.version("4.0") -> version.feature in 7..8
-    else -> version.feature in 6..8
-  }
+  return isSupported(gradleVersion, versionString)
 }
 
 private fun GradleJvmResolutionContext.resolvePossibleGradleJvms(): List<Sdk> {
@@ -108,7 +99,6 @@ private fun GradleJvmResolutionContext.findOrAddGradleJdk(homePath: String): Sdk
   val canonicalHomePath = FileUtil.toCanonicalPath(homePath)
   val foundJdk = possibleGradleJvms.find { FileUtil.toCanonicalPath(it.homePath) == canonicalHomePath }
   if (foundJdk != null) return foundJdk
-  if (!isValidAndSupported(canonicalHomePath)) return null
   return ExternalSystemJdkUtil.addJdk(canonicalHomePath)
 }
 
@@ -123,13 +113,16 @@ private fun GradleJvmResolutionContext.getGradleJdkReference(): Sdk? {
 
 private fun GradleJvmResolutionContext.getOrAddGradleJavaHomeJdkReference(): Sdk? {
   val properties = getGradleProperties(externalProjectPath)
-  val javaHome = properties.javaHome ?: return null
+  val javaHomeProperty = properties.javaHomeProperty ?: return null
+  val javaHome = javaHomeProperty.value
   return findOrAddJdk(javaHome)
 }
 
 private fun GradleJvmResolutionContext.getOrAddEnvJavaHomeJdkReference(): Sdk? {
-  val javaHome = Environment.getEnvVariable(JAVA_HOME) ?: return null
-  return findOrAddGradleJdk(javaHome)
+  val javaHome = Environment.getEnvVariable(JAVA_HOME)
+  val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
+  if (validationStatus !is Success) return null
+  return findOrAddGradleJdk(validationStatus.javaHome)
 }
 
 private fun GradleJvmResolutionContext.getProjectJdkReference(): Sdk? {

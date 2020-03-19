@@ -4,7 +4,6 @@ package com.intellij.remote;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class WebDeploymentCredentialsHolder {
   private static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
@@ -15,7 +14,7 @@ public class WebDeploymentCredentialsHolder {
 
 
   private String myCredentialsId;
-  private String myWebServerConfigId;
+  private @NotNull String myWebServerConfigId = "";
   private String myWebServerConfigName;
 
 
@@ -32,8 +31,7 @@ public class WebDeploymentCredentialsHolder {
     return myCredentialsId;
   }
 
-  @Nullable
-  public String getWebServerConfigId() {
+  public @NotNull String getWebServerConfigId() {
     return myWebServerConfigId;
   }
 
@@ -50,7 +48,7 @@ public class WebDeploymentCredentialsHolder {
   }
 
   public void load(Element element) {
-    setWebServerConfigId(element.getAttributeValue(WEB_SERVER_CONFIG_ID));
+    setWebServerConfigId(StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CONFIG_ID)));
     setWebServerConfigName(StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CONFIG_NAME)));
     myCredentialsId = StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CREDENTIALS_ID));
     if (StringUtil.isEmpty(myCredentialsId)) {

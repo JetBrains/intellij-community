@@ -501,7 +501,7 @@ public class CustomizableActionsPanel {
       });
       new DoubleClickListener(){
         @Override
-        protected boolean onDoubleClick(MouseEvent event) {
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
           doOKAction();
           return true;
         }
@@ -612,7 +612,7 @@ public class CustomizableActionsPanel {
 
   private class AddActionActionTreeSelectionAction extends TreeSelectionAction {
     private AddActionActionTreeSelectionAction() {
-      super(IdeBundle.lazyMessage("button.add.action"));
+      super(IdeBundle.messagePointer("button.add.action"));
     }
 
     @Override
@@ -655,7 +655,7 @@ public class CustomizableActionsPanel {
 
   private class AddSeparatorAction extends TreeSelectionAction {
     private AddSeparatorAction() {
-      super(IdeBundle.lazyMessage("button.add.separator"));
+      super(IdeBundle.messagePointer("button.add.separator"));
     }
 
     @Override
@@ -685,7 +685,7 @@ public class CustomizableActionsPanel {
 
   private class RemoveAction extends TreeSelectionAction {
     private RemoveAction() {
-      super(IdeBundle.lazyMessage("button.remove"), Presentation.NULL_STRING, AllIcons.General.Remove);
+      super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.General.Remove);
       ShortcutSet shortcutSet = KeymapUtil.filterKeyStrokes(CommonShortcuts.getDelete(),
                                                             KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                                                             KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0));
@@ -712,7 +712,7 @@ public class CustomizableActionsPanel {
 
   private class EditIconAction extends TreeSelectionAction {
     private EditIconAction() {
-      super(IdeBundle.lazyMessage("button.edit.action.icon"), Presentation.NULL_STRING, AllIcons.Actions.Edit);
+      super(IdeBundle.messagePointer("button.edit.action.icon"), Presentation.NULL_STRING, AllIcons.Actions.Edit);
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel);
     }
 
@@ -750,7 +750,7 @@ public class CustomizableActionsPanel {
 
   private class MoveUpAction extends TreeSelectionAction {
     private MoveUpAction() {
-      super(IdeBundle.lazyMessage("button.move.up"), Presentation.NULL_STRING, AllIcons.Actions.MoveUp);
+      super(IdeBundle.messagePointer("button.move.up"), Presentation.NULL_STRING, AllIcons.Actions.MoveUp);
       registerCustomShortcutSet(CommonShortcuts.MOVE_UP, myPanel);
     }
 
@@ -784,7 +784,7 @@ public class CustomizableActionsPanel {
 
   private class MoveDownAction extends TreeSelectionAction {
     private MoveDownAction() {
-      super(IdeBundle.lazyMessage("button.move.down"), Presentation.NULL_STRING, AllIcons.Actions.MoveDown);
+      super(IdeBundle.messagePointer("button.move.down"), Presentation.NULL_STRING, AllIcons.Actions.MoveDown);
       registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, myPanel);
     }
 
@@ -819,7 +819,7 @@ public class CustomizableActionsPanel {
 
   private class RestoreSelectionAction extends DumbAwareAction {
     private RestoreSelectionAction() {
-      super(IdeBundle.lazyMessage("button.restore.selected.groups"));
+      super(IdeBundle.messagePointer("button.restore.selected.groups"));
     }
 
     private Pair<TreeSet<String>, List<ActionUrl>> findActionsUnderSelection() {
@@ -866,17 +866,17 @@ public class CustomizableActionsPanel {
       Pair<TreeSet<String>, List<ActionUrl>> selection = findActionsUnderSelection();
       e.getPresentation().setEnabled(!selection.second.isEmpty());
       if (selection.first.size() != 1) {
-        e.getPresentation().setText(IdeBundle.lazyMessage("button.restore.selected.groups"));
+        e.getPresentation().setText(IdeBundle.messagePointer("button.restore.selected.groups"));
       }
       else {
-        e.getPresentation().setText(IdeBundle.lazyMessage("button.restore.selection", selection.first.iterator().next()));
+        e.getPresentation().setText(IdeBundle.messagePointer("button.restore.selection", selection.first.iterator().next()));
       }
     }
   }
 
   private class RestoreAllAction extends DumbAwareAction {
     private RestoreAllAction() {
-      super(IdeBundle.lazyMessage("button.restore.all"));
+      super(IdeBundle.messagePointer("button.restore.all"));
     }
 
     @Override

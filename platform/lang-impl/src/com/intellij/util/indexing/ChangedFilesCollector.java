@@ -7,7 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -17,6 +19,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ConcurrencyUtil;
@@ -33,15 +36,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class ChangedFilesCollector extends IndexedFilesListener {
+  private static final Logger LOG = Logger.getInstance(ChangedFilesCollector.class);
+
   private final IntObjectMap<VirtualFile> myFilesToUpdate = ContainerUtil.createConcurrentIntObjectMap();
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
@@ -136,6 +138,24 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return new ArrayList<>(myFilesToUpdate.values());
   }
 
+  // it's important here to don't load any extension here, so we don't check scopes.
+  Collection<VirtualFile> getAllPossibleFilesToUpdate() {
+
+    ReadAction.run(() -> {
+      processFilesInReadAction(info -> {
+        myFilesToUpdate.put(info.getFileId(),
+                            info.isFileRemoved() ? new DeletedVirtualFileStub(((VirtualFileWithId)info.getFile())) : info.getFile());
+        return true;
+      });
+    });
+
+    return new ArrayList<>(myFilesToUpdate.values());
+  }
+
+  void clearFilesToUpdate() {
+    myFilesToUpdate.clear();
+  }
+
   @Override
   @NotNull
   public AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
@@ -178,7 +198,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     myManager.waitUntilIndicesAreInitialized();
 
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      processFilesInReadAction();
+      processFilesToUpdateInReadAction();
     }
     else {
       processFilesInReadActionWithYieldingToWriteAction();
@@ -221,7 +241,20 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  private void processFilesInReadAction() {
+  private void processFilesToUpdateInReadAction() {
+    processFilesInReadAction(info -> {
+      int fileId = info.getFileId();
+      VirtualFile file = info.getFile();
+      if (info.isTransientStateChanged()) myManager.doTransientStateChangeForFile(fileId, file);
+      if (info.isBeforeContentChanged()) myManager.doInvalidateIndicesForFile(fileId, file, true);
+      if (info.isContentChanged()) myManager.scheduleFileForIndexing(fileId, file, true);
+      if (info.isFileRemoved()) myManager.doInvalidateIndicesForFile(fileId, file, false);
+      if (info.isFileAdded()) myManager.scheduleFileForIndexing(fileId, file, false);
+      return true;
+    });
+  }
+
+  private void processFilesInReadAction(@NotNull VfsEventsMerger.VfsEventProcessor processor) {
     assert ApplicationManager.getApplication().isReadAccessAllowed(); // no vfs events -> event processing code can finish
 
     int publishedEventIndex = getEventMerger().getPublishedEventIndex();
@@ -237,13 +270,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         ConcurrencyUtil.withLock(myManager.myWriteLock, () -> {
           try {
             ProgressManager.getInstance().executeNonCancelableSection(() -> {
-              int fileId = info.getFileId();
-              VirtualFile file = info.getFile();
-              if (info.isTransientStateChanged()) myManager.doTransientStateChangeForFile(fileId, file);
-              if (info.isBeforeContentChanged()) myManager.doInvalidateIndicesForFile(fileId, file, true);
-              if (info.isContentChanged()) myManager.scheduleFileForIndexing(fileId, file, true);
-              if (info.isFileRemoved()) myManager.doInvalidateIndicesForFile(fileId, file, false);
-              if (info.isFileAdded()) myManager.scheduleFileForIndexing(fileId, file, false);
+              processor.process(info);
             });
           }
           finally {
@@ -257,7 +284,12 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       myWorkersFinishedSync.arriveAndDeregister();
     }
 
-    myWorkersFinishedSync.awaitAdvance(phase);
+    try {
+      myWorkersFinishedSync.awaitAdvance(phase);
+    } catch (RejectedExecutionException e) {
+      LOG.warn(e);
+      throw new ProcessCanceledException(e);
+    }
 
     if (getEventMerger().getPublishedEventIndex() == publishedEventIndex) {
       myProcessedEventIndex.compareAndSet(processedEventIndex, publishedEventIndex);
@@ -266,7 +298,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private void processFilesInReadActionWithYieldingToWriteAction() {
     while (getEventMerger().hasChanges()) {
-      ReadAction.nonBlocking(this::processFilesInReadAction).executeSynchronously();
+      ReadAction.nonBlocking(() -> processFilesToUpdateInReadAction()).executeSynchronously();
     }
   }
 

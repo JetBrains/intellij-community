@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -50,9 +50,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -70,7 +72,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Nullable private final Project myProject;
   private final Component myContextComponent;
-  @Nullable private final Editor myEditor;
+  @Nullable private final WeakReference<Editor> myEditor;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
@@ -99,7 +101,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myContextComponent = component;
-    myEditor = editor;
+    myEditor = new WeakReference<>(editor);
     myModality = modalityState;
     buildActions();
   }
@@ -119,10 +121,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
+    Editor editor = myEditor != null ? myEditor.get() : null;
     if (myProject != null && !myProject.isDisposed() && !DumbService.isDumb(myProject) &&
-        myEditor != null && !myEditor.isDisposed()) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
+        editor != null && !editor.isDisposed()) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(editor, file);
       if (children != null) {
         for (ApplyIntentionAction action : children) {
           map.put(action.getName(), action);
@@ -169,6 +172,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   public void rebuildActions() {
     myActionGroups.clear();
     buildActions();
+  }
+
+  @ApiStatus.Internal
+  public void clearActions() {
+    myActionGroups.clear();
   }
 
   public static class MatchedValue {
@@ -718,14 +726,21 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     public Component getListCellRendererComponent(@NotNull JList list,
                                                   Object matchedValue,
                                                   int index, boolean isSelected, boolean cellHasFocus) {
+      SimpleColoredComponent nameComponent = new SimpleColoredComponent();
+
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
-      JPanel panel = new JPanel(new BorderLayout());
+      JPanel panel = new JPanel(new BorderLayout()){
+        @Override
+        public AccessibleContext getAccessibleContext() {
+          return nameComponent.getAccessibleContext();
+        }
+      };
+
       panel.setBorder(JBUI.Borders.empty(2));
       panel.setOpaque(true);
       Color bg = UIUtil.getListBackground(isSelected, cellHasFocus);
       panel.setBackground(bg);
 
-      SimpleColoredComponent nameComponent = new SimpleColoredComponent();
       if (myUseListFont) {
         nameComponent.setFont(list.getFont());
       }

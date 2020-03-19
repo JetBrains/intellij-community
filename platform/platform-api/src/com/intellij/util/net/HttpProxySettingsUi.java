@@ -127,7 +127,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       final String title = IdeBundle.message("dialog.title.check.proxy.settings");
       final String answer =
         Messages.showInputDialog(myMainPanel,
-                                 IdeBundle.message("message.text.warning.your.settings.will.be.saved.enter.any.url.to.check.connection.to"),
+                                 IdeBundle.message("message.text.enter.url.to.check.connection"),
                                  title, Messages.getQuestionIcon(), "http://", null);
       if (StringUtil.isEmptyOrSpaces(answer)) {
         return;

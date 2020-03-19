@@ -35,12 +35,7 @@ class GHPREditorReviewThreadsModel {
       for ((id, thread) in threadsById) {
         val current = modelsById[id]
         if (current == null) {
-          val model = GHPRReviewThreadModelImpl(thread).also {
-            it.addDeletionListener {
-              modelsByLine[line]?.remove(it)
-              changeEventDispatcher.multicaster.threadsRemoved(line, listOf(it))
-            }
-          }
+          val model = GHPRReviewThreadModelImpl(thread)
           models.add(model)
           addedModels.add(model)
         }

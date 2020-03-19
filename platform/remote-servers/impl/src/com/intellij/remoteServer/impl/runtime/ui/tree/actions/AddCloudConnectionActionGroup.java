@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class AddCloudConnectionActionGroup extends ActionGroup {
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (e.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
-        e.getPresentation().setText(CloudBundle.lazyMessage("new.cloud.connection.configurable.title", myServerType.getPresentableName()));
+        e.getPresentation().setText(CloudBundle.messagePointer("new.cloud.connection.configurable.title", myServerType.getPresentableName()));
       }
       else {
         e.getPresentation().setText(myServerType.getPresentableName());

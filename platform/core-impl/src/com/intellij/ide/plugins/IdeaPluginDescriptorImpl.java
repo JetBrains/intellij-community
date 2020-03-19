@@ -4,10 +4,10 @@ package com.intellij.ide.plugins;
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.BeanExtensionPoint;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -36,10 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
@@ -53,13 +54,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
 
-  private static final Logger LOG = Logger.getInstance(IdeaPluginDescriptorImpl.class);
-
-  private static final String APPLICATION_SERVICE = "com.intellij.applicationService";
-  private static final String PROJECT_SERVICE = "com.intellij.projectService";
-  private static final String MODULE_SERVICE = "com.intellij.moduleService";
-
-  static final List<String> SERVICE_QUALIFIED_ELEMENT_NAMES = Arrays.asList(APPLICATION_SERVICE, PROJECT_SERVICE, MODULE_SERVICE);
+  static final String APPLICATION_SERVICE = "com.intellij.applicationService";
+  static final String PROJECT_SERVICE = "com.intellij.projectService";
+  static final String MODULE_SERVICE = "com.intellij.moduleService";
 
   private final Path myPath;
   private Path myBasePath;   // base path for resolving optional dependency descriptors
@@ -193,8 +190,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       myDescriptionChildText = element.getChildTextTrim("description");
       myCategory = element.getChildTextTrim("category");
       myVersion = element.getChildTextTrim("version");
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
+      if (context.parentContext.getLogger().isDebugEnabled()) {
+        context.parentContext.getLogger().debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
       }
       List<Element> dependsElements = element.getChildren("depends");
       for (Element dependsElement : dependsElements) {
@@ -219,7 +216,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       Element child = (Element)content;
       switch (child.getName()) {
         case "extensions":
-          XmlReader.readExtensions(this, context.parentContext.getStringInterner(), child);
+          XmlReader.readExtensions(this, context.parentContext, child);
           break;
 
         case "extensionPoints":
@@ -297,7 +294,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         case "resource-bundle":
           String value = StringUtil.nullize(child.getTextTrim());
           if (myResourceBundleBaseName != null && !Comparing.equal(myResourceBundleBaseName, value)) {
-            LOG.warn("Resource bundle redefinition for plugin '" + rootDescriptor.getPluginId() + "'. " +
+            context.parentContext.getLogger().warn("Resource bundle redefinition for plugin '" + rootDescriptor.getPluginId() + "'. " +
                      "Old value: " + myResourceBundleBaseName + ", new value: " + value);
           }
           myResourceBundleBaseName = value;
@@ -307,7 +304,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
           myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context.parentContext);
           myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
-          myIsLicenseOptional = Boolean.valueOf(child.getAttributeValue("optional", "false"));
+          myIsLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
           break;
 
         case "vendor":
@@ -397,12 +394,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     markAsIncomplete(context);
-    context.parentContext.result.reportIncompatiblePlugin(this, since, until);
+    context.parentContext.result.reportIncompatiblePlugin(this, message, since, until);
     return false;
   }
 
-  @NotNull
-  String formatErrorMessage(@NotNull String message) {
+  @NotNull String formatErrorMessage(@NotNull String message) {
     String path = myPath.toString();
     StringBuilder builder = new StringBuilder();
     builder.append("The ").append(myName).append(" (id=").append(myId).append(", path=");
@@ -422,8 +418,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
   }
 
-  @NotNull
-  private static ServiceDescriptor readServiceDescriptor(@NotNull Element element) {
+  private static @NotNull ServiceDescriptor readServiceDescriptor(@NotNull Element element,
+                                                                  @NotNull DescriptorListLoadingContext loadingContext) {
     ServiceDescriptor descriptor = new ServiceDescriptor();
     descriptor.serviceInterface = element.getAttributeValue("serviceInterface");
     descriptor.serviceImplementation = StringUtil.nullize(element.getAttributeValue("serviceImplementation"));
@@ -433,20 +429,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
     String preload = element.getAttributeValue("preload");
     if (preload != null) {
-      if (preload.equals("true")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
-      }
-      else if (preload.equals("await")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
-      }
-      else if (preload.equals("notHeadless")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
-      }
-      else if (preload.equals("notLightEdit")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
-      }
-      else {
-        LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+      switch (preload) {
+        case "true":
+          descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
+          break;
+        case "await":
+          descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
+          break;
+        case "notHeadless":
+          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
+          break;
+        case "notLightEdit":
+          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
+          break;
+        default:
+          loadingContext.getLogger().error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+          break;
       }
     }
 
@@ -546,7 +544,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       return context.getDateParser().parse(dateStr);
     }
     catch (ParseException e) {
-      LOG.info("Error parse release date from plugin descriptor for plugin " + myName + " {" + myId + "}: " + e.getMessage());
+      context.getLogger().info("Error parse release date from plugin descriptor for plugin " + myName + " {" + myId + "}: " + e.getMessage());
     }
     return null;
   }
@@ -686,7 +684,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         bundle = DynamicBundle.INSTANCE.getResourceBundle(myResourceBundleBaseName, getPluginClassLoader());
       }
       catch (MissingResourceException e) {
-        LOG.info("Cannot find plugin " + myId + " resource-bundle: " + myResourceBundleBaseName);
+        PluginManagerCore.getLogger().info("Cannot find plugin " + myId + " resource-bundle: " + myResourceBundleBaseName);
       }
     }
 
@@ -823,8 +821,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return result;
   }
 
-  @NotNull
-  List<Path> collectClassPath() {
+  @NotNull List<Path> collectClassPath() {
     if (!Files.isDirectory(myPath)) {
       return Collections.singletonList(myPath);
     }
@@ -839,7 +836,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       for (Path f : childStream) {
         if (Files.isRegularFile(f)) {
           String name = f.getFileName().toString();
-          if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
+          if (StringUtilRt.endsWithIgnoreCase(name, ".jar") || StringUtilRt.endsWithIgnoreCase(name, ".zip")) {
             result.add(f);
           }
         }
@@ -848,10 +845,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
       }
     }
-    catch (FileNotFoundException ignore) {
+    catch (NoSuchFileException ignore) {
     }
     catch (IOException e) {
-      LOG.debug(e);
+      PluginManagerCore.getLogger().debug(e);
     }
     return result;
   }
@@ -932,6 +929,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   @Override
+  public Disposable getPluginDisposable() {
+    return PluginManager.pluginDisposables.get(this);
+  }
+
+  @Override
   public String getSinceBuild() {
     return mySinceBuild;
   }
@@ -1009,6 +1011,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return "PluginDescriptor(name=" + myName + ", id=" + myId + ", path=" + myPath + ")";
   }
 
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   private static boolean isSuitableForOs(@NotNull String os) {
     if (os.isEmpty()) {
       return true;
@@ -1084,7 +1087,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         String listenerClassName = child.getAttributeValue("class");
         String topicClassName = child.getAttributeValue("topic");
         if (listenerClassName == null || topicClassName == null) {
-          LOG.error("Listener descriptor is not correct: " + JDOMUtil.writeElement(child));
+          PluginManagerCore.getLogger().error("Listener descriptor is not correct: " + JDOMUtil.writeElement(child));
         }
         else {
           result.add(new ListenerDescriptor(listenerClassName, topicClassName,
@@ -1140,7 +1143,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
                 Integer.parseInt(internalVersionString);
               }
               catch (NumberFormatException e) {
-                LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.myId));
+                PluginManagerCore.getLogger().error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.myId));
               }
             }
             break;
@@ -1287,9 +1290,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       return value == null || Boolean.parseBoolean(value);
     }
 
-    static void readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Interner<String> stringInterner, Element child) {
+    static void readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor, DescriptorListLoadingContext loadingContext, Element child) {
       String ns = child.getAttributeValue("defaultExtensionNs");
       THashMap<String, List<Element>> epNameToExtensions = descriptor.myExtensions;
+      Interner<String> stringInterner = loadingContext.getStringInterner();
       for (Element extensionElement : child.getChildren()) {
         String os = extensionElement.getAttributeValue("os");
         if (os != null) {
@@ -1301,31 +1305,32 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
         String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
         ContainerDescriptor containerDescriptor;
-        if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
-          containerDescriptor = descriptor.myAppContainerDescriptor;
-        }
-        else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
-          containerDescriptor = descriptor.myProjectContainerDescriptor;
-        }
-        else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
-          containerDescriptor = descriptor.myModuleContainerDescriptor;
-        }
-        else {
-          if (epNameToExtensions == null) {
-            epNameToExtensions = new THashMap<>();
-            descriptor.myExtensions = epNameToExtensions;
-          }
+        switch (qualifiedExtensionPointName) {
+          case APPLICATION_SERVICE:
+            containerDescriptor = descriptor.myAppContainerDescriptor;
+            break;
+          case PROJECT_SERVICE:
+            containerDescriptor = descriptor.myProjectContainerDescriptor;
+            break;
+          case MODULE_SERVICE:
+            containerDescriptor = descriptor.myModuleContainerDescriptor;
+            break;
+          default:
+            if (epNameToExtensions == null) {
+              epNameToExtensions = new THashMap<>();
+              descriptor.myExtensions = epNameToExtensions;
+            }
 
-          List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
-          if (list == null) {
-            list = new SmartList<>();
-            epNameToExtensions.put(qualifiedExtensionPointName, list);
-          }
-          list.add(extensionElement);
-          continue;
+            List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
+            if (list == null) {
+              list = new SmartList<>();
+              epNameToExtensions.put(qualifiedExtensionPointName, list);
+            }
+            list.add(extensionElement);
+            continue;
         }
 
-        containerDescriptor.addService(readServiceDescriptor(extensionElement));
+        containerDescriptor.addService(readServiceDescriptor(extensionElement, loadingContext));
       }
     }
 
@@ -1347,7 +1352,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         String area = element.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA);
         ContainerDescriptor containerDescriptor = descriptor.getContainerDescriptorByExtensionArea(area);
         if (containerDescriptor == null) {
-          LOG.error("Unknown area: " + area);
+          PluginManagerCore.getLogger().error("Unknown area: " + area);
           continue;
         }
 

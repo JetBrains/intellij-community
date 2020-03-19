@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
-import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.Logger
@@ -42,7 +41,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.lang.UnsupportedOperationException
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -107,7 +105,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         component.initializeComponent()
       }
       else if (component is com.intellij.openapi.util.JDOMExternalizable) {
-        componentName = ComponentManagerImpl.getComponentName(component)
+        componentName = getComponentName(component)
         initJdomExternalizable(component, componentName)
       }
     }
@@ -122,7 +120,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun unloadComponent(component: Any) {
     @Suppress("DEPRECATION") val name = when (component) {
       is PersistentStateComponent<*> -> getStateSpec(component).name
-      is com.intellij.openapi.util.JDOMExternalizable -> ComponentManagerImpl.getComponentName(component)
+      is com.intellij.openapi.util.JDOMExternalizable -> getComponentName(component)
       else -> null
     }
     name?.let { removeComponent(it) }
@@ -266,7 +264,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val component = info.component
     @Suppress("DEPRECATION")
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
-      val effectiveComponentName = componentName ?: ComponentManagerImpl.getComponentName(component)
+      val effectiveComponentName = componentName ?: getComponentName(component)
       storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
         session.getProducer(it)?.setState(component, effectiveComponentName, component)
       }
@@ -397,7 +395,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   protected open fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage {
-    throw UnsupportedOperationException()
+    throw UnsupportedOperationException("PersistentStateComponent without State annotation not supported (store=$this, componentClass=${componentClass.name}, stateClass=${stateClass.classes})")
   }
 
   private fun doInitComponent(info: ComponentInfo, component: PersistentStateComponent<Any>, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
@@ -689,4 +687,8 @@ internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, cr
 
     task()
   }
+}
+
+private fun getComponentName(component: Any): String {
+  return if (component is NamedComponent) component.componentName else component.javaClass.name
 }

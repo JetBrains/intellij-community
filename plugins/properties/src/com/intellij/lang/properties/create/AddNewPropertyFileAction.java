@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddNewPropertyFileAction extends AnAction {
  protected AddNewPropertyFileAction() {
-    super(PropertiesBundle.lazyMessage("add.property.files.to.resource.bundle.dialog.action.title"), AllIcons.FileTypes.Properties);
+    super(PropertiesBundle.messagePointer("add.property.files.to.resource.bundle.dialog.action.title"), AllIcons.FileTypes.Properties);
   }
 
   @Override

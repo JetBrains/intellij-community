@@ -92,9 +92,14 @@ public class GitRebaser {
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
-    GitTask task = new GitTask(myProject, rh, "Aborting rebase");
+    GitTask task = new GitTask(myProject, rh, GitBundle.getString("rebase.update.project.abort.task.title"));
     task.setProgressIndicator(myProgressIndicator);
-    task.executeAsync(new GitTaskResultNotificationHandler(myProject, "Rebase aborted", "Abort rebase cancelled", "Error aborting rebase"));
+    task.executeAsync(new GitTaskResultNotificationHandler(
+      myProject,
+      GitBundle.getString("rebase.update.project.notification.abort.success.message"),
+      GitBundle.getString("rebase.update.project.notification.abort.cancel.message"),
+      GitBundle.getString("rebase.update.project.notification.abort.error.message")
+    ));
   }
 
   public boolean continueRebase(@NotNull VirtualFile root) {
@@ -175,13 +180,15 @@ public class GitRebaser {
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
-        @Override protected boolean proceedIfNothingToMerge() {
+      return new GitConflictResolver(myProject, Collections.singleton(root), makeParams(myProject)) {
+        @Override
+        protected boolean proceedIfNothingToMerge() {
           notifyUnresolvedRemain();
           return false;
         }
 
-        @Override protected boolean proceedAfterAllMerged() {
+        @Override
+        protected boolean proceedAfterAllMerged() {
           return continueRebase(root, "--continue");
         }
       }.merge();
@@ -207,14 +214,21 @@ public class GitRebaser {
       }
       catch (VcsException e) {
         LOG.info("Failed to work around 'no changes' error.", e);
-        String message = "Couldn't proceed with rebase. " + e.getMessage();
-        GitUIUtil.notifyImportantError(myProject, "Error rebasing", message);
+        GitUIUtil.notifyImportantError(
+          myProject,
+          GitBundle.getString("rebase.update.project.notification.failed.title"),
+          GitBundle.message("rebase.update.project.notification.failed.message", e.getMessage())
+        );
         return false;
       }
     }
     else {
       LOG.info("handleRebaseFailure error " + h.errors());
-      GitUIUtil.notifyImportantError(myProject, "Error rebasing", GitUIUtil.stringifyErrors(h.errors()));
+      GitUIUtil.notifyImportantError(
+        myProject,
+        GitBundle.getString("rebase.update.project.notification.failed.title"),
+        GitUIUtil.stringifyErrors(h.errors())
+      );
       return false;
     }
   }
@@ -226,16 +240,16 @@ public class GitRebaser {
     myGit.runCommand(handler).throwOnError();
   }
 
-  private GitConflictResolver.Params makeParamsForRebaseConflict() {
-    return new GitConflictResolver.Params(myProject).
-      setReverse(true).
-      setErrorNotificationTitle("Can't continue rebase").
-      setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.").
-      setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> " +
-                                                "You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+  @NotNull
+  private static GitConflictResolver.Params makeParams(@NotNull Project project) {
+    return new GitConflictResolver.Params(project)
+      .setReverse(true)
+      .setErrorNotificationTitle(GitBundle.getString("rebase.update.project.conflict.error.notification.title"))
+      .setMergeDescription(GitBundle.getString("rebase.update.project.conflict.merge.description.label"))
+      .setErrorNotificationAdditionalDescription(GitBundle.getString("rebase.update.project.conflict.error.notification.description"));
   }
 
-  public static class TrivialEditor extends GitInteractiveRebaseEditorHandler{
+  public static class TrivialEditor extends GitInteractiveRebaseEditorHandler {
     public TrivialEditor(@NotNull Project project, @NotNull VirtualFile root) {
       super(project, root);
     }
@@ -265,12 +279,20 @@ public class GitRebaser {
       return GitUpdateResult.ERROR;
     }
     else if (localChangesDetector.wasMessageDetected()) {
-      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(myProject, root, "rebase", localChangesDetector.getRelativeFilePaths());
+      LocalChangesWouldBeOverwrittenHelper.showErrorNotification(
+        myProject,
+        root,
+        GitBundle.getString("rebase.git.operation.name"),
+        localChangesDetector.getRelativeFilePaths()
+      );
       return GitUpdateResult.ERROR;
     }
     else {
       LOG.info("handleRebaseFailure error " + handler.errors());
-      VcsNotifier.getInstance(myProject).notifyError("Rebase error", result.getErrorOutputAsHtmlString());
+      VcsNotifier.getInstance(myProject).notifyError(
+        GitBundle.getString("rebase.update.project.notification.failed.title"),
+        result.getErrorOutputAsHtmlString()
+      );
       return GitUpdateResult.ERROR;
     }
   }
@@ -283,15 +305,6 @@ public class GitRebaser {
       super(project, Collections.singleton(root), makeParams(project));
       myRebaser = rebaser;
       myRoot = root;
-    }
-
-    private static Params makeParams(Project project) {
-      Params params = new Params(project);
-      params.setReverse(true);
-      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
-      params.setErrorNotificationTitle("Can't continue rebase");
-      params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
-      return params;
     }
 
     @Override protected boolean proceedIfNothingToMerge() {

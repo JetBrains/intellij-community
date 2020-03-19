@@ -399,6 +399,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location) {
+    showColorPickerPopup(project, currentColor, listener, location, false);
+  }
+
+  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
     Ref<LightCalloutPopup> ref = Ref.create();
 
     ColorListener colorListener = new ColorListener() {
@@ -410,7 +414,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       }
     };
 
-    LightCalloutPopup popup = new ColorPickerBuilder()
+    LightCalloutPopup popup = new ColorPickerBuilder(showAlpha)
       .setOriginalColor(currentColor)
       .addSaturationBrightnessComponent()
       .addColorAdjustPanel(new MaterialGraphicalColorPipetteProvider())
@@ -812,11 +816,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
     @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+      str = StringUtil.trimStart(str, "#");
       final boolean rgb = isRGBMode();
       char[] source = str.toCharArray();
       if (mySrc != null) {
         final int selected = mySrc.getSelectionEnd() - mySrc.getSelectionStart();
-        int newLen = mySrc.getText().length() -  selected + str.length();
+        int newLen = mySrc.getText().length() - selected + str.length();
         if (newLen > (myHex ? 6 : 3)) {
           Toolkit.getDefaultToolkit().beep();
           return;
@@ -842,9 +847,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
               Toolkit.getDefaultToolkit().beep();
               return;
             }
-          } else {
+          }
+          else {
             if ((mySrc == myRed && num > 359)
-              || ((mySrc == myGreen || mySrc == myBlue) && num > 100)) {
+                || ((mySrc == myGreen || mySrc == myBlue) && num > 100)) {
               Toolkit.getDefaultToolkit().beep();
               return;
             }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginManager
@@ -13,15 +13,15 @@ import com.intellij.openapi.extensions.PluginId
  */
 fun getPluginInfo(clazz: Class<*>): PluginInfo {
   val classLoader = clazz.classLoader
-  when {
+  return when {
     classLoader is PluginClassLoader -> {
-      return getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
+      getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
     }
     PluginManagerCore.isRunningFromSources() && !PluginManagerCore.isUnitTestMode -> {
-      return builtFromSources
+      builtFromSources
     }
     else -> {
-      return getPluginInfo(clazz.name)
+      getPluginInfo(clazz.name)
     }
   }
 }
@@ -47,6 +47,7 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
     return unknownPlugin
   }
   val plugin = PluginManagerCore.getPlugin(pluginId)
+  @Suppress("FoldInitializerAndIfToElvis")
   if (plugin == null) {
     // we can't load plugin descriptor for a not installed plugin but we can check if it's from JB repo
     return if (isPluginFromOfficialJbPluginRepo(pluginId)) PluginInfo(PluginType.LISTED, pluginId.idString, null) else unknownPlugin
@@ -65,26 +66,26 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 
   val id = plugin.pluginId.idString
   val version = plugin.version
-  if (PluginManager.isDevelopedByJetBrains(plugin)) {
-    return if (plugin.isBundled) PluginInfo(PluginType.JB_BUNDLED, id, version) else PluginInfo(PluginType.JB_NOT_BUNDLED, id, version)
+  if (PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
+    val pluginType = when {
+      plugin.isBundled -> PluginType.JB_BUNDLED
+      PluginManagerCore.isUpdatedBundledPlugin(plugin) -> PluginType.JB_UPDATED_BUNDLED
+      else -> PluginType.JB_NOT_BUNDLED
+    }
+    return PluginInfo(pluginType, id, version)
   }
 
   // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
   // they are also considered bundled) would be reported
-  val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
-  return if (listed) {
-    PluginInfo(PluginType.LISTED, id, version)
-  }
-  else {
-    notListedPlugin
-  }
+  val listed = !plugin.isBundled && !PluginManagerCore.isUpdatedBundledPlugin(plugin) && isSafeToReportFrom(plugin)
+  return if (listed) PluginInfo(PluginType.LISTED, id, version) else notListedPlugin
 }
 
 enum class PluginType {
-  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES;
+  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES, JB_UPDATED_BUNDLED;
 
   private fun isPlatformOrJBBundled(): Boolean {
-    return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES
+    return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
   }
 
   fun isDevelopedByJetBrains(): Boolean {
@@ -119,6 +120,10 @@ class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
    */
   fun isSafeToReport(): Boolean {
     return type.isSafeToReport()
+  }
+
+  override fun toString(): String {
+    return "PluginInfo(type=$type, id=$id, version=$version)"
   }
 }
 

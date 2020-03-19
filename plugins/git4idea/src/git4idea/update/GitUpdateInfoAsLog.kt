@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowId
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 import kotlin.collections.ArrayList
 
 private val LOG = logger<GitUpdateInfoAsLog>()
@@ -162,8 +164,9 @@ class GitUpdateInfoAsLog(private val project: Project,
     val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
+    val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
     ContentUtilEx.addTabbedContent(contentManager, panel, "Update Info",
-                                   DateFormatUtil.formatDateTime(System.currentTimeMillis()),
+                                   VcsBundle.messagePointer("vcs.update.tab.name"), Supplier { tabName },
                                    select, panel.getUi())
     if (select) {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.activate(null)

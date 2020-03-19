@@ -67,6 +67,7 @@ public class PluginEnabler {
         return true;
       }
     }
+    InstalledPluginsState.getInstance().setRestartRequired(true);
     return false;
   }
 
@@ -80,10 +81,15 @@ public class PluginEnabler {
     return result;
   }
 
+  @Nullable
+  public static IdeaPluginDescriptorImpl tryLoadFullDescriptor(IdeaPluginDescriptorImpl descriptor) {
+    return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled());
+  }
+
   @NotNull
   public static IdeaPluginDescriptorImpl loadFullDescriptor(IdeaPluginDescriptorImpl descriptor) {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
-    IdeaPluginDescriptorImpl fullDescriptor = PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+    IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
     if (fullDescriptor == null) {
       LOG.error("Could not load full descriptor for plugin " + descriptor.getPath());
       fullDescriptor = descriptor;

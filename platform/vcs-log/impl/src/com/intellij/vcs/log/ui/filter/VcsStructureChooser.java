@@ -21,6 +21,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
@@ -29,6 +30,7 @@ import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -235,7 +237,10 @@ public class VcsStructureChooser extends DialogWrapper {
           selectedLabel.setText("");
         }
         else {
-          selectedLabel.setText(VcsLogBundle.message("vcs.log.filters.max.folders.selected", MAX_FOLDERS));
+          String errorText = "<font color=red>(" +
+                             VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) +
+                             ")</font>";
+          selectedLabel.setText(XmlStringUtil.wrapInHtml(VcsLogBundle.message("vcs.log.filters.structure.label", errorText)));
         }
         selectedLabel.revalidate();
       }
@@ -282,7 +287,7 @@ public class VcsStructureChooser extends DialogWrapper {
       mySelectionManager = selectionManager;
       myModulesSet = modulesSet;
       myRoots = roots;
-      setBackground(UIUtil.getTreeBackground(tree));
+      setBackground(RenderingUtil.getBackground(tree));
       myColoredRenderer = new ColoredTreeCellRenderer() {
         @Override
         public void customizeCellRenderer(@NotNull JTree tree,
@@ -296,7 +301,7 @@ public class VcsStructureChooser extends DialogWrapper {
         }
       };
       myFictive = new JBList();
-      myFictive.setBackground(UIUtil.getTreeBackground(tree));
+      myFictive.setBackground(RenderingUtil.getBackground(tree));
       myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
       myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
 
@@ -308,10 +313,10 @@ public class VcsStructureChooser extends DialogWrapper {
           }
         }
       };
-      myTextRenderer.setBackground(UIUtil.getTreeBackground(tree));
+      myTextRenderer.setBackground(RenderingUtil.getBackground(tree));
 
       myCheckbox = new JCheckBox();
-      myCheckbox.setBackground(UIUtil.getTreeBackground(tree));
+      myCheckbox.setBackground(RenderingUtil.getBackground(tree));
       myEmpty = new JLabel("");
 
       add(myCheckbox, BorderLayout.WEST);

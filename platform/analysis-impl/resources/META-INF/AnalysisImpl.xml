@@ -15,7 +15,8 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
-    <projectService serviceImplementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager" preload="notHeadless"/>
+    <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
+      serviceImplementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager" preload="notHeadless"/>
     <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
                     serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"

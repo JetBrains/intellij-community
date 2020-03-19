@@ -7,10 +7,9 @@ import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
+import com.intellij.structuralsearch.inspection.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -32,13 +31,12 @@ public class SSRSerializationTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
-    Registry.get("ssr.separate.inspections").setValue(true, getTestRootDisposable());
     myInspection = new SSBasedInspection();
-    final SearchConfiguration configuration1 = new SearchConfiguration("i", "user defined");
-    final MatchOptions options = configuration1.getMatchOptions();
+    final SearchConfiguration configuration = new SearchConfiguration("i", "user defined");
+    final MatchOptions options = configuration.getMatchOptions();
     options.setFileType(StdFileTypes.JAVA);
     options.setSearchPattern("int i;");
-    myInspection.setConfigurations(Arrays.asList(configuration1));
+    myInspection.addConfiguration(configuration);
     final InspectionToolsSupplier supplier = new InspectionToolsSupplier() {
 
       @Override
@@ -47,8 +45,8 @@ public class SSRSerializationTest extends LightPlatformTestCase {
       }
     };
     myProfile = new InspectionProfileImpl("test", supplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
-    myProfile.lockProfile(true);
     myProfile.enableTool(SSBasedInspection.SHORT_NAME, getProject());
+    myProfile.lockProfile(true);
     myProfile.initInspectionTools(getProject());
   }
 
@@ -89,12 +87,12 @@ public class SSRSerializationTest extends LightPlatformTestCase {
 
   public void testModifiedToolShouldBeWritten() {
     final Configuration configuration = myInspection.getConfigurations().get(0);
-    myProfile.setToolEnabled(configuration.getUuid().toString(), true);
+    myProfile.setToolEnabled(configuration.getUuid().toString(), false);
 
     final String expected =
       "<profile version=\"1.0\" is_locked=\"true\">\n" +
       "  <option name=\"myName\" value=\"test\" />\n" +
-      "  <inspection_tool class=\"865c0c0b-4ab0-3063-a5ca-a3387c1a8741\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+      "  <inspection_tool class=\"865c0c0b-4ab0-3063-a5ca-a3387c1a8741\" enabled=\"false\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
       "  <inspection_tool class=\"SSBasedInspection\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
       "    <searchConfiguration name=\"i\" text=\"int i;\" recursive=\"false\" caseInsensitive=\"false\" type=\"JAVA\" />\n" +
       "  </inspection_tool>\n" +

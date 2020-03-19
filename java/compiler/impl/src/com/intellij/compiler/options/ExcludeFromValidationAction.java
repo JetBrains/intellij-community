@@ -2,6 +2,7 @@
 
 package com.intellij.compiler.options;
 
+import com.intellij.build.FileNavigatable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class ExcludeFromValidationAction extends AnAction {
 
   public ExcludeFromValidationAction() {
-    super(JavaCompilerBundle.lazyMessage("action.name.exclude.from.validation"));
+    super(JavaCompilerBundle.messagePointer("action.name.exclude.from.validation"));
   }
 
   @Override
@@ -34,12 +35,21 @@ public class ExcludeFromValidationAction extends AnAction {
   @Nullable
   private static Pair<ExcludesConfiguration, VirtualFile> getExcludedConfigurationAndFile(final AnActionEvent event, Project project) {
     Navigatable navigatable = event.getData(CommonDataKeys.NAVIGATABLE);
-    if (project != null && navigatable instanceof OpenFileDescriptor) {
-      final VirtualFile file = ((OpenFileDescriptor)navigatable).getFile();
-      final ExcludesConfiguration configuration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
-      return Pair.create(configuration, file);
+    if (project == null) return null;
+    final VirtualFile file;
+    if (navigatable instanceof OpenFileDescriptor) {
+      file = ((OpenFileDescriptor)navigatable).getFile();
     }
-    return null;
+    else if (navigatable instanceof FileNavigatable) {
+      OpenFileDescriptor fileDescriptor = ((FileNavigatable)navigatable).getFileDescriptor();
+      file = fileDescriptor != null ? fileDescriptor.getFile() : null;
+    }
+    else {
+      file = null;
+    }
+    if (file == null) return null;
+    final ExcludesConfiguration configuration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
+    return Pair.create(configuration, file);
   }
 
 

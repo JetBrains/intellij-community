@@ -1,19 +1,27 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="pushSupport"
-                    interface="com.intellij.dvcs.push.PushSupport" area="IDEA_PROJECT"/>
+                    interface="com.intellij.dvcs.push.PushSupport"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="cherryPicker"
-                    interface="com.intellij.dvcs.cherrypick.VcsCherryPicker" area="IDEA_PROJECT"/>
+                    interface="com.intellij.dvcs.cherrypick.VcsCherryPicker"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="vcsRepositoryCreator" interface="com.intellij.dvcs.repo.VcsRepositoryCreator" area="IDEA_PROJECT"/>
 
     <extensionPoint name="prePushHandler" interface="com.intellij.dvcs.push.PrePushHandler" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="clonePathProvider" interface="com.intellij.dvcs.repo.ClonePathProvider"/>
+    <extensionPoint name="clonePathProvider"
+                    interface="com.intellij.dvcs.repo.ClonePathProvider"
+                    dynamic="true"/>
 
   </extensionPoints>
   <actions>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
     <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push">
       <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
+      <add-to-group group-id="VcsToobarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
+      <add-to-group group-id="VcsNavBarToobarActions" anchor="after" relative-to-action="ChangesView.ToggleCommitUi"/>
     </action>
     <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction"/>
 
@@ -48,15 +56,16 @@
     </action>
 
   </actions>
+
   <project-components>
     <component>
       <implementation-class>com.intellij.dvcs.repo.VcsRepositoryManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.dvcs.shelf.ShelfViewUpdater</implementation-class>
-      <headless-implementation-class/>
-    </component>
   </project-components>
+
+  <projectListeners>
+    <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
+  </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>

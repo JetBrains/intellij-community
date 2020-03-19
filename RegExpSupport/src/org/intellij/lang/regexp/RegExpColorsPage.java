@@ -16,23 +16,23 @@ import java.util.Map;
 
 public class RegExpColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Plain character",  RegExpHighlighter.CHARACTER),
-    new AttributesDescriptor("Operator character",  RegExpHighlighter.META),
-    new AttributesDescriptor("Escaped character",  RegExpHighlighter.ESC_CHARACTER),
-    new AttributesDescriptor("Invalid escape sequence",  RegExpHighlighter.INVALID_CHARACTER_ESCAPE),
-    new AttributesDescriptor("Redundant escape sequence",  RegExpHighlighter.REDUNDANT_ESCAPE),
-    new AttributesDescriptor("Brace",  RegExpHighlighter.BRACES),
-    new AttributesDescriptor("Bracket",  RegExpHighlighter.BRACKETS),
-    new AttributesDescriptor("Parenthesis",  RegExpHighlighter.PARENTHS),
-    new AttributesDescriptor("Comma",  RegExpHighlighter.COMMA),
-    new AttributesDescriptor("Bad character",  RegExpHighlighter.BAD_CHARACTER),
-    new AttributesDescriptor("Character class",  RegExpHighlighter.CHAR_CLASS),
-    new AttributesDescriptor("Quote character",  RegExpHighlighter.QUOTE_CHARACTER),
-    new AttributesDescriptor("Comment",  RegExpHighlighter.COMMENT),
-    new AttributesDescriptor("Quantifier", RegExpHighlighter.QUANTIFIER),
-    new AttributesDescriptor("Dot", RegExpHighlighter.DOT),
-    new AttributesDescriptor("Inline option", RegExpHighlighter.OPTIONS),
-    new AttributesDescriptor("Name", RegExpHighlighter.NAME)
+    new AttributesDescriptor(RegExpBundle.message("color.settings.plain.character"), RegExpHighlighter.CHARACTER),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.operator.character"), RegExpHighlighter.META),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.escaped.character"), RegExpHighlighter.ESC_CHARACTER),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.invalid.escape.sequence"), RegExpHighlighter.INVALID_CHARACTER_ESCAPE),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.redundant.escape.sequence"), RegExpHighlighter.REDUNDANT_ESCAPE),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.brace"), RegExpHighlighter.BRACES),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.bracket"), RegExpHighlighter.BRACKETS),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.parenthesis"), RegExpHighlighter.PARENTHS),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.comma"), RegExpHighlighter.COMMA),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.bad.character"), RegExpHighlighter.BAD_CHARACTER),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.character.class"), RegExpHighlighter.CHAR_CLASS),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.quote.character"), RegExpHighlighter.QUOTE_CHARACTER),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.comment"), RegExpHighlighter.COMMENT),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.quantifier"), RegExpHighlighter.QUANTIFIER),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.dot"), RegExpHighlighter.DOT),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.inline.option"), RegExpHighlighter.OPTIONS),
+    new AttributesDescriptor(RegExpBundle.message("color.settings.name"), RegExpHighlighter.NAME)
   };
 
   @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
@@ -40,7 +40,7 @@ public class RegExpColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public String getDisplayName() {
-    return "RegExp";
+    return RegExpBundle.message("color.settings.title.regexp");
   }
 
   @Override

@@ -91,8 +91,8 @@ internal class GitInteractiveRebaseDialog(
     ChangeEntryStateSimpleAction(GitRebaseEntry.Action.PICK, AllIcons.Actions.Rollback, commitsTable),
     ChangeEntryStateSimpleAction(
       GitRebaseEntry.Action.EDIT,
-      GitBundle.lazyMessage("rebase.interactive.dialog.stop.to.edit.text"),
-      GitBundle.lazyMessage("rebase.interactive.dialog.stop.to.edit.text"),
+      GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
+      GitBundle.messagePointer("rebase.interactive.dialog.stop.to.edit.text"),
       AllIcons.Actions.Pause,
       commitsTable
     )
@@ -100,7 +100,7 @@ internal class GitInteractiveRebaseDialog(
   private val rewordAction = RewordAction(commitsTable)
   private val fixupAction = FixupAction(commitsTable)
   private val squashAction = SquashAction(commitsTable)
-  private val dropAction = ChangeEntryStateButtonAction(GitRebaseEntry.Action.DROP, commitsTable)
+  private val dropAction = DropAction(commitsTable)
 
   private val contextMenuOnlyActions = listOf<AnAction>(ShowGitRebaseCommandsDialog(project, commitsTable))
   private var modified = false
@@ -139,6 +139,7 @@ internal class GitInteractiveRebaseDialog(
     val decorator = ToolbarDecorator.createDecorator(commitsTable)
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())
+      .setScrollPaneBorder(JBUI.Borders.empty())
       .disableAddAction()
       .disableRemoveAction()
       .addExtraActions(*iconActions.toTypedArray())

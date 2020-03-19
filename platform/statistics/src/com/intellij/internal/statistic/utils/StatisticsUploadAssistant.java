@@ -57,18 +57,18 @@ public class StatisticsUploadAssistant {
     EventLogSendListener listener = new EventLogSendListener() {
       @Override
       public void onLogsSend(int succeed, int failed, int totalLocalFiles) {
-        EventLogSystemLogger.logFilesSend(recorderId, totalLocalFiles, succeed, failed);
+        EventLogSystemLogger.logFilesSend(recorderId, totalLocalFiles, succeed, failed, false);
       }
     };
 
     return new EventLogStatisticsService(
       new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
       new EventLogInternalRecorderConfig(recorderId),
-      new EventLogInternalApplicationInfo(false), listener
+      new EventLogInternalApplicationInfo(recorderId, false), listener
     );
   }
 
   public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTest) {
-    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(isTest));
+    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(recorderId, isTest));
   }
 }

@@ -102,7 +102,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     panel.add(ToolbarDecorator.createDecorator(myCheckboxTree)
                               .setAddActionUpdater(e -> canAddTemplate)
                               .setAddAction(button -> myCheckboxTree.addTemplate(button))
-                              .setEditActionUpdater(e -> true)
+                              .setEditActionUpdater(e -> myCheckboxTree.canEditSelectedTemplate())
                               .setEditAction(button -> myCheckboxTree.editSelectedTemplate())
                               .setRemoveActionUpdater(e -> myCheckboxTree.canRemoveSelectedTemplates())
                               .setRemoveAction(button -> myCheckboxTree.removeSelectedTemplates())
@@ -114,7 +114,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   }
 
   private AnActionButton duplicateAction() {
-    AnActionButton button = new AnActionButton(CodeInsightBundle.lazyMessage("action.AnActionButton.text.duplicate"), PlatformIcons.COPY_ICON) {
+    AnActionButton button = new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.duplicate"), PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myCheckboxTree != null) {

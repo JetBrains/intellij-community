@@ -107,8 +107,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   protected boolean beforeShow() {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
-
-    updateVisibleRowCount();
+    myList.setVisibleRowCount(myMaxRowCount);
 
     boolean shouldShow = super.beforeShow();
     if (myAutoHandleBeforeShow) {
@@ -117,10 +116,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     return shouldShow;
-  }
-
-  protected void updateVisibleRowCount() {
-    myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
   }
 
   @Override
@@ -563,6 +558,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private class MyList extends JBList implements DataProvider {
     MyList() {
       super(myListModel);
+      putClientProperty("visibleRowCountIsMax", true);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 

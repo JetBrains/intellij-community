@@ -2,7 +2,6 @@
 package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -310,7 +309,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoConstructor() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_constructor.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(8);
       }
 
@@ -351,7 +350,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoChain() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_chain.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(6);
       }
 
@@ -386,7 +385,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoCondition() {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_condition.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoints(13, 18);
       }
 
@@ -468,8 +467,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         toggleBreakpoint(26);
-        assertSmartStepIntoVariants("foo", "foo", "generate_power", "foo", "foo", "generate_power");
-        smartStepInto("generate_power", 1);
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        stepOver();
+        waitForPause();
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        smartStepInto("generate_power", 0);
         waitForPause();
         eval("exponent").hasValue("5");
         resume();
@@ -494,8 +496,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
-        assertSmartStepIntoVariants("foo", "foo", "generate_power", "foo", "foo", "generate_power");
-        smartStepInto("generate_power", 1);
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        stepOver();
+        waitForPause();
+        assertSmartStepIntoVariants("foo", "foo", "generate_power");
+        smartStepInto("generate_power", 0);
         waitForPause();
         toggleBreakpoint(26);
         eval("exponent").hasValue("5");
@@ -547,7 +552,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   public void testSmartStepIntoNativeFunctionInReturn() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_native_function_in_return.py") {
       @Override
-      public void before() throws Exception {
+      public void before() {
         toggleBreakpoint(5);
       }
 
@@ -825,7 +830,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testSmartStepIntoInheritance() {
+  public void testSmartStepIntoInheritancePython3() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_inheritance.py") {
       @Override
       public void before() {
@@ -845,6 +850,45 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         eval("x").hasValue("100");
         resume();
         waitForTerminate();
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python2.7");
+      }
+    });
+  }
+
+  @Test
+  public void testSmartStepIntoInheritancePython2() {
+    runPythonTest(new PySmartStepIntoDebuggerTask("test_smart_step_into_inheritance.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(14);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        assertSmartStepIntoVariants("foo", "make_class");
+        smartStepInto("foo", 0);
+        waitForPause();
+        stepOver();
+        waitForPause();
+        smartStepInto("make_class", 0);
+        waitForPause();
+        eval("x").hasValue("100");
+        resume();
+        waitForPause();
+        resume();
+        waitForPause();
+        resume();
+        waitForTerminate();
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("python2.7");
       }
     });
   }
@@ -935,34 +979,75 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-
         waitForPause();
-
         stepOver();
-
         waitForPause();
-
         eval("a").hasValue("42");
-
         stepOver();
-
         waitForPause();
-
         eval("a").hasValue("42");
-
         stepOver();
-
         waitForPause();
-
         eval("sum").hasValue("6");
-
         resume();
       }
 
       @NotNull
       @Override
       public Set<String> getTags() {
-        return Sets.newHashSet("python34");
+        return ImmutableSet.of("-python2.7");
+      }
+    });
+  }
+
+  @Test
+  public void testStepOverAwait() {
+    runPythonTest(new PyDebuggerTask("/debug/stepping", "test_step_over_await.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(10);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepOver();
+        waitForPause();
+        stepOver();
+        waitForPause();
+        eval("result").hasValue("3");
+        stepOver();
+        waitForPause();
+        eval("z").hasValue("42");  // check that we haven't got into the `asyncio` machinery
+        resume();
+        waitForTerminate();
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python2.7");
+      }
+    });
+  }
+
+  @Test
+  public void testStepOverOutsideProject() {
+    runPythonTest(new PyDebuggerTask("/debug/stepping/", "test_step_over_outside_project_scope.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepInto();
+        waitForPause();
+        stepOver();
+        waitForPause();
+        eval("instream").hasValue("'a b c'");  // ensure we're still in the library scope after performing a step over
+        resume();
+        waitForTerminate();
       }
     });
   }

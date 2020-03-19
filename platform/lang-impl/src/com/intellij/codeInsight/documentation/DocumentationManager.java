@@ -141,17 +141,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected String getRestorePopupDescription() {
-    return "Restore popup view mode";
+    return CodeInsightBundle.message("action.description.restore.popup.view.mode");
   }
 
   @Override
   protected String getAutoUpdateDescription() {
-    return "Refresh documentation on selection change automatically";
+    return CodeInsightBundle.message("action.description.refresh.documentation.on.selection.change.automatically");
   }
 
   @Override
   protected String getAutoUpdateTitle() {
-    return "Auto-update from Source";
+    return CodeInsightBundle.message("popup.title.auto.update.from.source");
   }
 
   @Override
@@ -1127,13 +1127,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       LOG.debug("Using provider ", provider);
 
       if (provider instanceof ExternalDocumentationProvider) {
-        List<String> urls = ReadAction.compute(
+        List<String> urls = ReadAction.nonBlocking(
           () -> {
             SmartPsiElementPointer originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
             PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
             return provider.getUrlFor(element, originalElement);
           }
-        );
+        ).executeSynchronously();
         LOG.debug("External documentation URLs: ", urls);
         if (urls != null) {
           for (String url : urls) {

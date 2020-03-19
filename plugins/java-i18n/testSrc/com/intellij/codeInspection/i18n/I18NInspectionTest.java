@@ -107,6 +107,20 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  public void testNonNlsIndirect() {
+    doTest();
+  }
+
+  public void testNlsIndirect() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections";

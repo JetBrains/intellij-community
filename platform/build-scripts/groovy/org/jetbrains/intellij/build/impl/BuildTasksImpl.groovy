@@ -429,6 +429,12 @@ idea.fatal.error.notification=disabled
     distributionJARsBuilder.buildNonBundledPlugins()
   }
 
+  @Override
+  void generateProjectStructureMapping(File targetFile) {
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
+    jarsBuilder.generateProjectStructureMapping(targetFile)
+  }
+
   private void setupJBre() {
     logFreeDiskSpace("before downloading JREs")
     String[] args = [

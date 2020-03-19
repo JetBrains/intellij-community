@@ -317,6 +317,30 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     assertTrue(test.get());
   }
 
+  /**
+   * Tests only testMode-ish execution: unhandled exceptions on event pumping are `LOG.error`-ed, hence throw exceptions in tests.
+   * It is better to be aware of such exceptions in tests so we propagate them in ProgressRunner
+   */
+  @Test
+  public void testPumpingExceptionPropagation() {
+    final String failureMessage = "Expected Failure";
+    ProgressResult<?> result = new ProgressRunner<>(() ->
+                                                      UIUtil.invokeAndWaitIfNeeded(() -> {
+                                                        throw new RuntimeException(failureMessage);
+                                                      }))
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .withProgress(createProgressWindow())
+      .modal()
+      .sync()
+      .submitAndGet();
+    if (result == null) return;
+    assertFalse(result.isCanceled());
+    Throwable throwable = result.getThrowable();
+
+    assertNotNull(throwable);
+    assertEquals(failureMessage, ExceptionUtil.getRootCause(throwable).getMessage());
+  }
+
   @Override
   protected void invokeTestRunnable(@NotNull Runnable runnable) {
     if (runInDispatchThread()) {

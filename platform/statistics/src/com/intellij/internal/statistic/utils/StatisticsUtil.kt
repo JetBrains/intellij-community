@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.internal.statistic.beans.*
+import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -13,7 +12,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.util.containers.ObjectIntHashMap
@@ -21,10 +19,6 @@ import gnu.trove.THashSet
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.TimeUnit
-
-fun getProjectId(project: Project): String {
-  return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
-}
 
 fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
   data["plugin_type"] = info.type.name
@@ -37,53 +31,6 @@ fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
   if (!version.isNullOrEmpty()) {
     data["plugin_version"] = version
   }
-}
-
-fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
-  val plugin = PluginManagerCore.getPlugin(pluginId)
-  return plugin == null || PluginManager.isDevelopedByJetBrains(plugin.vendor)
-}
-
-/**
- * @deprecated will be deleted in 2019.3
- *
- * Report setting name as event id and enabled/disabled state in event data with MetricEvent class.
- * @see newBooleanMetric(java.lang.String, boolean)*
- */
-@Deprecated("Report enabled or disabled setting as MetricEvent")
-fun getBooleanUsage(key: String, value: Boolean): UsageDescriptor {
-  return UsageDescriptor(key + if (value) ".enabled" else ".disabled", 1)
-}
-
-/**
- * @deprecated will be deleted in 2019.3
- *
- * Report setting name as event id and setting value in event data with MetricEvent class.
- * @see newMetric(java.lang.String, Enum)*
- */
-@Deprecated("Report enum settings as MetricEvent")
-fun getEnumUsage(key: String, value: Enum<*>?): UsageDescriptor {
-  return UsageDescriptor(key + "." + value?.name?.toLowerCase(Locale.ENGLISH), 1)
-}
-
-/**
- * @deprecated will be deleted in 2019.3
- * This method should be used only for a transition period for existing counter metrics.
- * New metrics should report absolute counter value by
- * @see newCounterMetric(java.lang.String, int)
- *
- * Constructs a proper UsageDescriptor for a counting value.
- * NB:
- * (1) the list of steps must be sorted ascendingly; If it is not, the result is undefined.
- * (2) the value should lay somewhere inside steps ranges. If it is below the first step, the following usage will be reported:
- * `git.commit.count.<1`.
- *
- * @key   The key prefix which will be appended with "." and range code.
- * @steps Limits of the ranges. Each value represents the start of the next range. The list must be sorted ascendingly.
- * @value Value to be checked among the given ranges.
- */
-fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescriptor {
-  return UsageDescriptor("$key." + getCountingStepName(value, steps), 1)
 }
 
 fun getCountingStepName(value: Int, steps: List<Int>): String {
@@ -124,7 +71,7 @@ fun getCountingUsage(key: String, value: Int): UsageDescriptor {
 }
 
 private const val kilo = 1000
-private val mega = kilo * kilo
+private const val mega = kilo * kilo
 
 private fun humanize(number: Int): String {
   if (number == 0) return "0"
@@ -135,39 +82,6 @@ private fun humanize(number: Int): String {
   val ks = if (k > 0) "${k}K" else ""
   val rs = if (r > 0) "${r}" else ""
   return ms + ks + rs
-}
-
-/**
- * @deprecated will be deleted in 2019.3
- *
- * Report setting name as event id and setting value in event data with MetricEvent class.
- *
- * @see addIfDiffers
- * @see addBoolIfDiffers
- * @see addCounterIfDiffers
- */
-fun <T> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
-                     valueFunction: (T) -> Any, featureIdPrefix: String) {
-  addIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction, { "$featureIdPrefix.$it" })
-}
-
-/**
- * @deprecated will be deleted in 2019.3
- *
- * Report setting name as event id and setting value in event data with MetricEvent class.
- *
- * @see addIfDiffers
- * @see addBoolIfDiffers
- * @see addCounterIfDiffers
- */
-fun <T, V> addIfDiffers(set: MutableSet<in UsageDescriptor>, settingsBean: T, defaultSettingsBean: T,
-                        valueFunction: (T) -> V,
-                        featureIdFunction: (V) -> String) {
-  val value = valueFunction(settingsBean)
-  val defaultValue = valueFunction(defaultSettingsBean)
-  if (!Comparing.equal(value, defaultValue)) {
-    set.add(UsageDescriptor(featureIdFunction(value), 1))
-  }
 }
 
 fun toUsageDescriptors(result: ObjectIntHashMap<String>): Set<UsageDescriptor> {
@@ -238,7 +152,7 @@ fun getPluginInfoProvider(): PluginInfoProvider? {
  * Checks this plugin is created by JetBrains or from official repository, so API from it may be reported
  */
 internal fun isSafeToReportFrom(descriptor: PluginDescriptor): Boolean {
-  if (PluginManager.isDevelopedByJetBrains(descriptor)) {
+  if (PluginManager.getInstance().isDevelopedByJetBrains(descriptor)) {
     return true
   }
   else if (descriptor.isBundled) {
@@ -262,23 +176,12 @@ internal fun isPluginFromOfficialJbPluginRepo(pluginId: PluginId?): Boolean {
   return pluginIdsFromOfficialJbPluginRepo.get().contains(pluginId)
 }
 
-/**
- * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
- * so API from it may be reported
- */
-fun getPluginType(clazz: Class<*>): PluginType {
-  val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(clazz.name) ?: return PluginType.PLATFORM
-  if (PluginManager.isDevelopedByJetBrains(plugin)) {
-    return if (plugin.isBundled) PluginType.JB_BUNDLED else PluginType.JB_NOT_BUNDLED
+object StatisticsUtil {
+  @JvmStatic
+  fun getProjectId(project: Project): String {
+    return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
   }
 
-  // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
-  // they are also considered bundled) would be reported
-  val listed = !plugin.isBundled && isSafeToReportFrom(plugin)
-  return if (listed) PluginType.LISTED else PluginType.NOT_LISTED
-}
-
-object StatisticsUtil {
   /**
    * Anonymizes sensitive project properties by rounding it to the next power of two
    * @see com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector

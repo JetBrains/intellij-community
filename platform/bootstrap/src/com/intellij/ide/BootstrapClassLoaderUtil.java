@@ -5,7 +5,7 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +92,7 @@ public final class BootstrapClassLoaderUtil {
   }
 
   private static void addParentClasspath(@NotNull Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
-    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       if (!ext) {
         // ManagementFactory.getRuntimeMXBean().getClassPath() = System.getProperty("java.class.path"), but 100 times faster
         parseClassPathString(System.getProperty("java.class.path"), classpath);

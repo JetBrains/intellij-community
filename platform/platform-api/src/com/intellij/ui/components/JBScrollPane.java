@@ -61,11 +61,15 @@ public class JBScrollPane extends JScrollPane {
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
+  private static final String STATUS_COMPONENT = "STATUS_COMPONENT";
+
   private ScrollSource myScrollSource = ScrollSource.UNKNOWN;
   private double myWheelRotation;
 
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
+
+  protected JComponent statusComponent;
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -149,10 +153,10 @@ public class JBScrollPane extends JScrollPane {
 
   protected void setupCorners() {
     setBorder(IdeBorderFactory.createBorder());
-    setCorner(UPPER_RIGHT_CORNER, new Corner(UPPER_RIGHT_CORNER));
-    setCorner(UPPER_LEFT_CORNER, new Corner(UPPER_LEFT_CORNER));
-    setCorner(LOWER_RIGHT_CORNER, new Corner(LOWER_RIGHT_CORNER));
-    setCorner(LOWER_LEFT_CORNER, new Corner(LOWER_LEFT_CORNER));
+    setCorner(UPPER_RIGHT_CORNER, new Corner());
+    setCorner(UPPER_LEFT_CORNER, new Corner());
+    setCorner(LOWER_RIGHT_CORNER, new Corner());
+    setCorner(LOWER_LEFT_CORNER, new Corner());
   }
 
   @Override
@@ -179,10 +183,35 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
+  /**
+   * Adds status component which's anchored to the top right corner above the right scrollbar.
+   * This component obeys the <code>Flip</code>
+   * @param statusComponent
+   */
+  public void setStatusComponent(JComponent statusComponent) {
+    JComponent old = getStatusComponent();
+    this.statusComponent = statusComponent;
+    if (statusComponent != null) {
+      add(statusComponent, STATUS_COMPONENT);
+    }
+    else if (old != null) {
+      remove(old);
+    }
+    firePropertyChange("statusComponent", old, statusComponent);
+
+    revalidate();
+    repaint();
+  }
+
+  public JComponent getStatusComponent() {
+    return statusComponent;
+  }
+
   private static class JBMouseWheelListener implements MouseWheelListener {
 
     private final MouseWheelListener myDelegate;
     private MouseWheelSmoothScroll mySmoothScroll;
+    private TouchScroll myTouchScroll;
 
     private JBMouseWheelListener(MouseWheelListener delegate) {
       this.myDelegate = delegate;
@@ -201,7 +230,12 @@ public class JBScrollPane extends JScrollPane {
         boolean isAdjustedDeltaZero = bar instanceof JBScrollBar && ((JBScrollBar)bar).getDeltaAdjusted(event) == 0.0;
 
         if (isWheelScrollEnabled && isBarVisible && !isAdjustedDeltaZero) {
-          if (UISettings.getShadowInstance().getAnimatedScrolling() || TouchScrollUtil.isTouchScroll(event)) {
+          if (TouchScrollUtil.isTouchScroll(event)) {
+            if (myTouchScroll == null) {
+              myTouchScroll = TouchScroll.create();
+            }
+            myTouchScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
+          } else if (UISettings.getShadowInstance().getAnimatedScrolling()) {
             if (mySmoothScroll == null) {
               mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
                 return ScrollSettings.isEligibleFor(pane);
@@ -311,10 +345,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class Corner extends JPanel {
-    private final String myPos;
-
-    Corner(String pos) {
-      myPos = pos;
+    Corner() {
       ScrollBarPainter.setBackground(this);
     }
 
@@ -405,6 +436,27 @@ public class JBScrollPane extends JScrollPane {
    */
   protected static class Layout extends ScrollPaneLayout {
     private static final Insets EMPTY_INSETS = emptyInsets();
+
+    protected Component statusComponent;
+
+    @Override
+    public void syncWithScrollPane(JScrollPane sp) {
+      super.syncWithScrollPane(sp);
+
+      if (sp instanceof JBScrollPane) {
+        statusComponent = ((JBScrollPane)sp).getStatusComponent();
+      }
+    }
+
+    @Override
+    public void addLayoutComponent(String s, Component c) {
+      if (s.equals(STATUS_COMPONENT)) {
+        statusComponent = addSingletonComponent(statusComponent, c);
+      }
+      else {
+        super.addLayoutComponent(s, c);
+      }
+    }
 
     @Override
     public void layoutContainer(Container parent) {
@@ -589,10 +641,11 @@ public class JBScrollPane extends JScrollPane {
       colHeadBounds.x = bounds.x - insets.left;
       colHeadBounds.width = bounds.width + insets.left + insets.right;
       boolean fillUpperCorner = false;
+      boolean hasStatusComponent = statusComponent != null && statusComponent.isShowing(); 
       if (colHead != null) {
         if (vsbOpaque) {
           Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);
-          fillUpperCorner = corner == null && UIManager.getBoolean("ScrollPane.fillUpperCorner");
+          fillUpperCorner = corner == null && UIManager.getBoolean("ScrollPane.fillUpperCorner") && !hasStatusComponent;
           if (!fillUpperCorner && ScrollSettings.isHeaderOverCorner(viewport)) {
             if (vsbOnLeft) colHeadBounds.x -= vsbBounds.width;
             colHeadBounds.width += vsbBounds.width;
@@ -611,6 +664,10 @@ public class JBScrollPane extends JScrollPane {
       // Set the bounds of the vertical scroll bar.
       vsbBounds.y = bounds.y - insets.top;
       vsbBounds.height = bounds.height + insets.top + insets.bottom;
+
+      // Forked bounds that are actually used for setting vertical scroll bar bounds
+      // after possible modification with statusComponent bounds.
+      Rectangle actualVsbBounds = new Rectangle(vsbBounds);
       if (vsb != null) {
         vsb.setVisible(vsbNeeded);
         if (vsbNeeded) {
@@ -623,7 +680,8 @@ public class JBScrollPane extends JScrollPane {
             vsbBounds.height += colHeadBounds.height;
           }
           int overlapY = !hsbOnTop ? 0 : overlapHeight;
-          vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
+          actualVsbBounds.y += overlapY;
+          actualVsbBounds.height -= overlapHeight;
           vsb.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.LEFT : Alignment.RIGHT);
         }
         // Modify the bounds of the translucent scroll bar.
@@ -656,6 +714,36 @@ public class JBScrollPane extends JScrollPane {
           hsbBounds.height = 0;
         }
       }
+
+      if (hasStatusComponent) {
+        Dimension scSize = statusComponent.getPreferredSize();
+
+        switch (flip) {
+          case NONE:
+            statusComponent.setBounds(actualVsbBounds.x + actualVsbBounds.width - scSize.width, actualVsbBounds.y, scSize.width, scSize.height);
+            actualVsbBounds.y += scSize.height;
+            break;
+          case HORIZONTAL:
+            statusComponent.setBounds(actualVsbBounds.x, actualVsbBounds.y, scSize.width, scSize.height);
+            actualVsbBounds.y += scSize.height;
+            break;
+          case VERTICAL:
+            statusComponent.setBounds(actualVsbBounds.x + actualVsbBounds.width - scSize.width,
+                                      actualVsbBounds.y + actualVsbBounds.height - scSize.height, scSize.width, scSize.height);
+            break;
+          case BOTH:
+            statusComponent.setBounds(actualVsbBounds.x,
+                                      actualVsbBounds.y + actualVsbBounds.height - scSize.height, scSize.width, scSize.height);
+            break;
+        }
+
+        actualVsbBounds.height -= scSize.height;
+      }
+
+      if (vsb != null && vsbNeeded) {
+        vsb.setBounds(actualVsbBounds);
+      }
+
       // Set the bounds of the corners.
       Rectangle left = vsbOnLeft ? vsbBounds : rowHeadBounds;
       Rectangle right = vsbOnLeft ? rowHeadBounds : vsbBounds;
@@ -683,6 +771,10 @@ public class JBScrollPane extends JScrollPane {
       }
       if (!vsbOpaque && vsbNeeded || !hsbOpaque && hsbNeeded) {
         fixComponentZOrder(vsb, 0);
+        fixComponentZOrder(viewport, -1);
+      }
+      else if (hasStatusComponent) {
+        fixComponentZOrder(statusComponent, 0);
         fixComponentZOrder(viewport, -1);
       }
     }

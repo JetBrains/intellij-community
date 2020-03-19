@@ -13,7 +13,7 @@
           <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="Compare:"/>
+          <text resource-bundle="messages/SvnBundle" key="diff.options.label.compare"/>
         </properties>
       </component>
       <component id="cbb7c" class="javax.swing.JLabel" binding="mySourceUrlLabel">
@@ -31,7 +31,7 @@
           <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="With:"/>
+          <text resource-bundle="messages/SvnBundle" key="diff.options.label.with"/>
         </properties>
       </component>
       <component id="7804d" class="javax.swing.JCheckBox" binding="myReverseDiffButton">
@@ -40,7 +40,7 @@
           <gridbag top="2" left="2" bottom="2" right="2" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="Reverse Diff"/>
+          <text resource-bundle="messages/SvnBundle" key="diff.options.checkbox.reverse.diff"/>
         </properties>
       </component>
       <grid id="efd95" layout-manager="GridBagLayout">
@@ -52,7 +52,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Compare Type" title-justification="4" title-position="2">
+        <border type="none" title-resource-bundle="messages/SvnBundle" title-key="diff.options.label.compare.type" title-justification="4" title-position="2">
           <font name="Tahoma" size="11" style="0"/>
           <title-color color="-16777216"/>
         </border>
@@ -64,7 +64,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Graphical Compare"/>
+              <text resource-bundle="messages/SvnBundle" key="diff.options.radio.graphical.compare"/>
             </properties>
           </component>
           <component id="d4867" class="javax.swing.JRadioButton" binding="myUnifiedDiffButton">
@@ -73,7 +73,7 @@
               <gridbag top="2" left="2" bottom="2" right="2" weightx="1.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text value="Unified Diff"/>
+              <text resource-bundle="messages/SvnBundle" key="diff.options.radio.unified.diff"/>
             </properties>
           </component>
           <component id="d97c4" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myFileBrowser">

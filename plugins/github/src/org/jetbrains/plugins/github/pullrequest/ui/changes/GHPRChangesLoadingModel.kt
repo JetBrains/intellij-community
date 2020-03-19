@@ -3,7 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEventDispatcherLoadingModel
+import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
@@ -56,18 +58,16 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
       loading = true
       error = null
 
-      updateFuture = dataProvider.changesProviderRequest.handleOnEdt { result, error ->
+      updateFuture = dataProvider.changesProviderRequest.successOnEdt {
+        if (zipChanges) changesModel.changes = it.changes
+        else changesModel.commits = it.changesByCommits
 
-        if (result != null) {
-          if (zipChanges) changesModel.changes = result.changes
-          else changesModel.commits = result.changesByCommits
-
-          diffHelper.setUp(dataProvider, result)
-        }
-        if (error != null) this.error = error
+        diffHelper.setUp(dataProvider, it)
+      }.errorOnEdt {
+        this.error = error
+      }.handleOnEdt { _, _ ->
         loading = false
         eventDispatcher.multicaster.onLoadingCompleted()
-
       }
       eventDispatcher.multicaster.onLoadingStarted()
     }

@@ -22,7 +22,7 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
   private final PsiElement myDeclaringElement;
   private final TextRange myDeclarationRange;
 
-  private PsiElement2Declaration(@NotNull PsiElement targetElement, @NotNull PsiElement declaringElement, @NotNull TextRange range) {
+  PsiElement2Declaration(@NotNull PsiElement targetElement, @NotNull PsiElement declaringElement, @NotNull TextRange range) {
     myTargetElement = targetElement;
     myDeclaringElement = declaringElement;
     myDeclarationRange = range;
@@ -66,16 +66,22 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
    * @param declaredElement  target element (symbol); used for target-based actions, e.g. Find Usages
    * @param declaringElement element at caret from which {@code declaredElement} was obtained; used to determine the declaration range
    */
-  @Nullable
-  static PsiSymbolDeclaration createFromDeclaredPsiElement(@NotNull PsiElement declaredElement, @NotNull PsiElement declaringElement) {
-    PsiElement identifyingElement = getIdentifyingElement(declaredElement);
-    TextRange declarationRange = identifyingElement == null
-                                 ? rangeOf(declaringElement)
-                                 : relateRange(declaredElement, identifyingElement, rangeOf(identifyingElement), declaringElement);
-    if (declarationRange == null) {
-      return null;
-    }
+  static @NotNull PsiSymbolDeclaration createFromDeclaredPsiElement(@NotNull PsiElement declaredElement,
+                                                                    @NotNull PsiElement declaringElement) {
+    TextRange declarationRange = getDeclarationRangeFromPsi(declaredElement, declaringElement);
     return new PsiElement2Declaration(declaredElement, declaringElement, declarationRange);
+  }
+
+  private static @NotNull TextRange getDeclarationRangeFromPsi(@NotNull PsiElement declaredElement, @NotNull PsiElement declaringElement) {
+    PsiElement identifyingElement = getIdentifyingElement(declaredElement);
+    if (identifyingElement == null) {
+      return rangeOf(declaringElement);
+    }
+    TextRange identifyingRange = relateRange(declaredElement, identifyingElement, rangeOf(identifyingElement), declaringElement);
+    if (identifyingRange == null) {
+      return rangeOf(declaringElement);
+    }
+    return identifyingRange;
   }
 
   @Nullable
@@ -120,11 +126,6 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
     }
     TextRange identifyingElementRange = identifyingElement.getTextRange();
     if (identifyingElementRange == null) {
-      LOG.error("Identifying element has no text range;\n" +
-                "target: " + nameIdentifierOwner + ";\n" +
-                "target class: " + nameIdentifierOwner.getClass().getName() + ";\n" +
-                "identifying element: " + identifyingElement + ";\n" +
-                "identifying element class: " + identifyingElement.getClass().getName());
       return null;
     }
     return identifyingElement;
@@ -149,13 +150,6 @@ class PsiElement2Declaration implements PsiSymbolDeclaration {
         return rangeInFile.shiftLeft(declaringElementRange.getStartOffset());
       }
       else {
-        LOG.error("Identifying range is outside of declaring range;\n" +
-                  "target: " + target + ";\n" +
-                  "target class: " + target.getClass().getName() + ";\n" +
-                  "identifying element: " + identifyingElement + ";\n" +
-                  "identifying element class: " + identifyingElement.getClass().getName() + ";\n" +
-                  "declaring element: " + declaringElement + ";\n" +
-                  "declaring element class: " + declaringElement.getClass().getName());
         return null;
       }
     }

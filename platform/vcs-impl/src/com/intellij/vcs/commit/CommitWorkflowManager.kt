@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.application.subscribe
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ConfigImportHelper.isConfigImported
 import com.intellij.openapi.application.ConfigImportHelper.isFirstSession
 import com.intellij.openapi.application.runInEdt
@@ -56,6 +57,10 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
     if (isForceNonModalCommit.asBoolean()) return true
     if (!appSettings.COMMIT_FROM_LOCAL_CHANGES) return false
 
+    return canSetNonModal()
+  }
+
+  internal fun canSetNonModal(): Boolean {
     val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
     return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }
   }
@@ -80,6 +85,17 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
 
     @JvmStatic
     fun getInstance(project: Project): CommitWorkflowManager = project.getComponent(CommitWorkflowManager::class.java)
+
+    @JvmStatic
+    fun setCommitFromLocalChanges(value: Boolean) {
+      val oldValue = appSettings.COMMIT_FROM_LOCAL_CHANGES
+      if (oldValue == value) return
+
+      appSettings.COMMIT_FROM_LOCAL_CHANGES = value
+      getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
+    }
+
+    internal fun isNonModalInSettings(): Boolean = isForceNonModalCommit.asBoolean() || appSettings.COMMIT_FROM_LOCAL_CHANGES
   }
 
   interface SettingsListener : EventListener {

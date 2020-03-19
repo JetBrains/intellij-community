@@ -1067,8 +1067,15 @@ public class PsiClassImplUtil {
         PsiTypeParameter p1 = (PsiTypeParameter)aClass;
         PsiTypeParameter p2 = (PsiTypeParameter)another;
 
-        return p1.getIndex() == p2.getIndex() &&
-               (aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner()) || TypeConversionUtil.areSameFreshVariables(p1, p2));
+        if (p1.getIndex() != p2.getIndex()) {
+          return false;
+        }
+        if (TypeConversionUtil.areSameFreshVariables(p1, p2)) {
+          return true;
+        }
+
+        return !Boolean.FALSE.equals(RecursionManager.doPreventingRecursion(Pair.create(p1, p2), true, () ->
+          aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner())));
       }
       else {
         return false;

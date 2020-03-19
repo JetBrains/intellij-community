@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -43,6 +42,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
+import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR;
+
 /**
  * @author vlan
  */
@@ -50,21 +51,22 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   private static final String SETUPTOOLS_VERSION = "40.8.0";
   private static final String PIP_VERSION = "19.0.3";
-  private static final String VIRTUALENV_VERSION = "16.4.3";
+
+  private static final String SETUPTOOLS_WHEEL_NAME = "setuptools-" + SETUPTOOLS_VERSION + "-py2.py3-none-any.whl";
+  private static final String PIP_WHEEL_NAME = "pip-" + PIP_VERSION + "-py2.py3-none-any.whl";
+  private static final String VIRTUALENV_WHEEL_NAME = "virtualenv-16.4.3-py2.py3-none-any.whl";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
-  private static final String GET_PIP = "get-pip.py";
   private static final int TIMEOUT = 10 * 60 * 1000;
 
   private static final String BUILD_DIR_OPTION = "--build-dir";
 
   private static final String INSTALL = "install";
   private static final String UNINSTALL = "uninstall";
-  private static final String UNTAR = "untar";
   protected String mySeparator = File.separator;
 
   @Nullable private volatile List<PyPackage> myPackagesCache = null;
@@ -94,25 +96,32 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                    "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON27 + " or newer");
     }
 
-    try {
-      getHelperResult(GET_PIP, Collections.singletonList("setuptools"), true, true, null);
+    boolean success = updatePackagingTools();
+    if (success) {
       return;
-    }
-    catch (PyExecutionException exception) {
-      LOG.warn(exception.getStderr()); // get-pip.py executed with error, probably there's no internet connection
-    }
-    finally {
-      refreshPackagesSynchronously();
     }
 
     final PyPackage installedSetuptools = refreshAndCheckForSetuptools();
-    if (installedSetuptools == null ||
-        PackageVersionComparator.VERSION_COMPARATOR.compare(installedSetuptools.getVersion(), SETUPTOOLS_VERSION) < 0) {
-      installManagement(PyPackageUtil.SETUPTOOLS + "-" + SETUPTOOLS_VERSION);
-    }
     final PyPackage installedPip = PyPsiPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP);
-    if (installedPip == null || PackageVersionComparator.VERSION_COMPARATOR.compare(installedPip.getVersion(), PIP_VERSION) < 0) {
-      installManagement(PyPackageUtil.PIP + "-" + PIP_VERSION);
+    if (installedSetuptools == null || VERSION_COMPARATOR.compare(installedSetuptools.getVersion(), SETUPTOOLS_VERSION) < 0) {
+      installManagement(SETUPTOOLS_WHEEL_NAME);
+    }
+    if (installedPip == null || VERSION_COMPARATOR.compare(installedPip.getVersion(), PIP_VERSION) < 0) {
+      installManagement(PIP_WHEEL_NAME);
+    }
+  }
+
+  private boolean updatePackagingTools() {
+    try {
+      installUsingPipWheel("--upgrade", "--force-reinstall", PyPackageUtil.SETUPTOOLS, PyPackageUtil.PIP);
+      return true;
+    }
+    catch (ExecutionException e) {
+      LOG.info(e);
+      return false;
+    }
+    finally {
+      refreshPackagesSynchronously();
     }
   }
 
@@ -138,28 +147,17 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   protected void installManagement(@NotNull String name) throws ExecutionException {
-    final String dirName = extractHelper(name + ".tar.gz");
-    try {
-      final String fileName = dirName + name + mySeparator + "setup.py";
-      getPythonProcessResult(fileName, Collections.singletonList(INSTALL), true, true, dirName + name);
-    }
-    finally {
-      FileUtil.delete(new File(dirName));
-    }
+    installUsingPipWheel("--no-index", name);
   }
 
-  @NotNull
-  private String extractHelper(@NotNull String name) throws ExecutionException {
-    final String helperPath = getHelperPath(name);
-    final ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
-    final String result = getHelperResult(PACKAGING_TOOL, args, false, false, null);
-    String dirName = toSystemDependentName(result.trim());
-    if (!dirName.endsWith(mySeparator)) {
-      dirName += mySeparator;
-    }
-    return dirName;
+  private void installUsingPipWheel(String @NotNull ... pipArgs) throws ExecutionException {
+    final String pipWheel = getHelperPath(PIP_WHEEL_NAME);
+    List<String> args = Lists.newArrayList(INSTALL);
+    args.addAll(Arrays.asList(pipArgs));
+    getPythonProcessResult(pipWheel + mySeparator + PyPackageUtil.PIP, args,
+                           true, true,
+                           PythonHelpersLocator.getHelpersRoot().getAbsolutePath());
   }
-
 
   @NotNull
   protected String toSystemDependentName(@NotNull final String dirName) {
@@ -188,7 +186,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
     if (requirements == null) return;
-    installManagement();
+    if (!hasManagement()) {
+      installManagement();
+    }
     final List<String> args = new ArrayList<>();
     args.add(INSTALL);
     final File buildDir;
@@ -336,15 +336,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      final String name = "virtualenv-" + VIRTUALENV_VERSION;
-      final String dirName = extractHelper(name + ".tar.gz");
-      try {
-        final String fileName = dirName + name + mySeparator + "virtualenv.py";
-        getPythonProcessResult(fileName, args, false, true, dirName + name);
-      }
-      finally {
-        FileUtil.delete(new File(dirName));
-      }
+      createVirtualEnvForPython2UsingVirtualenvLibrary(args);
     }
 
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
@@ -363,6 +355,26 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     return path;
+  }
+
+  private void createVirtualEnvForPython2UsingVirtualenvLibrary(List<String> args) throws ExecutionException {
+    File workingDirectory = null;
+    try {
+      workingDirectory = FileUtil.createTempDirectory("tmp", "pycharm-management");
+      final String workingDirectoryPath = workingDirectory.getPath();
+      getPythonProcessResult("-mzipfile", Arrays.asList("-e", getHelperPath(VIRTUALENV_WHEEL_NAME), workingDirectoryPath),
+                             false, true, workingDirectoryPath);
+      getPythonProcessResult(workingDirectoryPath + "/virtualenv.py", args,
+                             false, true, workingDirectoryPath);
+    }
+    catch (IOException e) {
+      throw new ExecutionException("Cannot create temporary build directory", e);
+    }
+    finally {
+      if (workingDirectory != null) {
+        FileUtil.delete(workingDirectory);
+      }
+    }
   }
 
   @NotNull

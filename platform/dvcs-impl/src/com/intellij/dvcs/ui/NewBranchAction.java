@@ -33,8 +33,8 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
   protected final Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    super(DvcsBundle.lazyMessage("new.branch.action.text"),
-          DvcsBundle.lazyMessage("new.branch.action.description"), icon);
+    super(DvcsBundle.messagePointer("new.branch.action.text"),
+          DvcsBundle.messagePointer("new.branch.action.description"), icon);
     myRepositories = repositories;
     myProject = project;
   }
@@ -48,7 +48,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
   public static <T extends Repository> void checkIfAnyRepositoryIsFresh(@NotNull AnActionEvent e, @NotNull List<T> repositories) {
     if (DvcsUtil.anyRepositoryIsFresh(repositories)) {
       e.getPresentation().setEnabled(false);
-      e.getPresentation().setDescription(DvcsBundle.lazyMessage("action.presentation.NewBranchAction.description"));
+      e.getPresentation().setDescription(DvcsBundle.messagePointer("action.presentation.NewBranchAction.description"));
     }
   }
 

@@ -46,6 +46,7 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
     public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = true;
+    public boolean SHOW_INSPECTION_WIDGET = true;
     public int TOOLTIPS_DELAY_MS = TOOLTIPS_DELAY_RANGE.initial;
     public boolean SHOW_INTENTION_BULB = true;
     public boolean IS_CARET_BLINKING = true;
@@ -56,6 +57,7 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
+    public boolean ENABLE_RENDERED_DOC = false;
 
     public boolean SMART_HOME = true;
 
@@ -340,6 +342,14 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
     return (visible == null || visible) != value;
   }
 
+  public boolean isDocCommentRenderingEnabled() {
+    return myOptions.ENABLE_RENDERED_DOC;
+  }
+
+  public void setDocCommentRenderingEnabled(boolean value) {
+    myOptions.ENABLE_RENDERED_DOC = value;
+  }
+
   public boolean isBlockCursor() {
     return myOptions.IS_BLOCK_CURSOR;
   }
@@ -470,6 +480,15 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
 
   public void setShowQuickDocOnMouseOverElement(boolean show) {
     myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
+  }
+
+
+  public boolean isShowInspectionWidget() {
+    return myOptions.SHOW_INSPECTION_WIDGET;
+  }
+
+  public void setShowInspectionWidget(boolean show) {
+    myOptions.SHOW_INSPECTION_WIDGET = show;
   }
 
   /**

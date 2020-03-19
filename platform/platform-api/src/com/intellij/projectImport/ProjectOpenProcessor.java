@@ -5,8 +5,10 @@
  */
 package com.intellij.projectImport;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,21 @@ public abstract class ProjectOpenProcessor {
 
   public boolean isProjectFile(@NotNull VirtualFile file) {
     return canOpenProject(file);
+  }
+
+  /**
+   * If known that a user tries to open some project, ask if the user wants to open it as a plain file or as a project.
+   * @return Messages.YES -> Open as a project, Messages.NO -> Open as a plain file, Messages.CANCEL -> Don't open.
+   */
+  @Messages.YesNoCancelResult
+  public int askConfirmationForOpeningProject(@NotNull VirtualFile file, @Nullable Project project) {
+    return Messages.showYesNoCancelDialog(project,
+                                          IdeBundle.message("message.open.file.is.project", file.getName()),
+                                          IdeBundle.message("title.open.project"),
+                                          IdeBundle.message("message.open.file.is.project.open.as.project"),
+                                          IdeBundle.message("message.open.file.is.project.open.as.file"),
+                                          IdeBundle.message("button.cancel"),
+                                          Messages.getQuestionIcon());
   }
 
   @Nullable

@@ -7,6 +7,7 @@ import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ExportToTextFileToolbarAction;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -385,6 +386,19 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return descriptors.size() == 1 ? descriptors.get(0) : null;
   }
 
+  @Nullable
+  public VirtualFile getSelectedFile() {
+    final ErrorTreeNodeDescriptor descriptor = getSelectedNodeDescriptor();
+    ErrorTreeElement element = descriptor != null? descriptor.getElement() : null;
+    if (element != null && !(element instanceof GroupingElement)) {
+      NodeDescriptor<?> parent = descriptor.getParentDescriptor();
+      if (parent instanceof ErrorTreeNodeDescriptor) {
+        element = ((ErrorTreeNodeDescriptor)parent).getElement();
+      }
+    }
+    return element instanceof GroupingElement? ((GroupingElement)element).getFile() : null;
+  }
+
   private List<ErrorTreeNodeDescriptor> getSelectedNodeDescriptors() {
     TreePath[] paths = myIsDisposed ? null : myTree.getSelectionPaths();
     if (paths == null) {
@@ -640,7 +654,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class StopAction extends DumbAwareAction {
     StopAction() {
-      super(IdeBundle.lazyMessage("action.stop"), AllIcons.Actions.Suspend);
+      super(IdeBundle.messagePointer("action.stop"), AllIcons.Actions.Suspend);
     }
 
     @Override
@@ -665,7 +679,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class ShowWarningsAction extends ToggleAction implements DumbAware {
     ShowWarningsAction() {
-      super(IdeBundle.lazyMessage("action.show.warnings"), AllIcons.General.ShowWarning);
+      super(IdeBundle.messagePointer("action.show.warnings"), AllIcons.General.ShowWarning);
     }
 
     @Override
@@ -685,7 +699,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class ShowInfosAction extends ToggleAction implements DumbAware {
     ShowInfosAction() {
-      super(IdeBundle.lazyMessage("action.show.infos"), AllIcons.General.ShowInfos);
+      super(IdeBundle.messagePointer("action.show.infos"), AllIcons.General.ShowInfos);
     }
 
     @Override

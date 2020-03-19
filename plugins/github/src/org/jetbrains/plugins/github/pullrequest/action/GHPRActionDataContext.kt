@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.openapi.editor.Document
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -30,9 +31,10 @@ interface GHPRActionDataContext {
   val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory
   val currentUser: GHUser
 
-  val pullRequest: Long?
   val pullRequestDetails: GHPullRequestShort?
   val pullRequestDataProvider: GHPRDataProvider?
+
+  val submitReviewCommentDocument: Document
 
   fun resetAllData()
 }

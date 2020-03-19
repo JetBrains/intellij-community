@@ -45,7 +45,8 @@ public class RefreshLogAction extends RefreshAction {
   private static final Logger LOG = Logger.getInstance(RefreshLogAction.class);
 
   public RefreshLogAction() {
-    super(VcsLogBundle.message("action.name.refresh.log"), VcsLogBundle.message("action.description.refresh.log"), AllIcons.Actions.Refresh);
+    super(VcsLogBundle.message("action.name.refresh.log"), VcsLogBundle.message("action.description.refresh.log"),
+          AllIcons.Actions.Refresh);
   }
 
   @Override

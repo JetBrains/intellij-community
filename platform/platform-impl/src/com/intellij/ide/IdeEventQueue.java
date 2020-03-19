@@ -3,7 +3,6 @@ package com.intellij.ide;
 
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LoggableEventWatcher;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
@@ -202,7 +201,7 @@ public final class IdeEventQueue extends EventQueue {
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
     systemEventQueue.push(this);
 
-    EDT.assertIsEdt();
+    EDT.updateEdt();
 
     KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
@@ -391,6 +390,9 @@ public final class IdeEventQueue extends EventQueue {
       fixNestedSequenceEvent(e);
       // Add code below if you need
 
+      // Update EDT if it changes (might happen after Application disposal)
+      EDT.updateEdt();
+
       if (e.getID() == WindowEvent.WINDOW_ACTIVATED
           || e.getID() == WindowEvent.WINDOW_DEICONIFIED
           || e.getID() == WindowEvent.WINDOW_OPENED) {
@@ -472,9 +474,9 @@ public final class IdeEventQueue extends EventQueue {
           if (finalE1 instanceof KeyEvent) {
             maybeReady();
           }
-          if (eventWatcher instanceof LoggableEventWatcher &&
+          if (eventWatcher != null &&
               runnableClass != FLUSH_NOW_CLASS) {
-            ((LoggableEventWatcher)eventWatcher).logTimeMillis(
+            eventWatcher.logTimeMillis(
               runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
               startedAt,
               runnableClass
@@ -1331,7 +1333,7 @@ public final class IdeEventQueue extends EventQueue {
   private boolean isTypeaheadTimeoutExceeded() {
     if (!delayKeyEvents.get()) return false;
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
-    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
+    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimeout").asDouble()) {
       // Log4j uses appenders. The appenders potentially may use invokeLater method
       // In this particular place it is possible to get a deadlock because of
       // sun.awt.PostEventQueue#flush implementation.
@@ -1509,8 +1511,8 @@ public final class IdeEventQueue extends EventQueue {
     }
 
     EventWatcher watcher = obtainEventWatcher();
-    if (watcher instanceof LoggableEventWatcher) {
-      ((LoggableEventWatcher)watcher).logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
+    if (watcher != null) {
+      watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
     }
   }
 

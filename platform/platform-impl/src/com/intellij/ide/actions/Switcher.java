@@ -186,7 +186,7 @@ public final class Switcher extends AnAction implements DumbAware {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
 
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     if (SWITCHER != null && Comparing.equal(SWITCHER.myTitle, title)) return null;
 
     Project project = e.getProject();
@@ -629,7 +629,7 @@ public final class Switcher extends AnAction implements DumbAware {
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), this, myPopup);
       }
       if (!myPinned) {
-        new DumbAwareAction(IdeBundle.lazyMessage("action.AnActionButton.text.suppress.all.actions.to.activate.a.toolwindow")) {
+        new DumbAwareAction(IdeBundle.messagePointer("action.AnActionButton.text.suppress.all.actions.to.activate.a.toolwindow")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             //suppress all actions to activate a toolwindow : IDEA-71277
@@ -1350,7 +1350,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
       @Nullable
       @Override
-      protected Object findElement(String s) {
+      protected Object findElement(@NotNull String s) {
         final List<SpeedSearchObjectWithWeight> elements = SpeedSearchObjectWithWeight.findElement(s, this);
         return elements.isEmpty() ? null : elements.get(0).node;
       }

@@ -37,7 +37,7 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="await"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
-    <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="true"
+    <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="notHeadless"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
@@ -349,7 +349,7 @@
     <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"
                         serviceImplementation="com.intellij.diagnostic.EventWatcherImpl"/>
     <toolWindow id="Events Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
-                factoryClass="com.intellij.diagnostic.ui.EventsWatcherToolWindowFactory"/>
+                factoryClass="com.intellij.diagnostic.ui.EventWatcherToolWindowFactory"/>
 
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
@@ -540,6 +540,7 @@
     <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="last"/>
     <filePropertyPusher implementation="com.intellij.execution.impl.RCInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
+    <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
@@ -957,7 +958,7 @@
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
-              topic="com.intellij.notification.LogModel"/>
+              topic="com.intellij.notification.EventLogListener"/>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </applicationListeners>

@@ -55,7 +55,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-@SuppressWarnings("ConstantConditions")
 public class FileTypesTest extends HeavyPlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
@@ -307,11 +306,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       @Override
       public int getDesiredContentPrefixLength() {
         return 48;
-      }
-
-      @Override
-      public int getVersion() {
-        return 0;
       }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
@@ -631,11 +625,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       public int getDesiredContentPrefixLength() {
         return 48;
       }
-
-      @Override
-      public int getVersion() {
-        return 0;
-      }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
     myFileTypeManager.toLog = true;
@@ -842,11 +831,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       public int getDesiredContentPrefixLength() {
         return "#!archive".length();
       }
-
-      @Override
-      public int getVersion() {
-        return 0;
-      }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
 
@@ -856,7 +840,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEquals(1, detectorCalls.get());
   }
 
-  public void testUniqueLanguage() {
+  public void testEveryLanguageHasOnePrimaryFileType() {
     Map<String, LanguageFileType> map = new HashMap<>();
     for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
       if (!(type instanceof LanguageFileType)) continue;
@@ -900,7 +884,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
     
-    VirtualFile file = createTempFile(extension, null, "", CharsetToolkit.UTF8_CHARSET);
+    VirtualFile file = createTempFile("x."+extension, null, "", CharsetToolkit.UTF8_CHARSET);
     assertEquals(replaceableFileType, file.getFileType());
   }
 
@@ -968,7 +952,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @NotNull
     @Override
     public String getName() {
-      return "PlainTextLike files";
+      return "PlainTextLike Replaceable";
     }
 
     @NotNull

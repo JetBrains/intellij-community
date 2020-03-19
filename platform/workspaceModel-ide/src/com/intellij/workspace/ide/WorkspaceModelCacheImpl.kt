@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.ide
 
 import com.google.common.base.Stopwatch
@@ -110,7 +110,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
   }
 
   private object PluginAwareEntityTypesResolver: EntityTypesResolver {
-    override fun getPluginId(clazz: Class<*>): String? = PluginManager.getPluginOrPlatformByClassName(clazz.name)?.idString
+    override fun getPluginId(clazz: Class<*>): String? = PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.name)?.idString
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
       val id = pluginId?.let { PluginId.getId(it) }

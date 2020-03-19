@@ -26,9 +26,9 @@ import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
+import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +92,7 @@ public class PyInterpreterInspection extends PyInspection {
       final String product = pyCharm ? "PyCharm" : "Python plugin";
 
       if (sdk == null) {
-        registerProblem(node, "No Python interpreter configured for the " + interpreterOwner, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        registerProblem(node, PyBundle.message("python.sdk.no.interpreter.configured.owner", interpreterOwner), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else {
         final Module associatedModule = PySdkExtKt.getAssociatedModule(sdk);
@@ -133,7 +133,10 @@ public class PyInterpreterInspection extends PyInspection {
 
       final UserDataHolderBase context = new UserDataHolderBase();
 
-      final PyDetectedSdk detectedAssociatedSdk = PySdkExtKt.findDetectedAssociatedEnvironment(module, existingSdks, context);
+      final PyDetectedSdk detectedAssociatedSdk = StreamEx.of(PySdkExtKt.detectVirtualEnvs(module, existingSdks, context))
+        .findFirst(sdk -> PySdkExtKt.isAssociatedWithModule(sdk, module))
+        .orElse(null);
+
       if (detectedAssociatedSdk != null) return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
 
       final Matcher matcher = NAME.matcher(name);
@@ -166,21 +169,11 @@ public class PyInterpreterInspection extends PyInspection {
                                                                 @NotNull Module module,
                                                                 @NotNull List<Sdk> existingSdks,
                                                                 @NotNull UserDataHolderBase context) {
-      final PyDetectedSdk associatedViaRootNameVirtualEnv = findAssociatedViaRootNameEnv(
+      return findAssociatedViaRootNameEnv(
         associatedName,
         PySdkExtKt.detectVirtualEnvs(module, existingSdks, context),
         Visitor::getVirtualEnvRootName
       );
-      if (associatedViaRootNameVirtualEnv != null) return associatedViaRootNameVirtualEnv;
-
-      final PyDetectedSdk associatedViaRootNameCondaEnv = findAssociatedViaRootNameEnv(
-        associatedName,
-        PySdkExtKt.detectCondaEnvs(module, existingSdks, context),
-        Visitor::getCondaEnvRootName
-      );
-      if (associatedViaRootNameCondaEnv != null) return associatedViaRootNameCondaEnv;
-
-      return null;
     }
 
     @Nullable
@@ -219,12 +212,6 @@ public class PyInterpreterInspection extends PyInspection {
     private static String getVirtualEnvRootName(@NotNull PyDetectedSdk sdk) {
       final String path = sdk.getHomePath();
       return path == null ? null : getEnvRootName(PythonSdkUtil.getVirtualEnvRoot(path));
-    }
-
-    @Nullable
-    private static String getCondaEnvRootName(@NotNull PyDetectedSdk sdk) {
-      final String path = sdk.getHomePath();
-      return path == null ? null : getEnvRootName(CondaEnvSdkFlavor.getCondaEnvRoot(path));
     }
 
     @Nullable
@@ -372,6 +359,7 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyUiUtil.clearFileLevelInspectionResults(project);
       SdkConfigurationUtil.setDirectoryProjectSdk(project, mySdk);
       PySdkExtKt.excludeInnerVirtualEnv(myModule, mySdk);
     }
@@ -399,6 +387,7 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyUiUtil.clearFileLevelInspectionResults(project);
       final Sdk newSdk = myAssociate
                          ? PySdkExtKt.setupAssociated(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule))
                          : PySdkExtKt.setup(mySdk, myExistingSdks);

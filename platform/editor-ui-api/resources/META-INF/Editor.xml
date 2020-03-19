@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener"/>
+    <extensionPoint name="editorFactoryListener" interface="com.intellij.openapi.editor.event.EditorFactoryListener" dynamic="true"/>
     <extensionPoint name="syntaxHighlighter"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
                     dynamic="true">

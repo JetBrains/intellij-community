@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsIgnoredFilesHolder extends IgnoredFilesHolder {
-  ExtensionPointName<VcsIgnoredFilesHolder.Provider> VCS_IGNORED_FILES_HOLDER_EP = ExtensionPointName.create("com.intellij.vcs.ignoredFilesHolder");
+  ProjectExtensionPointName<Provider> VCS_IGNORED_FILES_HOLDER_EP = new ProjectExtensionPointName<>("com.intellij.vcs.ignoredFilesHolder");
 
   default boolean isInUpdatingMode() {return false;}
 

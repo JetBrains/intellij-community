@@ -63,7 +63,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
         showPopup(e);
         return true;
       }
-    }.installOn(myComponent);
+    }.installOn(myComponent, true);
     myComponent.setBorder(WidgetBorder.WIDE);
   }
 
@@ -147,6 +147,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
           }
         }));
     }
+    setEditor(getEditor());
     update();
   }
 

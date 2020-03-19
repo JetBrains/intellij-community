@@ -293,11 +293,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     int lineHeight = myView.getLineHeight();
     if (myEditor.isOneLineMode()) return lineHeight;
 
-    int linesHeight = myView.visualLineToY(myEditor.getVisibleLineCount());
-
-    // Preferred height of less than a single line height doesn't make sense:
-    // at least a single line with a blinking caret on it is to be displayed
-    int size = Math.max(linesHeight, lineHeight);
+    int size = myView.visualLineToY(myEditor.getVisibleLineCount());
 
     EditorSettings settings = myEditor.getSettings();
     if (settings.isAdditionalPageAtBottom()) {
@@ -384,9 +380,6 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     VisualLinesIterator iterator = new VisualLinesIterator(myEditor, startVisualLine);
     int maxWidth = 0;
     int largestLineNumber = 0;
-    if (startVisualLine == 0 && iterator.atEnd()) {
-      maxWidth += myView.getPrefixTextWidthInPixels();
-    }
     while (!iterator.atEnd()) {
       int width = getVisualLineWidth(iterator, true);
       if (width > maxWidth) {
@@ -416,8 +409,9 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
     if (quickEvaluationListener != null &&
         (topLevelRegions == null || topLevelRegions.length == 0) && myEditor.getSoftWrapModel().getRegisteredSoftWraps().isEmpty() &&
-        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine)
-        && !myEditor.getInlayModel().hasInlineElements() && !myEditor.getInlayModel().hasAfterLineEndElements()) {
+        (myDocument.getLineCount() == 0 || !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine)) &&
+        !myEditor.getInlayModel().hasInlineElements() && !myEditor.getInlayModel().hasAfterLineEndElements() &&
+        (visualLine > 0 || myView.getPrefixTextWidthInPixels() == 0)) {
       // fast path - speeds up editor opening
       quickEvaluationListener.run();
       return (int)(myView.getLogicalPositionCache().offsetToLogicalColumn(visualLine,
@@ -425,7 +419,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
                                                                           myDocument.getLineStartOffset(visualLine)) *
                    myView.getMaxCharWidth());
     }
-    float x = 0;
+    float x = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
     int maxOffset = iterator.getVisualLineStartOffset();
     int leftInset = myView.getInsets().left;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, iterator,

@@ -34,7 +34,7 @@ import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 
 public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   public CreateModuleInfoAction() {
-    super(JavaBundle.lazyMessage("action.create.new.module-info.title"), JavaBundle.lazyMessage("action.create.new.module-info.description"), AllIcons.FileTypes.Java);
+    super(JavaBundle.messagePointer("action.create.new.module-info.title"), JavaBundle.messagePointer("action.create.new.module-info.description"), AllIcons.FileTypes.Java);
   }
 
   @Override

@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -44,7 +45,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.i18n.GitBundle.message
-import git4idea.i18n.GitBundleExtensions.lazyMessage
+import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupByDirectoryAction
@@ -159,7 +160,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val toolbar = ActionManager.getInstance().createActionToolbar("Git.Log.Branches", group, false)
     toolbar.setTargetComponent(branchesTreePanel)
 
-    val branchesButton = ExpandStripeButton(lazyMessage("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
+    val branchesButton = ExpandStripeButton(messagePointer("action.Git.Log.Show.Branches.text"), AllIcons.Actions.ArrowExpand)
       .apply {
         border = createBorder(JBColor.border(), SideBorder.RIGHT)
         addActionListener {
@@ -290,7 +291,8 @@ private class BranchViewSplitter(first: JComponent? = null, second: JComponent? 
 
 private class DiffPreviewSplitter(diffPreview: VcsLogChangeProcessor, uiProperties: VcsLogUiProperties, mainComponent: JComponent)
   : FrameDiffPreview<VcsLogChangeProcessor>(diffPreview, uiProperties, mainComponent,
-                                            "vcs.branch.view.diff.splitter.proportion", true, 0.3f) {
+                                            "vcs.branch.view.diff.splitter.proportion",
+                                            Registry.`is`("vcs.log.diff.preview.vertical"), 0.3f) {
   override fun updatePreview(state: Boolean) {
     previewDiff.updatePreview(state)
   }

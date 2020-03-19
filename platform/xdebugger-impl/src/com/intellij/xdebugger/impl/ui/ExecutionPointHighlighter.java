@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -54,24 +53,29 @@ public class ExecutionPointHighlighter {
   public void show(final @NotNull XSourcePosition position, final boolean notTopFrame,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
     updateRequested.set(false);
-    TransactionGuard.submitTransaction(myProject, () -> {
-      updateRequested.set(false);
+    AppUIExecutor
+      .onWriteThread(ModalityState.NON_MODAL)
+      .expireWith(myProject)
+      .submit(() -> {
+        updateRequested.set(false);
 
-      mySourcePosition = position;
+        mySourcePosition = position;
 
-      clearDescriptor();
-      myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
-      if (!XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isScrollToCenter()) {
-        myOpenFileDescriptor.setScrollType(notTopFrame ? ScrollType.CENTER : ScrollType.MAKE_VISIBLE);
-      }
-      //see IDEA-125645 and IDEA-63459
-      //myOpenFileDescriptor.setUseCurrentWindow(true);
+        clearDescriptor();
+        myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
+        if (!XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isScrollToCenter()) {
+          myOpenFileDescriptor.setScrollType(notTopFrame ? ScrollType.CENTER : ScrollType.MAKE_VISIBLE);
+        }
+        //see IDEA-125645 and IDEA-63459
+        //myOpenFileDescriptor.setUseCurrentWindow(true);
 
-      myGutterIconRenderer = gutterIconRenderer;
-      myNotTopFrame = notTopFrame;
-
-      doShow(true);
-    });
+        myGutterIconRenderer = gutterIconRenderer;
+        myNotTopFrame = notTopFrame;
+      }).thenAsync(ignored -> AppUIExecutor
+      .onUiThread()
+      .expireWith(myProject)
+      .submit(() -> doShow(true))
+    );
   }
 
   public void hide() {

@@ -177,13 +177,11 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
   @Override
   public Dimension getPreferredSize() {
-    if (getModel().getSize() == 0 && !StringUtil.isEmpty(getEmptyText().getText())) {
-      Dimension s = getEmptyText().getPreferredSize();
-      JBInsets.addTo(s, getInsets());
-      return s;
-    } else {
-      return super.getPreferredSize();
-    }
+    Dimension s = getEmptyText().getPreferredSize();
+    JBInsets.addTo(s, getInsets());
+    Dimension size = super.getPreferredSize();
+    return new Dimension(Math.max(s.width, size.width),
+                         Math.max(s.height, size.height));
   }
 
   private void init() {
@@ -293,7 +291,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     super.setCellRenderer(new ExpandedItemListCellRendererWrapper<>(cellRenderer, myExpandableItemsHandler));
   }
 
-  public <T> void installCellRenderer(@NotNull final NotNullFunction<? super T, ? extends JComponent> fun) {
+  public void installCellRenderer(@NotNull final NotNullFunction<? super E, ? extends JComponent> fun) {
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 

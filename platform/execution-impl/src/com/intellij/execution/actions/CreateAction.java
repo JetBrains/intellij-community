@@ -14,7 +14,7 @@ import java.util.List;
 
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {
-    super(ExecutionBundle.lazyMessage("create.run.configuration.action.name"), Presentation.NULL_STRING, null);
+    super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, null);
   }
 
   @Override

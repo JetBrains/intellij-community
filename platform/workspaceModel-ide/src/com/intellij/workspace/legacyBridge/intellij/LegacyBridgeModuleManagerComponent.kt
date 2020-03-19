@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.graph.*
@@ -37,8 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 @Suppress("ComponentNotRegistered")
 class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleManagerEx(), Disposable {
@@ -47,7 +46,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   private val LOG = Logger.getInstance(javaClass)
 
-  private val idToModule: ConcurrentMap<ModuleId, LegacyBridgeModule> = ConcurrentHashMap()
+  private val idToModule = Collections.synchronizedMap(LinkedHashMap<ModuleId, LegacyBridgeModule>())
   internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
   private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
 
@@ -548,9 +547,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                            entityStore: TypedEntityStore,
                            diff: TypedEntityStorageDiffBuilder?,
                            isNew: Boolean): LegacyBridgeModule {
-
     val modulePath = getModuleFilePath(moduleEntity)
-
     val module = LegacyBridgeModuleImpl(
       name = moduleEntity.name,
       project = project,
@@ -563,7 +560,8 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     module.init {
       try {
         val moduleStore = module.stateStore as ModuleStoreBase
-        moduleStore.setPath(modulePath, isNew)
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(modulePath)
+        moduleStore.setPath(modulePath, null, isNew)
         moduleStore.storageManager.addMacro("MODULE_FILE", modulePath)
       }
       catch (t: Throwable) {

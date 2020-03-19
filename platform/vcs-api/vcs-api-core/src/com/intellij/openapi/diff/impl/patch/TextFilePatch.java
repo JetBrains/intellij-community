@@ -66,6 +66,10 @@ public class TextFilePatch extends FilePatch {
     return Collections.unmodifiableList(myHunks);
   }
 
+  public boolean hasNoModifiedContent() {
+    return myHunks.isEmpty();
+  }
+
   @Override
   public boolean isNewFile() {
     return myFileStatus == FileStatus.ADDED || (myHunks.size() == 1 && myHunks.get(0).isNewContent());

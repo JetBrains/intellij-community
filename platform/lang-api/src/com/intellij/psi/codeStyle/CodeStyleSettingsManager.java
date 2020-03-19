@@ -5,7 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -28,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
+public class CodeStyleSettingsManager implements PersistentStateComponentWithModificationTracker<Element> {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   /**
@@ -43,6 +43,13 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private volatile CodeStyleSettings myTemporarySettings;
 
   private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  @Override
+  public long getStateModificationCount() {
+    return enumSettings().stream()
+                         .mapToLong(settings -> settings.getModificationTracker().getModificationCount())
+                         .sum();
+  }
 
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
     if (project == null || project.isDefault()) {

@@ -8,8 +8,8 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 public class AlignLabelsAction extends BooleanPropertyToggleAction {
 
   public AlignLabelsAction() {
-    super(VcsLogBundle.lazyMessage("vcs.log.action.align.labels"),
-          VcsLogBundle.lazyMessage("vcs.log.action.description.align.labels"), null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.align.labels"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.align.labels"), null);
   }
 
   @Override

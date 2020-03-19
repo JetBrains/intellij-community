@@ -238,4 +238,11 @@ public abstract class ProjectLevelVcsManager {
 
   @NotNull
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
+
+  /**
+   * Shows VCS console view.
+   * <p>
+   * Does nothing if {@code vcs.showConsole} turned off.
+   */
+  public abstract void showConsole();
 }

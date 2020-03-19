@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.typing.EmptyMapLiteralType
 
 class ListConstraint(private val leftType: PsiType?, private val literal: GrListOrMap) : GrConstraintFormula() {
 
-  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<in ConstraintFormula>): Boolean {
     val type = literal.type
     if (type is EmptyMapLiteralType) {
       val result = type.resolveResult ?: return true
