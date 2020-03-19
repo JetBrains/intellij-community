@@ -11,10 +11,10 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
@@ -264,6 +264,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
     statusPanel.add(statusToolbar.getComponent());
     statusPanel.add(smallIconLabel);
+    statusPanel.setBorder(JBUI.Borders.emptyTop(1));
 
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
 
@@ -1755,7 +1756,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
             action.actionPerformed(event);
 
             manager.queueActionPerformedEvent(action, context, event);
-            ToolbarClicksCollector.record(action, place, me, context);
+            ActionsCollector.getInstance().record(event.getProject(), action, event, null);
 
             ActionToolbar toolbar = getActionToolbar();
             if (toolbar != null) {
@@ -2044,7 +2045,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                         coverLine().weightx(1).insets(topIndent, 10, 10, 6));
       }
 
-      myContent.add(new LinkLabel<>("Open Problems View", null, (__, ___) -> controller.openProblemsView()),
+      myContent.add(new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), controller::openProblemsView),
                     gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(10, 10, 10, 0));
       
       myContent.add(createLowerPanel(controller),
@@ -2066,12 +2067,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       GridBag gc = new GridBag().nextLine();
 
       if (PowerSaveMode.isEnabled()) {
-        LinkLabel<String> powerMode = new LinkLabel<>(EditorBundle.message("iw.disable.powersave"), null,
-          (__, ___) -> {
-            PowerSaveMode.setEnabled(false);
-            hidePopup();
-          });
-        panel.add(powerMode, gc.next().anchor(GridBagConstraints.LINE_START));
+        panel.add(new TrackableLinkLabel(EditorBundle.message("iw.disable.powersave"), () ->{
+                    PowerSaveMode.setEnabled(false);
+                    hidePopup();
+                  }),
+                  gc.next().anchor(GridBagConstraints.LINE_START));
       }
       else {
         List<LanguageHighlightLevel> levels = controller.getHighlightLevels();
@@ -2132,6 +2132,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           showToolbar = state;
           EditorSettingsExternalizable.getInstance().setShowInspectionWidget(state);
           updateTrafficLightVisibility();
+          ActionsCollector.getInstance().record(e.getProject(), this, e, null);
         }
 
         @Override
@@ -2145,6 +2146,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
           return true;
         }
       });
+    }
+  }
+
+  private static class TrackableLinkLabel extends LinkLabel<Object> {
+    private InputEvent myEvent;
+
+    private TrackableLinkLabel(@NotNull String text, @NotNull Runnable action) {
+      super(text, null);
+      setListener((__, ___) -> {
+        action.run();
+        ActionsCollector.getInstance().record(null, myEvent, getClass());
+      }, null);
+    }
+
+    @Override
+    public void doClick(InputEvent e) {
+      myEvent = e;
+      super.doClick(e);
     }
   }
 }
