@@ -32,10 +32,8 @@ public class ConfigProjectComponent implements StartupActivity.DumbAware {
     MessageBus bus = project.getMessageBus();
     EncodingManager encodingManager = new EncodingManager(project);
     LineEndingsManager lineEndingsManager = new LineEndingsManager(project);
-    EditorSettingsManager editorSettingsManager = new EditorSettingsManager(project);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, encodingManager);
     bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, lineEndingsManager);
-    editorFactory.addEditorFactoryListener(editorSettingsManager, project);
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
@@ -62,7 +60,7 @@ public class ConfigProjectComponent implements StartupActivity.DumbAware {
               SettingsProviderComponent.getInstance().incModificationCount();
               for (Editor editor : editorFactory.getAllEditors()) {
                 if (editor.isDisposed()) continue;
-                editorSettingsManager.applyEditorSettings(editor);
+                EditorSettingsManager.applyEditorSettings(editor);
                 ((EditorEx)editor).reinitSettings();
               }
             }, 0, ModalityState.any());

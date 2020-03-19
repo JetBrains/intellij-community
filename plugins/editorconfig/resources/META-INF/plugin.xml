@@ -87,6 +87,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
         language="EditorConfig"
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
 
+    <editorFactoryListener implementation="org.editorconfig.configmanagement.EditorSettingsManager"/>
+
     <!-- Inspections -->
     <lang.inspectionSuppressor
         language="EditorConfig"
