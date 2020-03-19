@@ -3,13 +3,14 @@ package com.intellij.ide.gdpr;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
@@ -149,15 +150,16 @@ public final class ConsentOptions {
           return def != null && !def.isDeleted();
         })
       );
-      return StringUtil.isEmptyOrSpaces(str)? null : str;
+      return StringUtilRt.isEmptyOrSpaces(str)? null : str;
     }
     return null;
   }
 
   public void applyServerUpdates(@Nullable String json) {
-    if (StringUtil.isEmptyOrSpaces(json)) {
+    if (StringUtilRt.isEmptyOrSpaces(json)) {
       return;
     }
+
     try {
       final Collection<ConsentAttributes> fromServer = fromJson(json);
       // defaults
@@ -199,7 +201,7 @@ public final class ConsentOptions {
     return new Pair<>(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 
-  public void setConsents(Collection<Consent> confirmedByUser) {
+  public void setConsents(@NotNull Collection<Consent> confirmedByUser) {
     saveConfirmedConsents(
       ContainerUtil.map(confirmedByUser, c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L))
     );
@@ -265,7 +267,7 @@ public final class ConsentOptions {
     return changes;
   }
 
-  private static boolean applyServerChangesToDefaults(Map<String, Consent> base, @NotNull Collection<ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToDefaults(@NotNull Map<String, Consent> base, @NotNull Collection<ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final Consent newConsent = new Consent(update);
@@ -279,33 +281,72 @@ public final class ConsentOptions {
   }
 
   private static @NotNull Collection<ConsentAttributes> fromJson(@Nullable String json) {
-    try {
-      ConsentAttributes[] data = StringUtilRt.isEmptyOrSpaces(json) ? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
-      if (data != null) {
-        return Arrays.asList(data);
+    if (StringUtilRt.isEmptyOrSpaces(json)) {
+      return Collections.emptyList();
+    }
+
+    List<ConsentAttributes> result = new ArrayList<>();
+    try (JsonReader reader = new JsonReader(new StringReader(json))) {
+      reader.beginArray();
+      while (reader.hasNext()) {
+        result.add(readConsentAttributes(reader));
       }
+      reader.endArray();
     }
     catch (Throwable e) {
       LOG.info(e);
     }
-    return Collections.emptyList();
+    return result;
   }
 
-  private static String consentsToJson(Stream<Consent> consents) {
-    return consentAttributesToJson(consents.map(Consent::toConsentAttributes));
+  private static @NotNull ConsentAttributes readConsentAttributes(@NotNull JsonReader reader) throws IOException {
+    ConsentAttributes attributes = new ConsentAttributes();
+    reader.beginObject();
+    while (reader.hasNext()) {
+      switch (reader.nextName()) {
+        case "consentId":
+          attributes.consentId = reader.nextString();
+          break;
+        case "version":
+          attributes.version = reader.nextString();
+          break;
+        case "text":
+          attributes.text = reader.nextString();
+          break;
+        case "printableName":
+          attributes.printableName = reader.nextString();
+          break;
+        case "accepted":
+          // JSON is not valid - boolean value maybe specified as string true/false
+          attributes.accepted = reader.peek() == JsonToken.STRING ? Boolean.parseBoolean(reader.nextString()) : reader.nextBoolean();
+          break;
+        case "deleted":
+          attributes.deleted = reader.peek() == JsonToken.STRING ? Boolean.parseBoolean(reader.nextString()) : reader.nextBoolean();
+          break;
+        case "acceptanceTime":
+          attributes.acceptanceTime = reader.nextLong();
+          break;
+
+        default:
+          // skip unknown field
+          reader.skipValue();
+          break;
+      }
+    }
+    reader.endObject();
+    return attributes;
   }
 
-  private static String consentAttributesToJson(Stream<ConsentAttributes> attributes) {
-    final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    return gson.toJson(attributes.toArray());
+  private static @NotNull String consentsToJson(@NotNull Stream<Consent> consents) {
+    Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+    return gson.toJson(consents.map(Consent::toConsentAttributes).toArray());
   }
 
-  private static String confirmedConsentToExternalString(Stream<ConfirmedConsent> consents) {
-    return StringUtil.join(consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(ConfirmedConsent::toExternalString).collect(Collectors.toList()), ";");
+  private static @NotNull String confirmedConsentToExternalString(@NotNull Stream<ConfirmedConsent> consents) {
+    return consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(ConfirmedConsent::toExternalString).collect(Collectors.joining(";"));
   }
 
-  @NotNull
-  private Map<String, Consent> loadDefaultConsents() {
+  private @NotNull Map<String, Consent> loadDefaultConsents() {
     final Map<String, Consent> result = new HashMap<>();
     for (ConsentAttributes attributes : fromJson(myBackend.readBundledConsents())) {
       result.put(attributes.consentId, new Consent(attributes));
