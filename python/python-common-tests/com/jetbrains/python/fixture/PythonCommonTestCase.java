@@ -324,6 +324,11 @@ public abstract class PythonCommonTestCase extends TestCase {
     assertEmpty("", collection);
   }
 
+  public static void assertNotEmpty(@Nullable Collection<?> collection) {
+    assertNotNull(collection);
+    assertFalse(collection.isEmpty());
+  }
+
   public static void assertSize(int expectedSize, Object @NotNull [] array) {
     if (array.length != expectedSize) {
       assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
