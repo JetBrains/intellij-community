@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
 
+const val PAID_TAG = "Paid"
+
 /**
  * Object from Search Service for getting compatible updates for IDE.
  * [externalUpdateId] update ID from Plugin Repository database.
@@ -56,10 +58,10 @@ data class IntellijUpdateMetadata(
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class MarketplaceSearchPluginData(
+internal class MarketplaceSearchPluginData(
   @get:JsonProperty("xmlId")
   val id: String = "",
-  var productCode: String? = null,
+  var isPaid: Boolean = false,
   val rating: String = "",
   val name: String = "",
   val vendor: String = "",
@@ -78,7 +80,7 @@ class MarketplaceSearchPluginData(
     pluginNode.vendor = vendor
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId
-    pluginNode.productCode = productCode
+    if (isPaid) pluginNode.tags = listOf(PAID_TAG)
     return pluginNode
   }
 }
