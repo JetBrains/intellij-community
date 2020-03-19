@@ -36,7 +36,7 @@ import java.awt.*;
 public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    EventLog.getProjectComponent(project).initDefaultContent();
+    EventLog.getProjectService(project).initDefaultContent();
     toolWindow.setHelpId(EventLog.HELP_ID);
   }
 
