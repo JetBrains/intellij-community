@@ -376,6 +376,14 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
             mod.py
         """)
 
+    @python3_only
+    def test_keyword_only_arguments_in_signatures(self):
+        self.check_generator_output('mod', 'mod.py')
+
+    @python3_only
+    def test_keyword_only_arguments_in_return_type_constructor(self):
+        self.check_generator_output('mod', 'mod.py')
+
 
 class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--name-pattern', 'mod?']

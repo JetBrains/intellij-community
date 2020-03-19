@@ -43,4 +43,12 @@ public interface PyNumericLiteralExpression extends PyLiteralExpression {
   BigDecimal getBigDecimalValue();
 
   boolean isIntegerLiteral();
+
+  /**
+   * Returns possible suffix of integer literal like {@code uL}.
+   *
+   * @return null if this is not integer literal or the suffix is missed; string suffix otherwise
+   */
+  @Nullable
+  String getIntegerLiteralSuffix();
 }

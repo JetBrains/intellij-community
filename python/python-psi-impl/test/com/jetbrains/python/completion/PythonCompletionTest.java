@@ -234,6 +234,11 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-37755 PY-2700
+  public void testGlobalAndNonlocalMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+  }
+
   public void testStarImport() {
     myFixture.configureByFiles("starImport/starImport.py", "starImport/importSource.py");
     myFixture.completeBasic();

@@ -93,7 +93,7 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-18972
   public void testRemoveTrailingL() {
-    doTest(PyBundle.message("INTN.remove.trailing.l"), LanguageLevel.PYTHON34);
+    doTest(PyBundle.message("INTN.remove.trailing.suffix"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceOctalNumericLiteral() {

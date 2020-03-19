@@ -40,6 +40,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -77,6 +78,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   public EditorColorsManagerImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
     final class EditorColorSchemeProcessor extends LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl> implements SchemeExtensionProvider {
+      private final MultiMap<String, AdditionalTextAttributesEP> myAdditionalTextAttributes;
+
+      EditorColorSchemeProcessor(@NotNull MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes) {
+        myAdditionalTextAttributes = additionalTextAttributes;
+      }
+
       @NotNull
       @Override
       public EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
@@ -89,7 +96,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         // we don't need to update digest for bundled scheme because
         // 1) it can be computed on demand later (because bundled scheme is not mutable)
         // 2) in the future user copy of bundled scheme will use bundled scheme as parent (not as full copy)
-        if (isBundled) {
+        if (isBundled ||
+            ApplicationManager.getApplication().isUnitTestMode() && Boolean.valueOf(scheme.getMetaProperties().getProperty("forceOptimize")) == Boolean.TRUE){
+          loadAdditionalTextAttributesForScheme(scheme.myParentScheme, myAdditionalTextAttributes);
           scheme.optimizeAttributeMap();
         }
         return scheme;
@@ -147,13 +156,13 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         initEditableBundledSchemesCopies();
       }
     }
-    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor());
-
+    MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes = collectAdditionalTextAttributesEPs();
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor(additionalTextAttributes));
     initDefaultSchemes();
     loadBundledSchemes();
     loadSchemesFromThemes();
-    loadAdditionalTextAttributes();
     mySchemeManager.loadSchemes();
+    loadRemainAdditionalTextAttributes(additionalTextAttributes);
 
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
@@ -336,15 +345,43 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME).getAttributes(key);
   }
 
-  private void loadAdditionalTextAttributes() {
+  @NotNull
+  private static MultiMap<String, AdditionalTextAttributesEP> collectAdditionalTextAttributesEPs() {
+    MultiMap<String, AdditionalTextAttributesEP> schemeNameToAttributesFile = MultiMap.create();
     AdditionalTextAttributesEP.EP_NAME.forEachExtensionSafe(attributesEP -> {
-      EditorColorsScheme editorColorsScheme = mySchemeManager.findSchemeByName(attributesEP.scheme);
-      if (editorColorsScheme == null) {
+      schemeNameToAttributesFile.putValue(attributesEP.scheme, attributesEP);
+    });
+    return schemeNameToAttributesFile;
+  }
+
+  private void loadRemainAdditionalTextAttributes(@NotNull MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes) {
+    additionalTextAttributes.entrySet().forEach(entry -> {
+      String schemeName = entry.getKey();
+      EditorColorsScheme editorColorsScheme = mySchemeManager.findSchemeByName(schemeName);
+      if (!(editorColorsScheme instanceof AbstractColorsScheme)) {
         if (!isUnitTestOrHeadlessMode()) {
-          LOG.warn("Cannot find scheme: " + attributesEP.scheme + " from plugin: " + attributesEP.getPluginDescriptor().getPluginId());
+          LOG.warn("Cannot find scheme: " + schemeName + " from plugins: " +
+                   StringUtil.join(entry.getValue(), ep -> ep.getPluginDescriptor().getPluginId().getIdString(), ";"));
         }
         return;
       }
+
+      loadAdditionalTextAttributesForScheme((AbstractColorsScheme)editorColorsScheme, entry.getValue());
+    });
+    additionalTextAttributes.clear();
+  }
+
+  private static void loadAdditionalTextAttributesForScheme(@Nullable EditorColorsScheme scheme,
+                                                            @NotNull MultiMap<String, AdditionalTextAttributesEP> additionalTextAttributes) {
+    if (!(scheme instanceof AbstractColorsScheme)) return;
+    Collection<AdditionalTextAttributesEP> attributesEPs = additionalTextAttributes.remove(scheme.getName());
+    if (attributesEPs == null) return;
+    loadAdditionalTextAttributesForScheme((AbstractColorsScheme)scheme, attributesEPs);
+  }
+
+  private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
+                                                            @NotNull Collection<AdditionalTextAttributesEP> attributesEPs) {
+    attributesEPs.forEach(attributesEP -> {
       URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
       if (resource == null) {
         LOG.warn("resource not found: " + attributesEP.file);
@@ -354,7 +391,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         Element root = JDOMUtil.load(URLUtil.openStream(resource));
         Element attrs = ObjectUtils.notNull(root.getChild("attributes"), root);
         Element colors = root.getChild("colors");
-        AbstractColorsScheme scheme = (AbstractColorsScheme)editorColorsScheme;
         scheme.readAttributes(attrs);
         if (colors != null) {
           scheme.readColors(colors);

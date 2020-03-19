@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,14 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
         .map(astNode -> astNode.findChildByType(PyTokenTypes.ASYNC_KEYWORD))
         .ifPresent(asyncNode -> getHolder().createErrorAnnotation(asyncNode, "function \"" + node.getName() + "\" cannot be async"));
     }
+  }
+
+  @Override
+  public void visitPyNumericLiteralExpression(PyNumericLiteralExpression node) {
+    String suffix = node.getIntegerLiteralSuffix();
+    if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
+    if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
+    getHolder().createErrorAnnotation(node, "Python does not support a trailing '" + suffix + "'.");
   }
 
   @Override

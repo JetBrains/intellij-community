@@ -712,13 +712,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   static class MouseDragAwareCaret extends MarginAwareCaret {
     @Override
     public void mouseDragged(MouseEvent e) {
-      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !getComponent().getText().contains("\n")) {
+      if (e.getID() == MouseEvent.MOUSE_DRAGGED && !isMultiline(getComponent())) {
         boolean consumed = e.isConsumed();
         e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers() | e.getModifiersEx(), e.getX(),
                            getComponent().getHeight() / 2, e.getClickCount(), e.isPopupTrigger(), e.getButton());
         if (consumed) e.consume();
       }
       super.mouseDragged(e);
+    }
+
+    public boolean isMultiline(JTextComponent component) {
+      return component.getText().contains("\n")
+             || (component instanceof JTextArea && ((JTextArea) component).getLineWrap());
     }
   }
 }

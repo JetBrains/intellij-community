@@ -195,7 +195,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         } else {
           Set<Key> diskKeySet = new THashSet<>();
 
-          builder.differentiate(
+          builder.differentiateWithoutExternalModification(
             Collections.emptyMap(),
             (key, value, inputId1) -> {
             },

@@ -822,6 +822,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-37755 PY-2700
+  public void testGlobalResolveAttribute() {
+    doTest();
+  }
+
   // PY-39682
   public void testWildcardIgnorePatternReferenceForNestedBinaryModule() {
     // TODO simplify runWithAdditionalClassEntryInSdkRoots to accept a relative path directly

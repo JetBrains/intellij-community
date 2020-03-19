@@ -128,8 +128,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract Iterable<VirtualFile> iterInDbChildren();
 
   @NotNull
-  @Deprecated
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }

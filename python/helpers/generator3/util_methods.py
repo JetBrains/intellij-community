@@ -429,7 +429,7 @@ def restore_by_inspect(p_func):
     """
     Returns paramlist restored by inspect.
     """
-    args, varg, kwarg, defaults = inspect.getargspec(p_func)
+    args, varg, kwarg, defaults, kwonlyargs, kwonlydefaults, _ = getfullargspec(p_func)
     spec = []
     if defaults:
         dcnt = len(defaults) - 1
@@ -444,6 +444,16 @@ def restore_by_inspect(p_func):
         spec.insert(0, arg)
     if varg:
         spec.append("*" + varg)
+    elif kwonlyargs:
+        spec.append("*")
+
+    kwonlydefaults = kwonlydefaults or {}
+    for arg in kwonlyargs:
+        if arg in kwonlydefaults:
+            spec.append(arg + '=' + sanitize_value(kwonlydefaults[arg]))
+        else:
+            spec.append(arg)
+
     if kwarg:
         spec.append("**" + kwarg)
     return flatten(spec)
@@ -529,8 +539,8 @@ def detect_constructor(p_class):
     # try to inspect the thing
     constr = getattr(p_class, "__init__")
     if constr and inspect and inspect.isfunction(constr):
-        args, _, _, _ = inspect.getargspec(constr)
-        return ", ".join(args)
+        args, _, _, _, kwonlyargs, _, _ = getfullargspec(constr)
+        return ", ".join(args + [a + '=' + a for a in kwonlyargs])
     else:
         return None
 

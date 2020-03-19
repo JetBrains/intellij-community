@@ -1397,7 +1397,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
   private volatile boolean myPreviousDataBufferingState;
   private final Object myBufferingStateUpdateLock = new Object();
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public void runCleanupAction(@NotNull Runnable cleanupAction) {
     Computable<Boolean> updateComputable = () -> {
       cleanupAction.run();

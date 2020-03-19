@@ -27,6 +27,10 @@ if version[0] >= 3:
     def the_exec(source, context):
         exec (source, context)
 
+
+    # noinspection PyUnresolvedReferences
+    from inspect import getfullargspec
+
 else: # < 3.0
     import __builtin__ as the_builtins
 
@@ -39,6 +43,10 @@ else: # < 3.0
     def the_exec(source, context):
         #noinspection PyRedundantParentheses
         exec (source) in context
+
+    def getfullargspec(func):
+        import inspect
+        return inspect.getargspec(func) + ([], None, {})
 
 if version[0] == 2 and version[1] < 4:
     HAS_DECORATORS = False

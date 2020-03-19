@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.base.Stopwatch;
@@ -72,7 +72,7 @@ public class ChangesCacheFile {
 
   private void reset() {
     final Calendar date = Calendar.getInstance();
-    date.set(2020, Calendar.FEBRUARY, 2);
+    date.setTime(new Date(Long.MAX_VALUE));
     myFirstCachedDate = date.getTime();
     date.set(1970, Calendar.FEBRUARY, 2);
     myLastCachedDate = date.getTime();

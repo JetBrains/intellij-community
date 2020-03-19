@@ -302,6 +302,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                  "    print(ab.x)");
   }
 
+  // PY-37755 PY-2700
+  public void testGlobalAndNonlocalUnresolvedAttribute() {
+    doTest();
+  }
+
   public void testClassLevelDunderAll() {
     doMultiFileTest("a.py");
   }

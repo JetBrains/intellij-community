@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea
 
 import com.intellij.dvcs.DvcsUtil
@@ -15,11 +15,13 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
 import git4idea.GitUtil.refreshChangedVfs
+import git4idea.changes.GitChangeUtils.getStagedChanges
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
 import git4idea.commands.GitSimpleEventDetector
@@ -79,7 +81,6 @@ class GitApplyChangesProcess(private val project: Project,
                              commits: List<VcsFullCommitDetails>,
                              successfulCommits: MutableList<VcsFullCommitDetails>,
                              alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
-    val startHash = GitUtil.getHead(repository)
     for (commit in commits) {
       val conflictDetector = GitSimpleEventDetector(CHERRY_PICK_CONFLICT)
       val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
@@ -89,6 +90,7 @@ class GitApplyChangesProcess(private val project: Project,
       val changeList = createChangeList(commitMessage, commit)
       val previousDefaultChangelist = changeListManager.defaultChangeList
 
+      val startHash = GitUtil.getHead(repository)
       try {
         changeListManager.setDefaultChangeList(changeList, true)
 
@@ -96,11 +98,12 @@ class GitApplyChangesProcess(private val project: Project,
                              listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
         if (result.success()) {
-          refreshChangedVfs(repository, startHash)
           if (autoCommit) {
+            refreshChangedVfs(repository, startHash)
             successfulCommits.add(commit)
           }
           else {
+            refreshStagedVfs(repository.root)
             VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
             changeListManager.waitForUpdate(operationName)
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
@@ -196,6 +199,11 @@ class GitApplyChangesProcess(private val project: Project,
 
   private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
     changeListManagerEx.changeLists.map { "[${it.name}] ${it.changes}" }
+
+  private fun refreshStagedVfs(root: VirtualFile) {
+    val staged = getStagedChanges(project, root)
+    RefreshVFsSynchronously.refresh(staged)
+  }
 
   private fun markDirty(changes: Collection<Change>) {
     VcsDirtyScopeManager.getInstance(project).filePathsDirty(ChangesUtil.getPaths(changes), null)

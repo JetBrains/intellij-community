@@ -29,21 +29,25 @@ import org.jetbrains.annotations.NotNull;
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
-public class RemoveTrailingLQuickFix implements LocalQuickFix {
+public class RemoveTrailingSuffixQuickFix implements LocalQuickFix {
+
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyBundle.message("INTN.remove.trailing.l");
+    return PyBundle.message("INTN.remove.trailing.suffix");
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement numericLiteralExpression = descriptor.getPsiElement();
     if (numericLiteralExpression instanceof PyNumericLiteralExpression) {
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      String text = numericLiteralExpression.getText();
-      final LanguageLevel level = LanguageLevel.forElement(numericLiteralExpression);
-      numericLiteralExpression.replace(elementGenerator.createExpressionFromText(level, text.substring(0, text.length() - 1)));
+      PyNumericLiteralExpression numeric = (PyNumericLiteralExpression)numericLiteralExpression;
+      String suffix = numeric.getIntegerLiteralSuffix();
+      if (suffix == null) return;
+      String text = numeric.getText();
+      String newText = text.substring(0, text.length() - suffix.length());
+      numeric.replace(
+        PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(numeric), newText));
     }
   }
 }
