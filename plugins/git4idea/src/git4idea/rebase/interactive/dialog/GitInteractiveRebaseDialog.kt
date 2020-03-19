@@ -139,7 +139,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
 
     val tablePanel = decorator.createPanel()
     val resetEntriesLabelPanel = BorderLayoutPanel().addToCenter(resetEntriesLabel).apply {
-      border = JBUI.Borders.emptyRight(10)
+      border = JBUI.Borders.empty(0, 5, 0, 10)
     }
     decorator.actionsPanel.apply {
       add(BorderLayout.EAST, resetEntriesLabelPanel)
