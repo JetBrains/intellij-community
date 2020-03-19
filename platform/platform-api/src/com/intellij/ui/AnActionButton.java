@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.nls.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private Set<AnActionButtonUpdater> myUpdaters;
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
+  public AnActionButton(@Nls @NlsContexts.Button String text) {
     super(() -> text);
   }
 
@@ -38,8 +39,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(dynamicText);
   }
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                        @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public AnActionButton(@Nls @NlsContexts.Button String text,
+                        @Nls @NlsContexts.ButtonTooltip String description,
                         @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -50,7 +51,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(dynamicText, dynamicDescription, icon);
   }
 
-  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
+  public AnActionButton(@Nls @NlsContexts.Button String text, Icon icon) {
     this(text, null, icon);
   }
 

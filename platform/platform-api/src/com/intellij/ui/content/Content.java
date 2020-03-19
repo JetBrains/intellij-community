@@ -9,6 +9,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.nls.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,9 +68,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setShouldDisposeContent(boolean value);
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Nls @NlsContexts.ContentTooltip
   String getDescription();
-  void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description);
+
+  void setDescription(@Nls @NlsContexts.ContentTooltip String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
 

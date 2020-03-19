@@ -9,6 +9,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
+import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.JBUI;
@@ -556,20 +557,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                               @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+    public ElementActionButton(@Nls @NlsContexts.Button String text,
+                               @Nls @NlsContexts.ButtonTooltip String description,
                                @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
+    public ElementActionButton(@Nls @NlsContexts.Button String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
+    public ElementActionButton(@Nls @NlsContexts.Button String text) {
       super(text);
     }
   }

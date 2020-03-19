@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.nls.NlsContexts.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
@@ -132,23 +133,17 @@ class NotificationGroup(@param:NonNls val displayId: String,
       get() = registeredGroups.values
   }
 
-  fun createNotification(
-    @Nls(capitalization = Nls.Capitalization.Sentence) content: String,
-    type: MessageType
-  ): Notification {
+  fun createNotification(@Nls @NotificationContent content: String, type: MessageType): Notification {
     return createNotification(content, type.toNotificationType())
   }
 
-  fun createNotification(
-    @Nls(capitalization = Nls.Capitalization.Sentence) content: String,
-    type: NotificationType
-  ): Notification {
+  fun createNotification(@Nls @NotificationContent content: String, type: NotificationType): Notification {
     return createNotification("", content, type)
   }
 
   fun createNotification(
-    @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
-    @Nls(capitalization = Nls.Capitalization.Sentence) content: String,
+    @Nls @NotificationTitle title: String,
+    @Nls @NotificationContent content: String,
     type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null
   ): Notification {
@@ -162,9 +157,9 @@ class NotificationGroup(@param:NonNls val displayId: String,
 
   @JvmOverloads
   fun createNotification(
-    @Nls(capitalization = Nls.Capitalization.Sentence) title: String?,
-    @Nls(capitalization = Nls.Capitalization.Sentence) subtitle: String?,
-    @Nls(capitalization = Nls.Capitalization.Sentence) content: String?,
+    @Nls @NotificationTitle title: String?,
+    @Nls @NotificationSubtitle subtitle: String?,
+    @Nls @NotificationContent content: String?,
     type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null
   ): Notification {

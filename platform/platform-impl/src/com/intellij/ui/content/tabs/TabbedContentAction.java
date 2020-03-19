@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -18,7 +19,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
   protected TabbedContentAction(@NotNull ContentManager manager,
                                 @NotNull AnAction shortcutTemplate,
-                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
+                                @NotNull @Nls @NlsActions.ActionText String text,
                                 @NotNull Disposable parentDisposable) {
     super(text);
 

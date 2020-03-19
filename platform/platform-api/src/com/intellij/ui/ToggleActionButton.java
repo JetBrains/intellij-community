@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +29,7 @@ import java.util.function.Supplier;
  * @author yole
  */
 public abstract class ToggleActionButton extends AnActionButton implements Toggleable {
-  public ToggleActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                            Icon icon) {
+  public ToggleActionButton(@Nls @NlsActions.ActionText String text, Icon icon) {
     super(() -> text, Presentation.NULL_STRING, icon);
   }
 

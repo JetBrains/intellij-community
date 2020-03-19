@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -13,6 +14,8 @@ import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NlsActions.*;
 
 /**
  * Represents a group of actions.
@@ -58,7 +61,7 @@ public abstract class ActionGroup extends AnAction {
    * @param popup {@code true} if this group is a popup, {@code false}
    *  otherwise
    */
-  public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String shortName, boolean popup){
+  public ActionGroup(@Nls @ActionText String shortName, boolean popup){
     this(() -> shortName, popup);
   }
 
@@ -67,8 +70,8 @@ public abstract class ActionGroup extends AnAction {
     setPopup(popup);
   }
 
-  public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                     @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public ActionGroup(@Nls @ActionText String text,
+                     @Nls @ActionDescription String description,
                      Icon icon) {
     super(text, description, icon);
   }

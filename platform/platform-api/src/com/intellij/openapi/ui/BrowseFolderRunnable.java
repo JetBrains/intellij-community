@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.nls.NlsContexts;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +26,8 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   protected  T myTextComponent;
   private Project myProject;
 
-  public BrowseFolderRunnable(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                              @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public BrowseFolderRunnable(@Nullable @Nls @NlsContexts.FileChooserTitle String title,
+                              @Nullable @Nls @NlsContexts.FileChooserDescription String description,
                               @Nullable Project project,
                               FileChooserDescriptor fileChooserDescriptor,
                               @Nullable T component,

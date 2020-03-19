@@ -10,11 +10,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.util.NlsActions.ActionDescription;
+import static com.intellij.openapi.util.NlsActions.ActionText;
+
 public abstract class DumbAwareToggleAction extends ToggleAction implements DumbAware {
   protected DumbAwareToggleAction() {
   }
 
-  protected DumbAwareToggleAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
+  protected DumbAwareToggleAction(@Nullable @Nls @ActionText String text) {
     this(() -> text);
   }
 
@@ -22,8 +25,8 @@ public abstract class DumbAwareToggleAction extends ToggleAction implements Dumb
     super(text);
   }
 
-  protected DumbAwareToggleAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                                  @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description, @Nullable Icon icon) {
+  protected DumbAwareToggleAction(@Nullable @Nls @ActionText String text,
+                                  @Nullable @Nls @ActionDescription String description, @Nullable Icon icon) {
     this(() -> text, () -> description, icon);
   }
 

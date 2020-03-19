@@ -4,6 +4,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static DumbAwareAction create(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
+  public static DumbAwareAction create(@Nullable @Nls @NlsActions.ActionText String text,
                                        @NotNull Consumer<? super AnActionEvent> actionPerformed) {
     return new SimpleDumbAwareAction(text, actionPerformed);
   }
@@ -36,7 +37,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(icon);
   }
 
-  protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
+  protected DumbAwareAction(@Nullable @Nls @NlsActions.ActionText String text) {
     super(text);
   }
 
@@ -44,8 +45,8 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText);
   }
 
-  protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                            @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  protected DumbAwareAction(@Nullable @Nls @NlsActions.ActionText String text,
+                            @Nullable @Nls @NlsActions.ActionDescription String description,
                             @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -65,7 +66,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
       myActionPerformed = actionPerformed;
     }
 
-    private SimpleDumbAwareAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
+    private SimpleDumbAwareAction(@Nls @NlsActions.ActionText String text,
                                   Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;

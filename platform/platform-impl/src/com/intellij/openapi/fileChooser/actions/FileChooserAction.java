@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,8 +17,8 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  protected FileChooserAction(final @Nls(capitalization = Nls.Capitalization.Title) String text,
-                              final @Nls(capitalization = Nls.Capitalization.Sentence) String description, final Icon icon) {
+  protected FileChooserAction(final @Nls @NlsActions.ActionText String text,
+                              final @Nls @NlsActions.ActionDescription String description, final Icon icon) {
     this(() -> text, () -> description, icon);
   }
 

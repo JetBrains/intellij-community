@@ -9,6 +9,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NlsActions.*;
 
 /**
  * Represents an entity that has a state, a presentation and can be performed.
@@ -93,7 +96,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
    */
-  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
+  public AnAction(@Nullable @Nls @ActionText String text) {
     this(text, null, null);
   }
 
@@ -121,8 +124,8 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                  @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public AnAction(@Nullable @Nls @ActionText String text,
+                  @Nullable @Nls @ActionDescription String description,
                   @Nullable Icon icon) {
     this(() -> text, () -> description, icon);
   }

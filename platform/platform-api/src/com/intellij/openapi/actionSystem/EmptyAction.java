@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,8 @@ public final class EmptyAction extends AnAction {
     myEnabled = enabled;
   }
 
-  public EmptyAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
-                     @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description, @Nullable Icon icon) {
+  public EmptyAction(@Nullable @Nls @NlsActions.ActionText String text,
+                     @Nullable @Nls @NlsActions.ActionDescription String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
@@ -39,8 +40,8 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   @NonNls
   public static final String GROOVY_EXTENSION = ".groovy";
 
-  public NewGroovyActionBase(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                             @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public NewGroovyActionBase(@Nls @NlsActions.ActionText String text,
+                             @Nls @NlsActions.ActionDescription String description,
                              Icon icon) {
     super(text, description, icon);
   }

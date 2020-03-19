@@ -17,6 +17,8 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +31,12 @@ import java.util.function.Supplier;
  */
 public abstract class DumbAwareActionButton extends AnActionButton implements DumbAware {
 
-  public DumbAwareActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
+  public DumbAwareActionButton(@Nls @ActionText String text) {
     super(text);
   }
 
-  public DumbAwareActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                               @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public DumbAwareActionButton(@Nls @ActionText String text,
+                               @Nls @NlsActions.ActionDescription String description,
                                @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -45,7 +47,7 @@ public abstract class DumbAwareActionButton extends AnActionButton implements Du
     super(dynamicText, dynamicDescription, icon);
   }
 
-  public DumbAwareActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
+  public DumbAwareActionButton(@Nls @ActionText String text,
                                Icon icon) {
     super(text, icon);
   }

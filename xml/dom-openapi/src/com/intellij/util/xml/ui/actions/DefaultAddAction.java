@@ -4,6 +4,7 @@ package com.intellij.util.xml.ui.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
@@ -23,12 +24,12 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     super(XmlDomBundle.messagePointer("action.add"));
   }
 
-  public DefaultAddAction(@Nls(capitalization = Nls.Capitalization.Title) String text) {
+  public DefaultAddAction(@Nls @NlsActions.ActionText String text) {
     super(text);
   }
 
-  public DefaultAddAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
-                          @Nls(capitalization = Nls.Capitalization.Sentence) String description, Icon icon) {
+  public DefaultAddAction(@Nls @NlsActions.ActionText String text,
+                          @Nls @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 

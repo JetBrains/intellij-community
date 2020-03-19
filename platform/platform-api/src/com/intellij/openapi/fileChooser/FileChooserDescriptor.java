@@ -14,6 +14,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.nls.NlsContexts;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -109,11 +110,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myTitle;
   }
 
-  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public void setTitle(@Nls @NlsContexts.FileChooserTitle String title) {
     withTitle(title);
   }
 
-  public FileChooserDescriptor withTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+  public FileChooserDescriptor withTitle(@Nls @NlsContexts.FileChooserTitle String title) {
     myTitle = title;
     return this;
   }
@@ -122,11 +123,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myDescription;
   }
 
-  public void setDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
+  public void setDescription(@Nls @NlsContexts.FileChooserDescription String description) {
     withDescription(description);
   }
 
-  public FileChooserDescriptor withDescription(@Nls(capitalization = Nls.Capitalization.Sentence) String description) {
+  public FileChooserDescriptor withDescription(@Nls @NlsContexts.FileChooserDescription String description) {
     myDescription = description;
     return this;
   }

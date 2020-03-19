@@ -11,13 +11,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import static com.intellij.util.nls.NlsContexts.NotificationContent;
+
 /**
  * @author Alexander Lobas
  * @see Notification#addAction(AnAction)
  */
 public abstract class NotificationAction extends DumbAwareAction {
 
-  public NotificationAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
+  public NotificationAction(@Nullable @Nls @NotificationContent String text) {
     super(text);
   }
 
@@ -33,7 +35,7 @@ public abstract class NotificationAction extends DumbAwareAction {
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification);
 
   @NotNull
-  public static NotificationAction create(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
+  public static NotificationAction create(@NotNull @Nls @NotificationContent String text,
                                           @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
     return create(() -> text, performAction);
   }
@@ -55,14 +57,14 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   @NotNull
-  public static NotificationAction createSimple(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
+  public static NotificationAction createSimple(@NotNull @Nls @NotificationContent String text,
                                                 @NotNull Runnable performAction) {
     return create(() -> text, (event, notification) -> performAction.run());
   }
 
   @NotNull
-  public static NotificationAction createSimpleExpiring(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
-                                                @NotNull Runnable performAction) {
+  public static NotificationAction createSimpleExpiring(@NotNull @Nls @NotificationContent String text,
+                                                        @NotNull Runnable performAction) {
     return create(text, (event, notification) -> {
       performAction.run();
       notification.expire();

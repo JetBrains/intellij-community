@@ -24,14 +24,17 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.nls.NlsContexts.FileChooserDescription;
+import static com.intellij.util.nls.NlsContexts.FileChooserTitle;
+
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public void addBrowseFolderListener(@Nullable @Nls @FileChooserTitle String title,
+                                      @Nullable @Nls @FileChooserDescription String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor) {
@@ -40,8 +43,8 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public void addBrowseFolderListener(@Nullable @Nls @FileChooserTitle String title,
+                                      @Nullable @Nls @FileChooserDescription String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor,

@@ -26,6 +26,8 @@ import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
+import com.intellij.util.nls.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -374,7 +376,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo setTooltipText(final String text) {
+  public TabInfo setTooltipText(@Nls @NlsContexts.ContentTooltip String text) {
     String old = myTooltipText;
     if (!Comparing.equal(old, text)) {
       myTooltipText = text;

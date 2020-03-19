@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.util.nls.NlsContexts.*;
+
 /**
  * Notification bean class contains <b>title:</b>subtitle, content (plain text or HTML) and actions.
  * <br><br>
@@ -87,9 +89,9 @@ public class Notification {
    */
   public Notification(@NotNull @NonNls String groupDisplayId,
                       @Nullable Icon icon,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle,
-                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String content,
+                      @Nullable @Nls @NotificationTitle String title,
+                      @Nullable @Nls @NotificationSubtitle String subtitle,
+                      @Nullable @Nls @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupDisplayId;
@@ -106,8 +108,8 @@ public class Notification {
   }
 
   public Notification(@NotNull @NonNls String groupDisplayId,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
+                      @NotNull @Nls @NotificationTitle String title,
+                      @NotNull @Nls @NotificationContent String content,
                       @NotNull NotificationType type) {
     this(groupDisplayId, title, content, type, null);
   }
@@ -121,8 +123,8 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull @NonNls String groupDisplayId,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
+                      @NotNull @Nls @NotificationTitle String title,
+                      @NotNull @Nls @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupDisplayId;
@@ -168,14 +170,14 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
+  public Notification setTitle(@Nullable @Nls @NotificationTitle String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
-                               @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle) {
+  public Notification setTitle(@Nullable @Nls @NotificationTitle String title,
+                               @Nullable @Nls @NotificationSubtitle String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
 
@@ -259,7 +261,7 @@ public class Notification {
    * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
    */
   @NotNull
-  public Notification setDropDownText(@NotNull String dropDownText) {
+  public Notification setDropDownText(@NotNull @Nls @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }

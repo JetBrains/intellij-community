@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -149,8 +150,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.FileChooserTitle String title,
+                                      @Nullable @Nls @NlsContexts.FileChooserDescription String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor) {
@@ -161,8 +162,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
    */
   @Deprecated
-  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.FileChooserTitle String title,
+                                      @Nullable @Nls @NlsContexts.FileChooserDescription String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
@@ -220,8 +221,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
-    public BrowseFolderActionListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
+    public BrowseFolderActionListener(@Nullable @Nls @NlsContexts.FileChooserTitle String title,
+                                      @Nullable @Nls @NlsContexts.FileChooserDescription String description,
                                       @Nullable ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
