@@ -162,7 +162,12 @@ class IntellijModulesPublication {
     connection.requestMethod = "HEAD"
     connection.instanceFollowRedirects = true
 
-    return connection.responseCode == 200
+    int responseCode = connection.responseCode
+    if (responseCode == 302) {
+      // Redirect will not be performed in case of protocol change. E.g. http -> https.
+      context.messages.warning("Redirect code was returned, but no redirect was performed. Please check url $url")
+    }
+    return responseCode == 200
   }
 
   private File mavenSettings() {
