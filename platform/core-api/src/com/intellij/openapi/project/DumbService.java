@@ -300,10 +300,10 @@ public abstract class DumbService {
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
    * @param balloonText
-   * @param runWhenSmartAndBalloonUnhidden — will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
+   * @param runWhenSmartAndBalloonStillShowing — will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
   public abstract void showDumbModeActionBalloon(@NotNull String balloonText,
-                                                 @NotNull Runnable runWhenSmartAndBalloonUnhidden);
+                                                 @NotNull Runnable runWhenSmartAndBalloonStillShowing);
 
   public abstract Project getProject();
 

@@ -434,19 +434,19 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void showDumbModeActionBalloon(@NotNull String balloonText,
-                                        @NotNull Runnable runWhenSmartAndBalloonNotHidden) {
+                                        @NotNull Runnable runWhenSmartAndBalloonStillShowing) {
     if (LightEdit.owns(myProject)) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isDumb()) {
       UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonWasNotNeeded, new FeatureUsageData().addProject(myProject));
-      runWhenSmartAndBalloonNotHidden.run();
+      runWhenSmartAndBalloonStillShowing.run();
       return;
     }
     if (myBalloon != null) {
       //here should be an assertion that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
       return;
     }
-    tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonNotHidden);
+    tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing);
   }
 
   private void tryShowBalloonTillSmartMode(@NotNull String balloonText,
