@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher
@@ -53,6 +54,7 @@ import kotlin.test.assertNotEquals
 class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
   fun testAllFilesWithMemberNameReported() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     PropertyChecker.customized()
       .checkScenarios { ImperativeCommand(this::doTestAllFilesWithMemberNameReported) }
   }
