@@ -281,4 +281,9 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   public Object getElementFor(Object node) {
     return getUi().getElementFor(node);
   }
+  
+  public void reset() {
+    myLastSuccessfulSelect = null;
+    myRefilterQueue.cancelAllUpdates();
+  }
 }
