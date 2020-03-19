@@ -250,9 +250,10 @@ public final class StartupUtil {
                                @NotNull Future<AppStarter> appStarterFuture,
                                @Nullable Future<Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.startMainActivity("config importing");
+      Activity activity = StartUpMeasurer.startMainActivity("eua showing");
       boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
       if (configImportNeeded) {
+        activity = activity.endAndStart("config importing");
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
@@ -265,8 +266,11 @@ public final class StartupUtil {
           // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
           EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
         }
+        activity.end();
       }
-      activity.end();
+      else {
+        activity.end();
+      }
     }
 
     EdtInvocationManager oldEdtInvocationManager = null;
