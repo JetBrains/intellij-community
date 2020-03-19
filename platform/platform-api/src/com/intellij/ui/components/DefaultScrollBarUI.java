@@ -481,7 +481,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseMoved(MouseEvent event) {
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
       if (!isDragging) updateMouse(event.getX(), event.getY());
-      redispatchIfTrackNotClickable(event);
     }
 
     @Override
