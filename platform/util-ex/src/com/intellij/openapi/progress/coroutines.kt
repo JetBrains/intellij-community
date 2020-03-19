@@ -26,7 +26,7 @@ suspend fun checkCancelled() {
 
 /**
  * The method has same semantics as [runBlocking],
- * and additionally [action] is cancelled when current progress indicator is cancelled.
+ * and additionally [action] is canceled when current progress indicator is canceled.
  *
  * This is a bridge for invoking suspending code from blocking code.
  *
@@ -47,7 +47,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
     // we are not under indicator => just run the action, since nobody will cancel it anyway
     return runBlocking(block = action)
   }
-  // we are under indicator => the Job must be cancelled when indicator is cancelled
+  // we are under indicator => the Job must be canceled when indicator is canceled
   return runBlocking(CoroutineName("indicator run blocking")) {
     val indicatorWatchJob = launch(Dispatchers.Default + CoroutineName("indicator watcher")) {
       while (true) {
@@ -66,7 +66,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
 }
 
 /**
- * Runs blocking (e.g. Java) code under indicator, which is cancelled if current Job is cancelled.
+ * Runs blocking (e.g. Java) code under indicator, which is canceled if current Job is canceled.
  *
  * This is a bridge for invoking blocking code from suspending code.
  *
@@ -92,7 +92,7 @@ fun <T> runUnderIndicator(job: Job, action: () -> T): T {
   try {
     return ProgressManager.getInstance().runProcess(Computable {
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.
-      // If the Job was cancelled while runProcess was preparing,
+      // If the Job was canceled while runProcess was preparing,
       // then CompletionHandler is invoked right away and cancels the indicator.
       val completionHandle = job.invokeOnCompletion(onCancelling = true) {
         if (it is CancellationException) {
@@ -114,9 +114,9 @@ fun <T> runUnderIndicator(job: Job, action: () -> T): T {
       // => treat it as any other exception
       throw e
     }
-    // indicator is cancelled
+    // indicator is canceled
     // => CompletionHandler was actually invoked
-    // => current Job is cancelled
+    // => current Job is canceled
     check(job.isCancelled)
     throw job.getCancellationException()
   }
