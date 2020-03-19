@@ -54,7 +54,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDescriptionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -168,6 +167,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       }
       val componentDataProvider = dataContext.dataLoader.getDataProvider(details, currentDisposable!!)
       val pullRequestComponent = createPullRequestComponent(dataContext, componentDataProvider,
+                                                            details,
                                                             ::viewList,
                                                             avatarIconsProviderFactory,
                                                             currentDisposable!!)
@@ -179,17 +179,23 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createPullRequestComponent(dataContext: GHPRDataContext,
                                          dataProvider: GHPRDataProvider,
+                                         details: GHPullRequestShort,
                                          returnToListListener: () -> Unit,
                                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                          disposable: Disposable): JComponent {
 
-    val actionDataContext = GHPRFixedActionDataContext(dataContext, dataProvider, avatarIconsProviderFactory)
+    val detailsLoadingModel = createDetailsLoadingModel(dataProvider, disposable)
+
     val commitsModel = GHPRCommitsModelImpl()
     val cumulativeChangesModel = GHPRChangesModelImpl(project)
     val diffHelper = GHPRChangesDiffHelperImpl(avatarIconsProviderFactory, dataContext.securityService.currentUser)
     val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider, disposable)
 
-    val infoComponent = createInfoComponent(dataContext, actionDataContext, changesLoadingModel, disposable)
+    val actionDataContext = GHPRFixedActionDataContext(dataContext, dataProvider, avatarIconsProviderFactory) {
+      detailsLoadingModel.result ?: details
+    }
+
+    val infoComponent = createInfoComponent(dataContext, actionDataContext, detailsLoadingModel, changesLoadingModel, disposable)
     val commitsComponent = createCommitsComponent(dataContext, actionDataContext, changesLoadingModel, disposable)
 
     val infoTabInfo = TabInfo(infoComponent).apply {
@@ -229,11 +235,11 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createInfoComponent(dataContext: GHPRDataContext,
                                   actionDataContext: GHPRActionDataContext,
+                                  detailsLoadingModel: GHSimpleLoadingModel<GHPullRequest>,
                                   changesLoadingModel: GHPRChangesLoadingModel,
                                   disposable: Disposable): JComponent {
     val dataProvider = actionDataContext.pullRequestDataProvider
 
-    val detailsLoadingModel = createDetailsLoadingModel(dataProvider, disposable)
     val detailsModel = createValueModel(detailsLoadingModel)
 
     val detailsPanel = createDetailsPanel(dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
@@ -261,7 +267,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
 
-    return OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.5f).apply {
+    return OnePixelSplitter(true, "Github.PullRequest.Info.Component", 0.33f).apply {
       isOpaque = true
       background = UIUtil.getListBackground()
 
@@ -272,7 +278,10 @@ internal class GHPRComponentFactory(private val project: Project) {
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
         else when {
-          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> actionDataContext
+          GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, dataProvider,
+                                                                                        actionDataContext.avatarIconsProviderFactory) {
+            detailsModel.value ?: actionDataContext.pullRequestDetails
+          }
           else -> null
         }
       }
@@ -345,7 +354,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { actionDataContext.pullRequestDataProvider.reloadChanges() }
     }
 
-    return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.5f).apply {
+    return OnePixelSplitter(true, "Github.PullRequest.Commits.Component", 0.4f).apply {
       isOpaque = true
       background = UIUtil.getListBackground()
 
@@ -480,17 +489,12 @@ internal class GHPRComponentFactory(private val project: Project) {
                                       dataContext.securityService,
                                       dataContext.metadataService,
                                       avatarIconsProviderFactory).apply {
-      border = JBUI.Borders.empty(4, 8, 4, 8)
-    }
-
-    val descriptionPanel = GHPRDescriptionPanel(detailsModel).apply {
-      border = JBUI.Borders.empty(4, 8, 8, 8)
+      border = JBUI.Borders.empty(8)
     }
 
     val scrollablePanel = ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
       isOpaque = false
       add(metaPanel)
-      add(descriptionPanel)
     }
     val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
       viewport.isOpaque = false

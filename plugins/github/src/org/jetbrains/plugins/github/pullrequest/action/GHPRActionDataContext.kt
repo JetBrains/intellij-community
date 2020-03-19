@@ -31,7 +31,7 @@ interface GHPRActionDataContext {
   val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory
   val currentUser: GHUser
 
-  val pullRequestDetails: GHPullRequestShort?
+  val pullRequestDetails: GHPullRequestShort
   val pullRequestDataProvider: GHPRDataProvider
 
   val submitReviewCommentDocument: Document

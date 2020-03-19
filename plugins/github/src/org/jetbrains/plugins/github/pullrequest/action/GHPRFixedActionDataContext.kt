@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataContext,
                                                       dataProvider: GHPRDataProvider,
                                                       override val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                                      details: GHPullRequestShort? = null)
+                                                      private val detailsProvider: () -> GHPullRequestShort)
   : GHPRActionDataContext {
 
   override val account = dataContext.account
@@ -27,7 +27,8 @@ class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataConte
 
   override val currentUser = dataContext.securityService.currentUser
 
-  override val pullRequestDetails = details
+  override val pullRequestDetails
+    get() = detailsProvider()
   override val pullRequestDataProvider = dataProvider
 
   override val submitReviewCommentDocument by lazy(LazyThreadSafetyMode.NONE) { EditorFactory.getInstance().createDocument("") }

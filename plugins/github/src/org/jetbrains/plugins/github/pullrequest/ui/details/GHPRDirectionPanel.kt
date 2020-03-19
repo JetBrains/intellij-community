@@ -9,15 +9,16 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
-import org.jetbrains.plugins.github.ui.WrapLayout
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
-import java.awt.FlowLayout
 import javax.swing.JLabel
 
-internal class GHPRDirectionPanel : NonOpaquePanel(WrapLayout(FlowLayout.LEFT, 0, UIUtil.DEFAULT_VGAP)) {
+internal class GHPRDirectionPanel : NonOpaquePanel() {
   private val from = createLabel()
   private val to = createLabel()
   private val checkoutLink = LinkLabel<Any>("Checkout", null) { _, _ ->
@@ -35,12 +36,18 @@ internal class GHPRDirectionPanel : NonOpaquePanel(WrapLayout(FlowLayout.LEFT, 0
     }
 
   init {
-    add(to)
+    layout = MigLayout(LC()
+                         .fillX()
+                         .gridGap("0", "0")
+                         .insets("0", "0", "0", "0"))
+
+    add(to, CC().minWidth("${UI.scale(30)}"))
     add(JLabel(" ${UIUtil.leftArrow()} ").apply {
       foreground = CurrentBranchComponent.TEXT_COLOR
       border = JBUI.Borders.empty(0, 5)
     })
-    add(BorderLayoutPanel().addToLeft(from).addToRight(checkoutLink).andTransparent())
+    add(from, CC().minWidth("${UI.scale(30)}"))
+    add(checkoutLink)
   }
 
   companion object {
