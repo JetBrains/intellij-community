@@ -18,13 +18,17 @@ internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private
 
   private fun createRebaseTodoModel(): GitRebaseTodoModel<T> = convertToModel(initialEntries)
 
+  private val savedStates = SavedStates(rebaseTodoModel.elements)
+
   fun updateModel(f: (GitRebaseTodoModel<T>) -> Unit) {
     f(rebaseTodoModel)
+    savedStates.addState(rebaseTodoModel.elements)
     fireTableRowsUpdated(0, rowCount)
   }
 
   fun resetEntries() {
     rebaseTodoModel = createRebaseTodoModel()
+    savedStates.addState(rebaseTodoModel.elements)
     fireTableRowsUpdated(0, rowCount)
   }
 
@@ -73,6 +77,81 @@ internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private
     }
     else {
       getEntry(row).commitDetails.fullMessage
+    }
+  }
+
+  fun undo() {
+    savedStates.prevState()?.let {
+      rebaseTodoModel = GitRebaseTodoModel(it)
+    }
+    fireTableRowsUpdated(0, rowCount)
+  }
+
+  fun redo() {
+    savedStates.nextState()?.let {
+      rebaseTodoModel = GitRebaseTodoModel(it)
+    }
+    fireTableRowsUpdated(0, rowCount)
+  }
+
+  private class SavedStates<T : GitRebaseEntryWithDetails>(initialState: List<GitRebaseTodoModel.Element<T>>) {
+    companion object {
+      private const val MAX_SIZE = 10
+    }
+
+    private var currentState = 0
+    private val states = mutableListOf(copyElements(initialState))
+
+    private fun checkBoundsAndGetState(): List<GitRebaseTodoModel.Element<T>>? {
+      if (currentState !in states.indices) {
+        currentState = currentState.coerceIn(states.indices)
+        return null
+      }
+      return copyElements(states[currentState])
+    }
+
+    fun prevState(): List<GitRebaseTodoModel.Element<T>>? {
+      currentState--
+      return checkBoundsAndGetState()
+    }
+
+    fun nextState(): List<GitRebaseTodoModel.Element<T>>? {
+      currentState++
+      return checkBoundsAndGetState()
+    }
+
+    fun addState(newState: List<GitRebaseTodoModel.Element<T>>) {
+      currentState++
+      if (currentState == MAX_SIZE) {
+        currentState = MAX_SIZE - 1
+        states.removeAt(0)
+      }
+      while (states.lastIndex != currentState - 1) {
+        states.removeAt(states.lastIndex)
+      }
+      states.add(currentState, copyElements(newState))
+    }
+
+    private fun copyElements(elements: List<GitRebaseTodoModel.Element<T>>): List<GitRebaseTodoModel.Element<T>> {
+      val result = mutableListOf<GitRebaseTodoModel.Element<T>>()
+      elements.forEach { elementToCopy ->
+        when (elementToCopy) {
+          is GitRebaseTodoModel.Element.Simple -> {
+            result.add(GitRebaseTodoModel.Element.Simple(elementToCopy.index, elementToCopy.type, elementToCopy.entry))
+          }
+          is GitRebaseTodoModel.Element.UniteRoot -> {
+            result.add(GitRebaseTodoModel.Element.UniteRoot(elementToCopy.index, elementToCopy.type, elementToCopy.entry))
+          }
+          is GitRebaseTodoModel.Element.UniteChild -> {
+            val rootIndex = elementToCopy.root.index
+            val root = result[rootIndex] as GitRebaseTodoModel.Element.UniteRoot<T>
+            val child = GitRebaseTodoModel.Element.UniteChild(elementToCopy.index, elementToCopy.entry, root)
+            root.addChild(child)
+            result.add(child)
+          }
+        }
+      }
+      return result
     }
   }
 }
