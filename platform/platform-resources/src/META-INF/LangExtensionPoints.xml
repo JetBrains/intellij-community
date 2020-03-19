@@ -292,7 +292,7 @@
     <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
       <with attribute="providerClass" implements="com.intellij.psi.PsiReferenceProvider"/>
     </extensionPoint>
-    <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean">
+    <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean" dynamic="true">
       <with attribute="className" implements="java.lang.Object"/>
     </extensionPoint>
 
