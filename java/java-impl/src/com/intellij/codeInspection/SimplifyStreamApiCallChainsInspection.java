@@ -1060,7 +1060,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length == 0) return candidate;
       if (args.length != 1) return null;
-      PsiExpression supplier = args[0];
+      PsiExpression supplier = PsiUtil.skipParenthesizedExprDown(args[0]);
       if (supplier instanceof PsiMethodReferenceExpression) {
         // like toArray(String[]::new)
         PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)supplier;
