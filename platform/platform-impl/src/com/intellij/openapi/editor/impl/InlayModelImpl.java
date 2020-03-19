@@ -319,11 +319,10 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
         int yDiff = baseY - point.y;
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
-          int height = inlay.getHeightInPixels();
-          if (yDiff <= height) {
+          yDiff -= inlay.getHeightInPixels();
+          if (yDiff <= 0) {
             return relX < inlay.getWidthInPixels() ? inlay : null;
           }
-          yDiff -= height;
         }
         LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", baseY=" + baseY + ", " + inlays,
                   new Attachment("editorState.txt", myEditor.dumpState()));
@@ -335,11 +334,10 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
           List<Inlay> inlays = getBlockElementsForVisualLine(visualLine, false);
           int yDiff = point.y - lineBottom;
           for (Inlay inlay : inlays) {
-            int height = inlay.getHeightInPixels();
-            if (yDiff < height) {
+            yDiff -= inlay.getHeightInPixels();
+            if (yDiff < 0) {
               return relX < inlay.getWidthInPixels() ? inlay : null;
             }
-            yDiff -= height;
           }
           LOG.error("Inconsistent state: " + point + ", " + visualPosition + ", lineBottom=" + lineBottom + ", " + inlays,
                     new Attachment("editorState.txt", myEditor.dumpState()));
