@@ -454,7 +454,7 @@ internal class GHCloneDialogExtensionComponent(
   }
 
 
-  fun getGithubRepoPath(searchText: String): GHRepositoryCoordinates? {
+  private fun getGithubRepoPath(searchText: String): GHRepositoryCoordinates? {
     val url = searchText
       .trim()
       .removePrefix("git clone")
