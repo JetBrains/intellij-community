@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -29,6 +30,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingRev
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.util.successOnEdt
+import java.awt.Component
 import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.event.ActionListener
@@ -196,6 +198,13 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
     return object : JButton() {
       override fun isDefaultButton(): Boolean {
         return getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
+      }
+
+      override fun updateUI() {
+        super.updateUI()
+        border = object : DarculaButtonPainter() {
+          override fun getBorderInsets(c: Component) = JBUI.insets(0)
+        }
       }
     }
   }

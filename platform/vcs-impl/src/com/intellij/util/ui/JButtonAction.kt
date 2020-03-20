@@ -2,17 +2,19 @@
 package com.intellij.util.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ComponentUtil
+import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.border.Border
 
 abstract class JButtonAction(text: String?, description: String? = null, icon: Icon? = null)
   : DumbAwareAction(text, description, icon), CustomComponentAction {
@@ -33,15 +35,22 @@ abstract class JButtonAction(text: String?, description: String? = null, icon: I
       }
     }
 
-    val buttonInsets = button.insets
-    val leftRight = JBUI.scale(if (SystemInfo.isWindows) 4 else 6) - (buttonInsets.left + buttonInsets.right) / 2
-    val topBottom = JBUI.scale(4) - (buttonInsets.top + buttonInsets.bottom) / 2
-    val border = JBEmptyBorder(JBInsets.create(topBottom.coerceAtLeast(0), leftRight.coerceAtLeast(0)))
     updateButtonFromPresentation(button, presentation)
+    val border: Border = JBUI.Borders.empty(0, if (UIUtil.isUnderDefaultMacTheme()) 6 else 4)
     return JBUI.Panels.simplePanel(button).withBorder(border)
   }
 
-  protected open fun createButton(): JButton = JButton()
+  protected open fun createButton(): JButton {
+    return object : JButton() {
+
+      override fun updateUI() {
+        super.updateUI()
+        border = object : DarculaButtonPainter() {
+          override fun getBorderInsets(c: Component) = JBUI.insets(0)
+        }
+      }
+    }
+  }
 
   protected fun updateButtonFromPresentation(e: AnActionEvent) {
     val button = UIUtil.findComponentOfType(e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), JButton::class.java)
