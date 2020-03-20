@@ -106,7 +106,9 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
   }
 
   private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.message("python.sdk.popup.interpreter.settings")) {
-    override fun actionPerformed(e: AnActionEvent) = PyInterpreterInspection.InterpreterSettingsQuickFix.showProjectInterpreterDialog(project)
+    override fun actionPerformed(e: AnActionEvent) {
+      PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
+    }
   }
 
   private inner class AddInterpreterAction : DumbAwareAction(PyBundle.message("python.sdk.popup.add.interpreter")) {

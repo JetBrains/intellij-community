@@ -32,7 +32,7 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
   private final Project myProject;
 
   public PyActiveSdkModuleConfigurable(Project project) {
-    super(project, PyBundle.message("configurable.PyActiveSdkModuleConfigurable.display.name"), "reference.settings.project.interpreter");
+    super(project, PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"), "reference.settings.project.interpreter");
     myProject = project;
   }
 

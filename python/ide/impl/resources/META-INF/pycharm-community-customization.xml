@@ -21,7 +21,7 @@
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"
-                         key="configurable.PyActiveSdkModuleConfigurable.display.name"
+                         key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
                          instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
