@@ -994,10 +994,16 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myQueuedConfigurable = null;
     myQueue.cancelAllUpdates();
     myConfigurableToNodeMap.clear();
-    myBuilder.reset();
-    myTree.getSelectionModel().clearSelection();
     AbstractTreeUi ui = myBuilder.getUi();
-    AbstractTreeStructure structure = ui != null ? ui.getTreeStructure() : null;
+    if (ui == null) return;
+    
+    //remove expansion and selection (to avoid stuck old elements) before cleanup
+    myTree.getSelectionModel().clearSelection();
+    myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
+    
+    myBuilder.cleanUp();
+    ui.getUpdater().reset();
+    AbstractTreeStructure structure = ui.getTreeStructure();
     if (structure instanceof FilteringTreeStructure) {
       ((FilteringTreeStructure)structure).rebuild();
     }

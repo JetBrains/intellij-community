@@ -4609,6 +4609,7 @@ public class AbstractTreeUi {
     myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
     clearSelection();
     getRootNode().removeAllChildren();
+    TREE_NODE_WRAPPER = AbstractTreeBuilder.createSearchingTreeNodeWrapper();
 
     myRootNodeWasQueuedToInitialize = false;
     myRootNodeInitialized = false;
