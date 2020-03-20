@@ -111,46 +111,4 @@ public class NlsContexts {
   @Target(ElementType.TYPE_USE)
   public @interface StatusText {
   }
-
-  /**
-   * Swing components
-   */
-  @NlsContext(prefix = "link.label")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface LinkLabel {
-  }
-
-  @NlsContext(prefix = "checkbox")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface Checkbox {
-  }
-
-  @NlsContext(prefix = "checkbox.tooltip")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface CheckboxTooltip {
-  }
-
-  @NlsContext(prefix = "titled.separator")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface TitledSeparator {
-  }
-
-  /**
-   * Buttons
-   */
-  @NlsContext(prefix = "button")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface Button {
-  }
-
-  @NlsContext(prefix = "button.tooltip")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ButtonTooltip {
-  }
 }

@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
+import static com.intellij.openapi.util.NlsProgress.ProgressTitle;
+
 public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
 
@@ -219,7 +221,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                     @NotNull @Nls String progressTitle,
+                                                     @NotNull @Nls @ProgressTitle String progressTitle,
                                                      boolean canBeCanceled,
                                                      @Nullable Project project) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
@@ -228,7 +230,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // FROM EDT->UI: bg OR calling if can't
   @Override
   public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull final ThrowableComputable<T, E> process,
-                                                                        @NotNull @Nls String progressTitle,
+                                                                        @NotNull @Nls @ProgressTitle String progressTitle,
                                                                         boolean canBeCanceled,
                                                                         @Nullable Project project) throws E {
     final AtomicReference<T> result = new AtomicReference<>();
@@ -260,7 +262,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // FROM EDT: bg OR calling if can't
   @Override
   public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
-                                                     @NotNull @Nls String progressTitle,
+                                                     @NotNull @Nls @ProgressTitle String progressTitle,
                                                      boolean canBeCanceled,
                                                      @Nullable Project project,
                                                      @Nullable JComponent parentComponent) {
@@ -276,7 +278,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // bg; runnables on UI/EDT?
   @Override
   public void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                   @NotNull @Nls String progressTitle,
+                                                   @NotNull @Nls @ProgressTitle String progressTitle,
                                                    @NotNull Runnable process,
                                                    @Nullable Runnable successRunnable,
                                                    @Nullable Runnable canceledRunnable) {
@@ -287,7 +289,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // bg; runnables on UI/EDT?
   @Override
   public void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                   @NotNull @Nls String progressTitle,
+                                                   @NotNull @Nls @ProgressTitle String progressTitle,
                                                    @NotNull final Runnable process,
                                                    @Nullable final Runnable successRunnable,
                                                    @Nullable final Runnable canceledRunnable,

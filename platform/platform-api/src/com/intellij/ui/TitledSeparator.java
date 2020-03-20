@@ -2,8 +2,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -39,11 +39,11 @@ public class TitledSeparator extends JPanel {
     this("");
   }
 
-  public TitledSeparator(@Nls @NlsContexts.TitledSeparator String text) {
+  public TitledSeparator(@Nls @NlsUI.TitledSeparator String text) {
     this(text, null);
   }
 
-  public TitledSeparator(@Nls @NlsContexts.TitledSeparator String text, @Nullable JComponent labelFor) {
+  public TitledSeparator(@Nls @NlsUI.TitledSeparator String text, @Nullable JComponent labelFor) {
     mySeparator.setForeground(ENABLED_SEPARATOR_FOREGROUND);
 
     setLayout(new GridBagLayout());
@@ -61,7 +61,7 @@ public class TitledSeparator extends JPanel {
     return originalText;
   }
 
-  public void setText(@Nls @NlsContexts.TitledSeparator String text) {
+  public void setText(@Nls @NlsUI.TitledSeparator String text) {
     originalText = text;
     myLabel.setText(text != null && text.startsWith("<html>") ? text : UIUtil.replaceMnemonicAmpersand(originalText));
   }

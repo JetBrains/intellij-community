@@ -3,13 +3,13 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
-import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.JBUI;
@@ -557,20 +557,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(@Nls @NlsContexts.Button String text,
-                               @Nls @NlsContexts.ButtonTooltip String description,
+    public ElementActionButton(@Nls @NlsUI.Button String text,
+                               @Nls @NlsUI.ButtonTooltip String description,
                                @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(@Nls @NlsContexts.Button String text, Icon icon) {
+    public ElementActionButton(@Nls @NlsUI.Button String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(@Nls @NlsContexts.Button String text) {
+    public ElementActionButton(@Nls @NlsUI.Button String text) {
       super(text);
     }
   }

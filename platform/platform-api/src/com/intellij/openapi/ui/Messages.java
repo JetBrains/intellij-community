@@ -20,7 +20,6 @@ import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -200,7 +199,7 @@ public class Messages {
   public static int showDialog(@Nullable Project project,
                                @Nls @DialogMessage String message,
                                @Nls @DialogTitle String title,
-                               @Nls String @NotNull @NlsContexts.Button [] options,
+                               String @NotNull @Nls @NlsUI.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
@@ -239,7 +238,7 @@ public class Messages {
   public static int showDialog(@Nullable Project project,
                                @Nls @DialogMessage String message,
                                @NotNull @Nls @DialogTitle String title,
-                               @Nls String @NotNull @NlsContexts.Button [] options,
+                               String @NotNull @Nls @NlsUI.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -253,7 +252,7 @@ public class Messages {
   public static int showIdeaMessageDialog(@Nullable Project project,
                                           @Nls @DialogMessage String message,
                                           @Nls @DialogTitle String title,
-                                          @Nls String @NotNull @NlsContexts.Button [] options,
+                                          String @NotNull @Nls @NlsUI.Button [] options,
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -278,7 +277,7 @@ public class Messages {
                                @Nls @DialogMessage String message,
                                @NotNull @Nls @DialogTitle String title,
                                @Nullable String moreInfo,
-                               @Nls String @NotNull @NlsContexts.Button [] options,
+                               String @NotNull @Nls @NlsUI.Button [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                Icon icon) {
@@ -293,7 +292,7 @@ public class Messages {
   public static int showDialog(@NotNull Component parent,
                                @Nls @DialogMessage String message,
                                @NotNull @Nls @DialogTitle String title,
-                               @Nls String @NotNull @NlsContexts.Button [] options,
+                               String @NotNull @Nls @NlsUI.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
@@ -308,7 +307,7 @@ public class Messages {
    */
   public static int showDialog(@Nls @DialogMessage String message,
                                @NotNull @Nls @DialogTitle String title,
-                               @Nls String @NotNull @NlsContexts.Button [] options,
+                               String @NotNull @Nls @NlsUI.Button [] options,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
@@ -326,7 +325,7 @@ public class Messages {
    */
   public static int showDialog(@Nls @DialogMessage String message,
                                @Nls @DialogTitle String title,
-                               @Nls String @NotNull @NlsContexts.Button [] options,
+                               String @NotNull @Nls @NlsUI.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
@@ -342,7 +341,7 @@ public class Messages {
    */
   public static int showDialog(@Nls @DialogMessage String message,
                                @Nls @DialogTitle String title,
-                               @Nls String @NotNull @NlsContexts.Button [] options,
+                               String @NotNull @Nls @NlsUI.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
     return showDialog(message, title, options, defaultOptionIndex, icon, null);
@@ -423,8 +422,8 @@ public class Messages {
   public static int showConfirmationDialog(@NotNull JComponent parent,
                                            @NotNull @Nls @DialogMessage String message,
                                            @NotNull @Nls @DialogTitle String title,
-                                           @NotNull @Nls @NlsContexts.Button String yesText,
-                                           @NotNull @Nls @NlsContexts.Button String noText) {
+                                           @NotNull @Nls @NlsUI.Button String yesText,
+                                           @NotNull @Nls @NlsUI.Button String noText) {
     try {
       if (canShowMacSheetPanel()) {
         return MacMessages.getInstance().showYesNoDialog(message, "", yesText, noText, SwingUtilities.getWindowAncestor(parent));
@@ -448,8 +447,8 @@ public class Messages {
   public static int showYesNoDialog(@Nullable Project project,
                                     @Nls @DialogMessage String message,
                                     @NotNull @Nls @DialogTitle String title,
-                                    @NotNull @Nls @NlsContexts.Button String yesText,
-                                    @NotNull @Nls @NlsContexts.Button String noText,
+                                    @NotNull @Nls @NlsUI.Button String yesText,
+                                    @NotNull @Nls @NlsUI.Button String noText,
                                     @Nullable Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -475,8 +474,8 @@ public class Messages {
   public static int showYesNoDialog(@Nullable Project project,
                                     @Nls @DialogMessage String message,
                                     @NotNull @Nls @DialogTitle String title,
-                                    @NotNull @Nls @NlsContexts.Button String yesText,
-                                    @NotNull @Nls @NlsContexts.Button String noText,
+                                    @NotNull @Nls @NlsUI.Button String yesText,
+                                    @NotNull @Nls @NlsUI.Button String noText,
                                     @Nullable Icon icon,
                                     @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -582,8 +581,8 @@ public class Messages {
   @YesNoResult
   public static int showYesNoDialog(@Nls @DialogMessage String message,
                                     @NotNull @Nls @DialogTitle String title,
-                                    @Nls @NotNull @NlsContexts.Button String yesText,
-                                    @Nls @NotNull @NlsContexts.Button String noText,
+                                    @Nls @NotNull @NlsUI.Button String yesText,
+                                    @Nls @NotNull @NlsUI.Button String noText,
                                     @Nullable Icon icon,
                                     @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -614,8 +613,8 @@ public class Messages {
   @YesNoResult
   public static int showYesNoDialog(@Nls @DialogMessage String message,
                                     @Nls @DialogTitle String title,
-                                    @Nls @NlsContexts.Button String yesText,
-                                    @Nls @NlsContexts.Button String noText,
+                                    @Nls @NlsUI.Button String yesText,
+                                    @Nls @NlsUI.Button String noText,
                                     @Nullable Icon icon) {
     return showYesNoDialog(message, title, yesText, noText, icon, null);
   }
@@ -657,8 +656,8 @@ public class Messages {
   public static int showOkCancelDialog(Project project,
                                        @Nls @DialogMessage String message,
                                        @NotNull @Nls @DialogTitle String title,
-                                       @NotNull @Nls @NlsContexts.Button String okText,
-                                       @NotNull @Nls @NlsContexts.Button String cancelText,
+                                       @NotNull @Nls @NlsUI.Button String okText,
+                                       @NotNull @Nls @NlsUI.Button String cancelText,
                                        Icon icon,
                                        DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -683,8 +682,8 @@ public class Messages {
   public static int showOkCancelDialog(Project project,
                                        @Nls @DialogMessage String message,
                                        @NotNull @Nls @DialogTitle String title,
-                                       @NotNull @Nls @NlsContexts.Button String okText,
-                                       @NotNull @Nls @NlsContexts.Button String cancelText,
+                                       @NotNull @Nls @NlsUI.Button String okText,
+                                       @NotNull @Nls @NlsUI.Button String cancelText,
                                        Icon icon) {
     return showOkCancelDialog(project, message, title, okText, cancelText, icon, null);
   }
@@ -709,8 +708,8 @@ public class Messages {
   public static int showOkCancelDialog(@NotNull Component parent,
                                        @Nls @DialogMessage String message,
                                        @NotNull @Nls @DialogTitle String title,
-                                       @NotNull @Nls @NlsContexts.Button String okText,
-                                       @NotNull @Nls @NlsContexts.Button String cancelText,
+                                       @NotNull @Nls @NlsUI.Button String okText,
+                                       @NotNull @Nls @NlsUI.Button String cancelText,
                                        Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -762,8 +761,8 @@ public class Messages {
   @OkCancelResult
   public static int showOkCancelDialog(@Nls @DialogMessage String message,
                                        @Nls @DialogTitle String title,
-                                       @Nls @NlsContexts.Button String okText,
-                                       @Nls @NlsContexts.Button String cancelText,
+                                       @Nls @NlsUI.Button String okText,
+                                       @Nls @NlsUI.Button String cancelText,
                                        Icon icon) {
     return showOkCancelDialog(message, title, okText, cancelText, icon, null);
   }
@@ -778,8 +777,8 @@ public class Messages {
   @OkCancelResult
   public static int showOkCancelDialog(@Nls @DialogMessage String message,
                                        @NotNull @Nls @DialogTitle String title,
-                                       @NotNull @Nls @NlsContexts.Button String okText,
-                                       @NotNull @Nls @NlsContexts.Button String cancelText,
+                                       @NotNull @Nls @NlsUI.Button String okText,
+                                       @NotNull @Nls @NlsUI.Button String cancelText,
                                        Icon icon,
                                        @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -798,7 +797,7 @@ public class Messages {
 
   public static int showCheckboxOkCancelDialog(@Nls @DialogMessage String message,
                                                @Nls @DialogTitle String title,
-                                               @Nls @NlsContexts.Checkbox String checkboxText,
+                                               @Nls @NlsUI.Checkbox String checkboxText,
                                                final boolean checked,
                                                final int defaultOptionIndex,
                                                final int focusedOptionIndex,
@@ -810,8 +809,8 @@ public class Messages {
 
   public static int showCheckboxMessageDialog(@Nls @DialogMessage String message,
                                               @Nls @DialogTitle String title,
-                                              @Nls String @NotNull @NlsContexts.Button [] options,
-                                              @Nls @NlsContexts.Checkbox String checkboxText,
+                                              String @NotNull @Nls @NlsUI.Button [] options,
+                                              @Nls @NlsUI.Checkbox String checkboxText,
                                               final boolean checked,
                                               final int defaultOptionIndex,
                                               final int focusedOptionIndex,
@@ -825,7 +824,7 @@ public class Messages {
 
   public static int showTwoStepConfirmationDialog(@Nls @DialogMessage String message,
                                                   @Nls @DialogTitle String title,
-                                                  @Nls @NlsContexts.Checkbox String checkboxText,
+                                                  @Nls @NlsUI.Checkbox String checkboxText,
                                                   Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{getOkButton()}, checkboxText, true, -1, -1, icon, null);
   }
@@ -949,9 +948,9 @@ public class Messages {
   public static int showYesNoCancelDialog(Project project,
                                           @Nls @DialogMessage String message,
                                           @NotNull @Nls @DialogTitle String title,
-                                          @NotNull @Nls @NlsContexts.Button String yes,
-                                          @NotNull @Nls @NlsContexts.Button String no,
-                                          @NotNull @Nls @NlsContexts.Button String cancel,
+                                          @NotNull @Nls @NlsUI.Button String yes,
+                                          @NotNull @Nls @NlsUI.Button String no,
+                                          @NotNull @Nls @NlsUI.Button String cancel,
                                           @Nullable Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -986,9 +985,9 @@ public class Messages {
   public static int showYesNoCancelDialog(@NotNull Component parent,
                                           @Nls @DialogMessage String message,
                                           @NotNull @Nls @DialogTitle String title,
-                                          @NotNull @Nls @NlsContexts.Button String yes,
-                                          @NotNull @Nls @NlsContexts.Button String no,
-                                          @NotNull @Nls @NlsContexts.Button String cancel,
+                                          @NotNull @Nls @NlsUI.Button String yes,
+                                          @NotNull @Nls @NlsUI.Button String no,
+                                          @NotNull @Nls @NlsUI.Button String cancel,
                                           Icon icon) {
     try {
       if (canShowMacSheetPanel()) {
@@ -1027,9 +1026,9 @@ public class Messages {
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@Nls @DialogMessage String message,
                                           @NotNull @Nls @DialogTitle String title,
-                                          @NotNull @Nls @NlsContexts.Button String yes,
-                                          @NotNull @Nls @NlsContexts.Button String no,
-                                          @NotNull @Nls @NlsContexts.Button String cancel,
+                                          @NotNull @Nls @NlsUI.Button String yes,
+                                          @NotNull @Nls @NlsUI.Button String no,
+                                          @NotNull @Nls @NlsUI.Button String cancel,
                                           Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     try {
@@ -1056,9 +1055,9 @@ public class Messages {
   @YesNoCancelResult
   public static int showYesNoCancelDialog(@Nls @DialogMessage String message,
                                           @Nls @DialogTitle String title,
-                                          @Nls @NlsContexts.Button String yes,
-                                          @Nls @NlsContexts.Button String no,
-                                          @Nls @NlsContexts.Button String cancel,
+                                          @Nls @NlsUI.Button String yes,
+                                          @Nls @NlsUI.Button String no,
+                                          @Nls @NlsUI.Button String cancel,
                                           Icon icon) {
     return showYesNoCancelDialog(message, title, yes, no, cancel, icon, null);
   }
@@ -1215,7 +1214,7 @@ public class Messages {
   @NotNull
   public static Pair<String, Boolean> showInputDialogWithCheckBox(@Nls @DialogMessage String message,
                                                                   @Nls @DialogTitle String title,
-                                                                  @Nls @NlsContexts.Checkbox String checkboxText,
+                                                                  @Nls @NlsUI.Checkbox String checkboxText,
                                                                   boolean checked,
                                                                   boolean checkboxEnabled,
                                                                   @Nullable Icon icon,
@@ -1367,7 +1366,7 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable @Nls @InputDialogInitialValue String initialValue,
                        @Nullable InputValidator validator,
-                       @Nls String @NotNull @NlsContexts.Button [] options,
+                       String @NotNull @Nls @NlsUI.Button [] options,
                        int defaultOption,
                        @Nullable @Nls @DialogComment String comment) {
       super(project, true);
@@ -1384,7 +1383,7 @@ public class Messages {
                        @Nullable Icon icon,
                        @Nullable @Nls @InputDialogInitialValue String initialValue,
                        @Nullable InputValidator validator,
-                       @Nls String @NotNull @NlsContexts.Button [] options,
+                       String @NotNull @Nls @NlsUI.Button [] options,
                        int defaultOption) {
       this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
     }
@@ -1553,7 +1552,7 @@ public class Messages {
                                 @Nullable Icon icon,
                                 @Nullable @Nls @InputDialogInitialValue String initialValue,
                                 @Nullable InputValidator validator,
-                                @Nls String @NotNull @NlsContexts.Button [] options,
+                                String @NotNull @Nls @NlsUI.Button [] options,
                                 int defaultOption) {
       super(project, message, title, icon, initialValue, validator, options, defaultOption);
     }

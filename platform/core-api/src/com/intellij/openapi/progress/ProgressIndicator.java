@@ -20,6 +20,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.NlsProgress.ProgressIndicatorTextAbove;
+import static com.intellij.openapi.util.NlsProgress.ProgressIndicatorTextBelow;
+
 /**
  * An object accompanying a computation, usually in a background thread. It allows to display process status to the user
  * ({@link #setText}, {@link #setText2}, {@link #setFraction}, {@link #setIndeterminate}) and
@@ -95,7 +98,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText2(String)
    */
-  void setText(@Nls(capitalization = Nls.Capitalization.Sentence) String text);
+  void setText(@Nls @ProgressIndicatorTextAbove String text);
 
   /**
    * @return text above the progress bar, set by {@link #setText(String)}
@@ -107,7 +110,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText(String)
    */
-  void setText2(@Nls(capitalization = Nls.Capitalization.Sentence) String text);
+  void setText2(@Nls @ProgressIndicatorTextBelow String text);
 
   /**
    * @return text under the progress bar, set by {@link #setText2(String)}
