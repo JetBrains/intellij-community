@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -188,6 +189,10 @@ public abstract class FileBasedIndex {
           if (!Registry.is("indexer.follows.symlinks")) {
             return false;
           }
+          Boolean indexSymlink = file.getUserData(INDEX_SYMLINK);
+          if (indexSymlink != null) {
+            return indexSymlink;
+          }
           VirtualFile canonicalFile = file.getCanonicalFile();
           if (canonicalFile != null) {
             return acceptFilter.accept(canonicalFile);
@@ -203,6 +208,19 @@ public abstract class FileBasedIndex {
 
   public void invalidateCaches() {
     throw new IncorrectOperationException();
+  }
+
+  /**
+   * Sets whether the symlink and its descendant files should be indexed or not.
+   * @param symlink file/folder that is a symlink, i.e. <pre>symlink.is(VFileProperty.SYMLINK) == true</pre>
+   * @param indexingStatus How the symlink and its descendant files are indexed:<br>
+   *                       {@code Boolean.TRUE} - indexed;
+   *                       {@code Boolean.FALSE} - not indexed;
+   *                       {@code null} - (default) indexed only if the symlink target file is indexed.
+   */
+  @ApiStatus.Internal
+  public void setSymlinkIndexingStatus(@NotNull VirtualFile symlink, @Nullable Boolean indexingStatus) {
+    symlink.putUserData(FileBasedIndex.INDEX_SYMLINK, indexingStatus);
   }
 
   @FunctionalInterface
@@ -233,6 +251,8 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+
+  private static final Key<Boolean> INDEX_SYMLINK = Key.create("index symlink");
 
   @ApiStatus.Internal
   public static boolean isIndexAccessDuringDumbModeEnabled() {
