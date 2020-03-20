@@ -778,17 +778,24 @@ public class HintManagerImpl extends HintManager {
                                @PositionFlags short constraint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideQuestionHint();
-    TextAttributes attributes = new TextAttributes();
-    attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
-    attributes.setEffectType(EffectType.LINE_UNDERSCORE);
-    final RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter;
+    if (offset1 != offset2) {
+      TextAttributes attributes = new TextAttributes();
+      attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
+      attributes.setEffectType(EffectType.LINE_UNDERSCORE);
+      highlighter = editor.getMarkupModel()
+        .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+    } else {
+      highlighter = null;
+    }
 
     hint.addHintListener(new HintListener() {
       @Override
       public void hintHidden(@NotNull EventObject event) {
         hint.removeHintListener(this);
-        highlighter.dispose();
+        if (highlighter != null) {
+          highlighter.dispose();
+        }
 
         if (myQuestionHint == hint) {
           myQuestionAction = null;
