@@ -117,7 +117,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   @NotNull private final EditorImpl myEditor;
   // null renderer means we should not show traffic light icon
   @Nullable private ErrorStripeRenderer myErrorStripeRenderer;
-  private final MergingUpdateQueue myErrorUpdates;
+  private final MergingUpdateQueue myStatusUpdates;
   private final List<ErrorStripeListener> myErrorMarkerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean dimensionsAreValid;
@@ -289,7 +289,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
         updateTrafficLightVisibility();
       }
     });
-    myErrorUpdates = new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
+    myStatusUpdates = new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
   }
 
   @Override
@@ -309,6 +309,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void updateTrafficLightVisibility() {
+    myStatusUpdates.queue(Update.create("visibility", this::doUpdateTrafficLightVisibility));
+  }
+
+  private void doUpdateTrafficLightVisibility() {
     if (trafficLightVisible) {
       if (showToolbar) {
         VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
@@ -392,7 +396,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer == null) return;
     
-    myErrorUpdates.queue(Update.create(this, () -> {
+    myStatusUpdates.queue(Update.create("icon", () -> {
       if (myErrorStripeRenderer != null) {
         AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus(myEditor);
         if (!AnalyzerStatus.equals(newStatus, analyzerStatus)) {
