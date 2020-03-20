@@ -4,6 +4,8 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.nls.NlsContexts.FileChooserDescription;
+import com.intellij.util.nls.NlsContexts.FileChooserTitle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +29,8 @@ public class FileSaverDescriptor extends FileChooserDescriptor implements Clonea
    * @param description description
    * @param extensions accepted file extensions: "txt", "jpg", etc. Accepts all if empty
    */
-  public FileSaverDescriptor(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
-                             @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description, String... extensions) {
+  public FileSaverDescriptor(@Nls @FileChooserTitle @NotNull String title,
+                             @Nls @FileChooserDescription @NotNull String description, String... extensions) {
     super(true, true, true, true, false, false);
     setTitle(title);
     setDescription(description);

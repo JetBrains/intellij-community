@@ -7,6 +7,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsProgress;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -47,10 +49,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   public BackgroundableProcessIndicator(Project project,
-                                        @Nls(capitalization = Nls.Capitalization.Title) final String progressTitle,
+                                        @Nls @NlsProgress.ProgressTitle final String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nullable @Nls(capitalization = Nls.Capitalization.Title) final String cancelButtonText,
-                                        @Nls(capitalization = Nls.Capitalization.Sentence) final String backgroundStopTooltip,
+                                        @Nullable @Nls @NlsUI.Button final String cancelButtonText,
+                                        @Nls @NlsUI.ButtonTooltip final String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, new TaskInfo() {
 
