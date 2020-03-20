@@ -8,9 +8,9 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 public class NlsAnalysis {
-  @NlsContext(prefix = "problem.descriptor")
+  @NlsContext(prefix = "inspection.message")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ProblemTemplateDescription {
+  public @interface InspectionMessage {
   }
 }

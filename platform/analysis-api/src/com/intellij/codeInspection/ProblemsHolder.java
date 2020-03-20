@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.text.NlsAnalysis;
+import com.intellij.util.text.NlsAnalysis.InspectionMessage;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,13 +38,13 @@ public class ProblemsHolder {
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
-                              @NotNull @Nls @NlsAnalysis.ProblemTemplateDescription String descriptionTemplate,
+                              @NotNull @Nls @InspectionMessage String descriptionTemplate,
                               LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
-                              @NotNull @Nls @NlsAnalysis.ProblemTemplateDescription String descriptionTemplate,
+                              @NotNull @Nls @InspectionMessage String descriptionTemplate,
                               @NotNull ProblemHighlightType highlightType,
                               LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
@@ -90,7 +90,7 @@ public class ProblemsHolder {
     registerProblem(newProblem);
   }
 
-  public void registerProblem(@NotNull PsiReference reference, @Nls @NlsAnalysis.ProblemTemplateDescription String descriptionTemplate, ProblemHighlightType highlightType) {
+  public void registerProblem(@NotNull PsiReference reference, @Nls @InspectionMessage String descriptionTemplate, ProblemHighlightType highlightType) {
     LocalQuickFix[] fixes = null;
     if (reference instanceof LocalQuickFixProvider) {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
@@ -100,7 +100,7 @@ public class ProblemsHolder {
 
   public void registerProblemForReference(@NotNull PsiReference reference,
                                           @NotNull ProblemHighlightType highlightType,
-                                          @NotNull @Nls @NlsAnalysis.ProblemTemplateDescription String descriptionTemplate,
+                                          @NotNull @Nls @InspectionMessage String descriptionTemplate,
                                           LocalQuickFix @Nullable ... fixes) {
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(),
                                                                      descriptionTemplate, highlightType, myOnTheFly, fixes);
@@ -137,7 +137,7 @@ public class ProblemsHolder {
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @Nullable TextRange rangeInElement,
-                              @NotNull @Nls @NlsAnalysis.ProblemTemplateDescription String message,
+                              @NotNull @Nls @InspectionMessage String message,
                               LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
   }
@@ -152,7 +152,7 @@ public class ProblemsHolder {
    * @param fixes (Optional) fixes to appear for this highlighter.
    */
   public void registerProblem(@NotNull PsiElement psiElement,
-                              @NotNull @Nls @NlsAnalysis.ProblemTemplateDescription String message,
+                              @NotNull @Nls @InspectionMessage String message,
                               @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
                               LocalQuickFix @Nullable ... fixes) {
