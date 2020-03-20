@@ -247,6 +247,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
+  @TestOnly
+  public void runInDumbMode(@NotNull Runnable runnable) {
+    setDumb(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setDumb(false);
+    }
+  }
+
   @Override
   public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> unsafeRunWhenSmart(runnable));
