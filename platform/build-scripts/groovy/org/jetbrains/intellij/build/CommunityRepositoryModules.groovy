@@ -355,9 +355,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
-      withResourceFromModule("intellij.android.core", "lib/asm-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android.core", "lib/asm-analysis-5.0.3.jar", "lib")
-      withResourceFromModule("intellij.android.core", "lib/asm-tree-5.0.3.jar", "lib")
+      withProjectLibrary("asm-tools")
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/javawriter-2.2.1.jar", "lib")
 
