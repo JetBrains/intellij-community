@@ -198,33 +198,33 @@ public class RegExpParsingTest extends ParsingTestCase {
 
   public void testEscapes1() throws IOException { doCodeTest("\\q"); }
   public void testEscapes2() throws IOException { doCodeTest("\\#"); }
-  //public void testEscapes3() throws IOException { doCodeTest("a\\"); }
-  //public void testEscapes4() throws IOException { doCodeTest("a\\(b"); }
-  //public void testEscapes5() throws IOException { doCodeTest("a\\(*b"); }
-  //public void testEscapes6() throws IOException { doCodeTest("a\\\\b"); }
-  //public void testEscapes7() throws IOException { doCodeTest("\\u004a"); }
-  //public void testEscapes8() throws IOException { doCodeTest("\\0123"); }
-  //public void testEscapes9() throws IOException { doCodeTest("\\0"); }
-  //public void testEscapes10() throws IOException { doCodeTest("\\x4a"); }
-  //public void testEscapes11() throws IOException { doCodeTest("\\x{0}"); }
-  //public void testEscapes12() throws IOException { doCodeTest("\\x{2011F}"); }
-  //public void testEscapes13() throws IOException { doCodeTest("[\\x4a-\\x4b]"); }
-  //public void testEscapes14() throws IOException { doCodeTest("[a-a]"); }
-  //public void testEscapes15() throws IOException { doCodeTest("[\\x4a-\\x3f]"); }
-  //public void testEscapes16() throws IOException { doCodeTest("[\\udbff\\udfff-\\ud800\\udc00]"); }
-  //public void testEscapes17() throws IOException { doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
-  //public void testEscapes18() throws IOException { doCodeTest("[z-a]"); }
-  //public void testEscapes19() throws IOException { doCodeTest("[a-z]"); }
-  //public void testEscapes20() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\Eb"); }
-  //public void testEscapes21() throws IOException { doCodeTest("(a\\Qabc?*+.))]][]\\Eb)"); }
-  //public void testEscapes22() throws IOException { doCodeTest("[\\Qabc?*+.))]][]\\E]"); }
-  //public void testEscapes23() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\E)"); }
-  //public void testEscapes24() throws IOException { doCodeTest("\\Q\\j\\E"); }
-  //public void testEscapes25() throws IOException { doCodeTest("\\c0"); }
-  //public void testEscapes26() throws IOException { doCodeTest("[\\]]"); }
-  //public void testEscapes27() throws IOException { doCodeTest("[^\\]]"); }
-  //public void testEscapes28() throws IOException { doCodeTest("[a\\]]"); }
-  //public void testEscapes29() throws IOException { doCodeTest("[^a\\]]"); }
+  public void testEscapes3() throws IOException { doCodeTest("a\\"); }
+  public void testEscapes4() throws IOException { doCodeTest("a\\(b"); }
+  public void testEscapes5() throws IOException { doCodeTest("a\\(*b"); }
+  public void testEscapes6() throws IOException { doCodeTest("a\\\\b"); }
+  public void testEscapes7() throws IOException { doCodeTest("\\u004a"); }
+  public void testEscapes8() throws IOException { doCodeTest("\\0123"); }
+  public void testEscapes9() throws IOException { doCodeTest("\\0"); }
+  public void testEscapes10() throws IOException { doCodeTest("\\x4a"); }
+  public void testEscapes11() throws IOException { doCodeTest("\\x{0}"); }
+  public void testEscapes12() throws IOException { doCodeTest("\\x{2011F}"); }
+  public void testEscapes13() throws IOException { doCodeTest("[\\x4a-\\x4b]"); }
+  public void testEscapes14() throws IOException { doCodeTest("[a-a]"); }
+  public void testEscapes15() throws IOException { doCodeTest("[\\x4a-\\x3f]"); }
+  public void testEscapes16() throws IOException { doCodeTest("[\\udbff\\udfff-\\ud800\\udc00]"); }
+  public void testEscapes17() throws IOException { doCodeTest("[\\ud800\\udc00-\\udbff\\udfff]"); }
+  public void testEscapes18() throws IOException { doCodeTest("[z-a]"); }
+  public void testEscapes19() throws IOException { doCodeTest("[a-z]"); }
+  public void testEscapes20() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\Eb"); }
+  public void testEscapes21() throws IOException { doCodeTest("(a\\Qabc?*+.))]][]\\Eb)"); }
+  public void testEscapes22() throws IOException { doCodeTest("[\\Qabc?*+.))]][]\\E]"); }
+  public void testEscapes23() throws IOException { doCodeTest("a\\Qabc?*+.))]][]\\E)"); }
+  public void testEscapes24() throws IOException { doCodeTest("\\Q\\j\\E"); }
+  public void testEscapes25() throws IOException { doCodeTest("\\c0"); }
+  public void testEscapes26() throws IOException { doCodeTest("[\\]]"); }
+  public void testEscapes27() throws IOException { doCodeTest("[^\\]]"); }
+  public void testEscapes28() throws IOException { doCodeTest("[a\\]]"); }
+  public void testEscapes29() throws IOException { doCodeTest("[^a\\]]"); }
 
   public void testAnchors1() throws IOException { doCodeTest("^*"); }
   public void testAnchors2() throws IOException { doCodeTest("$*"); }
@@ -271,82 +271,82 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testComplex6() throws IOException { doCodeTest("^(?:([hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*$"); }
   public void testComplex7() throws IOException { doCodeTest("^(?:(?:[hH][tT]{2}[pP]|[fF][tT][pP]):\\/\\/)?[a-zA-Z0-9\\-]+(?:\\.[a-zA-Z0-9\\-]+)*$"); }
 
-  //public void testIncomplete1() throws IOException { doCodeTest("abc\\"); }
-  //public void testIncomplete2() throws IOException { doCodeTest("abc[\\"); }
-  //public void testIncomplete3() throws IOException { doCodeTest("abc\\x"); }
-  //public void testIncomplete4() throws IOException { doCodeTest("abc\\x1"); }
-  //public void testIncomplete5() throws IOException { doCodeTest("abc\\x{"); }
-  //public void testIncomplete6() throws IOException { doCodeTest("abc\\x{}"); }
-  //public void testIncomplete7() throws IOException { doCodeTest("abc\\x{0"); }
-  //public void testIncomplete8() throws IOException { doCodeTest("abc\\u"); }
-  //public void testIncomplete9() throws IOException { doCodeTest("abc\\u22"); }
-  //public void testIncomplete10() throws IOException { doCodeTest("\\Qabc"); }
-  //public void testIncomplete11() throws IOException { doCodeTest("\\Q"); }
-  //public void testIncomplete12() throws IOException { doCodeTest("\\E"); }
-  //public void testIncomplete13() throws IOException { doCodeTest("a|*"); }
-  //
-  //public void testRegressions1() throws IOException { doCodeTest("("); }
-  //public void testRegressions2() throws IOException { doCodeTest("[^^]"); }
-  //public void testRegressions3() throws IOException { doCodeTest("a)b"); }
-  //public void testRegressions4() throws IOException { doCodeTest("\\s*@return(?:s)?\\s*(?:(?:\\{|:)?\\s*(?([^\\s\\}]+)\\s*\\}?\\s*)?(.*)"); }
+  public void testIncomplete1() throws IOException { doCodeTest("abc\\"); }
+  public void testIncomplete2() throws IOException { doCodeTest("abc[\\"); }
+  public void testIncomplete3() throws IOException { doCodeTest("abc\\x"); }
+  public void testIncomplete4() throws IOException { doCodeTest("abc\\x1"); }
+  public void testIncomplete5() throws IOException { doCodeTest("abc\\x{"); }
+  public void testIncomplete6() throws IOException { doCodeTest("abc\\x{}"); }
+  public void testIncomplete7() throws IOException { doCodeTest("abc\\x{0"); }
+  public void testIncomplete8() throws IOException { doCodeTest("abc\\u"); }
+  public void testIncomplete9() throws IOException { doCodeTest("abc\\u22"); }
+  public void testIncomplete10() throws IOException { doCodeTest("\\Qabc"); }
+  public void testIncomplete11() throws IOException { doCodeTest("\\Q"); }
+  public void testIncomplete12() throws IOException { doCodeTest("\\E"); }
+  public void testIncomplete13() throws IOException { doCodeTest("a|*"); }
 
-  //public void testOptions1() throws IOException { doCodeTest("(?iZm)abc"); }
-  //public void testOptions2() throws IOException { doCodeTest("(?idmsuxU)nice"); }
-  //public void testOptions3() throws IOException { doCodeTest("(?idm-suxU)one(?suxU-idm)two"); }
-  //public void testOptions4() throws IOException { doCodeTest("(?i|abc"); }
-  //
-  //public void testTests1() throws IOException { doCodeTest("abc)"); }
-  //public void testTests2() throws IOException { doCodeTest("(abc"); }
-  //public void testTests3() throws IOException { doCodeTest("a+b+c"); }
-  //public void testTests4() throws IOException { doCodeTest("a**"); }
-  //public void testTests5() throws IOException { doCodeTest("a++"); }
-  //public void testTests6() throws IOException { doCodeTest("ab*"); }
-  //public void testTests7() throws IOException { doCodeTest("abcd*efg"); }
-  //public void testTests8() throws IOException { doCodeTest("a|b|c|d|e"); }
-  //public void testTests9() throws IOException { doCodeTest("(bc+d$|ef*g.|h?i(j|k))"); }
-  //public void testTests10() throws IOException { doCodeTest("a*(b*c*)"); }
-  //public void testTests11() throws IOException { doCodeTest("a?b+c*"); }
-  //public void testTests12() throws IOException { doCodeTest("i am a green (giant|man|martian)"); }
-  //public void testTests13() throws IOException { doCodeTest("(wee|week)(knights|knight)"); }
-  //public void testTests14() throws IOException { doCodeTest("(a.*b)(a.*b)"); }
-  //public void testTests15() throws IOException { doCodeTest("(\\s*\\w+)?"); }
-  //public void testTests16() throws IOException { doCodeTest("(?:a)"); }
-  //public void testTests17() throws IOException { doCodeTest("(?:\\w)"); }
-  //public void testTests18() throws IOException { doCodeTest("(?:\\w\\s\\w)+"); }
-  //public void testTests19() throws IOException { doCodeTest("(a\\w)(?:,(a\\w))+"); }
-  //public void testTests20() throws IOException { doCodeTest("abc.*?x+yz"); }
-  //public void testTests21() throws IOException { doCodeTest("abc.+?x+yz"); }
-  //public void testTests22() throws IOException { doCodeTest("a.+?(c|d)"); }
-  //public void testTests23() throws IOException { doCodeTest("a.+(c|d)"); }
-  //public void testTests24() throws IOException { doCodeTest("a+?b+?c+?"); }
-  //
-  //public void testRealLife1() throws IOException { doCodeTest("x:found=\"(true|false)\""); }
-  //public void testRealLife2() throws IOException { doCodeTest("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)"); }
-  //public void testRealLife3() throws IOException { doCodeTest("((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)"); }
-  //public void testRealLife4() throws IOException { doCodeTest("^[\\w\\+\\.\\-]{2,}:"); }
-  //public void testRealLife5() throws IOException { doCodeTest("#(.*)$"); }
-  //public void testRealLife6() throws IOException { doCodeTest("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
-  //public void testRealLife7() throws IOException { doCodeTest("(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
-  //public void testRealLife8() throws IOException { doCodeTest("usd [+-]?[0-9]+.[0-9][0-9]"); }
-  //public void testRealLife9() throws IOException { doCodeTest("\\b(\\w+)(\\s+\\1)+\\b"); }
-  //public void testRealLife10() throws IOException { doCodeTest(".*?(<(error|warning|info)(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)"); }
-  //
-  //public void testBug1() throws IOException { doCodeTest("[{][\\w\\.]*[}]"); }
-  //public void testBug2() throws IOException { doCodeTest("[a-z0-9!\\#$%&'*+/=?^_`{|}~-]+"); }
-  //public void testBug3() throws IOException { doCodeTest("[\\{]"); }
-  //public void testBug4() throws IOException { doCodeTest("{"); }
-  //public void testBug5() throws IOException { doCodeTest("\\{"); }
-  //public void testBug6() throws IOException { doCodeTest("(<=\\s)-{3,}(?>\\s)"); }
-  //public void testBug7() throws IOException { doCodeTest("(?x)a\\ b\\ c"); }
-  //public void testBug8() throws IOException { doCodeTest("a\\ b"); }
-  //public void testBug9() throws IOException { doCodeTest("(^|\\.)\\*(?=(\\.|$))"); }
-  //public void testBug10() throws IOException { doCodeTest("\\h \\H \\v \\V"); }
-  //
-  //public void testParse1() throws IOException { doCodeTest("123 | 456"); }
-  //public void testParse2() throws IOException { doCodeTest("1**"); }
-  //public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
-  //
-  //public void testCategoryShorthand1() throws IOException { doCodeTest("\\pL"); }
+  public void testRegressions1() throws IOException { doCodeTest("("); }
+  public void testRegressions2() throws IOException { doCodeTest("[^^]"); }
+  public void testRegressions3() throws IOException { doCodeTest("a)b"); }
+  public void testRegressions4() throws IOException { doCodeTest("\\s*@return(?:s)?\\s*(?:(?:\\{|:)?\\s*(?([^\\s\\}]+)\\s*\\}?\\s*)?(.*)"); }
+
+  public void testOptions1() throws IOException { doCodeTest("(?iZm)abc"); }
+  public void testOptions2() throws IOException { doCodeTest("(?idmsuxU)nice"); }
+  public void testOptions3() throws IOException { doCodeTest("(?idm-suxU)one(?suxU-idm)two"); }
+  public void testOptions4() throws IOException { doCodeTest("(?i|abc"); }
+
+  public void testTests1() throws IOException { doCodeTest("abc)"); }
+  public void testTests2() throws IOException { doCodeTest("(abc"); }
+  public void testTests3() throws IOException { doCodeTest("a+b+c"); }
+  public void testTests4() throws IOException { doCodeTest("a**"); }
+  public void testTests5() throws IOException { doCodeTest("a++"); }
+  public void testTests6() throws IOException { doCodeTest("ab*"); }
+  public void testTests7() throws IOException { doCodeTest("abcd*efg"); }
+  public void testTests8() throws IOException { doCodeTest("a|b|c|d|e"); }
+  public void testTests9() throws IOException { doCodeTest("(bc+d$|ef*g.|h?i(j|k))"); }
+  public void testTests10() throws IOException { doCodeTest("a*(b*c*)"); }
+  public void testTests11() throws IOException { doCodeTest("a?b+c*"); }
+  public void testTests12() throws IOException { doCodeTest("i am a green (giant|man|martian)"); }
+  public void testTests13() throws IOException { doCodeTest("(wee|week)(knights|knight)"); }
+  public void testTests14() throws IOException { doCodeTest("(a.*b)(a.*b)"); }
+  public void testTests15() throws IOException { doCodeTest("(\\s*\\w+)?"); }
+  public void testTests16() throws IOException { doCodeTest("(?:a)"); }
+  public void testTests17() throws IOException { doCodeTest("(?:\\w)"); }
+  public void testTests18() throws IOException { doCodeTest("(?:\\w\\s\\w)+"); }
+  public void testTests19() throws IOException { doCodeTest("(a\\w)(?:,(a\\w))+"); }
+  public void testTests20() throws IOException { doCodeTest("abc.*?x+yz"); }
+  public void testTests21() throws IOException { doCodeTest("abc.+?x+yz"); }
+  public void testTests22() throws IOException { doCodeTest("a.+?(c|d)"); }
+  public void testTests23() throws IOException { doCodeTest("a.+(c|d)"); }
+  public void testTests24() throws IOException { doCodeTest("a+?b+?c+?"); }
+
+  public void testRealLife1() throws IOException { doCodeTest("x:found=\"(true|false)\""); }
+  public void testRealLife2() throws IOException { doCodeTest("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)"); }
+  public void testRealLife3() throws IOException { doCodeTest("((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)"); }
+  public void testRealLife4() throws IOException { doCodeTest("^[\\w\\+\\.\\-]{2,}:"); }
+  public void testRealLife5() throws IOException { doCodeTest("#(.*)$"); }
+  public void testRealLife6() throws IOException { doCodeTest("^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
+  public void testRealLife7() throws IOException { doCodeTest("(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)"); }
+  public void testRealLife8() throws IOException { doCodeTest("usd [+-]?[0-9]+.[0-9][0-9]"); }
+  public void testRealLife9() throws IOException { doCodeTest("\\b(\\w+)(\\s+\\1)+\\b"); }
+  public void testRealLife10() throws IOException { doCodeTest(".*?(<(error|warning|info)(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)"); }
+
+  public void testBug1() throws IOException { doCodeTest("[{][\\w\\.]*[}]"); }
+  public void testBug2() throws IOException { doCodeTest("[a-z0-9!\\#$%&'*+/=?^_`{|}~-]+"); }
+  public void testBug3() throws IOException { doCodeTest("[\\{]"); }
+  public void testBug4() throws IOException { doCodeTest("{"); }
+  public void testBug5() throws IOException { doCodeTest("\\{"); }
+  public void testBug6() throws IOException { doCodeTest("(<=\\s)-{3,}(?>\\s)"); }
+  public void testBug7() throws IOException { doCodeTest("(?x)a\\ b\\ c"); }
+  public void testBug8() throws IOException { doCodeTest("a\\ b"); }
+  public void testBug9() throws IOException { doCodeTest("(^|\\.)\\*(?=(\\.|$))"); }
+  public void testBug10() throws IOException { doCodeTest("\\h \\H \\v \\V"); }
+
+  public void testParse1() throws IOException { doCodeTest("123 | 456"); }
+  public void testParse2() throws IOException { doCodeTest("1**"); }
+  public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
+
+  public void testCategoryShorthand1() throws IOException { doCodeTest("\\pL"); }
 
   public void testCapabilitiesProvider() throws IOException {
     RegExpCapabilitiesProvider provider = (host, def) -> EnumSet.of(POSIX_BRACKET_EXPRESSIONS);
