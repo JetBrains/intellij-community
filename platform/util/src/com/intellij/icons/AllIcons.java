@@ -140,6 +140,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Rerun = load("/actions/rerun.svg");
     /** 16x16 */ public static final @NotNull Icon Restart = load("/actions/restart.svg");
     /** 16x16 */ public static final @NotNull Icon RestartDebugger = load("/actions/restartDebugger.svg");
+    /** 16x16 */ public static final @NotNull Icon RestartFrame = load("/actions/restartFrame.svg");
     /** 16x16 */ public static final @NotNull Icon Resume = load("/actions/resume.svg");
     /** 16x16 */ public static final @NotNull Icon Rollback = load("/actions/rollback.svg");
     /** 16x16 */ public static final @NotNull Icon Run_anything = load("/actions/run_anything.svg");
