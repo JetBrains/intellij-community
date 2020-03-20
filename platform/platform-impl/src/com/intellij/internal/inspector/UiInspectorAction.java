@@ -694,8 +694,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       TableColumnModel columnModel = table.getColumnModel();
       TableColumn propertyColumn = columnModel.getColumn(0);
-      propertyColumn.setMinWidth(JBUIScale.scale(200));
-      propertyColumn.setMaxWidth(JBUIScale.scale(200));
+      propertyColumn.setMinWidth(JBUIScale.scale(220));
+      propertyColumn.setMaxWidth(JBUIScale.scale(220));
       propertyColumn.setResizable(false);
       propertyColumn.setCellRenderer(new PropertyNameRenderer());
 
@@ -1231,6 +1231,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getForeground", "getBackground", "getFont",
       "getCellRenderer", "getCellEditor",
       "getMinimumSize", "getMaximumSize", "getPreferredSize",
+      "getPreferredScrollableViewportSize",
       "getText", "isEditable", "getIcon",
       "getVisibleRect", "getLayout",
       "getAlignmentX", "getAlignmentY",
