@@ -21,12 +21,14 @@ import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -58,8 +60,10 @@ import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
@@ -449,10 +453,12 @@ internal class GHPRComponentFactory(private val project: Project) {
         return childComponent.toolTipText
       }
     }.apply {
+      setExpandableItemsEnabled(false)
       emptyText.clear()
       selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
     }.also {
       ScrollingUtil.installActions(it)
+      ListUtil.installAutoSelectOnMouseMove(it)
       GithubUIUtil.Lists.installSelectionOnFocus(it)
       GithubUIUtil.Lists.installSelectionOnRightClick(it)
       DataManager.registerDataProvider(it) { dataId ->
@@ -466,8 +472,11 @@ internal class GHPRComponentFactory(private val project: Project) {
       ListSpeedSearch(it) { item -> item.title }
     }
 
+    val openButtonViewModel = GHPROpenButtonViewModel()
+    installOpenButtonListeners(list, openButtonViewModel)
+
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-    val renderer = GHPRListCellRenderer(avatarIconsProvider)
+    val renderer = GHPRListCellRenderer(avatarIconsProvider, openButtonViewModel)
     list.cellRenderer = renderer
     UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
@@ -479,6 +488,10 @@ internal class GHPRComponentFactory(private val project: Project) {
     val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).apply {
       errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
         dataContext.listLoader.reset()
+      }
+      scrollPane.verticalScrollBar.apply {
+        isOpaque = true
+        UIUtil.putClientProperty(this, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
       }
     }.also {
       listReloadAction.registerCustomShortcutSet(it, disposable)
@@ -497,6 +510,45 @@ internal class GHPRComponentFactory(private val project: Project) {
     })
 
     return loaderPanel
+  }
+
+  private fun installOpenButtonListeners(list: JBList<GHPullRequestShort>,
+                                         openButtonViewModel: GHPROpenButtonViewModel) {
+
+    list.addMouseMotionListener(object : MouseMotionAdapter() {
+      override fun mouseMoved(e: MouseEvent) {
+        val point = e.point
+        var index = list.locationToIndex(point)
+        val cellBounds = list.getCellBounds(index, index)
+        if (cellBounds == null || !cellBounds.contains(point)) index = -1
+
+        openButtonViewModel.hoveredRowIndex = index
+        openButtonViewModel.isButtonHovered = if (index == -1) false else isInsideButton(cellBounds, point)
+        list.repaint()
+      }
+    })
+
+    object : ClickListener() {
+      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
+        val point = event.point
+        val index = list.locationToIndex(point)
+        val cellBounds = list.getCellBounds(index, index)
+        if (cellBounds == null || !cellBounds.contains(point)) return false
+
+        if (isInsideButton(cellBounds, point)) {
+          val action = actionManager.getAction("Github.PullRequest.Show")
+          ActionUtil.invokeAction(action, list, ActionPlaces.UNKNOWN, event, null)
+          return true
+        }
+        return false
+      }
+    }.installOn(list)
+  }
+
+  private fun isInsideButton(cellBounds: Rectangle, point: Point): Boolean {
+    val iconSize = EmptyIcon.ICON_16.iconWidth
+    val rendererRelativeX = point.x - cellBounds.x
+    return (cellBounds.width - rendererRelativeX) <= iconSize
   }
 
   private fun createDetailsPanel(dataContext: GHPRDataContext,
