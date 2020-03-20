@@ -23,4 +23,6 @@ open class GHPullRequestShort(id: String,
 
   @JsonIgnore
   val labels = labels.nodes
+
+  override fun toString(): String = "#$number $title"
 }

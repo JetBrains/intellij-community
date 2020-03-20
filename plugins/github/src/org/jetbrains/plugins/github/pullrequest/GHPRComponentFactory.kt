@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -60,6 +59,7 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
 import java.awt.Rectangle
+import java.awt.event.MouseEvent
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
@@ -70,7 +70,6 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private val progressManager = ProgressManager.getInstance()
   private val actionManager = ActionManager.getInstance()
-  private val copyPasteManager = CopyPasteManager.getInstance()
   private val avatarLoader = CachingGithubUserAvatarLoader.getInstance()
   private val imageResizer = GithubImageResizer.getInstance()
 
@@ -442,12 +441,23 @@ internal class GHPRComponentFactory(private val project: Project) {
   private fun createListComponent(dataContext: GHPRDataContext,
                                   avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                   disposable: Disposable): JComponent {
-    val list = GHPRList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
+    val list = object : JBList<GHPullRequestShort>(dataContext.listModel) {
+
+      override fun getToolTipText(event: MouseEvent): String? {
+        val childComponent = ListUtil.getDeepestRendererChildComponentAt(this, event.point)
+        if (childComponent !is JComponent) return null
+        return childComponent.toolTipText
+      }
+    }.apply {
       emptyText.clear()
+      selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
     }.also {
       ScrollingUtil.installActions(it)
       GithubUIUtil.Lists.installSelectionOnFocus(it)
       GithubUIUtil.Lists.installSelectionOnRightClick(it)
+      DataManager.registerDataProvider(it) { dataId ->
+        if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
+      }
       PopupHandler.installSelectionListPopup(it,
                                              actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup,
                                              ActionPlaces.UNKNOWN, actionManager)
@@ -455,6 +465,11 @@ internal class GHPRComponentFactory(private val project: Project) {
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
       ListSpeedSearch(it) { item -> item.title }
     }
+
+    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
+    val renderer = GHPRListCellRenderer(avatarIconsProvider)
+    list.cellRenderer = renderer
+    UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
     val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
@@ -477,7 +492,6 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     Disposer.register(disposable, Disposable {
-      Disposer.dispose(list)
       Disposer.dispose(search)
       Disposer.dispose(loaderPanel)
     })
