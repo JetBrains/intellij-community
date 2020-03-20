@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.UtilBundle
@@ -25,10 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -78,6 +75,31 @@ object GithubUIUtil {
       registerKeyboardAction({ action() },
                              KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
                              JComponent.WHEN_FOCUSED)
+    }
+  }
+
+  object Lists {
+    fun installSelectionOnFocus(list: JList<*>): FocusListener {
+      val listener: FocusListener = object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent) {
+          if (list.isSelectionEmpty && list.model.size > 0) list.selectedIndex = 0
+        }
+      }
+      list.addFocusListener(listener)
+      return listener
+    }
+
+    fun installSelectionOnRightClick(list: JList<*>): MouseListener {
+      val listener: MouseListener = object : MouseAdapter() {
+        override fun mousePressed(e: MouseEvent) {
+          if (SwingUtilities.isRightMouseButton(e)) {
+            val row = list.locationToIndex(e.point)
+            if (row != -1) list.selectedIndex = row
+          }
+        }
+      }
+      list.addMouseListener(listener)
+      return listener
     }
   }
 

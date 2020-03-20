@@ -6,6 +6,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.NonEmptyActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
@@ -89,6 +90,11 @@ internal open class GHPRChangesBrowser(private val model: GHPRChangesModel,
 
   override fun createToolbarActions(): List<AnAction> {
     return super.createToolbarActions() + GHPRReviewSubmitAction()
+  }
+
+  override fun createPopupMenuActions(): List<AnAction> {
+    val refreshAction = ActionManager.getInstance().getAction("Github.PullRequest.Changes.Reload")
+    return super.createPopupMenuActions() + refreshAction
   }
 
   override fun getEmptyText() = myViewer.emptyText

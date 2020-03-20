@@ -60,8 +60,6 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
 import java.awt.Rectangle
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
@@ -264,6 +262,8 @@ internal class GHPRComponentFactory(private val project: Project) {
           errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) { dataProvider.reloadChanges() }
         }
       }
+    }.also {
+      actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
     }
 
 
@@ -295,9 +295,6 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val commitsModel = changesLoadingModel.commitsModel
     val commitsListModel = CollectionListModel(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
-    commitsModel.addStateChangesListener {
-      commitsListModel.replaceAll(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
-    }
 
     val commitsList = JBList(commitsListModel).apply {
       selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -306,9 +303,18 @@ internal class GHPRComponentFactory(private val project: Project) {
       UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer.panel))
     }.also {
       ScrollingUtil.installActions(it)
-      ListSpeedSearch(it) { commit ->
-        commit.messageHeadlineHTML
-      }
+      GithubUIUtil.Lists.installSelectionOnFocus(it)
+      GithubUIUtil.Lists.installSelectionOnRightClick(it)
+      PopupHandler.installSelectionListPopup(it,
+                                             DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
+                                             ActionPlaces.UNKNOWN, actionManager)
+      ListSpeedSearch(it) { commit -> commit.messageHeadlineHTML }
+    }
+
+    commitsModel.addStateChangesListener {
+      val selectedCommit = commitsList.selectedValue
+      commitsListModel.replaceAll(commitsModel.commitsWithChanges?.keys?.toList().orEmpty())
+      commitsList.setSelectedValue(selectedCommit, true)
     }
 
     val commitDetailsModel = SingleValueModel<GHCommit?>(null)
@@ -361,6 +367,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       firstComponent = commitsLoadingPanel
       secondComponent = changesBrowser
     }.also {
+      actionManager.getAction("Github.PullRequest.Changes.Reload").registerCustomShortcutSet(it, disposable)
       changesBrowser.diffAction.registerCustomShortcutSet(it, disposable)
       DataManager.registerDataProvider(it) { dataId ->
         if (Disposer.isDisposed(disposable)) null
@@ -438,15 +445,12 @@ internal class GHPRComponentFactory(private val project: Project) {
     val list = GHPRList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
       emptyText.clear()
     }.also {
-      it.addFocusListener(object : FocusListener {
-        override fun focusGained(e: FocusEvent?) {
-          if (it.selectedIndex < 0 && !it.isEmpty) it.selectedIndex = 0
-        }
-
-        override fun focusLost(e: FocusEvent?) {}
-      })
-
-      installPopup(it)
+      ScrollingUtil.installActions(it)
+      GithubUIUtil.Lists.installSelectionOnFocus(it)
+      GithubUIUtil.Lists.installSelectionOnRightClick(it)
+      PopupHandler.installSelectionListPopup(it,
+                                             actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup,
+                                             ActionPlaces.UNKNOWN, actionManager)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
       ListSpeedSearch(it) { item -> item.title }
@@ -519,21 +523,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       panel.validate()
     }
     return panel
-  }
-
-  private fun installPopup(list: GHPRList) {
-    val popupHandler = object : PopupHandler() {
-      override fun invokePopup(comp: Component, x: Int, y: Int) {
-        if (ListUtil.isPointOnSelection(list, x, y)) {
-          val popupMenu = actionManager
-            .createActionPopupMenu("GithubPullRequestListPopup",
-                                   actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup)
-          popupMenu.setTargetComponent(list)
-          popupMenu.component.show(comp, x, y)
-        }
-      }
-    }
-    list.addMouseListener(popupHandler)
   }
 
   private fun createChangesLoadingModel(commitsModel: GHPRCommitsModel,

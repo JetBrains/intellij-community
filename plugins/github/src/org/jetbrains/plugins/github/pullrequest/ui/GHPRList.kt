@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.ide.CopyProvider
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.ui.ListUtil
-import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBDimension
@@ -26,7 +25,6 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Component
 import java.awt.datatransfer.StringSelection
-import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
@@ -39,13 +37,10 @@ internal class GHPRList(private val copyPasteManager: CopyPasteManager,
 
   init {
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
-    addMouseListener(RightClickSelectionListener())
 
     val renderer = PullRequestsListCellRenderer()
     cellRenderer = renderer
     UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
-
-    ScrollingUtil.installActions(this)
   }
 
   override fun getToolTipText(event: MouseEvent): String? {
@@ -157,15 +152,6 @@ internal class GHPRList(private val copyPasteManager: CopyPasteManager,
       }
 
       return this
-    }
-  }
-
-  private inner class RightClickSelectionListener : MouseAdapter() {
-    override fun mousePressed(e: MouseEvent) {
-      if (SwingUtilities.isRightMouseButton(e)) {
-        val row = locationToIndex(e.point)
-        if (row != -1) selectionModel.setSelectionInterval(row, row)
-      }
     }
   }
 }
