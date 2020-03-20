@@ -139,6 +139,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   }
   public void testPatternVariableDeclarationUsedInLocalJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
   public void testPatternVariableDeclarationAfterIfJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
+  public void testNonPatternVariableDeclarationTwoBlocksJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
   public void testNonPatternDeclarationJava14Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
 
   public void testTernaryBothBranches() { doTest("temp", true, false, false, "int"); }
