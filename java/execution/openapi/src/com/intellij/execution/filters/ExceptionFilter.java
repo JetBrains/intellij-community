@@ -18,7 +18,6 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,11 +25,13 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 public class ExceptionFilter implements Filter, DumbAware {
   private static final String EXCEPTION_IN_THREAD = "Exception in thread \"";
   private static final String CAUSED_BY = "Caused by: ";
   private final ExceptionInfoCache myCache;
-  private PsiElementFilter myNextLineRefiner;
+  private Predicate<PsiElement> myNextLineRefiner;
 
   public ExceptionFilter(@NotNull final GlobalSearchScope scope) {
     myCache = new ExceptionInfoCache(scope);
@@ -44,10 +45,10 @@ public class ExceptionFilter implements Filter, DumbAware {
     return result;
   }
 
-  private static PsiElementFilter getRefinerFromException(@NotNull String line) {
+  private static Predicate<PsiElement> getRefinerFromException(@NotNull String line) {
     String exceptionName = getExceptionFromMessage(line);
     if (exceptionName == null) return null;
-    PsiElementFilter exceptionCreationFilter = e -> {
+    Predicate<PsiElement> exceptionCreationFilter = e -> {
       // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
       if (!(e instanceof PsiKeyword) || !(e.textMatches(PsiKeyword.NEW))) return false;
       PsiNewExpression newExpression = ObjectUtils.tryCast(e.getParent(), PsiNewExpression.class);
@@ -55,13 +56,13 @@ public class ExceptionFilter implements Filter, DumbAware {
       PsiType type = newExpression.getType();
       return type != null && type.equalsToText(exceptionName);
     };
-    PsiElementFilter specificFilter = getExceptionSpecificFilter(exceptionName);
+    Predicate<PsiElement> specificFilter = getExceptionSpecificFilter(exceptionName);
     if (specificFilter == null) return exceptionCreationFilter;
-    return element -> exceptionCreationFilter.isAccepted(element) || specificFilter.isAccepted(element);
+    return exceptionCreationFilter.or(specificFilter);
   }
 
   @Nullable
-  private static PsiElementFilter getExceptionSpecificFilter(String exceptionName) {
+  private static Predicate<PsiElement> getExceptionSpecificFilter(String exceptionName) {
     switch (exceptionName) {
       case "java.lang.ArrayIndexOutOfBoundsException":
         return e -> e instanceof PsiJavaToken &&
