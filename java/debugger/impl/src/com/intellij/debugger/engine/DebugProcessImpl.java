@@ -372,7 +372,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       deleteStepRequests(stepThreadReference);
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
-      if (!(hint != null && hint.isIgnoreFilters()) && !isPositionFiltered(getLocation(stepThread))) {
+      if (!(hint != null && hint.isIgnoreFilters()) && !isPositionFiltered(getLocation(stepThread, suspendContext))) {
         getActiveFilters().forEach(f -> stepRequest.addClassExclusionFilter(f.getPattern()));
       }
 
@@ -443,17 +443,40 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  @Nullable
-  private static Location getLocation(@Nullable ThreadReferenceProxyImpl thread) {
-    try {
-      if (thread != null && thread.frameCount() > 0) {
-        StackFrameProxyImpl stackFrame = thread.frame(0);
-        if (stackFrame != null) {
-          return stackFrame.location();
+  static int getFrameCount(@Nullable ThreadReferenceProxyImpl thread, @NotNull SuspendContextImpl suspendContext) {
+    if (thread != null) {
+      if (thread.equals(suspendContext.getThread())) {
+        return suspendContext.frameCount();
+      }
+      else {
+        try {
+          return thread.frameCount();
+        }
+        catch (EvaluateException ignored) {
         }
       }
     }
-    catch (EvaluateException ignored) {
+    return 0;
+  }
+
+  @Nullable
+  static Location getLocation(@Nullable ThreadReferenceProxyImpl thread, @NotNull SuspendContextImpl suspendContext) {
+    if (thread != null) {
+      if (thread.equals(suspendContext.getThread())) {
+        return suspendContext.getLocation();
+      }
+      else {
+        try {
+          if (thread.frameCount() > 0) {
+            StackFrameProxyImpl stackFrame = thread.frame(0);
+            if (stackFrame != null) {
+              return stackFrame.location();
+            }
+          }
+        }
+        catch (EvaluateException ignored) {
+        }
+      }
     }
     return null;
   }
