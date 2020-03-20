@@ -109,6 +109,7 @@ internal constructor(private val reviewDataProvider: GHPRReviewDataProvider,
     private var borderLineColor: Color? = null
 
     init {
+      isOpaque = false
       cursor = Cursor.getDefaultCursor()
       updateColors()
     }
