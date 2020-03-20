@@ -90,19 +90,19 @@ public class NlsContexts {
    */
   @NlsContext(prefix = "notification.title")
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target({ElementType.PARAMETER, ElementType.TYPE_USE})
+  @Target(ElementType.TYPE_USE)
   public @interface NotificationTitle {
   }
 
   @NlsContext(prefix = "notification.subtitle")
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target({ElementType.PARAMETER, ElementType.TYPE_USE})
+  @Target(ElementType.TYPE_USE)
   public @interface NotificationSubtitle {
   }
 
   @NlsContext(prefix = "notification.content")
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target({ElementType.PARAMETER, ElementType.TYPE_USE})
+  @Target(ElementType.TYPE_USE)
   public @interface NotificationContent {
   }
 

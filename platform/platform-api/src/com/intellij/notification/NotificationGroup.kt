@@ -133,17 +133,17 @@ class NotificationGroup(@param:NonNls val displayId: String,
       get() = registeredGroups.values
   }
 
-  fun createNotification(@Nls @NotificationContent content: String, type: MessageType): Notification {
+  fun createNotification(content: @Nls @NotificationContent String, type: MessageType): Notification {
     return createNotification(content, type.toNotificationType())
   }
 
-  fun createNotification(@Nls @NotificationContent content: String, type: NotificationType): Notification {
+  fun createNotification(content: @Nls @NotificationContent String, type: NotificationType): Notification {
     return createNotification("", content, type)
   }
 
   fun createNotification(
-    @Nls @NotificationTitle title: String,
-    @Nls @NotificationContent content: String,
+    title: @Nls @NotificationTitle String,
+    content: @Nls @NotificationContent String,
     type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null
   ): Notification {
@@ -157,9 +157,9 @@ class NotificationGroup(@param:NonNls val displayId: String,
 
   @JvmOverloads
   fun createNotification(
-    @Nls @NotificationTitle title: String?,
-    @Nls @NotificationSubtitle subtitle: String?,
-    @Nls @NotificationContent content: String?,
+    title: @Nls @NotificationTitle String?,
+    subtitle: @Nls @NotificationSubtitle String?,
+    content: @Nls @NotificationContent String?,
     type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null
   ): Notification {
