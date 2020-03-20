@@ -4,6 +4,7 @@ package com.intellij.ide.dnd;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,6 @@ import java.awt.dnd.*;
 import static com.intellij.openapi.util.SystemInfo.JAVA_VERSION;
 import static com.intellij.ui.scale.JBUIScale.sysScale;
 import static com.intellij.util.ui.TimerUtil.createNamedTimer;
-import static com.intellij.util.ui.UIUtil.isClientPropertyTrue;
 
 /**
  * This class provides the application-wide scroller for drag targets.
@@ -132,6 +132,8 @@ public final class SmoothAutoScroller {
       if (component != null) {
         Point location = new Point(event.getLocation());
         SwingUtilities.convertPointToScreen(location, component);
+        Window window = UIUtil.getWindow(component);
+        if (window != null) window.toFront();
         this.screen.setLocation(location);
         this.event = event;
         if (!timer.isRunning()) {
@@ -218,7 +220,7 @@ public final class SmoothAutoScroller {
     if (component instanceof Autoscroll) return null; // Swing DnD is used
     if (component.getAutoscrolls()) return null; // default scroller is used
     if (!component.isShowing()) return null; // component is not visible on screen
-    return isClientPropertyTrue(component, ENABLED) ? component : null;
+    return UIUtil.isClientPropertyTrue(component, ENABLED) ? component : null;
   }
 
   private static int getDelta(int count, int margin, int value, int min, int max) {
