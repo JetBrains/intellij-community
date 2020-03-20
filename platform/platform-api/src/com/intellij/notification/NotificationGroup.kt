@@ -24,7 +24,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
                         val isLogByDefault: Boolean = true,
                         @param:NonNls val toolWindowId: String? = null,
                         val icon: Icon? = null,
-                        @param:Nls(capitalization = Nls.Capitalization.Sentence) var title: String? = null,
+                        var title: @Nls @NotificationTitle String? = null,
                         pluginId: PluginId? = null) {
 
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
@@ -61,8 +61,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun balloonGroup(@NonNls displayId: String,
-                     @Nls(capitalization = Nls.Capitalization.Sentence) title: String?): NotificationGroup {
+    fun balloonGroup(@NonNls displayId: String, title: @Nls @NotificationTitle String?): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.BALLOON, title = title)
     }
 
@@ -77,8 +76,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun logOnlyGroup(@NonNls displayId: String,
-                     @Nls(capitalization = Nls.Capitalization.Sentence) title: String?): NotificationGroup {
+    fun logOnlyGroup(@NonNls displayId: String, title: @Nls @NotificationTitle String?): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.NONE, title = title)
     }
 
@@ -98,7 +96,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     fun toolWindowGroup(@NonNls displayId: String,
                         @NonNls toolWindowId: String,
                         logByDefault: Boolean = true,
-                        @Nls(capitalization = Nls.Capitalization.Sentence) title: String?): NotificationGroup {
+                        title: @Nls @NotificationTitle String?): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, title = title)
     }
 
@@ -122,7 +120,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun createIdWithTitle(@NonNls displayId: String, @Nls(capitalization = Nls.Capitalization.Sentence) title: String): String {
+    fun createIdWithTitle(@NonNls displayId: String, title: @Nls @NotificationTitle String): String {
       val oldTitle = registeredTitles.put(displayId, title)
       LOG.assertTrue(oldTitle == null || oldTitle == title, "New title \"$title\" for NotificationGroup($displayId,$oldTitle)")
       return displayId
