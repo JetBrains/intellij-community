@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("KotlinUtils")
 package com.intellij.util
 
@@ -25,3 +25,5 @@ fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
 fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> = toArrayFromContainers(empty)
 
 inline fun <reified T> Any?.castSafelyTo(): T? = this as? T
+
+inline infix fun <T : Any> T?.withNotNullBackup(backup: () -> T): T = this ?: backup()
