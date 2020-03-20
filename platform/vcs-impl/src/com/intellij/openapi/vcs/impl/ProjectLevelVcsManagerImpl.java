@@ -64,7 +64,6 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
-import javax.swing.JComponent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -865,6 +864,15 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void showConsole() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    showConsole(null);
+  }
+
+  @Override
+  public void showConsole(@Nullable Runnable then) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     if (!Registry.is("vcs.showConsole")) {
       return;
     }
@@ -874,9 +882,28 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
     if (vcsToolWindow.isVisible()) {
       showConsoleInternal();
+      if (then != null) {
+        then.run();
+      }
     }
     else {
-      vcsToolWindow.show(this::showConsoleInternal);
+      vcsToolWindow.show(() -> {
+        showConsoleInternal();
+        if (then != null) {
+          then.run();
+        }
+      });
+    }
+  }
+
+  @Override
+  public void scrollConsoleToTheEnd() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!Registry.is("vcs.showConsole")) {
+      return;
+    }
+    if (myConsole != null) {
+      myConsole.requestScrollingToEnd();
     }
   }
 

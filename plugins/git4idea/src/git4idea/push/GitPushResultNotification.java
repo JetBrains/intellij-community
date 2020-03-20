@@ -185,7 +185,8 @@ class GitPushResultNotification extends Notification {
       notification.addAction(NotificationAction.createSimple(
         GitBundle.message("push.result.notification.showConsole"),
         () -> {
-          ProjectLevelVcsManager.getInstance(project).showConsole();
+          ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+          vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
         }));
     }
 

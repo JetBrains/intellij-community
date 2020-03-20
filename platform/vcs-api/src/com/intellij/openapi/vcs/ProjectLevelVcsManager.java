@@ -240,9 +240,24 @@ public abstract class ProjectLevelVcsManager {
   public abstract VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
 
   /**
-   * Shows VCS console view.
+   * Shows VCS console.
    * <p>
    * Does nothing if {@code vcs.showConsole} turned off.
    */
+  @CalledInAwt
   public abstract void showConsole();
+
+  /**
+   * Shows VCS console and then performs the given command.
+   * <p>
+   * Does nothing if {@code vcs.showConsole} turned off.
+   */
+  @CalledInAwt
+  public abstract void showConsole(@Nullable Runnable then);
+
+  /**
+   * Navigates to the end in VCS console.
+   */
+  @CalledInAwt
+  public abstract void scrollConsoleToTheEnd();
 }
