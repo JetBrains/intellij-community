@@ -74,6 +74,7 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put(RUN_DASHBOARD, new ToolWindowInfo("Run_Dashboard"));
     ourToolwindowWhitelist.put(SERVICES, new ToolWindowInfo("Services"));
     ourToolwindowWhitelist.put("Statistics Event Log", new ToolWindowInfo("Statistics_Event_Log"));
+    ourToolwindowWhitelist.put(ENDPOINTS, new ToolWindowInfo("Endpoints"));
   }
 
   private ToolWindowCollector() {
