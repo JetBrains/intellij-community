@@ -46,6 +46,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.List;
@@ -294,7 +295,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       ourUpdatingTitle = true;
 
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
-        frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+        File ioFile = currentFile != null ? currentFile.toFile() : null;
+        frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
 
       Builder builder = new Builder().append(title).append(fileTitle);
