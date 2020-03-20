@@ -265,9 +265,8 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       myComponent.setIcon(state.icon);
       myComponent.setToolTipText(toolTipText);
       myComponent.setText(widgetText);
-      myComponent.invalidate();
 
-      if (myStatusBar != null) {
+      if (myStatusBar != null && !myComponent.isValid()) {
         myStatusBar.updateWidget(ID());
       }
 

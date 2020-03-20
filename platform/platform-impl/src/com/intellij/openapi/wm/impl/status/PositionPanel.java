@@ -178,7 +178,10 @@ public class PositionPanel extends EditorBasedWidget
       boolean empty = editor == null || DISABLE_FOR_EDITOR.isIn(editor);
       if (!empty && !isOurEditor(editor)) return;
 
-      myText = empty ? "" : getPositionText(editor);
+      String newText = empty ? "" : getPositionText(editor);
+      if (newText.equals(myText)) return;
+
+      myText = newText;
       if (myStatusBar != null) {
         myStatusBar.updateWidget(ID());
       }
