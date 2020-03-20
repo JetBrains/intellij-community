@@ -24,8 +24,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
                         val isLogByDefault: Boolean = true,
                         @param:NonNls val toolWindowId: String? = null,
                         val icon: Icon? = null,
-                        @param:Nls(capitalization = Nls.Capitalization.Sentence)
-                        var localizedTitle: String? = null,
+                        var localizedTitle: @Nls @NotificationTitle String? = null,
                         pluginId: PluginId? = null) {
 
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
@@ -62,8 +61,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun balloonGroup(@NonNls displayId: String,
-                     @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String?): NotificationGroup {
+    fun balloonGroup(@NonNls displayId: String, localizedTitle: @Nls @NotificationTitle String?): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.BALLOON, localizedTitle = localizedTitle)
     }
 
@@ -78,8 +76,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun logOnlyGroup(@NonNls displayId: String,
-                     @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String?): NotificationGroup {
+    fun logOnlyGroup(@NonNls displayId: String, localizedTitle: @Nls @NotificationTitle String?): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.NONE, localizedTitle = localizedTitle)
     }
 
@@ -99,7 +96,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     fun toolWindowGroup(@NonNls displayId: String,
                         @NonNls toolWindowId: String,
                         logByDefault: Boolean = true,
-                        @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String?): NotificationGroup {
+                        localizedTitle: @Nls @NotificationTitle String?): NotificationGroup {
       return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, localizedTitle = localizedTitle)
     }
 
@@ -123,7 +120,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun createIdWithTitle(@NonNls displayId: String, @Nls(capitalization = Nls.Capitalization.Sentence) localizedTitle: String): String {
+    fun createIdWithTitle(@NonNls displayId: String, localizedTitle: @Nls @NotificationTitle String): String {
       localizedTitles[displayId] = localizedTitle
       return displayId
     }
