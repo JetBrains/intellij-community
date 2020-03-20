@@ -5,8 +5,6 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -32,10 +30,7 @@ public class EditorUIUtil {
   }
 
   public static void hideCursorInEditor(Editor editor) {
-    if (SystemInfo.isMac) {
-      MacUIUtil.hideCursor();
-    }
-    else if (editor instanceof EditorImpl) {
+    if (editor instanceof EditorImpl) {
       ((EditorImpl)editor).hideCursor();
     }
   }

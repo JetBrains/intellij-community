@@ -139,8 +139,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
+    int id = e.getID();
     if (myIgnoreNextKeyTypedEvent) {
-      if (KeyEvent.KEY_TYPED == e.getID()) return true;
+      if (KeyEvent.KEY_TYPED == id) return true;
       myIgnoreNextKeyTypedEvent = false;
     }
 
@@ -150,18 +151,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myLeftCtrlPressed = false;
       }
     }
     else if (e.getKeyCode() == KeyEvent.VK_ALT) {
-      if (e.getID() == KeyEvent.KEY_PRESSED) {
+      if (id == KeyEvent.KEY_PRESSED) {
         myRightAltPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT;
       }
-      else if (e.getID() == KeyEvent.KEY_RELEASED) {
+      else if (id == KeyEvent.KEY_RELEASED) {
         myRightAltPressed = false;
       }
     }
@@ -172,10 +173,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     // shortcuts should not work in shortcut setup fields
     if (focusOwner instanceof ShortcutTextField) {
       // remove AltGr modifier to show a shortcut without AltGr in Settings
-      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID()) removeAltGraph(e);
+      if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == id) removeAltGraph(e);
       return false;
     }
-    if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
+    if (id == KeyEvent.KEY_PRESSED && focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
       if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
       }
