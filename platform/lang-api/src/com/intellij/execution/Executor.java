@@ -5,6 +5,7 @@ package com.intellij.execution;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
@@ -59,11 +60,11 @@ public abstract class Executor {
    *
    * @return the executor action description.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Nls @NlsActions.ActionDescription
   public abstract String getDescription();
 
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @Nls @NlsActions.ActionText
   public abstract String getActionName();
 
   /**

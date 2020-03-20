@@ -10,6 +10,12 @@ public class NlsUI {
   /**
    * Swing components
    */
+  @NlsContext(prefix = "label")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Label {
+  }
+
   @NlsContext(prefix = "link.label")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)

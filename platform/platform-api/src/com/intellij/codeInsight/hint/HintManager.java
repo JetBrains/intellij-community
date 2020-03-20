@@ -4,7 +4,9 @@ package com.intellij.codeInsight.hint;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.nls.NlsContexts.HintText;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,22 +51,22 @@ public abstract class HintManager {
 
   public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, @HideFlags int flags, int timeout);
 
-  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text);
-  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull @Nls @HintText String text);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull @Nls @HintText String text, @PositionFlags short position);
 
-  public void showInformationHint(@NotNull Editor editor, @NotNull String text) {
+  public void showInformationHint(@NotNull Editor editor, @NotNull @Nls @HintText String text) {
     showInformationHint(editor, text, ABOVE);
   }
-  public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position);
-  public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text, @Nullable HyperlinkListener listener);
+  public abstract void showInformationHint(@NotNull Editor editor, @NotNull @Nls @HintText String text, @PositionFlags short position);
+  public abstract void showInformationHint(@NotNull Editor editor, @NotNull @Nls @HintText String text, @Nullable HyperlinkListener listener);
 
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component);
 
-  public abstract void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action);
+  public abstract void showQuestionHint(@NotNull Editor editor, @NotNull @Nls @HintText String hintText, int offset1, int offset2, @NotNull QuestionAction action);
 
   public abstract boolean hideHints(@HideFlags int mask, boolean onlyOne, boolean editorChanged);
 
-  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @PositionFlags short constraint, @HideFlags int flags, int timeout);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull @Nls @HintText String hintText, int offset1, int offset2, @PositionFlags short constraint, @HideFlags int flags, int timeout);
 
   public abstract void hideAllHints();
 

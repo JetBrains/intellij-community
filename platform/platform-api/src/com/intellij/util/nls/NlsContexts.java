@@ -111,4 +111,10 @@ public class NlsContexts {
   @Target(ElementType.TYPE_USE)
   public @interface StatusText {
   }
+
+  @NlsContext(prefix = "hint.text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface HintText {
+  }
 }

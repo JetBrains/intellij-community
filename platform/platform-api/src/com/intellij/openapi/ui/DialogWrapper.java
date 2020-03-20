@@ -2234,7 +2234,7 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     @NotNull
-    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Nls @NlsUI.Checkbox
     String getDoNotShowMessage();
   }
 
