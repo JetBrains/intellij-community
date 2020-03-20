@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -146,11 +145,13 @@ public abstract class DebuggerUtils {
 
   public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
     throws EvaluateException {
-    StackFrameProxy frameProxy = context.getFrameProxy();
-    if (frameProxy != null && frameProxy.location().method().isConstructor() && reference.equals(context.computeThisObject())) {
+    Location location = getInstance().getLocation(context.getSuspendContext());
+    if (location != null && location.method().isConstructor() && reference.equals(context.computeThisObject())) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.is.being.initialized"));
     }
   }
+
+  protected abstract Location getLocation(SuspendContext context);
 
   public static final int MAX_DISPLAY_LABEL_LENGTH = 1024 * 5;
 
