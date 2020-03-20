@@ -139,7 +139,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   // so that when it is eventually loaded, we can mark is as a selected.
   // See also notYetAppliedInitialSelectedConfigurationId, which helps when the initially selected RC is stored in some arbitrary *.run.xml file in project
   private var selectedConfigurationId: String? = null
-  // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace an .idea/runConfigurations.
+  // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace and from .idea/runConfigurations.
   // This var helps if initially selected RC is a one from such file.
   private var notYetAppliedInitialSelectedConfigurationId: String? = null
 
@@ -360,7 +360,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             }
           }
           else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
-            // don't loose currently selected RC in case of ay external changes in the file
+            // don't loose currently selected RC in case of any external changes in the file
             selectedConfigurationId = oldSelectedId
           }
         }
