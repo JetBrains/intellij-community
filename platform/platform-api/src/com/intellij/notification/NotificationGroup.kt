@@ -14,7 +14,7 @@ import javax.swing.Icon
 
 private val LOG = logger<NotificationGroup>()
 private val registeredGroups: MutableMap<String, NotificationGroup> = ContainerUtil.newConcurrentMap()
-private val localizedTitles: MutableMap<String, String> = ContainerUtil.newConcurrentMap()
+private val registeredTitles: MutableMap<String, String> = ContainerUtil.newConcurrentMap()
 
 /**
  * Groups notifications and allows controlling display options in Settings.
@@ -24,7 +24,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
                         val isLogByDefault: Boolean = true,
                         @param:NonNls val toolWindowId: String? = null,
                         val icon: Icon? = null,
-                        var localizedTitle: @Nls @NotificationTitle String? = null,
+                        @param:Nls(capitalization = Nls.Capitalization.Sentence) var title: String? = null,
                         pluginId: PluginId? = null) {
 
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
@@ -49,8 +49,8 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
     registeredGroups.put(displayId, this)
 
-    if (localizedTitle == null) {
-      localizedTitle = localizedTitles[displayId]
+    if (title == null) {
+      title = registeredTitles[displayId]
     }
   }
 
@@ -61,8 +61,9 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun balloonGroup(@NonNls displayId: String, localizedTitle: @Nls @NotificationTitle String?): NotificationGroup {
-      return NotificationGroup(displayId, NotificationDisplayType.BALLOON, localizedTitle = localizedTitle)
+    fun balloonGroup(@NonNls displayId: String,
+                     @Nls(capitalization = Nls.Capitalization.Sentence) title: String?): NotificationGroup {
+      return NotificationGroup(displayId, NotificationDisplayType.BALLOON, title = title)
     }
 
     @JvmStatic
@@ -76,8 +77,9 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun logOnlyGroup(@NonNls displayId: String, localizedTitle: @Nls @NotificationTitle String?): NotificationGroup {
-      return NotificationGroup(displayId, NotificationDisplayType.NONE, localizedTitle = localizedTitle)
+    fun logOnlyGroup(@NonNls displayId: String,
+                     @Nls(capitalization = Nls.Capitalization.Sentence) title: String?): NotificationGroup {
+      return NotificationGroup(displayId, NotificationDisplayType.NONE, title = title)
     }
 
     @JvmStatic
@@ -96,8 +98,8 @@ class NotificationGroup(@param:NonNls val displayId: String,
     fun toolWindowGroup(@NonNls displayId: String,
                         @NonNls toolWindowId: String,
                         logByDefault: Boolean = true,
-                        localizedTitle: @Nls @NotificationTitle String?): NotificationGroup {
-      return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, localizedTitle = localizedTitle)
+                        @Nls(capitalization = Nls.Capitalization.Sentence) title: String?): NotificationGroup {
+      return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, title = title)
     }
 
     @JvmStatic
@@ -111,17 +113,18 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun findLocalizedGroupTitle(@NonNls displayId: String): String? {
+    fun getGroupTitle(@NonNls displayId: String): String? {
       val group = findRegisteredGroup(displayId)
-      if (group?.localizedTitle != null) {
-        return group.localizedTitle
+      if (group?.title != null) {
+        return group.title
       }
-      return localizedTitles[displayId]
+      return registeredTitles[displayId]
     }
 
     @JvmStatic
-    fun createIdWithTitle(@NonNls displayId: String, localizedTitle: @Nls @NotificationTitle String): String {
-      localizedTitles[displayId] = localizedTitle
+    fun createIdWithTitle(@NonNls displayId: String, @Nls(capitalization = Nls.Capitalization.Sentence) title: String): String {
+      val oldTitle = registeredTitles.put(displayId, title)
+      LOG.assertTrue(oldTitle == null || oldTitle == title, "New title \"$title\" for NotificationGroup($displayId,$oldTitle)")
       return displayId
     }
 

@@ -74,13 +74,12 @@ public class Notification {
   private WeakReference<Balloon> myBalloonRef;
   private final long myTimestamp;
 
-  public Notification(@NotNull String groupDisplayId, @Nullable Icon icon, @NotNull NotificationType type) {
-    this(groupDisplayId, icon, null, null, null, type, null);
+  public Notification(@NotNull String groupId, @Nullable Icon icon, @NotNull NotificationType type) {
+    this(groupId, icon, null, null, null, type, null);
   }
 
   /**
-   * @param groupDisplayId this should be a human-readable, capitalized string like "Facet Detector".
-   *                       It will appear in "Notifications" configurable.
+   * @param groupId        notification group id
    * @param icon           notification icon, if <b>null</b> used icon from type
    * @param title          notification title
    * @param subtitle       notification subtitle
@@ -88,14 +87,14 @@ public class Notification {
    * @param type           notification type
    * @param listener       notification lifecycle listener
    */
-  public Notification(@NotNull @NonNls String groupDisplayId,
+  public Notification(@NotNull @NonNls String groupId,
                       @Nullable Icon icon,
                       @Nullable @Nls @NotificationTitle String title,
                       @Nullable @Nls @NotificationSubtitle String subtitle,
                       @Nullable @Nls @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
-    myGroupId = groupDisplayId;
+    myGroupId = groupId;
     myTitle = StringUtil.notNullize(title);
     myContent = StringUtil.notNullize(content);
     myType = type;
@@ -108,27 +107,26 @@ public class Notification {
     id = calculateId(this);
   }
 
-  public Notification(@NotNull @NonNls String groupDisplayId,
+  public Notification(@NotNull @NonNls String groupId,
                       @NotNull @Nls @NotificationTitle String title,
                       @NotNull @Nls @NotificationContent String content,
                       @NotNull NotificationType type) {
-    this(groupDisplayId, title, content, type, null);
+    this(groupId, title, content, type, null);
   }
 
   /**
-   * @param groupDisplayId this should be a human-readable, capitalized string like "Facet Detector".
-   *                       It will appear in "Notifications" configurable.
+   * @param groupId        notification group id
    * @param title          notification title
    * @param content        notification content
    * @param type           notification type
    * @param listener       notification lifecycle listener
    */
-  public Notification(@NotNull @NonNls String groupDisplayId,
+  public Notification(@NotNull @NonNls String groupId,
                       @NotNull @Nls @NotificationTitle String title,
                       @NotNull @Nls @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
-    myGroupId = groupDisplayId;
+    myGroupId = groupId;
     myTitle = title;
     myContent = content;
     myType = type;

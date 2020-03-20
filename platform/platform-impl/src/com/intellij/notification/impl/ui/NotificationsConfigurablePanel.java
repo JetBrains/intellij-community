@@ -177,7 +177,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     public String toString() {
       if (myTitle == null) {
         String groupId = getGroupId();
-        String title = NotificationGroup.findLocalizedGroupTitle(groupId);
+        String title = NotificationGroup.getGroupTitle(groupId);
         return title == null ? groupId : title;
       }
       return myTitle;
