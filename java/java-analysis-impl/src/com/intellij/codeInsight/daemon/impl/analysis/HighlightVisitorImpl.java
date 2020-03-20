@@ -375,7 +375,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (toReportFunctionalExpressionProblemOnParent(parent)) return;
     if (!myHolder.hasErrorResults() && !LambdaUtil.isValidLambdaContext(parent)) {
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-                     .descriptionAndTooltip("Lambda expression not expected here").create());
+                     .descriptionAndTooltip(JavaErrorBundle.message("lambda.expression.not.expected")).create());
     }
 
     if (!myHolder.hasErrorResults()) myHolder.add(LambdaHighlightingUtil.checkConsistentParameterDeclaration(expression));
@@ -394,7 +394,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
       else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip("Cannot infer functional interface type").create());
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(
+          JavaErrorBundle.message("cannot.infer.functional.interface.type")).create());
       }
     }
 
@@ -1170,7 +1171,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
         if (!canSelectFromTypeParameter) {
-          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip("Cannot select from a type parameter").range(ref).create());
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(
+            JavaErrorBundle.message("cannot.select.from.a.type.parameter")).range(ref).create());
         }
       }
     }
@@ -1443,7 +1445,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!LambdaUtil.isValidLambdaContext(parent)) {
-      String description = "Method reference expression is not expected here";
+      String description = JavaErrorBundle.message("method.reference.expression.is.not.expected");
       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create());
     }
 
@@ -1453,7 +1455,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (!PsiMethodReferenceUtil.isValidQualifier(expression)) {
           PsiElement qualifier = expression.getQualifier();
           if (qualifier != null) {
-            String description = "Cannot find class " + qualifier.getText();
+            String description = JavaErrorBundle.message("cannot.find.class", qualifier.getText());
             myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description).create());
           }
         }
@@ -1464,7 +1466,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
         if (!isFunctional) {
-          String description = functionalInterfaceType.getPresentableText() + " is not a functional interface";
+          String description =
+            JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText());
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create());
         }
       }
@@ -1472,7 +1475,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         checkFunctionalInterfaceTypeAccessible(expression, functionalInterfaceType);
       }
       if (!myHolder.hasErrorResults()) {
-        String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
+        String errorMessage = PsiMethodReferenceHighlightingUtil.checkMethodReferenceContext(expression);
         if (errorMessage != null) {
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create();
           if (method instanceof PsiMethod &&

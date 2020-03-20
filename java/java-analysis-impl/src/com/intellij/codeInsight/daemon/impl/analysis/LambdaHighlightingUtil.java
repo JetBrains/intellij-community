@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,30 +34,28 @@ public class LambdaHighlightingUtil {
   private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
 
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
-    return checkInterfaceFunctional(psiClass, "Target type of a lambda conversion must be an interface");
+    return checkInterfaceFunctional(psiClass, JavaErrorBundle.message("target.type.of.a.lambda.conversion.must.be.an.interface"));
   }
 
   static String checkInterfaceFunctional(@NotNull PsiClass psiClass, String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
     final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return interfaceNonFunctionalMessage;
-    if (signatures.isEmpty()) return "No target method found";
+    if (signatures.isEmpty()) return JavaErrorBundle.message("no.target.method.found");
     if (signatures.size() == 1) {
       return null;
     }
-    return "Multiple non-overriding abstract methods found in interface " + HighlightUtil.formatClass(psiClass);
+    return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.interface.0", HighlightUtil.formatClass(psiClass));
   }
 
   static HighlightInfo checkParametersCompatible(PsiLambdaExpression expression,
                                                  PsiParameter[] methodParameters,
                                                  PsiSubstitutor substitutor) {
     final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
-    String incompatibleTypesMessage = "Incompatible parameter types in lambda expression: ";
     if (lambdaParameters.length != methodParameters.length) {
-      incompatibleTypesMessage += "wrong number of parameters: expected " + methodParameters.length + " but found " + lambdaParameters.length;
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(expression.getParameterList())
-        .descriptionAndTooltip(incompatibleTypesMessage)
+        .descriptionAndTooltip(JavaErrorBundle.message("incompatible.parameter.types.in.lambda.wrong.number.of.parameters", methodParameters.length, lambdaParameters.length))
         .create();
     }
     boolean hasFormalParameterTypes = expression.hasFormalParameterTypes();
@@ -70,7 +69,8 @@ public class LambdaHighlightingUtil {
         final String actualType = lambdaParameterType.getPresentableText();
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(expression.getParameterList())
-          .descriptionAndTooltip(incompatibleTypesMessage + "expected " + expectedType + " but found " + actualType)
+          .descriptionAndTooltip(
+            JavaErrorBundle.message("incompatible.parameter.types.in.lambda", expectedType, actualType))
           .create();
       }
     }
@@ -97,7 +97,7 @@ public class LambdaHighlightingUtil {
       }
 
       if (signatures.size() > 1) {
-        return "Multiple non-overriding abstract methods found in " + functionalInterfaceType.getPresentableText();
+        return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.0", functionalInterfaceType.getPresentableText());
       }
       return null;
     }
@@ -106,10 +106,11 @@ public class LambdaHighlightingUtil {
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
       MethodSignature functionalMethod = LambdaUtil.getFunction(aClass);
-      if (functionalMethod != null && functionalMethod.getTypeParameters().length > 0) return "Target method is generic";
+      if (functionalMethod != null && functionalMethod.getTypeParameters().length > 0) return JavaErrorBundle
+        .message("target.method.is.generic");
       return checkInterfaceFunctional(aClass);
     }
-    return functionalInterfaceType.getPresentableText() + " is not a functional interface";
+    return JavaErrorBundle.message("not.a.functional.interface",functionalInterfaceType.getPresentableText());
   }
 
   public static HighlightInfo checkConsistentParameterDeclaration(PsiLambdaExpression expression) {
@@ -119,7 +120,7 @@ public class LambdaHighlightingUtil {
     for (int i = 1; i < parameters.length; i++) {
       if (hasExplicitParameterTypes != hasExplicitType(parameters[i])) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                            .descriptionAndTooltip("Cannot mix 'var' and explicitly typed parameters in lambda expression")
+                            .descriptionAndTooltip(JavaErrorBundle.message("lambda.parameters.consistency.message"))
                             .range(expression.getParameterList())
                             .create();
       }
