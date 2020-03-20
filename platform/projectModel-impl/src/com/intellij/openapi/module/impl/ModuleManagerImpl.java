@@ -354,9 +354,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
         for (String url : ModuleRootManager.getInstance(module).getContentRootUrls()) {
           Module oldModule = track.put(url, module);
           if (oldModule != null) {
-            //Map<String, VirtualFilePointer> track1 = ContentEntryImpl.track;
-            //VirtualFilePointer pointer = track1.get(url);
-            LOG.error("Module '" + module.getName() + "' and module '" + oldModule.getName() + "' have the same content root: " + url);
+            LOG.warn("Module '" + module.getName() + "' and module '" + oldModule.getName() + "' have the same content root: " + url);
           }
         }
       }
