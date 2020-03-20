@@ -8,7 +8,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
+import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -20,9 +23,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
+import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.*;
@@ -36,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -86,7 +92,7 @@ public class PyInterpreterInspection extends PyInspection {
         fixes.add(new ConfigureInterpreterFix());
       }
       else {
-        fixes.add(new ConfigureProjectOrModuleFix(module));
+        fixes.add(new InterpreterSettingsQuickFix(module));
       }
 
       final String product = pyCharm ? "PyCharm" : "Python plugin";
@@ -238,10 +244,20 @@ public class PyInterpreterInspection extends PyInspection {
   }
 
   public static final class InterpreterSettingsQuickFix implements LocalQuickFix {
+
+    @NotNull
+    private final Module myModule;
+
+    public InterpreterSettingsQuickFix(@NotNull Module module) {
+      myModule = module;
+    }
+
     @NotNull
     @Override
     public String getFamilyName() {
-      return PyBundle.message("INSP.interpreter.interpreter.settings");
+      return PlatformUtils.isPyCharm()
+             ? PyBundle.message("INSP.interpreter.interpreter.settings")
+             : PyBundle.message("INSP.interpreter.configure.python.interpreter");
     }
 
     @Override
@@ -251,14 +267,35 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      showProjectInterpreterDialog(project);
+      showPythonInterpreterSettings(project, myModule);
     }
 
-    /**
-     * It is only applicable to PyCharm, not Python plugin.
-     */
-    public static void showProjectInterpreterDialog(@NotNull Project project) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, "Project Interpreter");
+    public static void showPythonInterpreterSettings(@NotNull Project project, @NotNull Module module) {
+      if (hasPythonSdkConfigurable(project)) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, PyActiveSdkModuleConfigurable.class);
+        return;
+      }
+
+      final ProjectSettingsService settingsService = ProjectSettingsService.getInstance(project);
+      if (justOneModuleInheritingSdk(project, module)) {
+        settingsService.openProjectSettings();
+      }
+      else {
+        settingsService.openModuleSettings(module);
+      }
+    }
+
+    private static boolean hasPythonSdkConfigurable(@NotNull Project project) {
+      if (PlatformUtils.isPyCharm()) return true;
+
+      final List<ConfigurableGroup> groups = Collections.singletonList(ConfigurableExtensionPointUtil.getConfigurableGroup(project, true));
+      return ConfigurableVisitor.findByType(PyActiveSdkModuleConfigurable.class, groups) != null;
+    }
+
+    private static boolean justOneModuleInheritingSdk(@NotNull Project project, @NotNull Module module) {
+      return ProjectRootManager.getInstance(project).getProjectSdk() == null &&
+             ModuleRootManager.getInstance(module).isSdkInherited() &&
+             ModuleManager.getInstance(project).getModules().length < 2;
     }
   }
 
@@ -283,40 +320,6 @@ public class PyInterpreterInspection extends PyInspection {
       if (module == null) return;
 
       PySdkPopupFactory.Companion.createAndShow(project, module);
-    }
-  }
-
-  private static final class ConfigureProjectOrModuleFix implements LocalQuickFix {
-
-    @NotNull
-    private final Module myModule;
-
-    private ConfigureProjectOrModuleFix(@NotNull Module module) {
-      myModule = module;
-    }
-
-    @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return PyBundle.message("INSP.interpreter.configure.python.interpreter");
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final ProjectSettingsService settingsService = ProjectSettingsService.getInstance(project);
-
-      if (ProjectRootManager.getInstance(project).getProjectSdk() == null &&
-          ModuleRootManager.getInstance(myModule).isSdkInherited() &&
-          ModuleManager.getInstance(project).getModules().length < 2) {
-        settingsService.openProjectSettings();
-      }
-      else {
-        settingsService.openModuleSettings(myModule);
-      }
     }
   }
 
