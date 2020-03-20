@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -49,6 +49,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -1927,6 +1928,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
     private final AncestorListener myAncestorListener;
     private final JBPopupListener myPopupListener;
+    private final PopupState myPopupState = new PopupState();
 
     private JBPopup myPopup;
 
@@ -1963,11 +1965,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
 
     private void showPopup(@NotNull InputEvent event) {
       hidePopup();
+      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
 
       updateContentPanel(analyzerStatus.getController());
 
       myPopup = myPopupBuilder.createPopup();
       myPopup.addListener(myPopupListener);
+      myPopup.addListener(myPopupState);
       myEditor.getComponent().addAncestorListener(myAncestorListener);
 
       JComponent owner = (JComponent)event.getComponent();
