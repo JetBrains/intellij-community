@@ -4736,6 +4736,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (oldTabSize != newTabSize) {
         reinitSettings(false);
       }
+      else {
+        // cover the case of right margin update
+        myEditorComponent.repaint();
+      }
     }
   }
 
