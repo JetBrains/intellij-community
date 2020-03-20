@@ -69,6 +69,7 @@ public class _LastInSuiteTest extends TestCase {
   public void testDynamicExtensions() {
     Assume.assumeTrue(!EXTENSION_POINTS_WHITE_LIST.isEmpty() ||
                       SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false));
+    if (ApplicationManager.getApplication() == null) return;
 
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
     unloadExtensionPoints(extensions.keySet());
@@ -149,6 +150,7 @@ public class _LastInSuiteTest extends TestCase {
 
   @NotNull
   private static Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> collectDynamicNonPlatformExtensions() {
+
     boolean useWhiteList = !SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
     ExtensionsArea area = Extensions.getRootArea();
 
