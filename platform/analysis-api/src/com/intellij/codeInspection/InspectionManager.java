@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.text.NlsAnalysis.InspectionMessage;
+import com.intellij.codeInspection.util.InspectionMessage;
 
 public abstract class InspectionManager {
   public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION =
