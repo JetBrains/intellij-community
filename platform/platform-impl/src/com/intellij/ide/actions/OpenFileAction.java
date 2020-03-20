@@ -111,17 +111,8 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
 
     // try to open as a project - unless the file is an .ipr of the current one
     if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-      ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
       final int answer;
-      if (file.getFileType() instanceof ProjectFileType) {
-        answer = Messages.YES;
-      }
-      else if (provider == null) {
-        answer = Messages.CANCEL;
-      }
-      else {
-        answer = provider.askConfirmationForOpeningProject(file, project);
-      }
+      answer = shouldOpenNewProject(project, file);
 
       if (answer == Messages.CANCEL) return;
 
@@ -146,6 +137,20 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
         PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask());
       }
     }
+  }
+
+  @Messages.YesNoCancelResult
+  private static int shouldOpenNewProject(@Nullable Project project, @NotNull VirtualFile file) {
+    if (file.getFileType() instanceof ProjectFileType) {
+      return Messages.YES;
+    }
+
+    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
+    if (provider == null) {
+      return Messages.CANCEL;
+    }
+
+    return provider.askConfirmationForOpeningProject(file, project);
   }
 
   public static void openFile(String filePath, @NotNull Project project) {
