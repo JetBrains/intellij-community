@@ -301,7 +301,7 @@ class VariableExtractor {
           !(PsiUtil.skipParenthesizedExprUp(firstOccurrence.getParent()) instanceof PsiExpressionStatement)) {
         PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
         if (candidate != null && allOccurrences.stream()
-          .map(occ -> ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class))
+          .map(occ -> ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(occ), PsiTypeCastExpression.class))
           .allMatch(occ -> occ != null && (occ == firstOccurrence || InstanceOfUtils.findPatternCandidate(occ) == candidate))) {
           return candidate;
         }
