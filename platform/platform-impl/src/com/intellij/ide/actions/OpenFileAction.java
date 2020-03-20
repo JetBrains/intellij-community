@@ -113,11 +113,11 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
       ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
       final int answer;
-      if (provider == null) {
-        answer = Messages.CANCEL;
-      }
-      else if (file.getFileType() instanceof ProjectFileType) {
+      if (file.getFileType() instanceof ProjectFileType) {
         answer = Messages.YES;
+      }
+      else if (provider == null) {
+        answer = Messages.CANCEL;
       }
       else {
         answer = provider.askConfirmationForOpeningProject(file, project);
