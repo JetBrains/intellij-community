@@ -1,3 +1,3 @@
 class MyTest {
-    //simple end comment<caret>
+    // simple end comment<caret>
 }

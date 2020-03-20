@@ -1,5 +1,5 @@
 class MyTest {
     // todo first line<caret>
-    //  second line
+    //   second line
     int field;
 }
