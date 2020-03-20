@@ -248,6 +248,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       }
     };
     statusToolbar.getComponent().addComponentListener(toolbarComponentListener);
+    statusToolbar.getComponent().setBorder(JBUI.Borders.emptyTop(1));
 
     smallIconLabel = new JLabel();
     smallIconLabel.addMouseListener(new MouseAdapter() {
@@ -264,7 +265,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
     statusPanel.add(statusToolbar.getComponent());
     statusPanel.add(smallIconLabel);
-    statusPanel.setBorder(JBUI.Borders.emptyTop(1));
 
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
 
@@ -527,7 +527,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     int shift = 0;
     if (visualLine >= lineCount - 1) {
       CharSequence sequence = myEditor.getDocument().getCharsSequence();
-      shift = sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
+      shift = sequence.length() < 1 ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
     }
     return Math.max(0, Math.min(lineCount - shift, visualLine));
   }
