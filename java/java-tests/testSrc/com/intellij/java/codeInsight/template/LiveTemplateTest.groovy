@@ -21,6 +21,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -1238,5 +1239,24 @@ class Foo {
     def action = group.find { it.templatePresentation.text.contains(template.key) }
     (action as InvokeTemplateAction).perform()
     myFixture.checkResult('//a foobar+x b')
+  }
+
+  void "test completion in dumb mode"() {
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate('hello_world', 'user', 'Hello, World')
+    TemplateContextType contextType = contextType(JavaCodeContextType.class)
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable())
+
+    myFixture.configureByText "a.java", "class Foo {{ hello_<caret> }}"
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
+    DumbServiceImpl.getInstance(getProject()).runInDumbMode(new Runnable() {
+      @Override
+      void run() {
+        myFixture.completeBasic()
+        assert myFixture.lookup
+        assert myFixture.lookupElementStrings.contains('hello_world')
+      }
+    })
   }
 }
