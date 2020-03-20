@@ -103,7 +103,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
       cleanUp();
       return;
     }
-    if (event == DebuggerSession.Event.RESUME || event == DebuggerSession.Event.STEP) {
+    if (event == DebuggerSession.Event.RESUME) {
       cancelComputation();
       myScheduledCleanup = EdtScheduledExecutorService.getInstance().schedule(this::cleanUp, CLEANUP_DELAY_MILLIS, TimeUnit.MILLISECONDS);
     }
