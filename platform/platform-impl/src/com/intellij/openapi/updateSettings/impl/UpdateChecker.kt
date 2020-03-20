@@ -113,6 +113,7 @@ object UpdateChecker {
       override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings,
                                                                              fromSettings || WelcomeFrame.getInstance() != null, true,
                                                                              settings, indicator, null)
+
       override fun isConditionalModal(): Boolean = fromSettings
       override fun shouldStartInBackground(): Boolean = !fromSettings
     })
@@ -170,7 +171,8 @@ object UpdateChecker {
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
     ApplicationManager.getApplication().invokeLater {
-      showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, showSettingsLink, showDialog, showEmptyNotification)
+      showUpdateResult(project, result, updatedPlugins, incompatiblePlugins, externalUpdates, showSettingsLink, showDialog,
+                       showEmptyNotification)
       callback?.setDone()
     }
   }
@@ -247,6 +249,13 @@ object UpdateChecker {
     }
 
     return if (toUpdate.isEmpty()) null else toUpdate.values
+  }
+
+  @JvmStatic
+  fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
+    val updateable = collectUpdateablePlugins()
+    if (updateable.isEmpty()) return
+    validateCompatibleUpdatesForCurrentPlugins(updateable, mutableMapOf(), null, state, null, null)
   }
 
   /**
@@ -473,7 +482,7 @@ object UpdateChecker {
           showNotification(project, title, message, runnable, { notification ->
             notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.title")
             notification.actions.add(0, object : NotificationAction(
-                IdeBundle.message(if (updatedPlugins.size == 1) "plugins.configurable.update.button" else "plugin.manager.update.all")) {
+              IdeBundle.message(if (updatedPlugins.size == 1) "plugins.configurable.update.button" else "plugin.manager.update.all")) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 notification.expire()
                 PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
@@ -519,7 +528,7 @@ object UpdateChecker {
         ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
         val title = IdeBundle.message("updates.no.updates.notification")
-        showNotification(project, title, "", {}, { notification -> notification.actions.clear()}, NotificationUniqueType.PLUGINS)
+        showNotification(project, title, "", {}, { notification -> notification.actions.clear() }, NotificationUniqueType.PLUGINS)
       }
     }
   }
@@ -538,7 +547,8 @@ object UpdateChecker {
                                action: () -> Unit,
                                extraBuilder: ((Notification) -> Unit)?,
                                notificationType: NotificationUniqueType) {
-    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, null)
+    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
+                                                                 null)
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         notification.expire()

@@ -32,8 +32,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +46,6 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
@@ -123,7 +122,6 @@ public class PluginManagerConfigurable
 
   private List<IdeaPluginDescriptor> myCustomRepositoryPluginsList;
   private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
-  private Map<PluginId, IdeaPluginDescriptor> myAllRepositoryPluginsMap;
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myTagsSorted;
@@ -316,7 +314,7 @@ public class PluginManagerConfigurable
   private void resetPanels() {
     synchronized (myRepositoriesLock) {
       myAllRepositoryPluginsList = null;
-      myAllRepositoryPluginsMap = null;
+      myCustomRepositoryPluginsList = null;
       myCustomRepositoryPluginsMap = null;
     }
 
@@ -381,13 +379,14 @@ public class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> pair = loadRepositoryPlugins();
-            //    Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
-            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadRepositoryPlugins();
             try {
-              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true", "/sortBy:featured");
-              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date", "/sortBy:updated");
-              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads", "/sortBy:downloads");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
+                                         "/sortBy:featured");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.new.and.updated"), "orderBy=update+date",
+                                         "/sortBy:updated");
+              addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.downloads"), "orderBy=downloads",
+                                         "/sortBy:downloads");
               addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.top.rated"), "orderBy=rating", "/sortBy:rating");
             }
             catch (IOException e) {
@@ -643,9 +642,7 @@ public class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> p = loadRepositoryPlugins();
-                Map<PluginId, IdeaPluginDescriptor> allRepositoriesMap = p.first;
-                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = p.second;
+                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadRepositoryPlugins();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
@@ -702,6 +699,7 @@ public class PluginManagerConfigurable
                   result.descriptors.addAll(0, builtinList);
                 }
 
+                //TODO: WT
                 if (result.descriptors.isEmpty() && "/tag:Paid".equals(query)) {
                   for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
                     if (descriptor.getProductCode() != null) {
@@ -1529,7 +1527,17 @@ public class PluginManagerConfigurable
     }
     try {
       if (myCustomRepositoryPluginsList != null) {
-        myAllRepositoryPluginsList = RepositoryHelper.loadPlugins(null, null);
+        ApplicationManager.getApplication().executeOnPooledThread(
+          () ->
+          {
+            try {
+              myAllRepositoryPluginsList = RepositoryHelper.loadPlugins(null, null);
+            }
+            catch (IOException e) {
+              LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
+            }
+          });
+        while (myAllRepositoryPluginsList == null) Thread.sleep(100);
         //TODO: actually choose latest plugin for deduplication
         {
           myAllRepositoryPluginsList.addAll(myCustomRepositoryPluginsList);
@@ -1543,62 +1551,44 @@ public class PluginManagerConfigurable
         }
       }
     }
-    catch (IOException e) {
+    catch (IOException | InterruptedException e) {
       LOG.info(e);
     }
     return Collections.emptyList();
   }
 
   @NotNull
-  private Pair<Map<PluginId, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadRepositoryPlugins() {
+  private Map<String, List<IdeaPluginDescriptor>> loadRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoryPluginsMap != null) {
-        return Pair.create(myAllRepositoryPluginsMap, myCustomRepositoryPluginsMap);
+      if (myCustomRepositoryPluginsMap != null) {
+        return myCustomRepositoryPluginsMap;
       }
     }
-
     List<IdeaPluginDescriptor> list = new ArrayList<>();
-    Map<PluginId, IdeaPluginDescriptor> map = new HashMap<>();
     Map<String, List<IdeaPluginDescriptor>> custom = new HashMap<>();
-
     for (String host : RepositoryHelper.getPluginHosts()) {
       try {
-        List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null);
         if (host != null) {
+          List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null);
+          list.addAll(descriptors);  // TODO to extract to method - list should contains only latest version
           custom.put(host, descriptors);
-        }
-        for (IdeaPluginDescriptor plugin : descriptors) {
-          PluginId id = plugin.getPluginId();
-          if (!map.containsKey(id)) {
-            list.add(plugin);
-            map.put(id, plugin);
-          }
         }
       }
       catch (IOException e) {
-        if (host == null) {
-          LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
-        }
-        else {
-          LOG.info(host, e);
-        }
+        LOG.info(host, e);
       }
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      InstalledPluginsState state = InstalledPluginsState.getInstance();
-      for (IdeaPluginDescriptor descriptor : list) {
-        state.onDescriptorDownload(descriptor);
-      }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
     });
 
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoryPluginsList == null) {
-        myAllRepositoryPluginsList = list;
-        myAllRepositoryPluginsMap = map;
+      if (myCustomRepositoryPluginsMap == null) {
         myCustomRepositoryPluginsMap = custom;
+        myCustomRepositoryPluginsList = list;
       }
-      return Pair.create(myAllRepositoryPluginsMap, myCustomRepositoryPluginsMap);
+      return myCustomRepositoryPluginsMap;
     }
   }
 
