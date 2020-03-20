@@ -785,7 +785,8 @@ public class HintManagerImpl extends HintManager {
       attributes.setEffectType(EffectType.LINE_UNDERSCORE);
       highlighter = editor.getMarkupModel()
         .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
-    } else {
+    }
+    else {
       highlighter = null;
     }
 
