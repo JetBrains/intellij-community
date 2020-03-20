@@ -147,11 +147,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
         if (!isLayoutInsetsAdjusted) {
           isLayoutInsetsAdjusted = true
           if (container.getClientProperty(DialogWrapper.DIALOG_CONTENT_PANEL_PROPERTY) != null) {
-            val topBottom = createUnitValue(spacing.dialogTopBottom, false)
-            val leftRight = createUnitValue(spacing.dialogLeftRight, true)
             // since we compensate visual padding, child components should be not clipped, so, we do not use content pane DialogWrapper border (returns null),
             // but instead set insets to our content panel (so, child components are not clipped)
-            lc.insets = arrayOf(topBottom, leftRight, topBottom, leftRight)
+            lc.setInsets(spacing.dialogTopBottom, spacing.dialogLeftRight)
           }
         }
 
@@ -295,36 +293,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
     val isCheckboxRow get() = this == CHECKBOX || this == CHECKBOX_TALL
   }
-}
-
-internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
-  val unitValue = createUnitValue(value, isHorizontal)
-  return BoundSize(unitValue, unitValue, null, false, null)
-}
-
-fun createLayoutConstraints(): LC {
-  val lc = LC()
-  lc.gridGapX = gapToBoundSize(0, true)
-  lc.setInsets(0)
-  return lc
-}
-
-fun LC.setInsets(value: Int) {
-  val h = createUnitValue(value, isHorizontal = true)
-  val v = createUnitValue(value, isHorizontal = false)
-  insets = arrayOf(v, h, v, h)
-}
-
-fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
-  val lc = LC()
-  lc.gridGapX = gapToBoundSize(horizontalGap, isHorizontal = true)
-  lc.gridGapY = gapToBoundSize(verticalGap, isHorizontal = false)
-  lc.setInsets(0)
-  return lc
-}
-
-private fun createUnitValue(value: Int, isHorizontal: Boolean): UnitValue {
-  return UnitValue(value.toFloat(), "px", isHorizontal, UnitValue.STATIC, null)
 }
 
 private fun LC.apply(flags: Array<out LCFlags>): LC {

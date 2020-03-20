@@ -21,7 +21,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.layout.migLayout.MigLayoutBuilderKt;
+import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
 import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
@@ -605,7 +605,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private final class TabPanel extends JPanel implements UISettingsListener {
     private TabPanel() {
-      super(new MigLayout(MigLayoutBuilderKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
+      super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
 
       setOpaque(false);
       setBorder(JBUI.Borders.emptyRight(2));
