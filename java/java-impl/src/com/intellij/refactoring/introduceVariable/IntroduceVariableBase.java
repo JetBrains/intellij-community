@@ -70,6 +70,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author dsl
@@ -121,6 +122,24 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     public String toString() {
       // For debug/test purposes
       return formatDescription(0);
+    }
+
+    @NotNull
+    private static IntroduceVariableBase.JavaReplaceChoice allOccurrencesInside(PsiElement parent,
+                                                                                int sameKeywordCount,
+                                                                                String finalKeyword) {
+      return new JavaReplaceChoice(ReplaceChoice.ALL, null, false) {
+        @Override
+        public PsiExpression[] filter(ExpressionOccurrenceManager manager) {
+          return StreamEx.of(manager.getOccurrences()).filter(expr -> PsiTreeUtil.isAncestor(parent, expr, true))
+            .toArray(PsiExpression.EMPTY_ARRAY);
+        }
+
+        @Override
+        public String formatDescription(int occurrencesCount) {
+          return JavaRefactoringBundle.message("replace.occurrences.inside.statement", occurrencesCount, finalKeyword, sameKeywordCount);
+        }
+      };
     }
   }
 
@@ -1220,14 +1239,77 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
 
         if (myOccurrences.size() > 1 && !myCantReplaceAll) {
-          JavaReplaceChoice choice = occurrencesMap.containsKey(JavaReplaceChoice.NO_WRITE)
-                                     ? new JavaReplaceChoice(ReplaceChoice.ALL, JavaRefactoringBundle.message("replace.all.read.and.write"),
-                                                             false)
-                                     : JavaReplaceChoice.ALL;
-          occurrencesMap.put(choice, myOccurrences);
+          if (occurrencesMap.containsKey(JavaReplaceChoice.NO_WRITE)) {
+            JavaReplaceChoice choice = new JavaReplaceChoice(
+              ReplaceChoice.ALL, JavaRefactoringBundle.message("replace.all.read.and.write"), false);
+            occurrencesMap.put(choice, myOccurrences);
+          }
+          else {
+            generateScopeBasedChoices(expr, occurrencesMap);
+            occurrencesMap.put(JavaReplaceChoice.ALL, myOccurrences);
+          }
         }
       }
       return occurrencesMap;
+    }
+
+    private void generateScopeBasedChoices(PsiExpression expr,
+                                           LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap) {
+      Comparator<PsiElement> treeOrder = (e1, e2) -> {
+        if (PsiTreeUtil.isAncestor(e1, e2, true)) return 1;
+        if (PsiTreeUtil.isAncestor(e2, e1, true)) return -1;
+        return 0;
+      };
+      PsiElement physical = getPhysicalElement(expr);
+      TreeMap<PsiElement, List<PsiExpression>> groupByBlock =
+        StreamEx.of(myOccurrences).groupingBy(e -> PsiTreeUtil.findCommonParent(e, physical),
+                                              () -> new TreeMap<>(treeOrder), Collectors.toList());
+      assert !groupByBlock.isEmpty();
+      List<PsiExpression> currentOccurrences = new ArrayList<>();
+      Map<String, Integer> counts = new HashMap<>();
+      groupByBlock.forEach((parent, occurrences) -> {
+        PsiElement nextParent = groupByBlock.higherKey(parent);
+        if (nextParent == null) return;
+        currentOccurrences.addAll(occurrences);
+        if (currentOccurrences.size() == 1) return;
+        PsiElement current = parent.getParent();
+        String keyword = null;
+        while (current != nextParent) {
+          if (current instanceof PsiIfStatement || current instanceof PsiWhileStatement || current instanceof PsiForStatement ||
+              current instanceof PsiTryStatement) {
+            keyword = current.getFirstChild().getText();
+          }
+          else if (current instanceof PsiDoWhileStatement) {
+            keyword = "do-while";
+          }
+          else if (current instanceof PsiForeachStatement) {
+            keyword = "for-each";
+          }
+          else if (current instanceof PsiLambdaExpression) {
+            keyword = "lambda";
+          }
+          if (keyword != null) {
+            break;
+          }
+          current = current.getParent();
+        }
+        if (keyword == null && nextParent instanceof PsiIfStatement) {
+          PsiStatement thenBranch = ((PsiIfStatement)nextParent).getThenBranch();
+          PsiStatement elseBranch = ((PsiIfStatement)nextParent).getElseBranch();
+          if (PsiTreeUtil.isAncestor(thenBranch, parent, false)) {
+            keyword = "if-then";
+          } else if (PsiTreeUtil.isAncestor(elseBranch, parent, false)) {
+            keyword = "else";
+          }
+        }
+        if (keyword != null) {
+          int sameKeywordCount = counts.merge(keyword, 1, Integer::sum);
+          if (sameKeywordCount <= 2) {
+            JavaReplaceChoice choice = JavaReplaceChoice.allOccurrencesInside(parent, sameKeywordCount, keyword);
+            occurrencesMap.put(choice, new ArrayList<>(currentOccurrences));
+          }
+        }
+      });
     }
   }
 

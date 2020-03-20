@@ -175,6 +175,26 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      invokeEditorAction(IdeActions.ACTION_EDITOR_ENTER);
    });
   }
+  
+  public void testInBlock1() {
+    doTestReplaceChoice("Replace 0 occurrences in 'else' block");
+  }
+  
+  public void testInBlock2() {
+    doTestReplaceChoice("Replace 0 occurrences in 'if-then' block");
+  }
+  
+  public void testInBlock3() {
+    doTestReplaceChoice("Replace all 0 occurrences");
+  }
+  
+  public void testInBlockLambda1() {
+    doTestReplaceChoice("Replace 0 occurrences in 'lambda' block");
+  }
+  
+  public void testInBlockLambda2() {
+    doTestReplaceChoice("Replace 0 occurrences in outer 'lambda' block");
+  }
 
   private void doTestStopEditing(Consumer<AbstractInplaceIntroducer> pass) {
     String name = getTestName(true);
