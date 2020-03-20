@@ -6,6 +6,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.AnActionButton
@@ -66,14 +67,9 @@ internal class AnActionOptionButton(
     private val component: JComponent
   ) : AbstractAction(action.templatePresentation.text) {
     override fun actionPerformed(e: ActionEvent?) {
-      action.actionPerformed(
-        AnActionEvent.createFromAnAction(
-          action,
-          null,
-          GitInteractiveRebaseDialog.PLACE,
-          DataManager.getInstance().getDataContext(component)
-        )
-      )
+      val context = DataManager.getInstance().getDataContext(component)
+      val event = AnActionEvent.createFromAnAction(action, null, GitInteractiveRebaseDialog.PLACE, context)
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event, context)
     }
   }
 }
