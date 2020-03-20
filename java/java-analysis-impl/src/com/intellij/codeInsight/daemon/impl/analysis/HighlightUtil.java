@@ -75,8 +75,6 @@ import java.util.stream.Stream;
 public class HighlightUtil extends HighlightUtilBase {
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
-  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
   private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new THashMap<>(11);
   private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new THashMap<>(8);
@@ -141,6 +139,10 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   private HighlightUtil() { }
+
+  private static QuickFixFactory getFixFactory() {
+    return QuickFixFactory.getInstance();
+  }
 
   private static String getIncompatibleModifier(@NotNull String modifier,
                                                 @NotNull PsiModifierList modifierList,
@@ -369,7 +371,7 @@ public class HighlightUtil extends HighlightUtilBase {
         return null;
       }
       highlightInfo = createIncompatibleTypeHighlightInfo(lType, type, assignment.getTextRange(), 0);
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createChangeToAppendFix(sign, lType, assignment));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createChangeToAppendFix(sign, lType, assignment));
     }
     if (highlightInfo == null) {
       return null;
@@ -505,12 +507,12 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
     if (rType != null && expression != null && isCastIntentionApplicable(expression, lType)) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(lType, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createAddTypeCastFix(lType, expression));
     }
     if (expression != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithOptionalFix(lType, expression));
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapExpressionFix(lType, expression));
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createWrapWithAdapterFix(lType, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapWithOptionalFix(lType, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapExpressionFix(lType, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createWrapWithAdapterFix(lType, expression));
       AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
       HighlightFixUtil.registerCollectionToArrayFixAction(highlightInfo, rType, lType, expression);
       HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
@@ -550,8 +552,8 @@ public class HighlightUtil extends HighlightUtilBase {
           errorResult =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
           if (method != null && valueType != null && method.getBody() != null) {
-            QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createDeleteReturnFix(method, statement, returnValue));
-            QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true));
+            QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createDeleteReturnFix(method, statement, returnValue));
+            QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createMethodReturnFix(method, valueType, true));
           }
         }
         else {
@@ -559,13 +561,13 @@ public class HighlightUtil extends HighlightUtilBase {
           errorResult = checkAssignability(returnType, valueType, returnValue, textRange, returnValue.getStartOffsetInParent());
           if (errorResult != null && valueType != null) {
             if (!PsiType.VOID.equals(valueType)) {
-              QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true));
+              QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createMethodReturnFix(method, valueType, true));
             }
             HighlightFixUtil.registerChangeParameterClassFix(returnType, valueType, errorResult);
             if (returnType instanceof PsiArrayType) {
               final PsiType erasedValueType = TypeConversionUtil.erasure(valueType);
               if (erasedValueType != null && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), erasedValueType)) {
-                QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, returnValue));
+                QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createSurroundWithArrayFix(null, returnValue));
               }
             }
             HighlightFixUtil.registerCollectionToArrayFixAction(errorResult, valueType, returnType, returnValue);
@@ -576,14 +578,14 @@ public class HighlightUtil extends HighlightUtilBase {
         description = JavaErrorBundle.message("missing.return.value");
         errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description)
           .navigationShift(PsiKeyword.RETURN.length()).create();
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true));
+        QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createMethodReturnFix(method, PsiType.VOID, true));
       }
     }
     return errorResult;
   }
 
   static void registerReturnTypeFixes(@NotNull HighlightInfo info, @NotNull PsiMethod method, @NotNull PsiType expectedReturnType) {
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, expectedReturnType, true, true));
+    QuickFixAction.registerQuickFixAction(info, getFixFactory().createMethodReturnFix(method, expectedReturnType, true, true));
   }
 
   @NotNull
@@ -667,9 +669,9 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       HighlightInfo highlightInfo = builder.create();
       if (variable instanceof PsiLocalVariable) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createReuseVariableDeclarationFix((PsiLocalVariable)variable));
+        QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createReuseVariableDeclarationFix((PsiLocalVariable)variable));
       }
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNavigateToAlreadyDeclaredVariableFix(oldVariable));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createNavigateToAlreadyDeclaredVariableFix(oldVariable));
       return highlightInfo;
     }
     return null;
@@ -884,7 +886,7 @@ public class HighlightUtil extends HighlightUtilBase {
       String message = JavaErrorBundle.message("incompatible.modifiers", modifier, incompatible);
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createModifierListFix(modifierList, modifier, false, false));
       return highlightInfo;
     }
 
@@ -968,7 +970,7 @@ public class HighlightUtil extends HighlightUtilBase {
                         !modifierOwnerParent.isPhysical();
           }
           if (privateOrProtected && !isAllowed) {
-            fix = QUICK_FIX_FACTORY.createChangeModifierFix();
+            fix = getFixFactory().createChangeModifierFix();
           }
         }
 
@@ -1038,7 +1040,8 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!isAllowed) {
       String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix != null ? fix : QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false));
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix != null ? fix : getFixFactory()
+        .createModifierListFix(modifierList, modifier, false, false));
       return highlightInfo;
     }
 
@@ -1151,7 +1154,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (length > 1) {
           String message = JavaErrorBundle.message("too.many.characters.in.character.literal");
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertToStringLiteralAction());
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertToStringLiteralAction());
           return info;
         }
         else if (length == 0) {
@@ -1324,11 +1327,11 @@ public class HighlightUtil extends HighlightUtilBase {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expr;
       final PsiMethod method = methodCall.resolveMethod();
       if (method != null) {
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.BOOLEAN, true));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createMethodReturnFix(method, PsiType.BOOLEAN, true));
       }
     }
     else if (expr instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)expr).getOperationTokenType() == JavaTokenType.EQ) {
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAssignmentToComparisonFix((PsiAssignmentExpression)expr));
+      QuickFixAction.registerQuickFixAction(info, getFixFactory().createAssignmentToComparisonFix((PsiAssignmentExpression)expr));
     }
     return info;
   }
@@ -1381,7 +1384,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final String description = JavaErrorBundle.message("exception.never.thrown.try", JavaHighlightUtil.formatType(caughtType));
     final HighlightInfo errorResult =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter).descriptionAndTooltip(description).create();
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createDeleteCatchFix(parameter));
+    QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createDeleteCatchFix(parameter));
     return errorResult;
   }
 
@@ -1406,7 +1409,7 @@ public class HighlightUtil extends HighlightUtilBase {
         final String description = JavaErrorBundle.message("exception.never.thrown.try", JavaHighlightUtil.formatType(catchType));
         final HighlightInfo highlight =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
-        QuickFixAction.registerQuickFixAction(highlight, QUICK_FIX_FACTORY.createDeleteMultiCatchFix(typeElement));
+        QuickFixAction.registerQuickFixAction(highlight, getFixFactory().createDeleteMultiCatchFix(typeElement));
         highlights.add(highlight);
       }
     }
@@ -1463,10 +1466,10 @@ public class HighlightUtil extends HighlightUtilBase {
         final HighlightInfo highlightInfo =
           HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(catchSection).descriptionAndTooltip(message).create();
         if (isMultiCatch) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeleteMultiCatchFix(catchTypeElement));
+          QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createDeleteMultiCatchFix(catchTypeElement));
         }
         else {
-          QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeleteCatchFix(parameter));
+          QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createDeleteCatchFix(parameter));
         }
         result.add(highlightInfo);
       }
@@ -1487,7 +1490,7 @@ public class HighlightUtil extends HighlightUtilBase {
       HighlightInfo error =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
       if (statement instanceof PsiExpressionStatement) {
-        QuickFixAction.registerQuickFixAction(error, QuickFixFactory.getInstance().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
+        QuickFixAction.registerQuickFixAction(error, getFixFactory().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
       }
       return error;
     }
@@ -1514,14 +1517,14 @@ public class HighlightUtil extends HighlightUtilBase {
       String message = JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(type));
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       if (switchBlock instanceof PsiSwitchStatement) {
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertSwitchToIfIntention((PsiSwitchStatement)switchBlock));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createConvertSwitchToIfIntention((PsiSwitchStatement)switchBlock));
       }
       if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(PsiType.INT, expression));
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(PsiType.INT, expression));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddTypeCastFix(PsiType.INT, expression));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createWrapWithAdapterFix(PsiType.INT, expression));
       }
       if (requiredLevel != null) {
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(requiredLevel));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createIncreaseLanguageLevelFix(requiredLevel));
       }
       return info;
     }
@@ -1632,11 +1635,11 @@ public class HighlightUtil extends HighlightUtilBase {
       HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parentExpr).descriptionAndTooltip(message).create();
       if (parentExpr instanceof PsiPrefixExpression && token.getTokenType() == JavaTokenType.EXCL) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNegationBroadScopeFix((PsiPrefixExpression)parentExpr));
+        QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createNegationBroadScopeFix((PsiPrefixExpression)parentExpr));
         if (expression instanceof PsiMethodCallExpression) {
           PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
           if (method != null) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.BOOLEAN, true));
+            QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createMethodReturnFix(method, PsiType.BOOLEAN, true));
           }
         }
       }
@@ -1886,7 +1889,7 @@ public class HighlightUtil extends HighlightUtilBase {
       final String description = JavaErrorBundle.message("array.type.expected", JavaHighlightUtil.formatType(arrayExpressionType));
       final HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(arrayExpression).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createReplaceWithListAccessFix(arrayAccessExpression));
+      QuickFixAction.registerQuickFixAction(info, getFixFactory().createReplaceWithListAccessFix(arrayAccessExpression));
       return info;
     }
 
@@ -2014,7 +2017,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     String description = JavaErrorBundle.message("array.initializer.not.allowed");
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddNewArrayExpressionFix(expression));
+    QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddNewArrayExpressionFix(expression));
     return info;
   }
 
@@ -2121,9 +2124,9 @@ public class HighlightUtil extends HighlightUtilBase {
         String message = JavaErrorBundle.message(values.isEmpty() ? "switch.expr.empty" : "switch.expr.incomplete");
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
         if (!missingConstants.isEmpty()) {
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddMissingEnumBranchesFix(switchBlock, missingConstants));
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddMissingEnumBranchesFix(switchBlock, missingConstants));
         }
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddSwitchDefaultFix(switchBlock, null));
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createAddSwitchDefaultFix(switchBlock, null));
         results.add(info);
       }
     }
@@ -2561,7 +2564,7 @@ public class HighlightUtil extends HighlightUtilBase {
           final PsiTypeElement element = typeElements.get(sub ? i : j);
           final HighlightInfo highlight =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
-          QuickFixAction.registerQuickFixAction(highlight, QUICK_FIX_FACTORY.createDeleteMultiCatchFix(element));
+          QuickFixAction.registerQuickFixAction(highlight, getFixFactory().createDeleteMultiCatchFix(element));
           result.add(highlight);
           break;
         }
@@ -2604,12 +2607,12 @@ public class HighlightUtil extends HighlightUtilBase {
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
           result.add(highlightInfo);
 
-          QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMoveCatchUpFix(catchSection, upperCatchSection));
+          QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createMoveCatchUpFix(catchSection, upperCatchSection));
           if (isInMultiCatch) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeleteMultiCatchFix(typeElement));
+            QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createDeleteMultiCatchFix(typeElement));
           }
           else {
-            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeleteCatchFix(parameter));
+            QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createDeleteCatchFix(parameter));
           }
         }
       }
@@ -2695,7 +2698,7 @@ public class HighlightUtil extends HighlightUtilBase {
           HighlightInfo info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(alien).descriptionAndTooltip(description).create();
           if (previousRule != null) {
-            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapSwitchRuleStatementsIntoBlockFix(previousRule));
+            QuickFixAction.registerQuickFixAction(info, getFixFactory().createWrapSwitchRuleStatementsIntoBlockFix(previousRule));
           }
           return info;
         }
@@ -2718,7 +2721,7 @@ public class HighlightUtil extends HighlightUtilBase {
       // addTypeCast quickfix is not applicable here since no type can be cast to boolean
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(PsiType.BOOLEAN, type, expression.getTextRange(), 0);
       if (expression instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)expression).getOperationTokenType() == JavaTokenType.EQ) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAssignmentToComparisonFix((PsiAssignmentExpression)expression));
+        QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createAssignmentToComparisonFix((PsiAssignmentExpression)expression));
       }
       return highlightInfo;
     }
@@ -2930,13 +2933,13 @@ public class HighlightUtil extends HighlightUtilBase {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange(), 0);
       if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, throwable)) {
         if (context instanceof PsiExpression) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(throwable, (PsiExpression)context));
+          QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createAddTypeCastFix(throwable, (PsiExpression)context));
         }
       }
 
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
       if (aClass != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(aClass, throwable, true));
+        QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createExtendsListFix(aClass, throwable, true));
       }
       return highlightInfo;
     }
@@ -3015,7 +3018,7 @@ public class HighlightUtil extends HighlightUtilBase {
         else if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
           HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)resolved, ref, info, result.getCurrentFileResolveScope());
           if (ref instanceof PsiReferenceExpression) {
-            QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameWrongRefFix((PsiReferenceExpression)ref));
+            QuickFixAction.registerQuickFixAction(info, getFixFactory().createRenameWrongRefFix((PsiReferenceExpression)ref));
           }
         }
         UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
@@ -3028,7 +3031,7 @@ public class HighlightUtil extends HighlightUtilBase {
           HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
         HighlightFixUtil.registerStaticProblemQuickFixAction(resolved, info, ref);
         if (ref instanceof PsiReferenceExpression) {
-          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameWrongRefFix((PsiReferenceExpression)ref));
+          QuickFixAction.registerQuickFixAction(info, getFixFactory().createRenameWrongRefFix((PsiReferenceExpression)ref));
         }
         return info;
       }
@@ -3173,7 +3176,7 @@ public class HighlightUtil extends HighlightUtilBase {
     String description = JavaErrorBundle.message("expected.class.or.package");
     HighlightInfo info =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description).create();
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
+    QuickFixAction.registerQuickFixAction(info, getFixFactory().createRemoveQualifierFix(qualifier, expression, (PsiClass)resolved));
     return info;
   }
 
@@ -3183,7 +3186,7 @@ public class HighlightUtil extends HighlightUtilBase {
       final String message = JavaErrorBundle.message("annotation.interface.members.may.not.have.parameters");
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createRemoveParameterListFix((PsiMethod)parent));
+      QuickFixAction.registerQuickFixAction(highlightInfo, getFixFactory().createRemoveParameterListFix((PsiMethod)parent));
       return highlightInfo;
     }
     return null;
@@ -3299,8 +3302,8 @@ public class HighlightUtil extends HighlightUtilBase {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(element, feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(getApplicableLevel(file, feature)));
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createShowModulePropertiesFix(element));
+      QuickFixAction.registerQuickFixAction(info, getFixFactory().createIncreaseLanguageLevelFix(getApplicableLevel(file, feature)));
+      QuickFixAction.registerQuickFixAction(info, getFixFactory().createShowModulePropertiesFix(element));
       return info;
     }
 
