@@ -796,6 +796,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
+    if (!myHolder.hasErrorResults() && results.length == 1) {
+      myHolder.add(HighlightUtil.checkReference(ref, results[0], myFile, myLanguageLevel));
+    }
     if (!myHolder.hasErrorResults()) {
       PsiElement resolved = results.length >= 1 ? results[0].getElement() : null;
       if (results.length > 1) {
