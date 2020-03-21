@@ -187,7 +187,7 @@ public final class StartupUtil {
     // this check must be performed before system directories are locked
     boolean configImportNeeded = !Main.isHeadless() &&
                                  (!Files.exists(configPath) ||
-                                  CustomConfigMigrationOptionKt.needsCustomConfigMigration());
+                                  CustomConfigMigrationOption.needsCustomConfigMigration());
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
