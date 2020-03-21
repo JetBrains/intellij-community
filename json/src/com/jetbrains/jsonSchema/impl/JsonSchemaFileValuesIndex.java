@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, String> {
@@ -82,12 +80,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @Nullable
   public static String getCachedValue(Project project, VirtualFile file, String requestedKey) {
     if (project.isDisposed() || !file.isValid() || DumbService.isDumb(project)) return NULL;
-    List<String> values = FileBasedIndex.getInstance().getValues(INDEX_ID, requestedKey, GlobalSearchScope.fileScope(project, file));
-    if (values.size() == 1) {
-      return values.get(0);
-    }
-
-    return null;
+    return FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project).get(requestedKey);
   }
 
   @NotNull
