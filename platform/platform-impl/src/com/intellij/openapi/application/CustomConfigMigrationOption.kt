@@ -18,49 +18,54 @@ sealed class CustomConfigMigrationOption {
 
   class MigrateFromCustomPlace(val location: Path) : CustomConfigMigrationOption()
 
-}
+  companion object {
+    @JvmStatic
+    fun readCustomConfigMigrationOption(): CustomConfigMigrationOption? {
+      val markerFile = getMarkerFilePath()
+      if (!markerFile.exists()) return null
 
-fun readCustomConfigMigrationOption(): CustomConfigMigrationOption? {
-  val markerFile = getMarkerFilePath()
-  if (!markerFile.exists()) return null
-
-  try {
-    val content = FileUtil.loadFile(markerFile.toFile())
-    if (content.isEmpty()) return CustomConfigMigrationOption.StartWithCleanConfig
-    val configToMigrate = Paths.get(content)
-    if (!configToMigrate.exists()) {
-      log.warn("$markerFile points to non-existent config: [$content]")
-      return null
+      try {
+        val content = FileUtil.loadFile(markerFile.toFile())
+        if (content.isEmpty()) return StartWithCleanConfig
+        val configToMigrate = Paths.get(content)
+        if (!configToMigrate.exists()) {
+          log.warn("$markerFile points to non-existent config: [$content]")
+          return null
+        }
+        return MigrateFromCustomPlace(configToMigrate)
+      }
+      catch (e: Exception) {
+        log.warn("Couldn't load content of $markerFile")
+        return null
+      }
     }
-    return CustomConfigMigrationOption.MigrateFromCustomPlace(configToMigrate)
-  }
-  catch (e: Exception) {
-    log.warn("Couldn't load content of $markerFile")
-    return null
+
+    @JvmStatic
+    fun needsCustomConfigMigration(): Boolean = readCustomConfigMigrationOption() != null
+
+    @JvmStatic
+    fun removeCustomConfigMigrationFile() {
+      val markerFile = getMarkerFilePath()
+      try {
+        markerFile.delete()
+      }
+      catch (e: Exception) {
+        log.warn("Couldn't delete the custom config migration file $markerFile", e)
+      }
+    }
+
+    /**
+     * `null` means starts with clean configs
+     */
+    fun writeCustomConfigMigrationFile(migrateFrom: Path?) {
+      val markerFile = getMarkerFilePath()
+      if (markerFile.exists()) {
+        log.error("Marker file $markerFile shouldn't exist")
+      }
+      markerFile.write(migrateFrom?.systemIndependentPath ?: "")
+    }
+
+    private fun getMarkerFilePath() = Paths.get(PathManager.getConfigPath(), "migrate.config")
+
   }
 }
-
-fun needsCustomConfigMigration(): Boolean = readCustomConfigMigrationOption() != null
-
-fun removeCustomConfigMigrationFile() {
-  val markerFile = getMarkerFilePath()
-  try {
-    markerFile.delete()
-  }
-  catch (e: Exception) {
-    log.warn("Couldn't delete the custom config migration file $markerFile", e)
-  }
-}
-
-/**
- * `null` means starts with clean configs
- */
-fun writeCustomConfigMigrationFile(migrateFrom: Path?) {
-  val markerFile = getMarkerFilePath()
-  if (markerFile.exists()) {
-    log.error("Marker file $markerFile shouldn't exist")
-  }
-  markerFile.write(migrateFrom?.systemIndependentPath ?: "")
-}
-
-private fun getMarkerFilePath() = Paths.get(PathManager.getConfigPath(), "migrate.config")
