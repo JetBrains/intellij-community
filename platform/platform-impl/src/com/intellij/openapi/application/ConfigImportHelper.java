@@ -85,8 +85,8 @@ public final class ConfigImportHelper {
     catch (Exception ignored) { }
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
-    CustomConfigMigrationOption customMigrationOption = CustomConfigMigrationOptionKt.readCustomConfigMigrationOption();
-    CustomConfigMigrationOptionKt.removeCustomConfigMigrationFile();
+    CustomConfigMigrationOption customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOption();
+    CustomConfigMigrationOption.removeCustomConfigMigrationFile();
     File tempBackup = null;
 
     try {
