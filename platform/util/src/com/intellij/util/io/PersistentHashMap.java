@@ -162,7 +162,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if (myIsReadOnly) options = options.setReadOnly();
 
     myAppendCache = createAppendCache(keyDescriptor);
-    final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
+    final PersistentEnumeratorBase.@NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
     myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonNegativeIntegralValues();
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
@@ -170,14 +170,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8];
     mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtilRt.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 4];
 
-    myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase>() {
+    myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>>() {
       @Override
-      int recordWriteOffset(PersistentEnumeratorBase enumerator, byte[] buf) {
+      int recordWriteOffset(PersistentEnumeratorBase<?> enumerator, byte[] buf) {
         return recordHandler.recordWriteOffset(enumerator, buf);
       }
 
       @Override
-      byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase enumerator) {
+      byte @NotNull [] getRecordBuffer(PersistentEnumeratorBase<?> enumerator) {
         return myIntAddressForNewRecord ? mySmallRecordBuffer : myRecordBuffer;
       }
 
