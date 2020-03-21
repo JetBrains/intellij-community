@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
@@ -13,6 +13,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -58,10 +59,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -121,13 +120,20 @@ public final class PythonSdkType extends SdkType {
   @NonNls
   @Nullable
   public String suggestHomePath() {
-    final Sdk[] existingSdks = ProjectJdkTable.getInstance().getAllJdks();
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> suggestHomePaths() {
+    final Sdk[] existingSdks = ReadAction.compute(() -> ProjectJdkTable.getInstance().getAllJdks());
     final List<PyDetectedSdk> sdks = PySdkExtKt.detectSystemWideSdks(null, Arrays.asList(existingSdks));
+    //return all detected items after PY-41218 is fixed
     final PyDetectedSdk latest = StreamEx.of(sdks).findFirst().orElse(null);
     if (latest != null) {
-      return latest.getHomePath();
+      return Collections.singleton(latest.getHomePath());
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Override
