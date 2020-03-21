@@ -1,15 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author cdr
@@ -20,16 +23,16 @@ public class ProjectWizardUtil {
   public static String findNonExistingFileName(String searchDirectory, String preferredName, String extension) {
     for (int idx = 0; ; idx++) {
       String fileName = (idx > 0 ? preferredName + idx : preferredName) + extension;
-      if (!new File(searchDirectory, fileName).exists()) {
+      if (!Files.exists(Paths.get(searchDirectory, fileName))) {
         return fileName;
       }
     }
   }
 
   public static boolean createDirectoryIfNotExists(String promptPrefix, String directoryPath, boolean promptUser) {
-    File dir = new File(directoryPath);
+    Path dir = Paths.get(directoryPath);
 
-    if (!dir.exists()) {
+    if (!Files.exists(dir)) {
       if (promptUser) {
         String ide = ApplicationNamesInfo.getInstance().getFullProductName();
         String message = JavaUiBundle.message("prompt.project.wizard.directory.does.not.exist", promptPrefix, dir, ide);
@@ -39,14 +42,18 @@ public class ProjectWizardUtil {
         }
       }
 
-      if (!FileUtil.createDirectory(dir)) {
-        Messages.showErrorDialog(IdeBundle.message("error.failed.to.create.directory", dir.getPath()), CommonBundle.getErrorTitle());
+      try {
+        Files.createDirectories(dir);
+      }
+      catch (IOException e) {
+        Logger.getInstance(ProjectWizardUtil.class).warn(e);
+        Messages.showErrorDialog(IdeBundle.message("error.failed.to.create.directory", dir), CommonBundle.getErrorTitle());
         return false;
       }
     }
 
-    if (SystemInfo.isUnix && !dir.canWrite()) {
-      Messages.showErrorDialog(JavaUiBundle.message("error.directory.read.only", dir.getPath()), CommonBundle.getErrorTitle());
+    if (SystemInfo.isUnix && !Files.isWritable(dir)) {
+      Messages.showErrorDialog(JavaUiBundle.message("error.directory.read.only", dir), CommonBundle.getErrorTitle());
       return false;
     }
 
