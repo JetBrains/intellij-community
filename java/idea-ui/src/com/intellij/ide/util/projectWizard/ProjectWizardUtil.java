@@ -36,7 +36,7 @@ public class ProjectWizardUtil {
       if (promptUser) {
         String ide = ApplicationNamesInfo.getInstance().getFullProductName();
         String message = JavaUiBundle.message("prompt.project.wizard.directory.does.not.exist", promptPrefix, dir, ide);
-        int answer = Messages.showOkCancelDialog(message, JavaUiBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
+        int answer = Messages.showOkCancelDialog(message, JavaUiBundle.message("title.directory.does.not.exist"), IdeBundle.message("button.create"), IdeBundle.message("button.cancel"), Messages.getQuestionIcon());
         if (answer != Messages.OK) {
           return false;
         }
