@@ -34,6 +34,9 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
   protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement().getParent();
     if (element instanceof PsiMethod) {
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
+        return;
+      }
       final PsiMethod method = (PsiMethod)element;
       final PsiModifierList modifierList = method.getModifierList();
       WriteAction.run(() -> modifierList.setModifierProperty(PsiModifier.FINAL, true));
