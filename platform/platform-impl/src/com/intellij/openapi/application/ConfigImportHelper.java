@@ -168,6 +168,15 @@ public final class ConfigImportHelper {
     }
   }
 
+  public static boolean needsCustomConfigMigration() {
+    return Files.exists(getCustomConfigMarkerFilePath());
+  }
+
+  @NotNull
+  static Path getCustomConfigMarkerFilePath() {
+    return Paths.get(PathManager.getConfigPath(), "migrate.config");
+  }
+
   @NotNull
   private static File backupCurrentConfigToTemp() throws IOException {
     File tempBackupDir = FileUtil.createTempDirectory("backup", "backup");
