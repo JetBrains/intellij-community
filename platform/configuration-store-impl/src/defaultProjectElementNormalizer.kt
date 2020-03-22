@@ -88,7 +88,7 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
 
   val storageNameToComponentNames = THashMap<String, MutableSet<String>>()
   val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
-  val ignoredComponentNames = THashSet<String>()
+  val ignoredComponentNames = THashSet<String>(listOf("ProjectCodeStyleConfiguration")) // AndroidStudio: b/145210466
   storageNameToComponentNames.put("workspace.xml", workspaceComponentNames)
 
   fun processComponents(aClass: Class<*>) {
