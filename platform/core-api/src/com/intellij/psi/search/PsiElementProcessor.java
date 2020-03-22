@@ -69,6 +69,11 @@ public interface PsiElementProcessor<T extends PsiElement> {
     }
   }
 
+  /**
+   * @deprecated use {@link com.intellij.psi.SyntaxTraverser} API instead. E.g.
+   * {@code SyntaxTraverser.psiTraverser(root).filter(ElementType.class).filter(additionalFilter).toList()}
+   */
+  @Deprecated
   class CollectFilteredElements<T extends PsiElement> extends CollectElements<T> {
     private final PsiElementFilter myFilter;
 

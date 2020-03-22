@@ -20,17 +20,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import org.intellij.lang.regexp.psi.RegExpBackref;
-import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.trimEnd;
 import static com.intellij.openapi.util.text.StringUtil.trimStart;
@@ -94,12 +95,9 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
     @Nullable
     private RegExpGroup resolveRelativeGroup(int index) {
-        PsiElementProcessor.CollectFilteredElements<PsiElement> processor =
-          new PsiElementProcessor.CollectFilteredElements<>(
-            element -> element instanceof RegExpGroup && ((RegExpGroup)element).isCapturing());
-        PsiTreeUtil.processElements(getContainingFile(), processor);
-        SmartList<PsiElement> elements = new SmartList<>(processor.getCollection());
-        return index <= elements.size() ? (RegExpGroup)elements.get(elements.size() - index) : null;
+        List<RegExpGroup> groups = SyntaxTraverser.psiTraverser(getContainingFile()).filter(RegExpGroup.class)
+          .filter(RegExpGroup::isCapturing).toList();
+        return index <= groups.size() ? groups.get(groups.size() - index) : null;
     }
 
     @Override

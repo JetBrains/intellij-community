@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor.CollectElements;
-import com.intellij.psi.search.PsiElementProcessor.CollectFilteredElements;
 import com.intellij.psi.search.PsiElementProcessor.FindElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -851,9 +850,12 @@ public class PsiTreeUtil {
 
   @Contract(pure=true)
   public static PsiElement @NotNull [] collectElements(@Nullable PsiElement element, @NotNull PsiElementFilter filter) {
-    CollectFilteredElements<PsiElement> processor = new CollectFilteredElements<>(filter);
-    processElements(element, processor);
-    return processor.toArray();
+    List<PsiElement> result = new ArrayList<>();
+    processElements(element, e -> {
+      if (filter.isAccepted(e)) result.add(e);
+      return true;
+    });
+    return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @SafeVarargs

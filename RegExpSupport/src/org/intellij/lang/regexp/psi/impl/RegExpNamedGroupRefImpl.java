@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -122,11 +123,8 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
 
       @Override
       public Object @NotNull [] getVariants() {
-        final PsiElementProcessor.CollectFilteredElements<PsiElement> processor = new PsiElementProcessor.CollectFilteredElements<>(
-          e -> e instanceof RegExpGroup && ((RegExpGroup)e).isAnyNamedGroup()
-        );
-        PsiTreeUtil.processElements(getContainingFile(), processor);
-        return processor.toArray();
+        return SyntaxTraverser.psiTraverser(getContainingFile()).filter(RegExpGroup.class)
+          .filter(RegExpGroup::isAnyNamedGroup).toArray(new RegExpGroup[0]);
       }
 
       @Override
