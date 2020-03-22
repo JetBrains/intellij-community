@@ -30,11 +30,19 @@ UFile (package = ) [public class TryCatch {...]
                                 UBinaryExpression (operator = =) [b = 1] = 1
                                     USimpleNameReferenceExpression (identifier = b) [b] = (var b = 0)
                                     ULiteralExpression (value = 1) [1] = 1
-                            UCatchClause (ex) [catch (e) {...}]
+                            UCatchClause (ex) [catch (var ex: java.lang.NumberFormatException) {...}]
+                                UParameter (name = ex) [var ex: java.lang.NumberFormatException]
                                 UBlockExpression [{...}] = 1
                                     UBinaryExpression (operator = =) [b = 1] = 1
                                         USimpleNameReferenceExpression (identifier = b) [b] = Undetermined
                                         ULiteralExpression (value = 1) [1] = 1
+                            UCatchClause (e) [catch (@java.lang.Deprecated var e: java.lang.NullPointerException) {...}]
+                                UParameter (name = e) [@java.lang.Deprecated var e: java.lang.NullPointerException]
+                                    UAnnotation (fqName = java.lang.Deprecated) [@java.lang.Deprecated]
+                                UBlockExpression [{...}] = 2
+                                    UBinaryExpression (operator = =) [b = 2] = 2
+                                        USimpleNameReferenceExpression (identifier = b) [b] = Undetermined
+                                        ULiteralExpression (value = 2) [2] = 2
                         UDeclarationsExpression [var c: int = b] = Undetermined
                             ULocalVariable (name = c) [var c: int = b]
                                 USimpleNameReferenceExpression (identifier = b) [b] = (var b = Phi(1, 0))

@@ -7,10 +7,13 @@ public class TryCatch {
                 sum = sum + Integer.parseInt(part)
                 b = 1
             }
-            catch (e) {
+            catch (var ex: java.lang.NumberFormatException) {
                 b = 1
             }
-            
+            catch (@java.lang.Deprecated var e: java.lang.NullPointerException) {
+                b = 2
+            }
+
             var c: int = b
         }
         return sum
