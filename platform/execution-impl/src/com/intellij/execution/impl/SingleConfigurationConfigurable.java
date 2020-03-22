@@ -456,7 +456,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private static String getDotIdeaStoragePath(@NotNull Project project) {
     // notNullize is to make inspections happy. Paths can't be null for non-default project
     return ProjectKt.isDirectoryBased(project)
-           ? StringUtil.notNullize(project.getBasePath()) + "/.idea/runConfigurations"
+           ? RunManagerImpl.getInstanceImpl(project).getDotIdeaRunConfigurationsPath$intellij_platform_execution_impl()
            : StringUtil.notNullize(project.getProjectFilePath());
   }
 
