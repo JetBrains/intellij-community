@@ -113,7 +113,8 @@ public abstract class ActionManager {
    *
    * @return all action {@code id}s which have the specified prefix.
    */
-  public abstract String @NotNull [] getActionIds(@NotNull String idPrefix);
+  @NotNull
+  public abstract String[] getActionIds(@NotNull String idPrefix);
 
   /**
    * Checks if the specified action ID represents an action group and not an individual action.
