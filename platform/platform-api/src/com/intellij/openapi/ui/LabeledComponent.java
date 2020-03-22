@@ -2,12 +2,14 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,12 +32,14 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   }
 
   @NotNull
-  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull String text) {
+  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull @Nls @NlsUI.Label String text) {
     return create(component, text, BorderLayout.NORTH);
   }
 
   @NotNull
-  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull String text, String labelConstraint) {
+  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component,
+                                                                        @NotNull @Nls @NlsUI.Label String text,
+                                                                        String labelConstraint) {
     LabeledComponent<Comp> labeledComponent = new LabeledComponent<>();
     labeledComponent.setComponent(component);
     labeledComponent.setText(text);
@@ -49,7 +53,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     setAnchor(myLabel);
   }
 
-  public void setText(String text) {
+  public void setText(@Nls @NlsUI.Label String text) {
     if (!StringUtil.isEmpty(text) && !StringUtil.endsWithChar(text, ':')) {
       text += ':';
     }
