@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -50,22 +51,22 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image);
   }
 
-  public JBLabel(@NotNull @Nls String text) {
+  public JBLabel(@NotNull @Nls @NlsUI.Label String text) {
     super(text);
   }
 
-  public JBLabel(@NotNull @Nls String text, @NotNull UIUtil.ComponentStyle componentStyle) {
+  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle) {
     super(text);
     setComponentStyle(componentStyle);
   }
 
-  public JBLabel(@NotNull @Nls String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
+  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
     super(text);
     setComponentStyle(componentStyle);
     setFontColor(fontColor);
   }
 
-  public JBLabel(@NotNull @Nls String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, horizontalAlignment);
   }
 
@@ -73,7 +74,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image, horizontalAlignment);
   }
 
-  public JBLabel(@NotNull @Nls String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, icon, horizontalAlignment);
   }
 
@@ -147,7 +148,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   @Override
-  public void setText(@Nls String text) {
+  public void setText(@Nls @NlsUI.Label String text) {
     super.setText(text);
     if (myEditorPane != null) {
       myEditorPane.setText(getText());
