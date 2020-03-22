@@ -179,7 +179,7 @@ public final class ConfigImportHelper {
 
   @NotNull
   private static File backupCurrentConfigToTemp() throws IOException {
-    File tempBackupDir = FileUtil.createTempDirectory("backup", "backup");
+    File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
     FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir);
     return tempBackupDir;
   }
@@ -193,7 +193,12 @@ public final class ConfigImportHelper {
   @NotNull
   public static Path getBackupPath() {
     Path configDir = PathManager.getConfigDir();
-    return configDir.resolveSibling(configDir.getFileName().toString() + "-backup");
+    return configDir.resolveSibling(getConfigDirName() + "-backup");
+  }
+
+  @NotNull
+  private static String getConfigDirName() {
+    return PathManager.getConfigDir().getFileName().toString();
   }
 
   private static boolean shouldAskForConfig() {
