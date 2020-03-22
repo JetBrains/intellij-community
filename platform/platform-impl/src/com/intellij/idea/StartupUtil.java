@@ -19,7 +19,10 @@ import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ConfigImportHelper;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -190,7 +193,7 @@ public final class StartupUtil {
     // this check must be performed before system directories are locked
     boolean configImportNeeded = !Main.isHeadless() &&
                                  (!Files.exists(configPath) ||
-                                  CustomConfigMigrationOption.needsCustomConfigMigration());
+                                  ConfigImportHelper.needsCustomConfigMigration());
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
