@@ -12,7 +12,7 @@
           </el-form-item>
 
           <el-form-item label="Product">
-            <el-select v-model="chartSettings.selectedProduct" filterable>
+            <el-select v-model="chartSettings.selectedProduct" filterable data-lpignore="true">
               <el-option v-for="productId in products" :key="productId" :label="productId" :value="productId"/>
             </el-select>
           </el-form-item>
