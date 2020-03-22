@@ -13,7 +13,9 @@ public class TryCatch {
             catch (@java.lang.Deprecated var e: java.lang.NullPointerException) {
                 b = 2
             }
-
+            finally {
+                b = 3
+            }
             var c: int = b
         }
         return sum

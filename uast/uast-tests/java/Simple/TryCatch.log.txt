@@ -43,6 +43,10 @@ UFile (package = )
                                     UBinaryExpression (operator = =)
                                         USimpleNameReferenceExpression (identifier = b)
                                         ULiteralExpression (value = 2)
+                            UBlockExpression
+                                UBinaryExpression (operator = =)
+                                    USimpleNameReferenceExpression (identifier = b)
+                                    ULiteralExpression (value = 3)
                         UDeclarationsExpression
                             ULocalVariable (name = c)
                                 USimpleNameReferenceExpression (identifier = b)
