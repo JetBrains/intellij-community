@@ -30,6 +30,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
@@ -179,6 +180,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                                                                                     isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
+
+  internal val dotIdeaRunConfigurationsPath get() = FileUtil.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
 
   private val rcInArbitraryFileManager = RCInArbitraryFileManager(project)
 
