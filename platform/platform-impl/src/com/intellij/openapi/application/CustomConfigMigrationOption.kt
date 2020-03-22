@@ -7,6 +7,7 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -20,7 +21,7 @@ sealed class CustomConfigMigrationOption {
 
   companion object {
     @JvmStatic
-    fun readCustomConfigMigrationOption(): CustomConfigMigrationOption? {
+    fun readCustomConfigMigrationOptionAndRemoveMarkerFile(): CustomConfigMigrationOption? {
       val markerFile = getMarkerFilePath()
       if (!markerFile.exists()) return null
 
@@ -38,14 +39,15 @@ sealed class CustomConfigMigrationOption {
         log.warn("Couldn't load content of $markerFile")
         return null
       }
+      finally {
+        removeMarkerFile(markerFile)
+      }
     }
 
     @JvmStatic
-    fun needsCustomConfigMigration(): Boolean = readCustomConfigMigrationOption() != null
+    fun needsCustomConfigMigration(): Boolean = Files.exists(getMarkerFilePath())
 
-    @JvmStatic
-    fun removeCustomConfigMigrationFile() {
-      val markerFile = getMarkerFilePath()
+    private fun removeMarkerFile(markerFile: Path) {
       try {
         markerFile.delete()
       }
