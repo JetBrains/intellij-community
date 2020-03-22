@@ -8,8 +8,11 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsUI
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.nls.NlsContexts
+import org.jetbrains.annotations.Nls
 
 abstract class FilesProcessorWithNotificationImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
   private val files = mutableSetOf<VirtualFile>()
@@ -36,9 +39,9 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   abstract fun rememberForAllProjects()
 
-  protected open val viewFilesDialogTitle: String? = null
-  protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
-  protected open val viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
+  protected open val viewFilesDialogTitle: @Nls @NlsContexts.DialogTitle String? = null
+  protected open val viewFilesDialogOkActionName: @Nls @NlsUI.Button String = CommonBundle.getAddButtonText()
+  protected open val viewFilesDialogCancelActionName: @Nls @NlsUI.Button String = CommonBundle.getCancelButtonText()
 
   protected open fun rememberForCurrentProject() {
     setForCurrentProject(true)

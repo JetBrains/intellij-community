@@ -17,6 +17,9 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsUI;
+import com.intellij.util.nls.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,8 +30,8 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
   private final Icon myIcon;
 
   protected OptionsMessageDialog(Project project,
-                                 final String message,
-                                 String title,
+                                 @Nls @NlsUI.Label String message,
+                                 @Nls @NlsContexts.DialogTitle String title,
                                  final Icon icon) {
     super(project);
     myMessage = message;

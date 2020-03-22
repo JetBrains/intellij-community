@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.nls.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,12 +95,12 @@ public class DialogBuilder implements Disposable {
     return this;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@Nls @NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
   @NotNull
-  public DialogBuilder title(@NotNull String title) {
+  public DialogBuilder title(@NotNull @Nls @NlsContexts.DialogTitle String title) {
     myTitle = title;
     return this;
   }

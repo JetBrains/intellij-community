@@ -5,10 +5,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.nls.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +62,7 @@ public class IOExceptionDialog extends DialogWrapper {
    * Show the dialog
    * @return {@code true} if "Try Again" button pressed and {@code false} if "Cancel" button pressed
    */
-  public static boolean showErrorDialog(final String title, final String text) {
+  public static boolean showErrorDialog(@Nls @NlsContexts.DialogTitle String title, @NlsUI.TextPane String text) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(title + ": " + text);
     }

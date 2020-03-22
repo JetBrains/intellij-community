@@ -13,7 +13,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +44,7 @@ public abstract class AbstractFieldPanel extends JPanel {
 
   public AbstractFieldPanel(JComponent component,
                             String labelText,
-                            final String viewerDialogTitle,
+                            @Nls @NlsContexts.DialogTitle String viewerDialogTitle,
                             ActionListener browseButtonActionListener,
                             Runnable changeListener) {
     myComponent = component;

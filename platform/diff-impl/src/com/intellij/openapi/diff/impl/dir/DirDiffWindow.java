@@ -16,6 +16,8 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.nls.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +26,7 @@ public interface DirDiffWindow {
   @NotNull
   Disposable getDisposable();
 
-  void setTitle(@NotNull String title);
+  void setTitle(@NotNull @Nls @NlsContexts.DialogTitle String title);
 
 
   class Dialog implements DirDiffWindow {
@@ -41,7 +43,7 @@ public interface DirDiffWindow {
     }
 
     @Override
-    public void setTitle(@NotNull String title) {
+    public void setTitle(@NotNull @Nls @NlsContexts.DialogTitle String title) {
       myDialog.setTitle(title);
     }
   }

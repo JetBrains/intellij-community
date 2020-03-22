@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.nls.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -74,8 +75,7 @@ open class MergeDialogCustomizer {
    *
    * Don't mix with [getMergeWindowTitle] which is the title of the 3-way merge dialog displayed for a single file.
    */
-  @Nls(capitalization = Nls.Capitalization.Title)
-  open fun getMultipleFileDialogTitle(): String = VcsBundle.message("multiple.file.merge.title")
+  open fun getMultipleFileDialogTitle(): @Nls @NlsContexts.DialogTitle String = VcsBundle.message("multiple.file.merge.title")
 
   /**
    * Allows to override the names of the columns of the multiple files merge dialog, defined in [MergeSession.getMergeInfoColumns].

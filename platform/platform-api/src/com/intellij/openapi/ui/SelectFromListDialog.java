@@ -20,7 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.nls.NlsContexts;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +43,7 @@ public class SelectFromListDialog extends DialogWrapper {
   public SelectFromListDialog(Project project,
                               Object[] objects,
                               ToStringAspect toStringAspect,
-                              String title,
+                              @Nls @NlsContexts.DialogTitle String title,
                               @JdkConstants.ListSelectionMode int selectionMode) {
     super(project, true);
     myToStringAspect = toStringAspect;

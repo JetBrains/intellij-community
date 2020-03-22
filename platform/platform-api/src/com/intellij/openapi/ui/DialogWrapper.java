@@ -309,6 +309,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
+  @NlsUI.Checkbox
   protected String getDoNotShowMessage() {
     return UIBundle.message("dialog.options.do.not.show");
   }

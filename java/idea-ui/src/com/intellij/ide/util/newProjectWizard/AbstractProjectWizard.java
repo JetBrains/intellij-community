@@ -21,11 +21,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +43,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     myWizardContext.setWizard(this);
   }
 
-  public AbstractProjectWizard(String title, Project project, Component dialogParent) {
+  public AbstractProjectWizard(@Nls @NlsContexts.DialogTitle String title, Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null, getDisposable());
     myWizardContext.setWizard(this);
