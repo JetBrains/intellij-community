@@ -90,10 +90,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
                                                   CurrentBranchHighlighter.Factory.ID)
                        : Collections.singleton(MyCommitsHighlighter.Factory.ID);
-    for (VcsLogHighlighterFactory factory : ContainerUtil.filter(LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject),
-                                                                 f -> isHighlighterEnabled(f.getId()))) {
-      getTable().addHighlighter(factory.createHighlighter(logData, this));
-    }
+    VcsLogUiUtil.installHighlighters(myProject, this, f -> isHighlighterEnabled(f.getId()));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
     }
