@@ -129,4 +129,10 @@ public class NlsContexts {
   @Target(ElementType.TYPE_USE)
   public @interface Configurable {
   }
+
+  @NlsContext(prefix = "validation.info")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ValidationInfo {
+  }
 }
