@@ -123,4 +123,10 @@ public class NlsContexts {
   @Target(ElementType.TYPE_USE)
   public @interface CommandName {
   }
+
+  @NlsContext(prefix = "configurable.name")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface Configurable {
+  }
 }
