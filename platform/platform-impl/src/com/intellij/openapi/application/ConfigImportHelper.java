@@ -90,7 +90,7 @@ public final class ConfigImportHelper {
 
     try {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
-      if (shouldAskForConfig(log)) {
+      if (shouldAskForConfig()) {
         oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
       }
       else if (customMigrationOption != null) {
@@ -187,14 +187,8 @@ public final class ConfigImportHelper {
     return configDir.resolveSibling(configDir.getFileName().toString() + "-backup");
   }
 
-  private static boolean shouldAskForConfig(@NotNull Logger log) {
-    try {
-      return Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    }
-    catch (Throwable t) {
-      log.error(t);
-      return false;
-    }
+  private static boolean shouldAskForConfig() {
+    return Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
   }
 
   @Nullable
