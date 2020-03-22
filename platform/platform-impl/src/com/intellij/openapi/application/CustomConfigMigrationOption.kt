@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.application.ConfigImportHelper.getCustomConfigMarkerFilePath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.delete
@@ -22,7 +23,7 @@ sealed class CustomConfigMigrationOption {
   companion object {
     @JvmStatic
     fun readCustomConfigMigrationOptionAndRemoveMarkerFile(): CustomConfigMigrationOption? {
-      val markerFile = getMarkerFilePath()
+      val markerFile = getCustomConfigMarkerFilePath()
       if (!markerFile.exists()) return null
 
       try {
@@ -44,9 +45,6 @@ sealed class CustomConfigMigrationOption {
       }
     }
 
-    @JvmStatic
-    fun needsCustomConfigMigration(): Boolean = Files.exists(getMarkerFilePath())
-
     private fun removeMarkerFile(markerFile: Path) {
       try {
         markerFile.delete()
@@ -60,14 +58,11 @@ sealed class CustomConfigMigrationOption {
      * `null` means starts with clean configs
      */
     fun writeCustomConfigMigrationFile(migrateFrom: Path?) {
-      val markerFile = getMarkerFilePath()
+      val markerFile = getCustomConfigMarkerFilePath()
       if (markerFile.exists()) {
         log.error("Marker file $markerFile shouldn't exist")
       }
       markerFile.write(migrateFrom?.systemIndependentPath ?: "")
     }
-
-    private fun getMarkerFilePath() = Paths.get(PathManager.getConfigPath(), "migrate.config")
-
   }
 }
