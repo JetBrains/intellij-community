@@ -7,37 +7,21 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 public class NlsProgress {
-  @NlsContext(prefix = "progress.indicator.text.above")
+  @NlsContext(prefix = "progress.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ProgressIndicatorTextAbove {
+  public @interface ProgressText {
   }
 
-  @NlsContext(prefix = "progress.indicator.text.below")
+  @NlsContext(prefix = "progress.details")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ProgressIndicatorTextBelow {
+  public @interface ProgressDetails {
   }
 
   @NlsContext(prefix = "progress.title")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface ProgressTitle {
-  }
-
-  /**
-   * System notifications
-   */
-
-  @NlsContext(prefix = "system.notification.title")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface SystemNotificationTitle {
-  }
-
-  @NlsContext(prefix = "system.notification.text")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface SystemNotificationText {
   }
 }

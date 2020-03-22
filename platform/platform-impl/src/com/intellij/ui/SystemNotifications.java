@@ -4,11 +4,11 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.NlsProgress.SystemNotificationText;
+import com.intellij.openapi.util.SystemNotificationText;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.util.NlsProgress.SystemNotificationTitle;
+import com.intellij.openapi.util.SystemNotificationTitle;
 
 public abstract class SystemNotifications {
   private static final SystemNotifications NULL = new SystemNotifications() {

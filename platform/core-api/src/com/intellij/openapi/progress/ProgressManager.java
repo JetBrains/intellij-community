@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsProgress.ProgressIndicatorTextAbove;
-import com.intellij.openapi.util.NlsProgress.ProgressIndicatorTextBelow;
+import com.intellij.openapi.util.NlsProgress.ProgressText;
+import com.intellij.openapi.util.NlsProgress.ProgressDetails;
 import com.intellij.openapi.util.NlsProgress.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -61,11 +61,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @Override
   public abstract ProgressIndicator getProgressIndicator();
 
-  public static void progress(@NotNull @Nls @ProgressIndicatorTextAbove String text) throws ProcessCanceledException {
+  public static void progress(@NotNull @Nls @ProgressText String text) throws ProcessCanceledException {
     progress(text, "");
   }
 
-  public static void progress2(@NotNull @Nls @ProgressIndicatorTextBelow String text) throws ProcessCanceledException {
+  public static void progress2(@NotNull @Nls @ProgressDetails String text) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -73,8 +73,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
-  public static void progress(@NotNull @Nls @ProgressIndicatorTextAbove String text,
-                              @Nullable @Nls @ProgressIndicatorTextBelow String text2) throws ProcessCanceledException {
+  public static void progress(@NotNull @Nls @ProgressText String text,
+                              @Nullable @Nls @ProgressDetails String text2) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
