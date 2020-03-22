@@ -135,4 +135,16 @@ public class NlsContexts {
   @Target(ElementType.TYPE_USE)
   public @interface ValidationInfo {
   }
+
+  @NlsContext(prefix = "configuration.error.message")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ConfigurationErrorMessage {
+  }
+
+  @NlsContext(prefix = "configuration.error.title")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ConfigurationErrorTitle {
+  }
 }
