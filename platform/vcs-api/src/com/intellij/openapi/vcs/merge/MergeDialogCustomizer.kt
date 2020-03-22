@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.util.NlsUI
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
@@ -25,8 +26,7 @@ open class MergeDialogCustomizer {
    *
    * @param files the files that have conflicted changes and are shown in the dialog.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  open fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String = ""
+  open fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): @Nls @NlsUI.Label String = ""
 
   /**
    * Returns the title of the merge dialog invoked for a 3-way merge of a file (after pressing the "Merge" button).

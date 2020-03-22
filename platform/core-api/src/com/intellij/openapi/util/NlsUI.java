@@ -40,6 +40,18 @@ public class NlsUI {
   public @interface TitledSeparator {
   }
 
+  @NlsContext(prefix = "separator.text")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface SeparatorText {
+  }
+
+  @NlsContext(prefix = "table.item.tooltip")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface TableItemTooltip {
+  }
+
   /**
    * Buttons
    */
@@ -54,4 +66,17 @@ public class NlsUI {
   @Target(ElementType.TYPE_USE)
   public @interface ButtonTooltip {
   }
+
+  @NlsContext(prefix = "text.pane")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface TextPane {
+  }
+
+  @NlsContext(prefix = "list.item")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ListItem {
+  }
+
 }

@@ -34,6 +34,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.nls.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,13 +49,14 @@ public abstract class ElementCreator implements WriteActionAware {
   private final Project myProject;
   private final String myErrorTitle;
 
-  protected ElementCreator(Project project, String errorTitle) {
+  protected ElementCreator(Project project, @Nls @NlsContexts.DialogTitle String errorTitle) {
     myProject = project;
     myErrorTitle = errorTitle;
   }
 
   protected abstract PsiElement[] create(@NotNull String newName) throws Exception;
   @Nls
+  @NlsContexts.CommandName
   protected abstract String getActionName(String newName);
 
   public PsiElement[] tryCreate(@NotNull final String inputString) {

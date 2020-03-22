@@ -29,13 +29,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.util.nls.NlsContexts.DialogMessage;
+import static com.intellij.util.nls.NlsContexts.DialogTitle;
+
 /**
  * @author ven
  */
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() { }
 
-  public static void showErrorMessage(String title, String message, @NonNls @Nullable String helpId, @NotNull Project project) {
+  public static void showErrorMessage(@Nls @DialogTitle String title,
+                                      @Nls @DialogMessage String message,
+                                      @NonNls @Nullable String helpId,
+                                      @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
@@ -63,8 +69,8 @@ public class CommonRefactoringUtil {
 
   public static void showErrorHint(@NotNull Project project,
                                    @Nullable Editor editor,
-                                   @NotNull @Nls String message,
-                                   @NotNull @Nls String title,
+                                   @NotNull @Nls @DialogMessage String message,
+                                   @NotNull @Nls @DialogTitle String title,
                                    @Nullable String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 

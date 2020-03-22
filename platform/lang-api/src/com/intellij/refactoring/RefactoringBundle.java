@@ -2,6 +2,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.DynamicBundle;
+import com.intellij.util.nls.NlsContexts;
 import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
@@ -59,7 +60,7 @@ public class RefactoringBundle extends DynamicBundle {
     return message("visibility.escalate");
   }
 
-  public static String getCannotRefactorMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @Nullable final String message) {
+  public static String getCannotRefactorMessage(@Nls @NlsContexts.DialogMessage @Nullable final String message) {
     return message("cannot.perform.refactoring") + (message == null ? "" : "\n" + message);
   }
 }
