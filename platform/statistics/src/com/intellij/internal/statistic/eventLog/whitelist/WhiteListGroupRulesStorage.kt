@@ -8,7 +8,15 @@ interface WhitelistGroupRulesStorage {
 
   fun isUnreachableWhitelist(): Boolean
 
+  /**
+   * Loads and updates whitelist from the server if necessary
+   */
   fun update()
+
+  /**
+   * Re-loads whitelist from local caches
+   */
+  fun reload()
 }
 
 interface WhitelistTestRulesStorageHolder {
@@ -21,13 +29,8 @@ interface WhitelistTestRulesStorageHolder {
 object InMemoryWhitelistStorage : WhitelistGroupRulesStorage {
   val eventsValidators = HashMap<String, WhiteListGroupRules>()
 
-  override fun getGroupRules(groupId: String): WhiteListGroupRules? {
-    return eventsValidators[groupId]
-  }
-
-  override fun isUnreachableWhitelist(): Boolean {
-    return false
-  }
-
+  override fun getGroupRules(groupId: String): WhiteListGroupRules? = eventsValidators[groupId]
+  override fun isUnreachableWhitelist(): Boolean = false
   override fun update() = Unit
+  override fun reload() = Unit
 }

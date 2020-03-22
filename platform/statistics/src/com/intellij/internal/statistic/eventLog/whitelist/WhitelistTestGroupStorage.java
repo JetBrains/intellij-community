@@ -50,6 +50,11 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     updateValidators();
   }
 
+  @Override
+  public void reload() {
+    updateValidators();
+  }
+
   private void updateValidators() {
     synchronized (myLock) {
       eventsValidators.clear();

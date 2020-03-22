@@ -123,6 +123,7 @@ public class WhitelistStorage extends BaseWhitelistStorage {
     }
   }
 
+  @Override
   public void reload() {
     myVersion = loadValidatorsFromLocalCache(myRecorderId);
   }

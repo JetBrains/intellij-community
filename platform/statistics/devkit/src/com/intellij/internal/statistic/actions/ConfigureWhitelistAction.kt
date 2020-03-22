@@ -53,7 +53,9 @@ class ConfigureWhitelistAction(private var myRecorderId: String = StatisticsDevK
           whitelistSettingsPersistence.setPathSettings(recorder, WhitelistPathSettings(oldSettings.customPath, false))
         }
       }
-      SensitiveDataValidator.getInstance(recorder).update()
+      val validator = SensitiveDataValidator.getInstance(recorder)
+      validator.update()
+      validator.reload()
     }
   }
 

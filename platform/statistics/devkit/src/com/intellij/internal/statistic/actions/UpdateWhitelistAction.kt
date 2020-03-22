@@ -20,7 +20,9 @@ class UpdateWhitelistAction(val recorder: String)
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, StatisticsBundle.message("stats.updating.whitelist"), false) {
       override fun run(indicator: ProgressIndicator) {
-        SensitiveDataValidator.getInstance(recorder).update()
+        val validator = SensitiveDataValidator.getInstance(recorder)
+        validator.update()
+        validator.reload()
       }
     })
   }

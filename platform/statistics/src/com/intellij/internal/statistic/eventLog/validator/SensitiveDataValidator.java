@@ -206,6 +206,10 @@ public class SensitiveDataValidator {
     myWhiteListStorage.update();
   }
 
+  public void reload() {
+    myWhiteListStorage.reload();
+  }
+
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
     protected BlindSensitiveDataValidator(@NotNull WhitelistGroupRulesStorage whiteListStorage) {
       super(whiteListStorage);
