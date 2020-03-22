@@ -90,10 +90,7 @@ public final class ConfigImportHelper {
 
     try {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
-      if (shouldAskForConfig()) {
-        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
-      }
-      else if (customMigrationOption != null) {
+      if (customMigrationOption != null) {
         try {
           tempBackup = backupCurrentConfigToTemp();
           FileUtil.delete(newConfigDir);
@@ -106,6 +103,9 @@ public final class ConfigImportHelper {
         catch (IOException e) {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
+      }
+      else if (shouldAskForConfig()) {
+        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
       }
       else if (guessedOldConfigDirs.isEmpty()) {
         boolean importedFromCloud = false;
