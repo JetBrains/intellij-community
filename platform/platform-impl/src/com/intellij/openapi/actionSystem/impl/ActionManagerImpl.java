@@ -566,7 +566,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public String @NotNull [] getActionIds(@NotNull String idPrefix) {
+  @NotNull
+  public String[] getActionIds(@NotNull String idPrefix) {
     synchronized (myLock) {
       ArrayList<String> idList = new ArrayList<>();
       for (String id : myId2Action.keySet()) {
