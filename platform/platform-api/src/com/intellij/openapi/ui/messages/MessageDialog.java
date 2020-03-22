@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +33,8 @@ public class MessageDialog extends DialogWrapper {
   private MessagesBorderLayout myLayout;
 
   public MessageDialog(@Nullable Project project,
-                       String message,
-                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                       @Nls @NlsContexts.DialogMessage String message,
+                       @Nls @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        @Nullable Icon icon,
@@ -43,21 +44,21 @@ public class MessageDialog extends DialogWrapper {
 
 
   public MessageDialog(@Nullable Project project,
-                @Nullable Component parentComponent,
-                String message,
-                @Nls(capitalization = Nls.Capitalization.Title) String title,
-                String @NotNull [] options,
-                int defaultOptionIndex,
-                int focusedOptionIndex,
-                @Nullable Icon icon,
-                @Nullable DoNotAskOption doNotAskOption,
-                boolean canBeParent) {
+                       @Nullable Component parentComponent,
+                       @Nls @NlsContexts.DialogMessage String message,
+                       @Nls @NlsContexts.DialogTitle String title,
+                       String @NotNull [] options,
+                       int defaultOptionIndex,
+                       int focusedOptionIndex,
+                       @Nullable Icon icon,
+                       @Nullable DoNotAskOption doNotAskOption,
+                       boolean canBeParent) {
     super(project, parentComponent, canBeParent, IdeModalityType.IDE);
     _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
   }
 
-  public MessageDialog(String message,
-                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+  public MessageDialog(@Nls @NlsContexts.DialogMessage String message,
+                       @Nls @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        @Nullable Icon icon) {
@@ -76,8 +77,8 @@ public class MessageDialog extends DialogWrapper {
     super(project, canBeParent);
   }
 
-  protected void _init(@Nls(capitalization = Nls.Capitalization.Title) String title,
-                       String message,
+  protected void _init(@Nls @NlsContexts.DialogTitle String title,
+                       @Nls @NlsContexts.DialogMessage String message,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        int focusedOptionIndex,

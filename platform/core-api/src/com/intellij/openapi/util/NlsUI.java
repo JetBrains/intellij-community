@@ -28,10 +28,28 @@ public class NlsUI {
   public @interface Checkbox {
   }
 
+  @NlsContext(prefix = "combobox.item")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface ComboboxItem {
+  }
+
   @NlsContext(prefix = "checkbox.tooltip")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface CheckboxTooltip {
+  }
+
+  @NlsContext(prefix = "tooltip.help")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Tooltip {
+  }
+
+  @NlsContext(prefix = "comment.panel")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface CommentPanel {
   }
 
   @NlsContext(prefix = "titled.separator")
@@ -71,6 +89,12 @@ public class NlsUI {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface TextPane {
+  }
+
+  @NlsContext(prefix = "text.area")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface TextArea {
   }
 
   @NlsContext(prefix = "list.item")
