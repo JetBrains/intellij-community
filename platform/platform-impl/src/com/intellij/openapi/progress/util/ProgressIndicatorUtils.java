@@ -18,11 +18,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -118,18 +120,30 @@ public class ProgressIndicatorUtils {
     }, progressIndicator);
   }
 
+  private static final List<Runnable> ourWACancellations = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  static {
+    Application app = ApplicationManager.getApplication();
+    app.addApplicationListener(new ApplicationListener() {
+      @Override
+      public void beforeWriteActionStart(@NotNull Object action) {
+        for (Runnable cancellation : ourWACancellations) {
+          cancellation.run();
+        }
+      }
+    }, app);
+  }
+
   @ApiStatus.Internal
   public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
                                                       @NotNull Runnable cancellation,
                                                       @NotNull Runnable action) {
-    Disposable listenerDisposable = Disposer.newDisposable();
-    ApplicationListener listener = new ApplicationListener() {
-      @Override
-      public void beforeWriteActionStart(@NotNull Object action) {
-        cancellation.run();
-      }
-    };
-    application.addApplicationListener(listener, listenerDisposable);
+    if (isWriting(application)) {
+      cancellation.run();
+      return false;
+    }
+
+    ourWACancellations.add(cancellation);
     try {
       if (isWriting(application)) {
         // the listener might not be notified if write action was requested concurrently with listener addition
@@ -142,7 +156,7 @@ public class ProgressIndicatorUtils {
       }
     }
     finally {
-      Disposer.dispose(listenerDisposable);
+      ourWACancellations.remove(cancellation);
     }
   }
 
