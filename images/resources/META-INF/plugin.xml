@@ -117,6 +117,8 @@
         <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
       </action>
 
+      <action class="org.intellij.images.thumbnail.actions.ShowBorderAction" id="Images.ShowBorder"/>
+
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <group id="Images.EditorToolbar">
@@ -136,6 +138,7 @@
       <reference id="RefactoringMenu"/>
       <separator/>
       <reference id="Images.EditorToolbar"/>
+      <reference id="Images.ShowBorder"/>
       <separator/>
       <reference id="Images.SetBackgroundImage"/>
       <separator/>
