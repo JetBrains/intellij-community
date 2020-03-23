@@ -92,8 +92,7 @@ public final class ConfigImportHelper {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
       if (customMigrationOption != null) {
         try {
-          tempBackup = backupCurrentConfigToTemp();
-          FileUtil.delete(newConfigDir);
+          tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log);
 
           if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace) {
             Path location = ((CustomConfigMigrationOption.MigrateFromCustomPlace)customMigrationOption).getLocation();
@@ -178,9 +177,23 @@ public final class ConfigImportHelper {
   }
 
   @NotNull
-  private static File backupCurrentConfigToTemp() throws IOException {
+  private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log) throws IOException {
     File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
     FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir);
+    FileUtil.delete(currentConfig);
+
+    File pluginsDir = new File(PathManager.getPluginsPath());
+    if (!FileUtil.isAncestor(currentConfig.toFile(), pluginsDir, false)) {
+      File pluginsBackup = new File(tempBackupDir, PathManager.PLUGINS_DIRECTORY);
+      if (pluginsBackup.mkdir()) {
+        FileUtil.copyDir(pluginsDir, pluginsBackup);
+        FileUtil.delete(pluginsDir);
+      }
+      else {
+        log.warn("Couldn't backup plugins directory to " + pluginsBackup);
+      }
+    }
+
     return tempBackupDir;
   }
 

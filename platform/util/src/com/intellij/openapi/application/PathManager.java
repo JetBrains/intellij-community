@@ -43,7 +43,7 @@ public class PathManager {
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
 
   private static final String LIB_DIRECTORY = "lib";
-  private static final String PLUGINS_DIRECTORY = "plugins";
+  static final String PLUGINS_DIRECTORY = "plugins";
   private static final String BIN_DIRECTORY = "bin";
   private static final String LOG_DIRECTORY = "log";
   private static final String CONFIG_DIRECTORY = "config";
