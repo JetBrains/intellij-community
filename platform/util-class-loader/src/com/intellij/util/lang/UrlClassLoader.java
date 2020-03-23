@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtilRt;
@@ -11,6 +12,7 @@ import sun.net.www.ParseUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -250,11 +252,22 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
   @Deprecated
+  @ReviseWhenPortedToJDK("9")
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urlsFromAppClassLoader(parent).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories()
            .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
            .autoAssignUrlsWithProtectionDomain());
+
+    // without this ToolProvider.getSystemJavaCompiler() does not work in jdk 9+
+    try {
+      //noinspection JavaReflectionMemberAccess
+      Field f = ClassLoader.class.getDeclaredField("classLoaderValueMap");
+      f.setAccessible(true);
+      f.set(this, f.get(parent));
+    }
+    catch (Exception ignored) {
+    }
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
