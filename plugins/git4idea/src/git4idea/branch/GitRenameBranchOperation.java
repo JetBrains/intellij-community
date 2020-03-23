@@ -78,7 +78,7 @@ class GitRenameBranchOperation extends GitBranchOperation {
                                GitBundle.message("git.rename.branch.renamed.back.to", myCurrentName));
     }
     else {
-      myNotifier.notifyError(GitBundle.message("git.rename.branch.rollback.failed"), result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError(GitBundle.message("git.rename.branch.rollback.failed"), result.getErrorOutputWithReposIndication(), true);
     }
   }
 

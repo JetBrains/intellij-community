@@ -179,7 +179,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     GitCompoundResult result = doRollback();
     if (!result.totalSuccess()) {
       myNotifier.notifyError(GitBundle.message("delete.branch.operation.error.during.rollback.of.branch.deletion"),
-                             result.getErrorOutputWithReposIndication());
+                             result.getErrorOutputWithReposIndication(),
+                             true);
     }
   }
 
@@ -368,7 +369,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
     else {
       myNotifier.notifyError(GitBundle.message("delete.branch.operation.could.not.restore.branch.error", formatBranchName(myBranchName)),
-                             result.getErrorOutputWithReposIndication());
+                             result.getErrorOutputWithReposIndication(),
+                             true);
     }
   }
 

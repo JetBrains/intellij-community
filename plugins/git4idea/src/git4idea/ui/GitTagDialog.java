@@ -142,7 +142,7 @@ public class GitTagDialog extends DialogWrapper {
                                  GitBundle.message("git.tag.created.tag.successfully", myTagNameTextField.getText()));
       }
       else {
-        myNotifier.notifyError(GitBundle.message("git.tag.could.not.create.tag"), result.getErrorOutputAsHtmlString());
+        myNotifier.notifyError(GitBundle.message("git.tag.could.not.create.tag"), result.getErrorOutputAsHtmlString(), true);
       }
 
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());

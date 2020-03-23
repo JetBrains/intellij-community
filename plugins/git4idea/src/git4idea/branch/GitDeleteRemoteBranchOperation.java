@@ -153,7 +153,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     if (!result.totalSuccess()) {
       VcsNotifier.getInstance(myProject).notifyError(
         GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
-        result.getErrorOutputWithReposIndication());
+        result.getErrorOutputWithReposIndication(),
+        true);
     }
     return result.totalSuccess();
   }

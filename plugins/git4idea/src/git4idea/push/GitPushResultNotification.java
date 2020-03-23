@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
@@ -183,7 +184,7 @@ class GitPushResultNotification extends Notification {
         || !grouped.rejected.isEmpty()
         || !grouped.customRejected.isEmpty()) {
       notification.addAction(NotificationAction.createSimple(
-        GitBundle.message("push.result.notification.showConsole"),
+        VcsBundle.message("notification.showDetailsInConsole"),
         () -> {
           ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
           vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);

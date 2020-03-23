@@ -255,7 +255,8 @@ class GitCheckoutOperation extends GitBranchOperation {
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
       VcsNotifier.getInstance(myProject).notifyError(GitBundle.message("checkout.operation.error.during.rollback"),
-                                                     message.toString());
+                                                     message.toString(),
+                                                     true);
     }
   }
 

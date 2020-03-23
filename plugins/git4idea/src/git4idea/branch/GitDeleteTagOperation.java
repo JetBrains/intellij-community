@@ -4,7 +4,6 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -35,8 +34,6 @@ import static git4idea.util.GitUIUtil.code;
  * Deletes tag.
  */
 class GitDeleteTagOperation extends GitBranchOperation {
-
-  private static final Logger LOG = Logger.getInstance(GitDeleteTagOperation.class);
 
   @NotNull private final String myTagName;
   @NotNull private final VcsNotifier myNotifier;
@@ -124,7 +121,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
     }
     else {
       myNotifier.notifyError(GitBundle.message("delete.tag.operation.error.during.rollback.of.tag.deletion"),
-                             result.getErrorOutputWithReposIndication());
+                             result.getErrorOutputWithReposIndication(),
+                             true);
     }
   }
 
@@ -135,7 +133,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
     }
     else {
       myNotifier.notifyError(GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
-                             result.getErrorOutputWithReposIndication());
+                             result.getErrorOutputWithReposIndication(),
+                             true);
     }
   }
 

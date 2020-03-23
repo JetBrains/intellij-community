@@ -71,7 +71,8 @@ internal class GitCreateBranchOperation(
     }
     else {
       vcsNotifier.notifyError(GitBundle.message("create.branch.operation.error.during.rollback"),
-                              deleteResult.errorOutputWithReposIndication)
+                              deleteResult.errorOutputWithReposIndication,
+                              true)
     }
   }
 

@@ -39,7 +39,7 @@ public class GitStash extends GitRepositoryAction {
             VfsUtil.markDirtyAndRefresh(false, true, false, d.getGitRoot());
           }
           else {
-            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString());
+            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString(), true);
           }
         }
       }

@@ -291,7 +291,8 @@ public class GitRebaser {
       LOG.info("handleRebaseFailure error " + handler.errors());
       VcsNotifier.getInstance(myProject).notifyError(
         GitBundle.getString("rebase.update.project.notification.failed.title"),
-        result.getErrorOutputAsHtmlString()
+        result.getErrorOutputAsHtmlString(),
+        true
       );
       return GitUpdateResult.ERROR;
     }

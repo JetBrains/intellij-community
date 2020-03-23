@@ -63,7 +63,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
         val result = Git.getInstance().runCommand(handler)
 
         if (!result.success()) {
-          VcsNotifier.getInstance(project).notifyError("$operationNameCapitalised Abort Failed", result.errorOutputAsHtmlString)
+          VcsNotifier.getInstance(project).notifyError("$operationNameCapitalised Abort Failed", result.errorOutputAsHtmlString, true)
         }
         else {
           VcsNotifier.getInstance(project).notifySuccess("$operationNameCapitalised Abort Succeeded")
