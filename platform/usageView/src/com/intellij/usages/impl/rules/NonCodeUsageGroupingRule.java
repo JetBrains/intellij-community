@@ -15,10 +15,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
+class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
   private final Project myProject;
 
-  public NonCodeUsageGroupingRule(Project project) {
+  NonCodeUsageGroupingRule(@NotNull Project project) {
     myProject = project;
   }
 
