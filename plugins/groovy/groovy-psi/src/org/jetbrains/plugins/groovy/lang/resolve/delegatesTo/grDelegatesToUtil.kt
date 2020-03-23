@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureSamParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
@@ -135,7 +135,7 @@ fun getFromType(call: GrCall, result: GroovyResolveResult, delegatesTo: PsiAnnot
   val type = JavaPsiFacade.getElementFactory(context.project).createTypeFromText(typeValue, context)
   val substitutor = if (result is GroovyMethodResult) {
     result.candidate?.let { candidate ->
-      ClosureAsAnonymousParameterEnhancer.substitutorIgnoringClosures(call, candidate, result)
+      ClosureSamParameterEnhancer.substitutorIgnoringClosures(call, candidate, result)
     } ?: result.partialSubstitutor
   }
   else {
