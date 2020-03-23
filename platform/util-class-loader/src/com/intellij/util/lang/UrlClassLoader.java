@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.net.www.ParseUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,7 +133,7 @@ public class UrlClassLoader extends ClassLoader {
       myURLs = new ArrayList<URL>(parts.length);
       for (String s : parts) {
         try {
-          myURLs.add(ParseUtil.fileToEncodedURL(new File(s).getCanonicalFile()));
+          myURLs.add(new File(s).toURI().toURL());
         } catch (IOException ignored) {
         }
       }
