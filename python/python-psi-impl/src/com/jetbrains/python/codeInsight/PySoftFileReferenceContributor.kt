@@ -10,10 +10,14 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
@@ -30,7 +34,8 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       .andOr(stringLiteral.with(HardCodedCalleeName),
              stringLiteral.with(AssignmentMatchingNamePattern),
              stringLiteral.with(KeywordArgumentMatchingNamePattern),
-             stringLiteral.with(CallArgumentMatchingParameterNamePattern))
+             stringLiteral.with(CallArgumentMatchingParameterNamePattern),
+             stringLiteral.with(CallArgumentMatchingParameterType))
     registrar.registerReferenceProvider(pattern, createSoftFileReferenceProvider())
   }
 
@@ -74,6 +79,33 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
     }
   }
 
+  private object CallArgumentMatchingParameterType : PatternCondition<PyStringLiteralExpression>("callArgumentMatchingPattern") {
+    override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
+      val argList = expr.parent as? PyArgumentList ?: return false
+      val callExpr = argList.parent as? PyCallExpression ?: return false
+
+      val builtinCache = PyBuiltinCache.getInstance(expr)
+      val strOrUnicodeType = builtinCache.strOrUnicodeType ?: return false
+      val osPathLikeType = builtinCache.getObjectType(PyNames.BUILTIN_PATH_LIKE) ?: return false
+
+      val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
+
+      return callExpr.multiResolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext))
+        .asSequence()
+        .mapNotNull {
+          val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
+          mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
+        }
+        .toList()
+        .let { PyUnionType.union(it) }
+        .let {
+          it != null &&
+          PyTypeChecker.match(strOrUnicodeType, it, typeEvalContext) &&
+          PyTypeChecker.match(osPathLikeType, it, typeEvalContext)
+        }
+    }
+  }
+
   /**
    * Matches string literals used as function keyword arguments where the keyword has a name that has something about files or paths.
    */
@@ -96,9 +128,8 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
     }
 
     private val PATTERNS = listOf(
-      Pattern("open", 0, isBuiltin = true),
-      Pattern("os.walk", 0),
-      Pattern("os.scandir", 0),
+      Pattern("open", 0, isBuiltin = true), // could be covered by CallArgumentMatchingParameterType in Py3+
+      Pattern("os.walk", 0), // could be covered by CallArgumentMatchingParameterType in Py3+
       Pattern("pandas.read_csv", 0)
     )
     private val SIMPLE_NAMES = PATTERNS.associateBy { it.qualifiedName.lastComponent }
