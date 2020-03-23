@@ -95,10 +95,8 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   private var modified = false
 
   init {
-    commitsTable.selectionModel.addListSelectionListener { e ->
-      if (!e.valueIsAdjusting) {
-        fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.getEntry(it).commitDetails })
-      }
+    commitsTable.selectionModel.addListSelectionListener { _ ->
+      fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.getEntry(it).commitDetails })
     }
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
     commitsTableModel.addTableModelListener { modified = true }
