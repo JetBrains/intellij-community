@@ -89,7 +89,7 @@ dependencies {
 
   testImplementation("junit:junit:4.13")
   testImplementation("org.mockito:mockito-core:3.3.1")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.6.0")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.6.1")
 }
 
 // Tasks
