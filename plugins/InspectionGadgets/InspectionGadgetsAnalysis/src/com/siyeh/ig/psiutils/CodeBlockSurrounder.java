@@ -176,14 +176,14 @@ public abstract class CodeBlockSurrounder {
           if (conditionParent instanceof PsiWhileStatement) {
             return new WhileConditionSurrounder(expression, (PsiWhileStatement)conditionParent);
           }
-          CodeBlockSurrounder parentSurrounder = forExpression(polyadicExpression);
+          CodeBlockSurrounder parentSurrounder = forExpressionSkipParentheses(polyadicExpression);
           if (parentSurrounder == null) return null;
           ParentContext parentContext = parentSurrounder.getExpectedParentContext();
           if (parentContext != ParentContext.RETURN && parentContext != ParentContext.SIMPLE_IF_CONDITION) return null;
           return new AndOrToIfSurrounder(expression, polyadicExpression, parentSurrounder);
         }
         else if (type.equals(JavaTokenType.OROR) && polyadicExpression.getOperands()[0] != cur) {
-          CodeBlockSurrounder parentSurrounder = forExpression(polyadicExpression);
+          CodeBlockSurrounder parentSurrounder = forExpressionSkipParentheses(polyadicExpression);
           if (parentSurrounder == null) return null;
           ParentContext parentContext = parentSurrounder.getExpectedParentContext();
           if (parentContext != ParentContext.RETURN) return null;
@@ -191,7 +191,7 @@ public abstract class CodeBlockSurrounder {
         }
       }
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
-        CodeBlockSurrounder parentSurrounder = forExpression((PsiConditionalExpression)parent);
+        CodeBlockSurrounder parentSurrounder = forExpressionSkipParentheses((PsiConditionalExpression)parent);
         if (parentSurrounder == null) return null;
         ParentContext parentContext = parentSurrounder.getExpectedParentContext();
         if (parentContext != ParentContext.ASSIGNMENT && parentContext != ParentContext.RETURN) return null;
@@ -251,6 +251,13 @@ public abstract class CodeBlockSurrounder {
     }
 
     return null;
+  }
+
+  private static @Nullable CodeBlockSurrounder forExpressionSkipParentheses(PsiExpression expression) {
+    while (expression.getParent() instanceof PsiParenthesizedExpression) {
+      expression = (PsiExpression)expression.getParent();
+    }
+    return forExpression(expression);
   }
 
   private static boolean hasNameCollision(PsiElement declaration, PsiElement context) {
@@ -543,7 +550,8 @@ public abstract class CodeBlockSurrounder {
     @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       boolean then = PsiTreeUtil.isAncestor(myConditional.getThenExpression(), myExpression, false);
       SurroundResult upstreamResult = myUpstream.surround();
-      PsiConditionalExpression ternary = (PsiConditionalExpression)upstreamResult.getExpression();
+      PsiConditionalExpression ternary = Objects.requireNonNull(
+        (PsiConditionalExpression)PsiUtil.skipParenthesizedExprDown(upstreamResult.getExpression()));
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(ternary.getParent());
       PsiStatement statement = upstreamResult.getAnchor();
       if (parent instanceof PsiLocalVariable) {
@@ -610,7 +618,8 @@ public abstract class CodeBlockSurrounder {
       int index = (int)StreamEx.of(operands).indexOf(o -> PsiTreeUtil.isAncestor(o, myExpression, false))
         .orElseThrow(IllegalStateException::new);
       SurroundResult upstreamResult = myUpstream.surround();
-      PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)upstreamResult.getExpression();
+      PsiPolyadicExpression polyadicExpression =
+        (PsiPolyadicExpression)Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(upstreamResult.getExpression()));
       PsiStatement statement = upstreamResult.getAnchor();
       PsiExpression operand = polyadicExpression.getOperands()[index];
       PsiExpression lOperands = SplitConditionUtil.getLOperands(polyadicExpression, Objects.requireNonNull(
