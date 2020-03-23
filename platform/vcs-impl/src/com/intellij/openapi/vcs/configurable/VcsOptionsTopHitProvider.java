@@ -8,12 +8,14 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.vcs.commit.CommitWorkflowManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,6 +52,7 @@ public final class VcsOptionsTopHitProvider extends VcsOptionsTopHitProviderBase
     if (vcsCA != null) {
       options.add(option(vcsCA, id, "Version Control: Show changed in last " + vcsCA.getLimitDays() + " days", "isShow", "setShow"));
     }
+    options.add(nonModalCommitOption());
     options.add(option(vcs, id, "Commit message: Show right margin at " + getBodyRightMargin(project) + " columns", "USE_COMMIT_MESSAGE_MARGIN"));
     options.add(option(vcs, id, "Commit message: " + ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), "WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN"));
 
@@ -102,6 +105,23 @@ public final class VcsOptionsTopHitProvider extends VcsOptionsTopHitProviderBase
       @Override
       protected void fireUpdated() {
         ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker().optionsChanged();
+      }
+    };
+  }
+
+  @NotNull
+  private static BooleanOptionDescription nonModalCommitOption() {
+    String option = VcsBundle.message("commit.dialog.configurable") + ": " + VcsBundle.message("settings.commit.without.dialog");
+
+    return new BooleanOptionDescription(option, CommitDialogConfigurable.ID) {
+      @Override
+      public boolean isOptionEnabled() {
+        return VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES;
+      }
+
+      @Override
+      public void setOptionState(boolean enabled) {
+        CommitWorkflowManager.setCommitFromLocalChanges(enabled);
       }
     };
   }
