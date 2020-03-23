@@ -1123,16 +1123,46 @@ public class AllIcons {
   public final static class Xml {
 
     public final static class Browsers {
-      /** 16x16 */ public static final @NotNull Icon Canary16 = load("/xml/browsers/canary16.svg");
-      /** 16x16 */ public static final @NotNull Icon Chrome16 = load("/xml/browsers/chrome16.svg");
-      /** 16x16 */ public static final @NotNull Icon Chromium16 = load("/xml/browsers/chromium16.svg");
-      /** 16x16 */ public static final @NotNull Icon Edge16 = load("/xml/browsers/edge16.svg");
-      /** 16x16 */ public static final @NotNull Icon Explorer16 = load("/xml/browsers/explorer16.svg");
-      /** 16x16 */ public static final @NotNull Icon Firefox16 = load("/xml/browsers/firefox16.svg");
-      /** 16x16 */ public static final @NotNull Icon Nwjs16 = load("/xml/browsers/nwjs16.svg");
-      /** 16x16 */ public static final @NotNull Icon Opera16 = load("/xml/browsers/opera16.svg");
-      /** 16x16 */ public static final @NotNull Icon Safari16 = load("/xml/browsers/safari16.svg");
-      /** 16x16 */ public static final @NotNull Icon Yandex16 = load("/xml/browsers/yandex16.svg");
+      /** 16x16 */ public static final @NotNull Icon Canary = load("/xml/browsers/canary.svg");
+      /** 16x16 */ public static final @NotNull Icon Chrome = load("/xml/browsers/chrome.svg");
+      /** 16x16 */ public static final @NotNull Icon Chromium = load("/xml/browsers/chromium.svg");
+      /** 16x16 */ public static final @NotNull Icon Edge = load("/xml/browsers/edge.svg");
+      /** 16x16 */ public static final @NotNull Icon Explorer = load("/xml/browsers/explorer.svg");
+      /** 16x16 */ public static final @NotNull Icon Firefox = load("/xml/browsers/firefox.svg");
+      /** 16x16 */ public static final @NotNull Icon Nwjs = load("/xml/browsers/nwjs.svg");
+      /** 16x16 */ public static final @NotNull Icon Opera = load("/xml/browsers/opera.svg");
+      /** 16x16 */ public static final @NotNull Icon Safari = load("/xml/browsers/safari.svg");
+      /** 16x16 */ public static final @NotNull Icon Yandex = load("/xml/browsers/yandex.svg");
+
+      /** @deprecated use {@link #Canary} */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final @NotNull Icon Canary16 = Canary;
+
+      /** @deprecated use {@link #Chrome} */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final @NotNull Icon Chrome16 = Chrome;
+
+      /** @deprecated use {@link #Chromium} */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final @NotNull Icon Chromium16 = Chromium;
+
+      /** @deprecated use {@link #Nwjs} */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final @NotNull Icon Nwjs16 = Nwjs;
+
+      /** @deprecated use {@link #Opera} */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final @NotNull Icon Opera16 = Opera;
+
+      /** @deprecated use {@link #Yandex} */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final @NotNull Icon Yandex16 = Yandex;
 
     }
     /** 16x16 */ public static final @NotNull Icon Css_class = load("/xml/css_class.svg");
