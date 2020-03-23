@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
@@ -145,9 +146,14 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
       Executor executor = DefaultRunExecutor.getRunExecutorInstance();
 
       long executionId = ExecutionEnvironment.getNextUnusedExecutionId();
+      int count = 0;
       for (MavenRunnerParameters params : parametersList) {
         RunnerAndConfigurationSettings configuration =
           MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, context.getProject());
+        if (parametersList.size() > 1) {
+          configuration
+            .setName(ProjectBundle.message("maven.before.build.of.count", ++count, parametersList.size(), configuration.getName()));
+        }
         ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configuration, context.getProject());
         environment.setExecutionId(executionId);
         boolean result = RunConfigurationBeforeRunProvider.doRunTask(executor.getId(), environment, runner);
