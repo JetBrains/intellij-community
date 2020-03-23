@@ -245,6 +245,12 @@ class Outer {
     checkResult()
   }
 
+  void testSerrConsumerConflict() {
+    configure()
+    startTemplate("serrc", "output")
+    checkResult()
+  }
+
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
     myFixture.configureByText("a.java", text)
     return TemplateManagerImpl.isApplicable(myFixture.getFile(), getEditor().getCaretModel().getOffset(), inst)
