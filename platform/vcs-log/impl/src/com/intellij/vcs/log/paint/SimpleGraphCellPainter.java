@@ -147,18 +147,19 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
     if (isUsual || hasArrow) {
       setUsualStroke(g2, isSelected);
-    } else {
+    }
+    else {
       setDashedStroke(g2, isSelected, (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.hypot(x1 - x2, y1 - y2)));
     }
 
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
-      Pair<Integer, Integer> rotate1 =
-        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2),
-               ARROW_LENGTH * getRowHeight());
-      Pair<Integer, Integer> rotate2 =
-        rotate(x1, y1, startArrowX, startArrowY, Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2),
-               ARROW_LENGTH * getRowHeight());
+      Pair<Integer, Integer> rotate1 = rotate(x1, y1, startArrowX, startArrowY,
+                                              Math.sqrt(ARROW_ANGLE_COS2), Math.sqrt(1 - ARROW_ANGLE_COS2),
+                                              ARROW_LENGTH * getRowHeight());
+      Pair<Integer, Integer> rotate2 = rotate(x1, y1, startArrowX, startArrowY,
+                                              Math.sqrt(ARROW_ANGLE_COS2), -Math.sqrt(1 - ARROW_ANGLE_COS2),
+                                              ARROW_LENGTH * getRowHeight());
       g2.drawLine(startArrowX, startArrowY, rotate1.first, rotate1.second);
       g2.drawLine(startArrowX, startArrowY, rotate2.first, rotate2.second);
     }
@@ -299,16 +300,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
         float lineThickness = PaintParameters.getLineThickness(getRowHeight());
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-          if (PositionUtil
-            .overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight(),
-                          nodeWidth, lineThickness)) {
+          if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(),
+                                        x, y, getRowHeight(), nodeWidth, lineThickness)) {
             return printElement;
           }
         }
         else {
-          if (PositionUtil
-            .overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y, getRowHeight(),
-                        nodeWidth, lineThickness)) {
+          if (PositionUtil.overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(),
+                                      x, y, getRowHeight(), nodeWidth, lineThickness)) {
             return printElement;
           }
         }
