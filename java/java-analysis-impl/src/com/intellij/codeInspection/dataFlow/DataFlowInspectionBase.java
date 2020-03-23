@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -454,22 +455,35 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private static boolean shouldReportZero(PsiExpression ref) {
-    boolean reportZeroValue = ref instanceof PsiPolyadicExpression && !PsiUtil.isConstantExpression(ref) ||
-                              ref instanceof PsiMethodCallExpression;
-    if (!reportZeroValue) return false;
+    if (ref instanceof PsiPolyadicExpression) {
+      if (PsiUtil.isConstantExpression(ref)) return false;
+      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)ref;
+      IElementType tokenType = polyadic.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.ASTERISK)) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(ref, PsiMethod.class, true, PsiLambdaExpression.class, PsiClass.class);
+        if (MethodUtils.isHashCode(method)) {
+          // Standard hashCode template generates int result = 0; result = result * 31 + ...;
+          // so annoying warnings might be produced there
+          return false;
+        }
+      }
+    }
+    else if (ref instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)ref;
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (PsiUtil.isConstantExpression(qualifier) &&
+          Stream.of(call.getArgumentList().getExpressions()).allMatch(PsiUtil::isConstantExpression)) {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
     PsiBinaryExpression binOp = tryCast(parent, PsiBinaryExpression.class);
     if (binOp != null && ComparisonUtils.isEqualityComparison(binOp) &&
         (ExpressionUtils.isZero(binOp.getLOperand()) || ExpressionUtils.isZero(binOp.getROperand()))) {
       return false;
-    }
-    PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, true, PsiLambdaExpression.class, PsiClass.class);
-    if (MethodUtils.isHashCode(method)) {
-      // Standard hashCode template generates int result = 0; result = result * 31 + ...;
-      // so annoying warnings might be produced there
-      if (ref instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)ref).getOperationTokenType().equals(JavaTokenType.ASTERISK)) {
-        return false;
-      }
     }
     return true;
   }

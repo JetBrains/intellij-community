@@ -229,16 +229,4 @@ public class LongRangeBasics {
       System.out.println();
     }
   }
-  
-  class HashCode {
-    Object a, b, c;
-    
-    public int hashCode() {
-      int result = 0;
-      result = result * 31 + a.hashCode();
-      result = result * 31 + b.hashCode();
-      result = result * 31 + c.hashCode();
-      return result;
-    }
-  }
 }
