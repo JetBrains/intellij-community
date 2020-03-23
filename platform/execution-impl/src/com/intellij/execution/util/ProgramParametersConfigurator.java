@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.PathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -167,7 +168,8 @@ public class ProgramParametersConfigurator {
   }
 
   protected @Nullable String getDefaultWorkingDir(@NotNull Project project) {
-    return project.getBasePath();
+    String path = project.getBasePath();
+    return path != null && LocalFileSystem.getInstance().findFileByPath(path) != null ? path : null;
   }
 
   protected @Nullable String getDefaultWorkingDir(@NotNull Module module) {
