@@ -2,14 +2,12 @@
 package com.intellij.idea;
 
 import com.intellij.Patches;
+import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.AssertiveRepaintManager;
-import com.intellij.ide.CliResult;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeRepaintManager;
+import com.intellij.ide.*;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -250,8 +248,14 @@ public final class StartupUtil {
                                @NotNull Future<AppStarter> appStarterFuture,
                                @Nullable Future<Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.startMainActivity("eua showing");
+      Activity activity = StartUpMeasurer.startMainActivity("checking screen readers");
+      if (configImportNeeded) {
+        runInEdtAndWait(log, () -> AccessibilityUtils.enableScreenReaderSupportIfNecessary(), initUiTask);
+      }
+
+      activity = activity.endAndStart("eua showing");
       boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
+
       if (configImportNeeded) {
         activity = activity.endAndStart("config importing");
         AppStarter appStarter = getAppStarter(appStarterFuture);
