@@ -3,9 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil
 
 class LambdaTypeInferenceTest extends TypeInferenceTestBase {
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
@@ -350,12 +348,6 @@ class W {
   }
 }
 ''', 'W'
-  }
-
-  void doNestedDfaTest(String text, @Nullable String type) {
-    if (FunctionalExpressionFlowUtil.nestedFlowProcessingAllowed) {
-      doTest(text, type)
-    }
   }
 
   void 'test use parent DFA'() {

@@ -8,12 +8,10 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -1278,12 +1276,6 @@ class C {
 }
 [new C()]*.field.las<caret>t()
 ''', JAVA_LANG_INTEGER
-  }
-
-  void doNestedDfaTest(String text, @Nullable String type) {
-    if (FunctionalExpressionFlowUtil.nestedFlowProcessingAllowed) {
-      doTest(text, type)
-    }
   }
 
   void 'test no type inference for variables from outer context'() {
