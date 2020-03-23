@@ -25,6 +25,17 @@
     <extensionPoint name="codeInsight.signatureHelp" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.signatureHelp.SignatureHelpProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="localInspection" beanClass="com.intellij.codeInspection.LocalInspectionEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.LocalInspectionTool"/>
+    </extensionPoint>
+
+    <extensionPoint name="globalInspection" beanClass="com.intellij.codeInspection.InspectionEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
+    </extensionPoint>
+
+    <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
+    <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
