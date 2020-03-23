@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public class PyPsiChainedComparisonsInspection extends PyInspection {
   protected static final String ourIgnoreConstantOptionText = "Ignore statements with a constant in the middle";
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";

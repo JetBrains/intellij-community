@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public class PyPsiShadowingBuiltinsInspection extends PyInspection {
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();

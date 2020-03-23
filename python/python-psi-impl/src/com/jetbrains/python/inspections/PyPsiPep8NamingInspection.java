@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public class PyPsiPep8NamingInspection extends PyInspection {
   protected static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
   private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
