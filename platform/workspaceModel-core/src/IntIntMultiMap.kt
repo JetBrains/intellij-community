@@ -7,9 +7,19 @@ import com.intellij.util.containers.IntIntHashMap
  * @author Alex Plate
  */
 
-class IntIntMultiMap {
-  private var values = IntArray(0)
-  private val links = IntIntHashMap()
+class IntIntMultiMap(
+  private var values: IntArray,
+  private val links: IntIntHashMap
+) {
+
+  constructor() : this(IntArray(0), IntIntHashMap())
+
+  operator fun get(key: Int): IntSequence {
+    val idx = links[key]
+    if (idx == -1) return EmptyIntSequence
+
+    return IntSequence(values, idx)
+  }
 
   fun get(key: Int, action: (Int) -> Unit) {
     var idx = links[key]
@@ -93,6 +103,27 @@ class IntIntMultiMap {
     }
   }
 
+  fun remove(key: Int) {
+    val idx = links[key]
+    if (idx == -1) return
+
+    val size = values.size
+
+    val sizeToRemove = size(key)
+
+    val newArray = IntArray(size - sizeToRemove)
+    values.copyInto(newArray, 0, 0, idx)
+    values.copyInto(newArray, idx, idx + sizeToRemove)
+    values = newArray
+
+    links.remove(key)
+
+    links.keys().forEach { keyToUpdate ->
+      val valueToUpdate = links[keyToUpdate]
+      if (valueToUpdate > idx) links.put(keyToUpdate, valueToUpdate - sizeToRemove)
+    }
+  }
+
   fun remove(key: Int, value: Int) {
     var idx = links[key]
     if (idx == -1) return
@@ -123,12 +154,11 @@ class IntIntMultiMap {
     values.copyInto(newArray, 0, 0, foundIndex)
     values.copyInto(newArray, foundIndex, foundIndex + 1)
     values = newArray
-    if (removeLast) {
+    if (removeLast && foundIndex - 1 >= 0) {
       values[foundIndex - 1] = values[foundIndex - 1].pack()
     }
 
-
-    // TODO: 23.03.2020 Remove last value
+    if (foundIndex - idx == 0) links.remove(key)
 
     links.keys().forEach { keyToUpdate ->
       val valueToUpdate = links[keyToUpdate]
@@ -145,6 +175,59 @@ class IntIntMultiMap {
     values = IntArray(0)
   }
 
-  private fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
-  private fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
+  fun copy(): IntIntMultiMap {
+    val newLinks = IntIntHashMap()
+    links.forEachEntry { key, value -> newLinks.put(key, value); true }
+    val newValues = values.clone()
+    return IntIntMultiMap(newValues, newLinks)
+  }
+
+  companion object {
+    private fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
+    private fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
+  }
+
+  open class IntSequence(
+    private val values: IntArray?,
+    startIndex: Int
+  ) {
+
+    private var hasNext = true
+    private var idx = startIndex
+
+    protected open fun hasNext(): Boolean {
+      if (!hasNext) return false
+      if (values!![idx] < 0) hasNext = false
+      return true
+    }
+
+    protected open fun next(): Int {
+      val value = values!![idx++]
+      return if (value >= 0) value else value.unpack()
+    }
+
+    fun forEach(action: (Int) -> Unit) {
+      while (hasNext()) action(next())
+    }
+
+    open fun <T> map(transformation: (Int) -> T): Sequence<T> {
+      return Sequence {
+        object : Iterator<T> {
+          override fun hasNext(): Boolean = this@IntSequence.hasNext()
+
+          override fun next(): T {
+            return transformation(this@IntSequence.next())
+          }
+        }
+      }
+    }
+  }
+
+  object EmptyIntSequence : IntIntMultiMap.IntSequence(null, 0) {
+    override fun hasNext(): Boolean = false
+
+    override fun next(): Int = throw NoSuchElementException()
+
+    override fun <T> map(transformation: (Int) -> T): Sequence<T> = emptySequence()
+  }
 }
