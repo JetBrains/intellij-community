@@ -62,21 +62,6 @@ public class NlsContexts {
   }
 
   /**
-   * File chooser
-   */
-  @NlsContext(prefix = "file.chooser.title")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface FileChooserTitle {
-  }
-
-  @NlsContext(prefix = "file.chooser.description")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface FileChooserDescription {
-  }
-
-  /**
    * Content pane
    */
   @NlsContext(prefix = "content.tooltip")

@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.nls.NlsContexts.FileChooserDescription;
-import static com.intellij.util.nls.NlsContexts.FileChooserTitle;
+import static com.intellij.openapi.util.NlsUI.Label;
+import static com.intellij.util.nls.NlsContexts.DialogTitle;
 
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
   public TextFieldWithHistoryWithBrowseButton() {
@@ -33,8 +33,8 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @Nls @FileChooserTitle String title,
-                                      @Nullable @Nls @FileChooserDescription String description,
+  public void addBrowseFolderListener(@Nullable @Nls @DialogTitle String title,
+                                      @Nullable @Nls @Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor) {
@@ -43,8 +43,8 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @Nls @FileChooserTitle String title,
-                                      @Nullable @Nls @FileChooserDescription String description,
+  public void addBrowseFolderListener(@Nullable @Nls @DialogTitle String title,
+                                      @Nullable @Nls @Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor,

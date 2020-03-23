@@ -4,6 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,8 +27,8 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   protected  T myTextComponent;
   private Project myProject;
 
-  public BrowseFolderRunnable(@Nullable @Nls @NlsContexts.FileChooserTitle String title,
-                              @Nullable @Nls @NlsContexts.FileChooserDescription String description,
+  public BrowseFolderRunnable(@Nullable @Nls @NlsContexts.DialogTitle String title,
+                              @Nullable @Nls @NlsUI.Label String description,
                               @Nullable Project project,
                               FileChooserDescriptor fileChooserDescriptor,
                               @Nullable T component,
