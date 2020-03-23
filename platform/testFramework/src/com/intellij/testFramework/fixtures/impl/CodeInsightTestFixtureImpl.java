@@ -120,7 +120,6 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -877,9 +876,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public Collection<Usage> testFindUsagesUsingAction(String @NotNull ... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
-    EdtTestUtil.runInEdtAndWait(() -> {
-      myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
-    });
+    EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES));
     Disposer.register(getTestRootDisposable(), () -> {
       UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());
       Content selectedContent;
@@ -914,8 +911,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public String getUsageViewTreeTextRepresentation(@NotNull final Collection<? extends UsageInfo> usages) {
     UsageViewImpl usageView = (UsageViewImpl)UsageViewManager
       .getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY,
-                                                 StreamEx.of(usages)
-                                                   .map(usageInfo -> new UsageInfo2UsageAdapter(usageInfo)).toArray(Usage.EMPTY_ARRAY),
+                                                 ContainerUtil.map(usages, usage -> new UsageInfo2UsageAdapter(usage)).toArray(Usage.EMPTY_ARRAY),
                                                  new UsageViewPresentation(),
                                                  null);
     return getUsageViewTreeTextRepresentation(usageView);
@@ -1230,43 +1226,41 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     runAll(
-      () -> {
-        EdtTestUtil.runInEdtAndWait(() -> {
-          if (ApplicationManager.getApplication() == null) {
-            return;
-          }
+      () -> EdtTestUtil.runInEdtAndWait(() -> {
+        if (ApplicationManager.getApplication() == null) {
+          return;
+        }
 
-          Project project;
-          try {
-            project = myProjectFixture.getProject();
-          }
-          catch (AssertionError ignore) {
-            project = null;
-          }
+        Project project;
+        try {
+          project = myProjectFixture.getProject();
+        }
+        catch (AssertionError ignore) {
+          project = null;
+        }
 
-          if (project != null) {
-            CodeStyle.dropTemporarySettings(project);
-            // clear "show param info" delayed requests leaking project
-            AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
-            if (autoPopupController != null) {
-              autoPopupController.cancelAllRequests();
-            }
+        if (project != null) {
+          CodeStyle.dropTemporarySettings(project);
+          // clear "show param info" delayed requests leaking project
+          AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
+          if (autoPopupController != null) {
+            autoPopupController.cancelAllRequests();
           }
+        }
 
-          // return default value to avoid unnecessary save
-          DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
-          if (daemonCodeAnalyzerSettings != null) {
-            daemonCodeAnalyzerSettings.setImportHintEnabled(true);
-          }
+        // return default value to avoid unnecessary save
+        DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+        if (daemonCodeAnalyzerSettings != null) {
+          daemonCodeAnalyzerSettings.setImportHintEnabled(true);
+        }
 
-          if (project != null) {
-            closeOpenFiles();
-            ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
-            // needed for myVirtualFilePointerTracker check below
-            ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
-          }
-        });
-      },
+        if (project != null) {
+          closeOpenFiles();
+          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+          // needed for myVirtualFilePointerTracker check below
+          ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).clearScopesCachesForModules();
+        }
+      }),
       () -> {
         clearFileAndEditor();
         myPsiManager = null;
@@ -1831,8 +1825,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testInlays(java.util.function.Function<? super Inlay, String> inlayPresenter,
-                         Predicate<? super Inlay> inlayFilter) {
+  public void testInlays(java.util.function.Function<? super Inlay<?>, String> inlayPresenter,
+                         Predicate<? super Inlay<?>> inlayFilter) {
     InlayHintsChecker checker = new InlayHintsChecker(this);
     try {
       checker.setUp();
