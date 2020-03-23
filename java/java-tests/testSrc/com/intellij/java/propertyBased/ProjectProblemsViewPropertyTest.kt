@@ -2,8 +2,6 @@
 package com.intellij.java.propertyBased
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl
 import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.ReportedChange
@@ -35,7 +33,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.propertyBased.MadTestingUtil
-import com.intellij.testFramework.propertyBased.RehighlightAllEditors
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewManager
 import com.intellij.util.ArrayUtilRt
@@ -92,8 +89,11 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val psiFile = psiManager.findFile(changedFile)!!
       rehighlight(psiFile)
       val reportedChanges = getReportedChanges(psiFile)
-      for (reportedChange in reportedChanges.values) {
-        assertNull("Problems are still reported even after the fix. File: ${changedFile.name} ", reportedChange.inlay)
+      for ((pointer, reportedChange) in reportedChanges) {
+        assertNull("Problems are still reported even after the fix. " +
+                   "File: ${changedFile.name}, " +
+                   "Member: ${JavaDocUtil.getReferenceText(myProject, pointer.element)}, " +
+                   "Previous member: ${reportedChange.prevMember}", reportedChange.inlay)
       }
     }
   }
@@ -135,12 +135,6 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return reportedFiles
   }
 
-  private fun hasErrors(virtualFile: VirtualFile): Boolean {
-    val editor = openEditor(virtualFile)
-    val infos = RehighlightAllEditors.highlightEditor(editor, myProject)
-    return infos.any { it.severity == HighlightSeverity.ERROR }
-  }
-
   private fun getMembersToSearch(member: PsiMember,
                                  modification: Modification,
                                  members: List<PsiMember>): List<PsiMember>? {
@@ -149,23 +143,27 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return members
   }
 
-  private fun rehighlight(psiFile: PsiFile, editor: Editor = openEditor(psiFile.virtualFile)): Editor {
+  private fun rehighlight(psiFile: PsiFile, editor: Editor = openEditor(psiFile.virtualFile)): List<HighlightInfo> {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-    CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
-    return editor
+    return CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
   }
 
   private fun openEditor(virtualFile: VirtualFile) =
     FileEditorManager.getInstance(myProject).openTextEditor(OpenFileDescriptor(myProject, virtualFile), true)!!
 
-  private fun findRelatedFiles(psiFile: PsiFile): MutableSet<VirtualFile> {
+  private fun findRelatedFiles(psiFile: PsiFile): Set<VirtualFile> {
     val targetFile = psiFile.virtualFile
     if (psiFile !is PsiClassOwner) return mutableSetOf()
     return psiFile.classes.asSequence()
       .flatMap { ReferencesSearch.search(it).findAll().asSequence() }
-      .filter { !JavaResolveUtil.isInJavaDoc(it.element) }
-      .mapNotNull { it.element.containingFile.virtualFile }
-      .filterTo(mutableSetOf()) { it != targetFile && !hasErrors(it) }
+      .map { it.element }
+      .filter { !JavaResolveUtil.isInJavaDoc(it) }
+      .mapNotNull { it.containingFile }
+      .distinctBy { it.virtualFile }
+      .mapNotNullTo(mutableSetOf()) {
+        val virtualFile = it.virtualFile
+        if (virtualFile == targetFile || hasErrors(it)) null else virtualFile
+      }
   }
 
   private fun findMembers(psiFile: PsiClassOwner): List<PsiMember> {
@@ -220,9 +218,27 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val filesWithErrors = mutableSetOf<VirtualFile>()
     for (file in relatedFiles) {
       val psiFile = psiManager.findFile(file) ?: continue
-      if (HighlightErrorSearcher.hasErrors(psiFile, members)) filesWithErrors.add(file)
+      if (hasErrors(psiFile, members)) filesWithErrors.add(file)
     }
     return filesWithErrors
+  }
+
+  private fun hasErrors(psiFile: PsiFile, members: List<PsiMember>? = null): Boolean {
+    val infos = rehighlight(psiFile)
+    return infos.any { info ->
+      if (info.severity != HighlightSeverity.ERROR) return@any false
+      if (members == null) return@any true
+      val startElement = psiFile.findElementAt(info.actualStartOffset) ?: return@any false
+      val endElement = psiFile.findElementAt(info.actualEndOffset - 1) ?: return@any false
+      val reported = PsiTreeUtil.findCommonParent(startElement, endElement) ?: return@any false
+      if (JavaResolveUtil.isInJavaDoc(reported)) return@any false
+      val context = PsiTreeUtil.getNonStrictParentOfType(reported,
+                                                         PsiStatement::class.java, PsiClass::class.java,
+                                                         PsiMethod::class.java, PsiField::class.java,
+                                                         PsiReferenceList::class.java) ?: return@any false
+      return@any StreamEx.ofTree(context, { StreamEx.of(*it.children) })
+        .anyMatch { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m) } }
+    }
   }
 
   private fun getFilesReportedByProblemSearch(psiFile: PsiFile): Set<VirtualFile> {
@@ -258,47 +274,6 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return filesWithProblems
   }
 
-  private class HighlightErrorSearcher(holder: HighlightInfoHolder) : HighlightVisitorImpl() {
-
-    init {
-      prepareToRunAsInspection(holder)
-    }
-
-    companion object {
-      internal fun hasErrors(psiFile: PsiFile, members: List<PsiMember>): Boolean {
-        var foundError = false
-        val visitor = object : JavaRecursiveElementVisitor() {
-          override fun visitElement(element: PsiElement) {
-            super.visitElement(element)
-            if (foundError) return
-            val holder = object : HighlightInfoHolder(psiFile) {
-              override fun add(info: HighlightInfo?): Boolean {
-                if (info == null || foundError || info.severity != HighlightSeverity.ERROR) return true
-                val startElement = psiFile.findElementAt(info.actualStartOffset) ?: return true
-                val endElement = psiFile.findElementAt(info.actualEndOffset - 1) ?: return true
-                val reported = PsiTreeUtil.findCommonParent(startElement, endElement) ?: return true
-                val context = PsiTreeUtil.getNonStrictParentOfType(reported,
-                                                                   PsiStatement::class.java, PsiClass::class.java,
-                                                                   PsiMethod::class.java, PsiField::class.java,
-                                                                   PsiReferenceList::class.java) ?: return true
-
-                foundError = StreamEx.ofTree(context, { StreamEx.of(*it.children) })
-                  .anyMatch { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m) } }
-                return true
-              }
-
-              override fun hasErrorResults() = foundError
-            }
-            val searcher = HighlightErrorSearcher(holder)
-            element.accept(searcher)
-          }
-        }
-        psiFile.accept(visitor)
-        return foundError
-      }
-    }
-  }
-
   private sealed class Modification(protected val member: PsiMember, env: ImperativeCommand.Environment) {
 
     abstract fun apply(project: Project)
@@ -321,11 +296,11 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         is PsiField -> if (member is PsiEnumConstant) emptyList() else fieldModifications.map { it(member, env) }
         else -> emptyList()
       }
-    }
 
-    internal fun String.absHash(): Int {
-      val hash = hashCode()
-      return if (hash == Int.MIN_VALUE) Int.MAX_VALUE else hash.absoluteValue
+      private fun String.absHash(): Int {
+        val hash = hashCode()
+        return if (hash == Int.MIN_VALUE) Int.MAX_VALUE else hash.absoluteValue
+      }
     }
 
     private class ChangeName(member: PsiMember, env: ImperativeCommand.Environment) : Modification(member, env) {
@@ -403,7 +378,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
       init {
         val methodName = method.name
-        paramName = methodName + methodName.hashCode().absoluteValue
+        paramName = methodName + methodName.absHash()
       }
 
       override fun apply(project: Project) {
