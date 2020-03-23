@@ -127,35 +127,24 @@ class IntIntMultiMap {
       values[foundIndex - 1] = values[foundIndex - 1].pack()
     }
 
+
+    // TODO: 23.03.2020 Remove last value
+
     links.keys().forEach { keyToUpdate ->
       val valueToUpdate = links[keyToUpdate]
       if (valueToUpdate > idx) links.put(keyToUpdate, valueToUpdate - 1)
     }
   }
 
+  operator fun contains(key: Int): Boolean = key in links
+
+  fun isEmpty(): Boolean = links.isEmpty
+
+  fun clear() {
+    links.clear()
+    values = IntArray(0)
+  }
+
   private fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
   private fun Int.unpack(): Int = if (this == Int.MIN_VALUE) 0 else -this
-}
-
-fun main() {
-  val myMap = IntIntMultiMap()
-  myMap.put(1, 2)
-  myMap.put(2, 4)
-  myMap.put(2, 5)
-  myMap.put(2, 6)
-  myMap.put(1, intArrayOf(10, 11, 12, 13, 16))
-  myMap.put(2, 0)
-  myMap.put(1, 3)
-  myMap.put(1, intArrayOf(10, 20, 30, 11, 40, 50))
-  myMap.remove(1, 2)
-  myMap.remove(1, 50)
-  myMap.remove(2, 0)
-
-  myMap.get(1) { println(it) }
-  println("---------")
-  myMap.get(2) { println(it) }
-  println("---------")
-  println(myMap.size(1))
-  println("---------")
-  println(myMap.size(2))
 }
