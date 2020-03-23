@@ -181,7 +181,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
                                                                                       streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
 
-  internal val dotIdeaRunConfigurationsPath get() = FileUtil.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
+  internal val dotIdeaRunConfigurationsPath: String
+    get() = FileUtil.toSystemIndependentName(projectSchemeManager.rootDirectory.path)
 
   private val rcInArbitraryFileManager = RCInArbitraryFileManager(project)
 
