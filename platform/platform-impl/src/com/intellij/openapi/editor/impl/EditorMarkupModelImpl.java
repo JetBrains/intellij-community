@@ -15,6 +15,8 @@ import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
@@ -170,7 +172,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
       }
     };
 
-    ActionGroup actions = new DefaultActionGroup(new StatusAction(), navigateGroup);
+    AnAction statusAction = new StatusAction();
+    ActionGroup actions = new DefaultActionGroup(statusAction, navigateGroup);
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
       @Override
@@ -255,6 +258,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
+        AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(event, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                                       statusAction.getTemplatePresentation(),
+                                                                       myEditor.getDataContext(), true, false);
+        ActionsCollector.getInstance().record(myEditor.getProject(), statusAction, actionEvent, null);
         myPopupManager.showPopup(event);
       }
     });
@@ -2121,6 +2128,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
                                   Dimension size = myContent.getPreferredSize();
                                   size.width = Math.max(size.width, JBUIScale.scale(296));
                                   myPopup.setSize(size);
+
+                                  // Update statistics
+                                  FeatureUsageData data = new FeatureUsageData().
+                                    addProject(myEditor.getProject()).
+                                    addLanguage(level.getLanguage()).
+                                    addData("level", inspectionsLevel.toString());
+
+                                  FUCounterUsageLogger.getInstance().logEvent("actions", "highlight.level.changed", data);
                                 }, true);
     }
   }
