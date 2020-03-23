@@ -145,8 +145,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                          boolean isSelected) {
     g2.setColor(color);
 
-    int length = (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.hypot(x1 - x2, y1 - y2));
-    setStroke(g2, isUsual || hasArrow, isSelected, length);
+    if (isUsual || hasArrow) {
+      setUsualStroke(g2, isSelected);
+    } else {
+      setDashedStroke(g2, isSelected, (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.hypot(x1 - x2, y1 - y2)));
+    }
 
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
@@ -198,22 +201,21 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.fill(circle);
   }
 
-  private void setStroke(@NotNull Graphics2D g2, boolean usual, boolean select, int edgeLength) {
-    if (usual) {
-      if (select) {
-        g2.setStroke(getSelectedStroke());
-      }
-      else {
-        g2.setStroke(getOrdinaryStroke());
-      }
+  private void setUsualStroke(@NotNull Graphics2D g2, boolean select) {
+    if (select) {
+      g2.setStroke(getSelectedStroke());
     }
     else {
-      if (select) {
-        g2.setStroke(getSelectedDashedStroke(getDashLength(edgeLength)));
-      }
-      else {
-        g2.setStroke(getDashedStroke(getDashLength(edgeLength)));
-      }
+      g2.setStroke(getOrdinaryStroke());
+    }
+  }
+
+  private void setDashedStroke(@NotNull Graphics2D g2, boolean select, int edgeLength) {
+    if (select) {
+      g2.setStroke(getSelectedDashedStroke(getDashLength(edgeLength)));
+    }
+    else {
+      g2.setStroke(getDashedStroke(getDashLength(edgeLength)));
     }
   }
 
