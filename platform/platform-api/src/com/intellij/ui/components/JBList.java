@@ -185,6 +185,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
                          Math.max(s.height, size.height));
   }
 
+  protected final Dimension super_getPreferredSize() {
+    return super.getPreferredSize();
+  }
+
   private void init() {
     setSelectionBackground(UIUtil.getListSelectionBackground(true));
     setSelectionForeground(UIUtil.getListSelectionForeground(true));
