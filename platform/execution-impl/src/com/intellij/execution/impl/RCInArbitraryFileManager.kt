@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -117,7 +118,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     }
 
     val element = try {
-      JDOMUtil.load(ByteArrayInputStream(bytes))
+      JDOMUtil.load(CharsetToolkit.inputStreamSkippingBOM(ByteArrayInputStream(bytes)))
     }
     catch (e: Exception) {
       LOG.info("Failed to parse file $filePath: $e")
