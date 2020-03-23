@@ -404,6 +404,7 @@ def foo() {
   lambda = x -> {
     <caret>a
   }
+  a = ""
 }
 ''', null
   }

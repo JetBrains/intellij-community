@@ -1317,6 +1317,15 @@ def foo() {
 ''', JAVA_LANG_STRING
   }
 
+  void 'test do type inference for outer effectively final variables'() {
+    doNestedDfaTest '''
+def foo() {
+  def x = "string"
+  def closure = { <caret>x }
+}
+''', JAVA_LANG_STRING
+  }
+
   void 'test use outer context for closures passed to DGM'() {
     doNestedDfaTest '''
 def foo() {
@@ -1334,6 +1343,7 @@ def foo() {
   'q'.with ({
     def closure = { <caret>x }
   })
+  x = ""
 }''', null
   }
 

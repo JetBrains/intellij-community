@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
+import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 
 import java.util.*;
 
@@ -338,7 +339,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
       }
     }
-    else if (resolved instanceof GrVariable && mayUseDefinition(refExpr, (PsiVariable)resolved)) {
+    else if (resolved instanceof GrVariable && mayUseDefinition(refExpr, (GrVariable)resolved)) {
       ensureValid(resolved);
       PsiType typeGroovy = SpreadState.apply(((GrVariable)resolved).getTypeGroovy(), result.getSpreadState(), refExpr.getProject());
       if (typeGroovy == null && PsiUtil.isCompileStatic(refExpr)) {
@@ -353,11 +354,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
   }
 
-  private static boolean mayUseDefinition(@NotNull GrReferenceExpression expression, @NotNull PsiVariable definition) {
+  private static boolean mayUseDefinition(@NotNull GrReferenceExpression expression, @NotNull GrVariable definition) {
     if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
       return true;
     }
     if (definition.hasModifier(JvmModifier.FINAL)) {
+      return true;
+    }
+    if (!GrHighlightUtil.isReassigned(definition)) { // check if variable is effectively final
       return true;
     }
     else {
