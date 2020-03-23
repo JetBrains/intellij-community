@@ -6,11 +6,13 @@ import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class ActiveRules {
   public static UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project,
                                                              @NotNull UsageViewSettings usageViewSettings,
