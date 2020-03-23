@@ -51,6 +51,9 @@ public abstract class YamlDocumentationProviderBase implements DocumentationProv
 
   @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement contextElement) {
+    if(!isRelevant(contextElement))
+      return null;
+
     if (object instanceof ForcedCompletionPath) {  // deep completion
       return createFromCompletionPath((ForcedCompletionPath)object, contextElement);
     }
