@@ -31,17 +31,17 @@ jobs:
       script: flake8
     - name: "stubtest py38"
       python: 3.8
-      install: pip install -U git+git://github.com/python/mypy@a07dbd00
+      install: pip install -U git+git://github.com/python/mypy@0a05e61a
       script: ./tests/stubtest_test.py
     - name: "stubtest py37"
       python: 3.7
-      install: pip install -U git+git://github.com/python/mypy@a07dbd00
+      install: pip install -U git+git://github.com/python/mypy@0a05e61a
       script: ./tests/stubtest_test.py
     - name: "stubtest py36"
       python: 3.6
-      install: pip install -U git+git://github.com/python/mypy@a07dbd00
+      install: pip install -U git+git://github.com/python/mypy@0a05e61a
       script: ./tests/stubtest_test.py
     - name: "stubtest py35"
       python: 3.5
-      install: pip install -U git+git://github.com/python/mypy@a07dbd00
+      install: pip install -U git+git://github.com/python/mypy@0a05e61a
       script: ./tests/stubtest_test.py

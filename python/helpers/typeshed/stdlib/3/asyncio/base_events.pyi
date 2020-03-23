@@ -10,6 +10,11 @@ from asyncio.tasks import Task
 from asyncio.transports import BaseTransport
 from _types import FileDescriptorLike
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 if sys.version_info >= (3, 7):
     from contextvars import Context
 
@@ -178,8 +183,9 @@ class BaseEventLoop(AbstractEventLoop, metaclass=ABCMeta):
     async def connect_read_pipe(self, protocol_factory: _ProtocolFactory, pipe: Any) -> _TransProtPair: ...
     async def connect_write_pipe(self, protocol_factory: _ProtocolFactory, pipe: Any) -> _TransProtPair: ...
     async def subprocess_shell(self, protocol_factory: _ProtocolFactory, cmd: Union[bytes, str], *, stdin: Any = ...,
-                               stdout: Any = ..., stderr: Any = ...,
-                               **kwargs: Any) -> _TransProtPair: ...
+                               stdout: Any = ..., stderr: Any = ..., universal_newlines: Literal[False] = ...,
+                               shell: Literal[True] = ..., bufsize: Literal[0] = ..., encoding: None = ...,
+                               errors: None = ..., text: Literal[False, None] = ..., **kwargs: Any) -> _TransProtPair: ...
     async def subprocess_exec(self, protocol_factory: _ProtocolFactory, *args: Any, stdin: Any = ...,
                               stdout: Any = ..., stderr: Any = ...,
                               **kwargs: Any) -> _TransProtPair: ...
