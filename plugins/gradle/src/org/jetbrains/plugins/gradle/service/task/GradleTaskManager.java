@@ -135,7 +135,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, f);
   }
 
-  protected boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
+  protected static boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
     return Optional.ofNullable(settings)
       .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_FLAG_KEY))
       .orElse(false);
@@ -231,7 +231,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
     Integer gradleScriptDebugPort = effectiveSettings.getUserData(BUILD_PROCESS_DEBUGGER_PORT_KEY);
-    if (gradleScriptDebugPort != null && gradleScriptDebugPort > 0) {
+    if (isGradleScriptDebug(effectiveSettings) && gradleScriptDebugPort != null && gradleScriptDebugPort > 0) {
       boolean isJdk9orLater = ExternalSystemJdkUtil.isJdk9orLater(effectiveSettings.getJavaHome());
       String jvmOpt = ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + (isJdk9orLater ? "127.0.0.1:" : "") + gradleScriptDebugPort;
       effectiveSettings.withVmOption(jvmOpt);
