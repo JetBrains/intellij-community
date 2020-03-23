@@ -40,7 +40,8 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     final YAMLValue oldValue = (holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
                                deleteLookupTextAndRetrieveOldValue(context, currentElement) :
                                null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
-    final YAMLKeyValue created = createNewEntry(holdingDocument, item, parent);
+
+    final YAMLKeyValue created = createNewEntry(holdingDocument, item, parent != null && parent.isValid() ? parent : null);
 
     context.getEditor().getCaretModel().moveToOffset(created.getTextRange().getEndOffset());
     if (oldValue != null) {
