@@ -69,7 +69,7 @@ import sys
 import warnings
 import re
 import sre_constants
-import collections
+import collections.abc
 #~ sys.stderr.write( "testing pyparsing module, version %s, %s\n" % (__version__,__versionTime__ ) )
 
 __all__ = [
@@ -573,7 +573,7 @@ class ParseResults(object):
     def __dir__(self):
         return dir(super(ParseResults,self)) + self.keys()
 
-collections.MutableMapping.register(ParseResults)
+collections.abc.MutableMapping.register(ParseResults)
 
 def col (loc,strg):
     """Returns current column within a string, counting newlines as line separators.
@@ -1799,7 +1799,7 @@ class QuotedString(Token):
             if isinstance(ret,basestring):
                 # replace escaped characters
                 if self.escChar:
-                    ret = re.sub(self.escCharReplacePattern,"\g<1>",ret)
+                    ret = re.sub(self.escCharReplacePattern, r"\g<1>", ret)
 
                 # replace escaped quotes
                 if self.escQuote:
