@@ -115,6 +115,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
     return true;
   }
 
+  private static boolean isLeadSelectionNeeded(@NotNull JTree tree, int row) {
+    return 1 < tree.getSelectionCount() && tree.isRowSelected(row - 1) && tree.isRowSelected(row + 1);
+  }
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent component) {
     assert component instanceof JTree;
@@ -223,7 +227,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 g.setColor(getBackground(tree, path, row, true));
                 DRAW.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
               }
-              else if (1 < tree.getSelectionModel().getSelectionCount()) {
+              else if (isLeadSelectionNeeded(tree, row)) {
                 g.setColor(RenderingUtil.getBackground(tree));
                 DRAW.paint((Graphics2D)g, helper.getX() + 1, bounds.y + 1, helper.getWidth() - 2, bounds.height - 2, 0);
               }
