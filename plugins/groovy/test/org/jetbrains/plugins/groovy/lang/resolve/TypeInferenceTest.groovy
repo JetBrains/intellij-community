@@ -1582,4 +1582,16 @@ static def foo(x) {
 
 ''', "A"
   }
+
+  void 'test assignment inside unknown closure'() {
+    doNestedDfaTest '''
+def foo(x) {
+  def x = (Number)1
+  def cl = {
+    x = (String)1
+  }
+  <caret>x
+}
+''', "java.io.Serializable"
+  }
 }

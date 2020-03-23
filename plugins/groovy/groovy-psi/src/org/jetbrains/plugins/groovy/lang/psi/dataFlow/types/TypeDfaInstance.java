@@ -205,6 +205,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         handleClosureDFAResult(state, blockFlowOwner, state::putType);
         break;
       case ZERO_OR_MORE:
+      case UNKNOWN:
         handleClosureDFAResult(state, blockFlowOwner, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
           if (existingType != null) {
@@ -212,8 +213,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
             state.putType(descriptor, mergedType);
           }
         });
-        break;
-      case UNKNOWN:
         break;
     }
   }
