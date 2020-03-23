@@ -6,6 +6,7 @@ import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall
@@ -30,9 +31,17 @@ open class ClosureSamParameterEnhancer : AbstractClosureParameterEnhancer() {
     if (parent is GrSafeCastExpression) {
       return parent.castTypeElement?.type
     }
+    else if (parent is GrListOrMap && !parent.isMap) {
+      return fromLiteralConstructorArgument(expression, parent)
+    }
     else {
       return fromMethodCall(expression)
     }
+  }
+
+  private fun fromLiteralConstructorArgument(expression: GrFunctionalExpression, list: GrListOrMap): PsiType? {
+    val constructorResult = list.constructorReference?.advancedResolve() as? GroovyMethodResult ?: return null
+    return constructorResult.candidate?.argumentMapping?.expectedType(ExpressionArgument(expression))
   }
 
   private fun fromMethodCall(expression: GrFunctionalExpression): PsiType? {

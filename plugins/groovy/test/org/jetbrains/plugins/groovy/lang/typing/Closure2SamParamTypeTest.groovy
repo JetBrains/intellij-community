@@ -31,4 +31,9 @@ class C { C(int x, I i, String s) {} }
   void 'argument of method call'() {
     typingTest 'def bar(I i) {}; bar { <caret>it }', JAVA_LANG_STRING
   }
+
+  @Test
+  void 'argument of literal constructor'() {
+    typingTest 'C c = [42, { <caret>it }, "hi"]', JAVA_LANG_STRING
+  }
 }
