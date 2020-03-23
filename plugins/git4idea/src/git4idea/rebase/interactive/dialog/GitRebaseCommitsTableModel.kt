@@ -56,7 +56,12 @@ internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private
 
   override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
     if (aValue is String) {
-      rebaseTodoModel.reword(rowIndex, aValue)
+      if (aValue == getEntry(rowIndex).commitDetails.fullMessage) {
+        rebaseTodoModel.pick(listOf(rowIndex))
+      }
+      else {
+        rebaseTodoModel.reword(rowIndex, aValue)
+      }
     }
   }
 
