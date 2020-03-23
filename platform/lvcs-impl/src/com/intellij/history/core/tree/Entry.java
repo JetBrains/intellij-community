@@ -194,6 +194,7 @@ public abstract class Entry {
     return findEntry(path) != null;
   }
 
+  @NotNull
   public Entry getEntry(String path) {
     Entry result = findEntry(path);
     if (result == null) {
@@ -202,6 +203,7 @@ public abstract class Entry {
     return result;
   }
 
+  @Nullable
   public Entry findEntry(String relativePath) {
     Iterable<String> parts = Paths.split(relativePath);
     Entry result = this;
