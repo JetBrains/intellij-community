@@ -38,7 +38,7 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     private set
   var saturation = 0f
     private set
-  var alpha: Int = 0
+  var alpha: Int = 255
     private set
 
   init {

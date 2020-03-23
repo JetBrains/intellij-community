@@ -286,13 +286,13 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
           val r = colorField1.colorValue
           val g = colorField2.colorValue
           val b = colorField3.colorValue
-          Color(r, g, b, a)
+          if (showAlpha) Color(r, g, b, a) else Color(r, g, b)
         }
         ColorFormat.HSB -> {
           val h = colorField1.colorValue / 360f
           val s = colorField2.colorValue / 100f
           val b = colorField3.colorValue / 100f
-          Color((a shl 24) or (0x00FFFFFF and Color.HSBtoRGB(h, s, b)), true)
+          Color((a shl 24) or (0x00FFFFFF and Color.HSBtoRGB(h, s, b)), showAlpha)
         }
       }
     }

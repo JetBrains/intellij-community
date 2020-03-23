@@ -76,7 +76,7 @@ class ColorAdjustPanel(private val model: ColorPickerModel,
       val hsbValues = Color.RGBtoHSB(model.color.red, model.color.green, model.color.blue, null)
       val rgb = Color.HSBtoRGB(hue, hsbValues[1], hsbValues[2])
       val argb = (model.color.alpha shl 24) or (rgb and 0x00FFFFFF)
-      val newColor = Color(argb, true)
+      val newColor = Color(argb, showAlpha)
       model.setColor(newColor, this@ColorAdjustPanel)
     }
   }
