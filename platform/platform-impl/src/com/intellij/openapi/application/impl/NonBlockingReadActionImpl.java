@@ -13,6 +13,7 @@ import com.intellij.openapi.application.constraints.ExpirableConstrainedExecutio
 import com.intellij.openapi.application.constraints.Expiration;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -24,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +43,10 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
@@ -102,12 +105,12 @@ public class NonBlockingReadActionImpl<T>
 
   @Override
   public NonBlockingReadAction<T> inSmartMode(@NotNull Project project) {
-    return withConstraint(new InSmartMode(project), earlyDisposable(project));
+    return withConstraint(new InSmartMode(project)).expireWithRWCompliantParent(project);
   }
 
   @Override
   public NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project) {
-    return withConstraint(new WithDocumentsCommitted(project, ModalityState.any()), earlyDisposable(project));
+    return withConstraint(new WithDocumentsCommitted(project, ModalityState.any())).expireWithRWCompliantParent(project);
   }
 
   @Override
@@ -118,12 +121,19 @@ public class NonBlockingReadActionImpl<T>
   @NotNull
   @Override
   public NonBlockingReadActionImpl<T> expireWith(@NotNull Disposable parentDisposable) {
-    return super.expireWith(earlyDisposable(parentDisposable));
+    return parentDisposable instanceof ComponentManager
+           ? expireWithRWCompliantParent((ComponentManager)parentDisposable)
+           : super.expireWith(parentDisposable);
   }
 
-  private static Disposable earlyDisposable(Disposable disposable) {
-    // account for shared project in tests
-    return disposable instanceof ProjectEx && !((ProjectEx)disposable).isDisposed() ? ((ProjectEx)disposable).getEarlyDisposable() : disposable;
+  /**
+   * App/projects/modules are always disposed in a write action,
+   * so checking them at computation/finish start is enough
+   * and allows to avoid querying Disposer, which isn't free.
+   */
+  @NotNull
+  private NonBlockingReadActionImpl<T> expireWithRWCompliantParent(@NotNull ComponentManager parent) {
+    return cancelIf(() -> parent.isDisposed());
   }
 
   @Override
