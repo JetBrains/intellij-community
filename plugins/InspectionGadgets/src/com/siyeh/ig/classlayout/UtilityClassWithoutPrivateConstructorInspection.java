@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ import java.util.List;
 
 public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreClassesWithOnlyMain = false;
 
   @Override
@@ -130,11 +130,12 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         final PsiElement element = reference.getElement();
         final PsiElement context = element.getParent();
         if (context instanceof PsiNewExpression) {
-          SwingUtilities.invokeLater(() -> Messages.showInfoMessage(aClass.getProject(),
-                                                                    InspectionGadgetsBundle.message(
-                                                                      "utility.class.without.private.constructor.cant.generate.constructor.message"),
-                                                                    InspectionGadgetsBundle.message(
-                                                                      "utility.class.without.private.constructor.cant.generate.constructor.title")));
+          if (isOnTheFly()) {
+            SwingUtilities.invokeLater(() -> Messages.showInfoMessage(
+              aClass.getProject(),
+              InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.message"),
+              InspectionGadgetsBundle.message("utility.class.without.private.constructor.cant.generate.constructor.title")));
+          }
           return;
         }
       }
