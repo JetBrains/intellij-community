@@ -846,14 +846,6 @@ public final class PsiUtil extends PsiUtilCore {
               final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
               LOG.assertTrue(capturedWildcard != null);
               PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
-              PsiType captureUpperBound = upperBound;
-              while (captureUpperBound instanceof PsiCapturedWildcardType) {
-                if (captureUpperBound == capturedWildcard) {
-                  upperBound = null;
-                  break;
-                }
-                captureUpperBound = ((PsiCapturedWildcardType)captureUpperBound).getUpperBound();
-              }
               if (upperBound != null) {
                 capturedWildcard.setUpperBound(upperBound);
               }

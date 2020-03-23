@@ -85,6 +85,18 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
         glb = getGreatestLowerBound(glb, substitutedBoundType, wildcardType);
       }
     }
+    if (glb instanceof PsiCapturedWildcardType) {
+      PsiType capturedWildcard = captureSubstitutor.substitute(typeParameter);
+      if (capturedWildcard instanceof PsiCapturedWildcardType) {
+        PsiType captureUpperBound = glb;
+        while (captureUpperBound instanceof PsiCapturedWildcardType) {
+          if (captureUpperBound == capturedWildcard) {
+            return null;
+          }
+          captureUpperBound = ((PsiCapturedWildcardType)captureUpperBound).getUpperBound();
+        }
+      }
+    }
 
     return glb;
   }
