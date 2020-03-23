@@ -7,11 +7,25 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serrc"
+            name="serrc" toReformat="true" toShortenFQNames="true" value="System.err::println">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_CONSUMER" value="true" />
+    </context>
+  </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sout"
             name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutc"
+            name="soutc" toReformat="true" toShortenFQNames="true" value="System.out::println">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_CONSUMER" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.souf"
