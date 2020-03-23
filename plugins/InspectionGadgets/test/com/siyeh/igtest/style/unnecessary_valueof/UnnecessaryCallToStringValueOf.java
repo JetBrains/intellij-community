@@ -94,4 +94,17 @@ public class UnnecessaryCallToStringValueOf {
     sb.append(Integer.toString(ch));  // bad hint here, wants to replace with sb.append(ch);
     // sb.append(ch); appends "z", not "122"
   }
+
+  <T> T genericMethod() {
+    return null;
+  }
+
+  void example2() {
+    System.out.println(String.valueOf(null));
+    System.out.println(java.util.Objects.toString(null));
+    System.out.println(String.valueOf(genericMethod()));
+
+    // Should not report because replacement is ambiguous
+    System.out.println(java.util.Objects.toString(genericMethod()));
+  }
 }
