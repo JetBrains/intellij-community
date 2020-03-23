@@ -202,21 +202,12 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void setUsualStroke(@NotNull Graphics2D g2, boolean select) {
-    if (select) {
-      g2.setStroke(getSelectedStroke());
-    }
-    else {
-      g2.setStroke(getOrdinaryStroke());
-    }
+    g2.setStroke(select ? getSelectedStroke() : getOrdinaryStroke());
   }
 
   private void setDashedStroke(@NotNull Graphics2D g2, boolean select, int edgeLength) {
-    if (select) {
-      g2.setStroke(getSelectedDashedStroke(getDashLength(edgeLength)));
-    }
-    else {
-      g2.setStroke(getDashedStroke(getDashLength(edgeLength)));
-    }
+    float[] length = getDashLength(edgeLength);
+    g2.setStroke(select ? getSelectedDashedStroke(length) : getDashedStroke(length));
   }
 
   @NotNull
