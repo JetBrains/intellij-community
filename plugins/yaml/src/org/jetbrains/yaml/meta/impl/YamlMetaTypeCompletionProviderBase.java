@@ -47,15 +47,12 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
 
     PsiElement position = params.getPosition();
 
-    if (!isOfType(position.getParent(), YAMLElementTypes.SCALAR_PLAIN_VALUE, YAMLElementTypes.SCALAR_QUOTED_STRING) &&
-        !isOfType(position, YAMLTokenTypes.SCALAR_KEY)) {
-      //weird, should be filtered by contributor
-      return;
-    }
-
-    if (position.getParent() instanceof YAMLScalar) { // if it's a value or an inserted key (no ':' after)
+    if (isOfType(position.getParent(), YAMLElementTypes.SCALAR_PLAIN_VALUE, YAMLElementTypes.SCALAR_QUOTED_STRING)) {
+      // it's a value or an inserted key (no ':' after)
       processValueOrInsertedKey(params, result, metaTypeProvider);
-    } else if(position.getParent() instanceof YAMLKeyValue) { // if it's an updated key (followed by ':')
+    }
+    else if (isOfType(position, YAMLTokenTypes.SCALAR_KEY) && position.getParent() instanceof YAMLKeyValue) {
+      // if it's an updated key (followed by ':')
       processUpdatedKey(params, result, metaTypeProvider);
     }
   }
