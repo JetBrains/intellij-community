@@ -58,24 +58,24 @@ final class ConfigurableWebBrowser extends WebBrowser {
   public Icon getIcon() {
     if (family == BrowserFamily.CHROME) {
       if (WebBrowserManager.isYandexBrowser(this)) {
-        return AllIcons.Xml.Browsers.Yandex16;
+        return AllIcons.Xml.Browsers.Yandex;
       }
       else if (checkNameAndPath("Dartium") || checkNameAndPath("Chromium")) {
-        return AllIcons.Xml.Browsers.Chromium16;
+        return AllIcons.Xml.Browsers.Chromium;
       }
       else if (checkNameAndPath("Canary")) {
-        return AllIcons.Xml.Browsers.Canary16;
+        return AllIcons.Xml.Browsers.Canary;
       }
       else if (checkNameAndPath("Opera")) {
-        return AllIcons.Xml.Browsers.Opera16;
+        return AllIcons.Xml.Browsers.Opera;
       }
       else if (checkNameAndPath("node-webkit") || checkNameAndPath("nw") || checkNameAndPath("nwjs")) {
-        return AllIcons.Xml.Browsers.Nwjs16;
+        return AllIcons.Xml.Browsers.Nwjs;
       }
     }
     else if (family == BrowserFamily.EXPLORER) {
       if (WebBrowserManager.isEdge(this)) {
-        return AllIcons.Xml.Browsers.Edge16;
+        return AllIcons.Xml.Browsers.Edge;
       }
     }
 
