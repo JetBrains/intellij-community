@@ -10,6 +10,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.idea.IdeaLogger
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
@@ -361,6 +362,7 @@ object DynamicPlugins {
           DefaultJDOMExternalizer.clearFieldCache()
           TopHitCache.getInstance().clear()
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
+          IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
 
           if (disable) {
             // Update list of disabled plugins
