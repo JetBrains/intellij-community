@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -358,9 +359,12 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
             if (notYetAppliedInitialSelectedConfigurationId != null &&
                 runConfig.uniqueID == notYetAppliedInitialSelectedConfigurationId) {
-              // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box
-              selectedConfiguration = runConfig
+              // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
+              // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
               notYetAppliedInitialSelectedConfigurationId = null
+              StartupManager.getInstance(project).runWhenProjectIsInitialized(DumbAwareRunnable {
+                selectedConfiguration = runConfig
+              })
             }
           }
           else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
