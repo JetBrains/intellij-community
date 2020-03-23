@@ -950,12 +950,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         return;
       }
 
-      getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
-        List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
-        if (checkers.size() != 0) {
-          VcsRootScanner.start(project, checkers);
-        }
-      });
+      getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> VcsRootScanner.start(project));
     }
 
     @Override

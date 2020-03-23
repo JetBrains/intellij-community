@@ -49,33 +49,36 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
-  @NotNull private final List<? extends VcsRootChecker> myCheckers;
 
   @NotNull private final Alarm myAlarm;
   private static final long WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1);
 
-  public static void start(@NotNull Project project, @NotNull List<? extends VcsRootChecker> checkers) {
-    new VcsRootScanner(project, checkers).scheduleScan();
+  public static void start(@NotNull Project project) {
+    new VcsRootScanner(project).scheduleScan();
   }
 
-  private VcsRootScanner(@NotNull Project project, @NotNull List<? extends VcsRootChecker> checkers) {
+  private VcsRootScanner(@NotNull Project project) {
     myProject = project;
     myProjectManager = ProjectRootManager.getInstance(project);
     myRootProblemNotifier = VcsRootProblemNotifier.getInstance(project);
-    myCheckers = checkers;
 
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, project);
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+
+    VcsRootChecker.EXTENSION_POINT_NAME.addExtensionPointListener(() -> scheduleScan(), project);
   }
 
   @Override
   public void filesChanged(@NotNull List<? extends VFileEvent> events) {
+    List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
+    if (checkers.isEmpty()) return;
+
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
       if (file != null && file.isDirectory()) {
         visitDirsRecursivelyWithoutExcluded(myProject, myProjectManager, file, dir -> {
-          if (isVcsDir(dir.getName())) {
+          if (isVcsDir(checkers, dir.getName())) {
             scheduleScan();
             return skipTo(file);
           }
@@ -116,14 +119,13 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
     });
   }
 
-  private boolean isVcsDir(@NotNull String filePath) {
-    return myCheckers.stream().anyMatch(it -> it.isVcsDir(filePath));
+  private static boolean isVcsDir(@NotNull List<VcsRootChecker> checkers, @NotNull String filePath) {
+    return checkers.stream().anyMatch(it -> it.isVcsDir(filePath));
   }
 
   private void scheduleScan() {
-    if (myAlarm.isDisposed()) {
-      return;
-    }
+    if (myAlarm.isDisposed()) return;
+    if (VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList().isEmpty()) return;
 
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
     myAlarm.addRequest(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () ->

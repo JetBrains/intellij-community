@@ -7,7 +7,8 @@
                     interface="com.intellij.openapi.vcs.VcsCheckoutProcessor"
                     dynamic="true"/>
     <extensionPoint name="vcsRootChecker"
-                    interface="com.intellij.openapi.vcs.VcsRootChecker"/>
+                    interface="com.intellij.openapi.vcs.VcsRootChecker"
+                    dynamic="true"/>
     <extensionPoint name="vcsIgnoreChecker"
                     interface="com.intellij.openapi.vcs.VcsIgnoreChecker"
                     area="IDEA_PROJECT"/>
