@@ -50,7 +50,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(project, ExtensionListener(window), window.disposable)
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings()
+  override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasActiveVcss()
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     updateContent(project, toolWindow)

@@ -17,7 +17,7 @@ class FilePredictionVcsFeatures : FilePredictionFeatureProvider {
   override fun getName(): String = "vcs"
 
   override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
-    if (!ProjectLevelVcsManager.getInstance(project).hasAnyMappings()) return emptyMap()
+    if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return emptyMap()
 
     val result = HashMap<String, FilePredictionFeature>()
     val changeListManager = ChangeListManager.getInstance(project)

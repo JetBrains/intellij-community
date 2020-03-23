@@ -5,5 +5,5 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 
 internal class ChangesViewToolWindowManagerImpl(private val project: Project) : ChangesViewToolWindowManager {
-  override fun shouldBeAvailable(): Boolean = ProjectLevelVcsManager.getInstance(project).hasAnyMappings()
+  override fun shouldBeAvailable(): Boolean = ProjectLevelVcsManager.getInstance(project).hasActiveVcss()
 }
