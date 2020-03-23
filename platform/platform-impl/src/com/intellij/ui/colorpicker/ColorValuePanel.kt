@@ -275,7 +275,12 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
       convertHexToColor(hexField.text)
     }
     else {
-      val a = if (currentAlphaFormat == AlphaFormat.BYTE) alphaField.colorValue else (alphaField.colorValue * 0xFF / 100f).roundToInt()
+      val a = if (currentAlphaFormat == AlphaFormat.BYTE) {
+        if(showAlpha) alphaField.colorValue else 255
+      }
+      else {
+        if (showAlpha) (alphaField.colorValue * 0xFF / 100f).roundToInt() else 100
+      }
       when (currentColorFormat) {
         ColorFormat.RGB -> {
           val r = colorField1.colorValue
