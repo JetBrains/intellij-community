@@ -1,11 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
+import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.internal.statistic.utils.PluginInfoDetector.isPluginFromOfficialJbPluginRepo
+import com.intellij.internal.statistic.utils.PluginInfoDetector.isSafeToReportFrom
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.Getter
+import com.intellij.openapi.util.TimeoutCachedValue
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 /**
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
@@ -133,3 +143,65 @@ val notListedPlugin: PluginInfo = PluginInfo(PluginType.NOT_LISTED, null, null)
 
 // Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
 val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null, null)
+
+object PluginInfoDetector {
+  private val pluginIdsFromOfficialJbPluginRepo: Getter<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+    // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
+    try {
+      val cached = getPluginInfoProvider()?.loadCachedPlugins()
+      if (cached != null) {
+        return@TimeoutCachedValue cached.mapNotNullTo(HashSet(cached.size)) { it.pluginId }
+      }
+    }
+    catch (ignored: IOException) {
+    }
+
+    // schedule plugins loading, will take them the next time
+    ApplicationManager.getApplication().executeOnPooledThread {
+      try {
+        getPluginInfoProvider()?.loadPlugins(null) ?: emptySet<PluginId>()
+      }
+      catch (ignored: IOException) {
+      }
+    }
+
+    //report nothing until repo plugins loaded
+    emptySet<PluginId>()
+  }
+
+  private fun getPluginInfoProvider(): PluginInfoProvider? {
+    return ApplicationManager.getApplication()?.let { ServiceManager.getService(PluginInfoProvider::class.java) }
+  }
+
+  /**
+   * Checks this plugin is created by JetBrains or from official repository, so API from it may be reported
+   */
+  internal fun isSafeToReportFrom(descriptor: PluginDescriptor): Boolean {
+    if (PluginManager.getInstance().isDevelopedByJetBrains(descriptor)) {
+      return true
+    }
+    else if (descriptor.isBundled) {
+      // bundled, but not from JetBrains, so, some custom unknown plugin
+      return false
+    }
+
+    // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
+    // they are also considered bundled) would be reported
+    val pluginId = descriptor.pluginId ?: return false
+    return isPluginFromOfficialJbPluginRepo(pluginId)
+  }
+
+  internal fun isPluginFromOfficialJbPluginRepo(pluginId: PluginId?): Boolean {
+    return getPluginIdsFromJbPluginRepository().contains(pluginId)
+  }
+
+  private fun getPluginIdsFromJbPluginRepository(): Set<PluginId> {
+    // not official JetBrains repository - is used, so, not safe to report
+    if (!ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
+      return emptySet()
+    }
+
+    // if in official JetBrains repository, then it is safe to report
+    return pluginIdsFromOfficialJbPluginRepo.get()
+  }
+}
