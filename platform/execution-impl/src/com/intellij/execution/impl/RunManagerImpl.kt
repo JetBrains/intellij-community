@@ -12,6 +12,7 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -20,7 +21,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
+import com.intellij.ui.GuiUtils
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
@@ -362,9 +363,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
               // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
               // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
               notYetAppliedInitialSelectedConfigurationId = null
-              StartupManager.getInstance(project).runWhenProjectIsInitialized(DumbAwareRunnable {
-                selectedConfiguration = runConfig
-              })
+              StartupManager.getInstance(project).runAfterOpened{
+                GuiUtils.invokeLaterIfNeeded(Runnable { selectedConfiguration = runConfig }, ModalityState.NON_MODAL, project.disposed)
+              }
             }
           }
           else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
