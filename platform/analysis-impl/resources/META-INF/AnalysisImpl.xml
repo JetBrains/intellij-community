@@ -30,6 +30,7 @@
                         serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
+    <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
 
     <projectService serviceImplementation="com.intellij.openapi.roots.impl.LibraryScopeCache"/>
     <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"

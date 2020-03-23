@@ -1,18 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
-import com.intellij.lang.IdeLanguageCustomization;
-import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -21,9 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 @State(name = "FindSettings", storages = @Storage("find.xml"))
 public class FindSettingsImpl extends FindSettings implements PersistentStateComponent<FindSettingsImpl> {
@@ -35,25 +27,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @NonNls private static final String FIND_SCOPE_SELECTED = "selected";
 
   public FindSettingsImpl() {
-    Set<String> extensions = JBIterable.from(IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages())
-      .filterMap(Language::getAssociatedFileType)
-      .flatten(o -> JBIterable.of(o.getDefaultExtension())
-        .append(JBIterable.from(FileTypeManager.getInstance().getAssociations(o))
-                  .filter(ExtensionFileNameMatcher.class)
-                  .filterMap(ExtensionFileNameMatcher::getExtension)))
-      .addAllTo(new LinkedHashSet<>());
-    if (extensions.contains("java")) {
-      extensions.add("properties");
-      extensions.add("jsp");
-    }
-    if (!extensions.contains("sql")) {
-      extensions.add("xml");
-      extensions.add("html");
-      extensions.add("css");
-    }
-    for (String ext : ContainerUtil.reverse(new ArrayList<>(extensions))) {
-      recentFileMasks.add("*." + ext);
-    }
   }
 
   @Override

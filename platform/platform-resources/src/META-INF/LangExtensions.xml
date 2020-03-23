@@ -150,8 +150,7 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"/>
 
     <applicationService serviceInterface="com.intellij.find.FindSettings"
-                        serviceImplementation="com.intellij.find.impl.FindSettingsImpl"/>
-    <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
+                        serviceImplementation="com.intellij.find.impl.LangFindSettingsImpl"/>
     <projectService serviceInterface="com.intellij.find.FindInProjectSettings" serviceImplementation="com.intellij.find.impl.FindInProjectRecents"/>
     <pathMacroFilter implementation="com.intellij.find.impl.FindInProjectSettingsBase$FindInProjectPathMacroFilter"/>
 
