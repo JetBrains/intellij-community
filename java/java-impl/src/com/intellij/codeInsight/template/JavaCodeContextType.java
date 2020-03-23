@@ -80,7 +80,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
   
   public static class Generic extends JavaCodeContextType {
     public Generic() {
-      super("JAVA_CODE", JavaBundle.message("live.template.context.java"), EverywhereContextType.class);
+      super("JAVA_CODE", JavaLanguage.INSTANCE.getDisplayName(), EverywhereContextType.class);
     }
 
     @Override

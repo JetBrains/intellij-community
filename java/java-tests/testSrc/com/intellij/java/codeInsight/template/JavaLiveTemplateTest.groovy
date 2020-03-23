@@ -229,6 +229,21 @@ class Outer {
     startTemplate("soutp", "output")
     checkResult()
   }
+  
+  void testSoutConsumerApplicability() {
+    for (String name : ["soutc", "serrc"]) {
+      TemplateImpl template = (TemplateImpl)TemplateSettings.getInstance().getTemplate(name, "output")
+      assert !isApplicable('class Foo {void x(){ <caret>JUNK }}', template)
+      assert !isApplicable('class Foo {void x(java.util.stream.IntStream is){ is.map(<caret>JUNK) }}', template)
+      assert isApplicable('class Foo {void x(java.util.stream.IntStream is){ is.peek(<caret>JUNK) }}', template)
+    }
+  }
+
+  void testSoutConsumer() {
+    configure()
+    startTemplate("soutc", "output")
+    checkResult()
+  }
 
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
     myFixture.configureByText("a.java", text)
