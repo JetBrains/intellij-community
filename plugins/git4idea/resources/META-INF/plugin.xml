@@ -310,8 +310,8 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint interface="git4idea.remote.GitHttpAuthDataProvider" name="GitHttpAuthDataProvider"/>
-    <extensionPoint interface="git4idea.remote.GitRepositoryHostingService" name="gitRepositoryHostingService"/>
+    <extensionPoint interface="git4idea.remote.GitHttpAuthDataProvider" name="GitHttpAuthDataProvider" dynamic="true"/>
+    <extensionPoint interface="git4idea.remote.GitRepositoryHostingService" name="gitRepositoryHostingService" dynamic="true"/>
     <extensionPoint interface="git4idea.checkin.GitCheckinExplicitMovementProvider" name="GitCheckinExplicitMovementProvider"/>
   </extensionPoints>
 
