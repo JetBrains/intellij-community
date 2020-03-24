@@ -114,7 +114,10 @@
                     interface="com.intellij.openapi.vcs.annotate.AnnotationGutterColumnProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
+    <extensionPoint name="vcs.taskHandler"
+                    interface="com.intellij.openapi.vcs.VcsTaskHandler"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
 
     <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
