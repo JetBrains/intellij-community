@@ -72,6 +72,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     myIndex.clearIndicesIfNecessary();
 
+    FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processIndexingProject(myProject, indicator));
+
     CollectingContentIterator finder = new UnindexedFilesFinder(myProject);
     snapshot = PerformanceWatcher.takeSnapshot();
 
