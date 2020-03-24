@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.idea.SplashManager;
@@ -215,7 +216,13 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldAskForConfig() {
-    return Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+    String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+    if ("force-not".equals(showImportDialog)) {
+      return false;
+    }
+    return PluginManagerCore.isRunningFromSources() ||
+           System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
+           "true".equals(showImportDialog);
   }
 
   @Nullable
