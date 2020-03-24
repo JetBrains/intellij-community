@@ -20,8 +20,6 @@ public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager 
   @Override
   protected void registerExtensionPointListeners(@NotNull Disposable disposable) {
     super.registerExtensionPointListeners(disposable);
-    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
-      LanguageCodeStyleSettingsProvider::resetSettingsPagesProviders, disposable);
   }
 
   @Override

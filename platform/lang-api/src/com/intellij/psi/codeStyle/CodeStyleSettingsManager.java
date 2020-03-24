@@ -87,12 +87,14 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
       new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
         @Override
         public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          LanguageCodeStyleSettingsProvider.registerSettingsPageProvider(extension);
           registerLanguageSettings(enumSettings(), extension);
           registerCustomSettings(enumSettings(), extension);
         }
 
         @Override
         public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          LanguageCodeStyleSettingsProvider.unregisterSettingsPageProvider(extension);
           unregisterLanguageSettings(enumSettings(), extension);
           unregisterCustomSettings(enumSettings(), extension);
         }
