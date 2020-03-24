@@ -18,7 +18,6 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -26,9 +25,8 @@ import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +117,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
   }
 
   private static boolean isApplicable(@NotNull PyClass containingClass, @NotNull TypeEvalContext context) {
-    return !PythonUnitTestUtil.isTestClass(containingClass, ThreeState.UNSURE, context) &&
+    return !PythonUnitTestDetectorsKt.isTestClass(containingClass, context) &&
            !containingClass.isSubclass("django.db.models.base.Model", context);
   }
 

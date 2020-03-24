@@ -17,9 +17,8 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.util.ThreeState;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
+import com.jetbrains.python.testing.PythonUnitTestDetectorsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +42,7 @@ public abstract class PyBaseDocstringInspection extends PyInspection {
 
     @Override
     public final void visitPyFunction(@NotNull PyFunction node) {
-      if (PythonUnitTestUtil.isTestFunction(node, ThreeState.UNSURE, myTypeEvalContext)) return;
+      if (PythonUnitTestDetectorsKt.isTestFunction(node)) return;
       final Property property = node.getProperty();
       if (property != null && (node == property.getSetter().valueOrNull() || node == property.getDeleter().valueOrNull())) {
         return;
@@ -54,7 +53,7 @@ public abstract class PyBaseDocstringInspection extends PyInspection {
 
     @Override
     public final void visitPyClass(@NotNull PyClass node) {
-      if (PythonUnitTestUtil.isTestClass(node, ThreeState.UNSURE, myTypeEvalContext)) return;
+      if (PythonUnitTestDetectorsKt.isTestClass(node, myTypeEvalContext)) return;
       final String name = node.getName();
       if (name == null || name.startsWith("_")) {
         return;
