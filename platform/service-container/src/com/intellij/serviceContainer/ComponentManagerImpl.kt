@@ -351,7 +351,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val adapter = picoContainer.getComponentAdapter(interfaceClass)
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
-      checkThatNotDisposedCompletely(ProgressManager.getGlobalProgressIndicator())
+      checkContainerNotDisposedCompletely(interfaceClass, ProgressManager.getGlobalProgressIndicator())
       return null
     }
 
@@ -397,7 +397,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     checkCanceledIfNotInClassInit()
-    checkThatNotDisposedCompletely(indicator)
+    checkContainerNotDisposedCompletely(serviceClass, indicator)
 
     if (parent != null) {
       val result = parent.doGetService(serviceClass, createIfNeeded)
@@ -419,9 +419,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return result
   }
 
-  private fun checkThatNotDisposedCompletely(indicator: @Nullable ProgressIndicator?) {
+  private fun checkContainerNotDisposedCompletely(interfaceClass: Class<*>, indicator: @Nullable ProgressIndicator?) {
     if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-      val error = AlreadyDisposedException("Cannot create ${toString()} because container is already disposed (container=${toString()})")
+      val error = AlreadyDisposedException("Cannot create ${interfaceClass.name} because container is already disposed: ${toString()}")
       if (indicator == null) {
         throw error
       }
