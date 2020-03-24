@@ -70,7 +70,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasA
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUpAndGetElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReceiverKt.processReceiverType;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
 /**
@@ -585,29 +584,6 @@ public class ResolveUtil {
       variants[i] = new GroovyResolveResultImpl(constructors[i], isAccessible);
     }
     return variants;
-  }
-
-  public static GroovyResolveResult[] getAllClassConstructors(@NotNull PsiClass psiClass,
-                                                              @NotNull PsiSubstitutor substitutor,
-                                                              PsiType @Nullable [] argTypes,
-                                                              @NotNull PsiElement place) {
-    final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, argTypes, PsiType.EMPTY_ARRAY);
-    final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
-
-    final PsiMethod[] constructors = psiClass.getConstructors();
-    if (constructors.length == 0) {
-      PsiMethod defaultConstructor = getDefaultConstructor(psiClass);
-      processor.execute(defaultConstructor, state);
-    }
-    else {
-      for (PsiMethod constructor : constructors) {
-        processor.execute(constructor, state);
-      }
-    }
-
-    final PsiClassType qualifierType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
-    processNonCodeMembers(qualifierType, processor, place, state);
-    return processor.getCandidates();
   }
 
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
