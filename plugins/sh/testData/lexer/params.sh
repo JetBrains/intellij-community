@@ -84,3 +84,15 @@ declare -A SHA256MAP=( \
         ["10"]="c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435")
 
 type="${entry[[:space:]]*}"
+
+${parameter-word}
+${parameter=word}
+${parameter?word}
+${parameter+word}
+${@}
+
+${parameter:-{}
+
+line="${line%'\r'}"
+line="${line%$'\r'}"
+line="${line%"\r"}"

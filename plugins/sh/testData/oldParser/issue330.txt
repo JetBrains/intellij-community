@@ -20,7 +20,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('varname')
+          PsiElement(word)('varname')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('[@]}\"')
         PsiElement(CLOSE_QUOTE)('"')
@@ -34,7 +34,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('varname')
+          PsiElement(word)('varname')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('+=(\"')
         VARIABLE

@@ -115,8 +115,9 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-ParamExpansion           = [^{}\\] | {EscapedChar}
+ParamExpansion           = [^}($`\\\"'] | {EscapedChar}
 ParamExpansionBody       = {ParamExpansion}+
+ParamExpansionName       = {AssignmentWord} | [@$0-9?*_-] // like {Variable}, #!* have special meaning in param expansions
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
@@ -152,6 +153,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 %state HERE_DOC_BODY
 
 %state PARAMETER_EXPANSION
+%state PARAMETER_EXPANSION_OPS
 %state PARENTHESES_COMMAND_SUBSTITUTION
 %state BACKQUOTE_COMMAND_SUBSTITUTION
 %%
@@ -257,11 +259,37 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
   {RegexInQuotes}                 { popState(); return WORD; }
 }
 
+// This state matches the initial variable name of a parameter expansion
 <PARAMETER_EXPANSION> {
-  "${"                                { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
   "{"                                 {             return LEFT_CURLY; }
   "}"                                 { popState(); return RIGHT_CURLY; }
-  {ParamExpansionBody} / "${"|"}"     {             return PARAMETER_EXPANSION_BODY; }
+
+  {ParamExpansionName}                { popState(); pushState(PARAMETER_EXPANSION_OPS); return WORD; }
+  "#" | "!"                           {             return PARAMETER_EXPANSION_BODY; }
+  // invalid token, continue in PARAMETER_EXPANSION_OPS to disable WORD matching
+  {ParamExpansion}                    { yypushback(yylength()); popState(); pushState(PARAMETER_EXPANSION_OPS); }
+}
+
+// This state matches the tokens which may appear after the initial part of a parameter expansion
+<PARAMETER_EXPANSION_OPS> {
+  "}"                                { popState(); return RIGHT_CURLY; }
+
+  // subexpressions
+  "$(("                              { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
+  "(("                               { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
+                                          pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
+                                      else return PARAMETER_EXPANSION_BODY; }
+  "$("                               { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
+  "${"                               { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+  "$["                               { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
+  "`"                                { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; }
+  {Variable}                         { return VAR; }
+  {Quote}                            { pushState(STRING_EXPRESSION); return OPEN_QUOTE; }
+  {RawString}                        |
+  {UnclosedRawString}                { return RAW_STRING; }
+
+  "("                                { return PARAMETER_EXPANSION_BODY; }  // to allow arithmetic sub-expressions $(())
+  {ParamExpansionBody}               { return PARAMETER_EXPANSION_BODY; }
 }
 
 <CASE_CONDITION> {

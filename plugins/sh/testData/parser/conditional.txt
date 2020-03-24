@@ -349,7 +349,7 @@ SHELL_SCRIPT
               PsiElement($)('$')
               SHELL_PARAMETER_EXPANSION
                 PsiElement({)('{')
-                PsiElement(parameter_expansion_body)('TEAMCITY_SERVER')
+                PsiElement(word)('TEAMCITY_SERVER')
                 PsiElement(})('}')
               PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
@@ -764,7 +764,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('osvers')
+          PsiElement(word)('osvers')
           PsiElement(})('}')
       PsiWhiteSpace(' ')
       LITERAL_CONDITION
@@ -796,7 +796,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('sss')
+          PsiElement(word)('sss')
           PsiElement(})('}')
       PsiWhiteSpace(' ')
       LITERAL_CONDITION

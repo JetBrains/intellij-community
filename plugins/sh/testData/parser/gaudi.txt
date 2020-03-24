@@ -11,7 +11,10 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('XDG_RUNTIME_DIR:-/run/user/$USER')
+          PsiElement(word)('XDG_RUNTIME_DIR')
+          PsiElement(parameter_expansion_body)(':-/run/user/')
+          VARIABLE
+            PsiElement(var)('$USER')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('/gaudi')
         PsiElement(CLOSE_QUOTE)('"')
@@ -26,7 +29,11 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('XDG_CONFIG_HOME:-$HOME/.config')
+          PsiElement(word)('XDG_CONFIG_HOME')
+          PsiElement(parameter_expansion_body)(':-')
+          VARIABLE
+            PsiElement(var)('$HOME')
+          PsiElement(parameter_expansion_body)('/.config')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('/gaudi.config')
         PsiElement(CLOSE_QUOTE)('"')
@@ -41,7 +48,11 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('XDG_CACHE_HOME:-$HOME/.cache')
+          PsiElement(word)('XDG_CACHE_HOME')
+          PsiElement(parameter_expansion_body)(':-')
+          VARIABLE
+            PsiElement(var)('$HOME')
+          PsiElement(parameter_expansion_body)('/.cache')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('/gaudi')
         PsiElement(CLOSE_QUOTE)('"')
@@ -2489,7 +2500,8 @@ SHELL_SCRIPT
                                             PsiElement($)('$')
                                             SHELL_PARAMETER_EXPANSION
                                               PsiElement({)('{')
-                                              PsiElement(parameter_expansion_body)('BEFORE_EXIT[@]')
+                                              PsiElement(word)('BEFORE_EXIT')
+                                              PsiElement(parameter_expansion_body)('[@]')
                                               PsiElement(})('}')
                                             PsiElement(CLOSE_QUOTE)('"')
                                         PsiElement(\n)('\n')
@@ -2512,7 +2524,8 @@ SHELL_SCRIPT
                                       PsiElement($)('$')
                                       SHELL_PARAMETER_EXPANSION
                                         PsiElement({)('{')
-                                        PsiElement(parameter_expansion_body)('BEFORE_EXIT[@]')
+                                        PsiElement(word)('BEFORE_EXIT')
+                                        PsiElement(parameter_expansion_body)('[@]')
                                         PsiElement(})('}')
                                       PsiElement(CLOSE_QUOTE)('"')
                                   PsiElement(\n)('\n')
