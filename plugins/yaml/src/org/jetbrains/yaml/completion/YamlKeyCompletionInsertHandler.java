@@ -43,7 +43,13 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
 
     final YAMLKeyValue created = createNewEntry(holdingDocument, item, parent != null && parent.isValid() ? parent : null);
 
-    context.getEditor().getCaretModel().moveToOffset(created.getTextRange().getEndOffset());
+    YAMLValue createdValue = created.getValue();
+    if (createdValue != null) {
+      context.getEditor().getCaretModel().moveToOffset(createdValue.getTextRange().getStartOffset() - 1);
+    }
+    else {
+      context.getEditor().getCaretModel().moveToOffset(created.getTextRange().getEndOffset());
+    }
     if (oldValue != null) {
       WriteCommandAction.runWriteCommandAction(context.getProject(),
                                                YAMLBundle.message("YamlKeyCompletionInsertHandler.insert.value"),
