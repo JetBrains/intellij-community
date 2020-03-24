@@ -8,18 +8,22 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.Decompressor;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -93,6 +97,28 @@ public final class PluginManager {
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabled);
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       return PluginManagerCore.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
+    }
+  }
+
+  public static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact(@NotNull Path file, @Nullable BuildNumber buildNumber) throws IOException {
+    PluginLoadingResult result = new PluginLoadingResult(Collections.emptyMap(), buildNumber != null ? buildNumber : PluginManagerCore.getBuildNumber());
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), result);
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+      IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
+      if (descriptor == null && file.getFileName().toString().endsWith(".zip")) {
+        File outputDir = FileUtil.createTempDirectory("plugin", "");
+        try {
+          new Decompressor.Zip(file.toFile()).extract(outputDir);
+          File[] files = outputDir.listFiles();
+          if (files != null && files.length == 1) {
+            descriptor = PluginManagerCore.loadDescriptorFromFileOrDir(files[0].toPath(), PluginManagerCore.PLUGIN_XML, context, true);
+          }
+        }
+        finally {
+          FileUtil.delete(outputDir);
+        }
+      }
+      return descriptor;
     }
   }
 
