@@ -125,6 +125,7 @@ public class UrlClassLoader extends ClassLoader {
     @NotNull
     public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
 
+    // Presense of this method is also checked in JUnitDevKitPatcher
     private Builder urlsFromAppClassLoader(ClassLoader classLoader) {
       if (classLoader instanceof URLClassLoader) {
         return urls(((URLClassLoader)classLoader).getURLs());
