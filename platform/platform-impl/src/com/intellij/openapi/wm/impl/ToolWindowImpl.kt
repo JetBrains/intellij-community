@@ -7,10 +7,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.*
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -607,7 +609,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   private inner class RemoveStripeButtonAction : AnAction(ActionsBundle.message("action.RemoveStripeButton.text"),
-                                                          ActionsBundle.message("action.RemoveStripeButton.description"), null), DumbAware {
+                                                          ActionsBundle.message("action.RemoveStripeButton.description"), null), DumbAware, FusAwareAction {
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isShowStripeButton
     }
@@ -615,9 +617,13 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowManager.removeFromSideBar(id)
     }
+
+    override fun recordFeatureUsageStatistics(event: AnActionEvent, data: FeatureUsageData) {
+      data.addData("toolwindow", id)
+    }
   }
 
-  private inner class ToggleContentUiTypeAction : ToggleAction(), DumbAware {
+  private inner class ToggleContentUiTypeAction : ToggleAction(), DumbAware, FusAwareAction {
     private var hadSeveralContents = false
 
     init {
@@ -636,6 +642,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       toolWindowManager.setContentUiType(id, if (state) ToolWindowContentUiType.COMBO else ToolWindowContentUiType.TABBED)
+    }
+
+    override fun recordFeatureUsageStatistics(event: AnActionEvent, data: FeatureUsageData) {
+      data.addData("toolwindow", id)
     }
   }
 

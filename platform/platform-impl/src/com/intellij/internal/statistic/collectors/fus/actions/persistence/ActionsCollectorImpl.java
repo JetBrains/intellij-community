@@ -54,9 +54,16 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   @Override
   public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
-    record(GROUP, ACTION_INVOKED_EVENT_ID, project, action, event, data -> {
+    recordActionInvoked(project, action, event, data -> {
       if (lang != null) data.addCurrentFile(lang);
     });
+  }
+
+  public static void recordActionInvoked(@Nullable Project project,
+                                         @Nullable AnAction action,
+                                         @Nullable AnActionEvent event,
+                                         @NotNull Consumer<FeatureUsageData> configurator) {
+    record(GROUP, ACTION_INVOKED_EVENT_ID, project, action, event, configurator);
   }
 
   /**

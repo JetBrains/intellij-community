@@ -16,16 +16,18 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public class MaximizeToolWindowAction extends AnAction implements DumbAware {
+public class MaximizeToolWindowAction extends AnAction implements DumbAware, FusAwareAction {
   public MaximizeToolWindowAction() {
     super(ActionsBundle.messagePointer("action.ResizeToolWindowMaximize.text"));
   }
@@ -57,5 +59,13 @@ public class MaximizeToolWindowAction extends AnAction implements DumbAware {
     e.getPresentation().setText(manager.isMaximized(toolWindow) ?
                                 ActionsBundle.message("action.ResizeToolWindowMaximize.text.alternative") :
                                 ActionsBundle.message("action.ResizeToolWindowMaximize.text"));
+  }
+
+  @Override
+  public void recordFeatureUsageStatistics(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+    ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
+    if (toolWindow != null) {
+      data.addData("toolwindow", toolWindow.getId());
+    }
   }
 }
