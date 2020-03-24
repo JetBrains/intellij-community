@@ -155,7 +155,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
 
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
     linkLabel.setHtmlText("Learn how to <a>build plugins with Gradle</a>");
-    linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
+    linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system.html");
     return linkLabel;
   }
 
