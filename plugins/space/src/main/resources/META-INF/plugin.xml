@@ -31,6 +31,13 @@
                 canCloseContents="true"
                 factoryClass="com.intellij.space.tools.SpaceToolWindowFactory"/>
 
+    <toolWindow id="Space Code Reviews"
+                icon="SpaceIcons.Main"
+                anchor="left"
+                canCloseContents="true"
+                doNotActivateOnStart="true"
+                factoryClass="com.intellij.space.vcs.review.SpaceReviewToolWindowFactory"/>
+
     <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SpaceKtsFileDetector"/>
     <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SpaceKtsModelBuilder"/>
     <projectService serviceImplementation="com.intellij.space.plugins.pipelines.services.SyncDslViewManager"/>
@@ -49,6 +56,11 @@
     <postStartupActivity implementation="com.intellij.space.vcs.PostStartupActivity"/>
     <postStartupActivity implementation="com.intellij.space.plugins.pipelines.services.SpaceKtsFileDetectorActivator"/>
 
+    <!--registry keys-->
+    <!--suppress PluginXmlCapitalization -->
+    <registryKey key="space.code.review.enabled"
+                 defaultValue="false"
+                 description="Space Code Review"/>
   </extensions>
 
   <actions>
@@ -100,6 +112,22 @@
       <add-to-group group-id="SpaceGroup" anchor="first"/>
       <add-to-group group-id="Vcs.Import" anchor="last"/>
     </action>
+    <!--code review-->
+    <action id="com.intellij.space.vcs.review.SpaceShowReviewsAction"
+            class="com.intellij.space.vcs.review.SpaceShowReviewsAction"/>
+
+    <group id="com.intellij.space.vcs.review.list.popup">
+      <action id="com.intellij.space.vcs.review.list.SpaceRefreshReviewsListAction"
+              class="com.intellij.space.vcs.review.list.SpaceRefreshReviewsListAction"/>
+      <action id="com.intellij.space.vcs.review.list.SpaceReviewOpenInBrowserAction"
+              class="com.intellij.space.vcs.review.list.SpaceReviewOpenInBrowserAction"/>
+      <separator/>
+      <action id="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"
+              class="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"/>
+
+    </group>
+    <action id="com.intellij.space.vcs.review.SpaceOpenCodeReviewDetailsAction"
+            class="com.intellij.space.vcs.review.SpaceOpenCodeReviewDetailsAction"/>
   </actions>
 
   <resource-bundle>messages.SpaceBundle</resource-bundle>
