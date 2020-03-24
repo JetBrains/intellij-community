@@ -20,6 +20,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +33,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
-  private int nextAvailableId = Pass.LAST_PASS + 1;
+  private int nextAvailableId;
   private boolean checkedForCycles;
   private final Project myProject;
+  private boolean runInspectionsAfterCompletionOfGeneralHighlightPass;
 
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
@@ -59,12 +61,13 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     }, this);
   }
 
-  void reregisterFactories() {
+  private void reregisterFactories() {
     synchronized (this) {
       checkedForCycles = false;
+      myRegisteredPassFactories.clear();
+      nextAvailableId = Pass.LAST_PASS + 1;
+      myDirtyScopeTrackingFactories.clear();
     }
-    myRegisteredPassFactories.clear();
-    myDirtyScopeTrackingFactories.clear();
     for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
       factoryRegistrar.registerHighlightingPassFactory(this, myProject);
     }
@@ -72,6 +75,17 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   @Override
   public void dispose() {
+  }
+
+  @ApiStatus.Internal
+  void runInspectionsAfterCompletionOfGeneralHighlightPass(boolean flag) {
+    runInspectionsAfterCompletionOfGeneralHighlightPass = flag;
+    reregisterFactories();
+  }
+
+  @ApiStatus.Internal
+  boolean isRunInspectionsAfterCompletionOfGeneralHighlightPass() {
+    return runInspectionsAfterCompletionOfGeneralHighlightPass;
   }
 
   private static class PassConfig {
@@ -106,6 +120,10 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
     }
     return passId;
+  }
+
+  synchronized int getNextAvailableId() {
+    return nextAvailableId;
   }
 
   @Override

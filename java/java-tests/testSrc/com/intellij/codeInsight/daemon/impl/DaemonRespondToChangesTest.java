@@ -2537,7 +2537,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   public void test_RunInspectionsAfterCompletionOfGeneralHighlightPass_SecretSettingDoesWork() {
     if (!ensureEnoughParallelism()) return;
-    assertFalse("Some rogue plugin left the dangerous setting on", myDaemonCodeAnalyzer.isRunInspectionsAfterCompletionOfGeneralHighlightPass());
+    TextEditorHighlightingPassRegistrarImpl registrar =
+      (TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(myProject);
+    assertFalse("Somebody (rogue plugin?) has left the dangerous setting on", registrar.isRunInspectionsAfterCompletionOfGeneralHighlightPass());
     registerInspection(new LocalInspectionTool() {
       @Override
       public @NotNull String getID() {
