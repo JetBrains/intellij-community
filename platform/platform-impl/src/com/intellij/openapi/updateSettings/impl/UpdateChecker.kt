@@ -34,6 +34,7 @@ import com.intellij.util.Urls
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
+import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -266,7 +267,7 @@ object UpdateChecker {
     val updates = PluginsMetaLoader.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
-      val isOutdated = descriptor == null || PluginDownloader.comparePluginVersions(lastUpdate.version, descriptor.version) > 0
+      val isOutdated = descriptor == null || VersionComparatorUtil.compare(lastUpdate.version, descriptor.version) > 0
       if (isOutdated) {
         val newDescriptor = try {
           PluginsMetaLoader.loadPluginDescriptor(id.idString, lastUpdate, indicator)

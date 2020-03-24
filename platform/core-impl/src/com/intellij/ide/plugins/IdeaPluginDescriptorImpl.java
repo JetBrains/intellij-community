@@ -146,20 +146,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myBasePath;
   }
 
-  /**
-   * @deprecated Use {@link PluginManager#loadDescriptorFromFile(IdeaPluginDescriptorImpl, Path, SafeJdomFactory, boolean, Set)}
-   */
+  /** @deprecated Use {@link PluginManager#loadDescriptorFromFile */
   @Deprecated
-  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude)
-    throws IOException, JDOMException {
+  public void loadFromFile(@NotNull File file, @Nullable SafeJdomFactory factory, boolean ignoreMissingInclude) throws IOException, JDOMException {
     PluginManager.loadDescriptorFromFile(this, file.toPath(), factory, ignoreMissingInclude, PluginManagerCore.disabledPlugins());
   }
 
-  public boolean readExternal(@NotNull Element element,
-                              @NotNull Path basePath,
-                              @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                              @NotNull DescriptorLoadingContext context,
-                              @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
+  boolean readExternal(@NotNull Element element,
+                       @NotNull Path basePath,
+                       @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
+                       @NotNull DescriptorLoadingContext context,
+                       @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
     myBasePath = basePath;
 
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
@@ -340,10 +337,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorLoadingContext context, Element child) {
     String dependencyIdString = child.getTextTrim();
-    if (dependencyIdString.isEmpty()) {
-      return true;
+    if (dependencyIdString.isEmpty()) return true;
 
-    }
     PluginId dependencyId = PluginId.getId(dependencyIdString);
     boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
     boolean isAvailable = true;
@@ -725,6 +720,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myReleaseVersion;
   }
 
+  @Override
   public boolean isLicenseOptional() {
     return myIsLicenseOptional;
   }

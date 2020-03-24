@@ -208,15 +208,11 @@ public final class PluginDownloader {
   }
 
   public static int compareVersionsSkipBrokenAndIncompatible(@NotNull IdeaPluginDescriptor existingPlugin, String newPluginVersion) {
-    int state = comparePluginVersions(newPluginVersion, existingPlugin.getVersion());
+    int state = VersionComparatorUtil.compare(newPluginVersion, existingPlugin.getVersion());
     if (state < 0 && (PluginManagerCore.isBrokenPlugin(existingPlugin) || PluginManagerCore.isIncompatible(existingPlugin))) {
       state = 1;
     }
     return state;
-  }
-
-  public static int comparePluginVersions(String newPluginVersion, String oldPluginVersion) {
-    return VersionComparatorUtil.compare(newPluginVersion, oldPluginVersion);
   }
 
   public void install() throws IOException {

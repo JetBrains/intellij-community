@@ -901,51 +901,29 @@ public final class PluginManagerCore {
                                                                             @NotNull DescriptorLoadingContext context) {
     String descriptorRelativePath = META_INF + pathName;
     IdeaPluginDescriptorImpl descriptor = loadDescriptorFromDir(file, descriptorRelativePath, null, context);
-    if (descriptor != null) {
-      return descriptor;
-    }
+    if (descriptor != null) return descriptor;
 
-    List<Path> files;
+    List<Path> pluginJarFiles = new ArrayList<>(), dirs = new ArrayList<>();
     try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
-      files = ContainerUtil.collect(s.iterator());
-    }
-    catch (IOException e) {
-      return null;
-    }
-
-    if (files.isEmpty()) {
-      return null;
-    }
-
-    putMoreLikelyPluginJarsFirst(file, files);
-
-    List<Path> pluginJarFiles = null;
-    List<Path> dirs = null;
-    for (Path childFile : files) {
-      if (Files.isDirectory(childFile)) {
-        if (dirs == null) {
-          dirs = new ArrayList<>();
+      for (Path childFile : s) {
+        if (Files.isDirectory(childFile)) {
+          dirs.add(childFile);
         }
-        dirs.add(childFile);
-      }
-      else {
-        String path = childFile.toString();
-        if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
-          if (files.size() == 1) {
-            pluginJarFiles = Collections.singletonList(childFile);
-            break;
-          }
-          else {
-            if (pluginJarFiles == null) {
-              pluginJarFiles = new ArrayList<>();
-            }
+        else {
+          String path = childFile.toString();
+          if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
             pluginJarFiles.add(childFile);
           }
         }
       }
     }
+    catch (IOException e) {
+      return null;
+    }
 
-    if (pluginJarFiles != null) {
+    if (!pluginJarFiles.isEmpty()) {
+      putMoreLikelyPluginJarsFirst(file, pluginJarFiles);
+
       PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(pluginJarFiles, context);
       for (Path jarFile : pluginJarFiles) {
         descriptor = loadDescriptorFromJar(jarFile, pathName, pathResolver, context, file);
@@ -954,10 +932,6 @@ public final class PluginManagerCore {
           return descriptor;
         }
       }
-    }
-
-    if (dirs == null) {
-      return null;
     }
 
     for (Path dir : dirs) {
