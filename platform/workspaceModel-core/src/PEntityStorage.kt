@@ -8,16 +8,52 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaField
 
+open class EntitiesStore private constructor(
+  entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
+) : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
+
+  constructor() : this(emptyMap())
+
+  protected open val entitiesByType: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>> = HashMap(entities)
+
+  @Suppress("UNCHECKED_CAST")
+  open operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entitiesByType[clazz] as EntityFamily<T>?
+
+  fun all() = entitiesByType
+
+  override fun iterator(): Iterator<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
+    return entitiesByType.iterator()
+  }
+
+  fun copy(): EntitiesStore = EntitiesStore(this.entitiesByType)
+  fun join(other: EntitiesStore): EntitiesStore = EntitiesStore(entitiesByType + other.entitiesByType)
+}
+
+class MutableEntitiesStore() : EntitiesStore() {
+  override val entitiesByType: MutableMap<Class<out TypedEntity>, MutableEntityFamily<out TypedEntity>> = mutableMapOf()
+
+  @Suppress("UNCHECKED_CAST")
+  override operator fun <T : TypedEntity> get(clazz: Class<T>): MutableEntityFamily<T>? = entitiesByType[clazz] as MutableEntityFamily<T>?
+
+  fun clear() = entitiesByType.clear()
+
+  fun isEmpty() = entitiesByType.isEmpty()
+
+  operator fun <T : TypedEntity> set(clazz: Class<T>, newFamily: MutableEntityFamily<T>) {
+    entitiesByType[clazz] = newFamily
+  }
+}
+
 open class PEntityStorage constructor(
-  open val entitiesByType: Map<Class<out TypedEntity>, EntityFamily>,
+  open val entitiesByType: EntitiesStore,
   val refs: RefsTable
 ) : TypedEntityStorage {
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
     return getEntities(entitiesByType[entityClass])
   }
 
-  protected fun <E : TypedEntity> getEntities(listToSearch: EntityFamily?) =
-    listToSearch?.entities?.asSequence()?.filterNotNull()?.map { it.createEntity(this) as E } ?: emptySequence()
+  protected fun <E : TypedEntity> getEntities(listToSearch: EntityFamily<E>?) =
+    listToSearch?.entities?.asSequence()?.filterNotNull()?.map { it.createEntity(this) } ?: emptySequence()
 
   override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
                                                             entityClass: KClass<R>,
@@ -29,42 +65,46 @@ open class PEntityStorage constructor(
     TODO("Not yet implemented")
   }
 
+  protected fun <E : TypedEntity> KProperty1<E, *>.declaringClass(): Class<E> {
+    return this.javaField!!.declaringClass as Class<E>
+  }
+
   open fun <T : TypedEntity, SUBT : TypedEntity> extractRefs(local: KProperty1<T, Sequence<SUBT>>,
                                                              remote: KProperty1<SUBT, T?>,
                                                              id: PId): Sequence<SUBT> {
-    val entitiesList = entitiesByType[remote.javaField!!.declaringClass] ?: return emptySequence()
+    val entitiesList = entitiesByType[remote.declaringClass()] ?: return emptySequence()
     return getRefs(local, remote, id.arrayId, entitiesList, refs) ?: emptySequence()
   }
 
   protected fun <T : TypedEntity, SUBT : TypedEntity> getRefs(local: KProperty1<T, Sequence<SUBT>>,
                                                               remote: KProperty1<SUBT, T?>,
                                                               index: Int,
-                                                              entitiesList: EntityFamily,
+                                                              entitiesList: EntityFamily<SUBT>,
                                                               searchedTable: RefsTable
-  ): Sequence<SUBT>? = searchedTable[local, remote, index]?.map { entitiesList[it]!!.createEntity(this) as SUBT }
+  ): Sequence<SUBT>? = searchedTable[local, remote, index]?.map { entitiesList[it]!!.createEntity(this) }
 
   protected fun <T : TypedEntity, SUBT : TypedEntity> getBackRefs(local: KProperty1<SUBT, T?>,
                                                                   remote: KProperty1<T, Sequence<SUBT>>,
                                                                   index: Int,
-                                                                  entitiesList: EntityFamily,
+                                                                  entitiesList: EntityFamily<T>,
                                                                   searchedTable: RefsTable
-  ): T? = searchedTable[local, remote, index]?.first { entitiesList[it]!!.createEntity(this) as T }
+  ): T? = searchedTable[local, remote, index]?.first { entitiesList[it]!!.createEntity(this) }
 
   open fun <T : TypedEntity, SUBT : TypedEntity> extractBackRef(local: KProperty1<SUBT, T?>,
                                                                 remote: KProperty1<T, Sequence<SUBT>>,
                                                                 index: PId): T? {
-    val entitiesList = entitiesByType[remote.javaField!!.declaringClass as Class<T>] ?: return null
+    val entitiesList = entitiesByType[remote.declaringClass()] ?: return null
     return getBackRefs(local, remote, index.arrayId, entitiesList, refs)
   }
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    return entitiesByType.asSequence().map { it.value.entities }.flatten().filterNotNull()
+    return entitiesByType.all().asSequence().map { it.value.entities }.flatten().filterNotNull()
       .map { it.createEntity(this) }.filterIsInstance<TypedEntityWithPersistentId>().find { it.persistentId() == id } as E
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
     val res = mutableMapOf<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
-    entitiesByType.forEach { (type, entities) ->
+    entitiesByType.all().forEach { (type, entities) ->
       entities.entities.asSequence().filterNotNull().forEach {
         if (sourceFilter(it.entitySource)) {
           val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
@@ -84,9 +124,9 @@ class PEntityStorageBuilder(
   private val origStorage: PEntityStorage
 ) : TypedEntityStorageBuilder, PEntityStorage(origStorage.entitiesByType, origStorage.refs) {
 
-  constructor() : this(PEntityStorage(HashMap(), RefsTable()))
+  constructor() : this(PEntityStorage(EntitiesStore(), RefsTable()))
 
-  private val modified: MutableMap<Class<out TypedEntity>, MutableEntityFamily> = mutableMapOf()
+  private val modified: MutableEntitiesStore = MutableEntitiesStore()
   private val clonedRefs: MutableRefsTable = MutableRefsTable()
 
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
@@ -101,36 +141,36 @@ class PEntityStorageBuilder(
                                                                          source: EntitySource,
                                                                          initializer: M.() -> Unit): T {
     val entityDataClass = clazz.kotlin.annotations.filterIsInstance<PEntityDataClass>().first().clazz
-    val unmodifiableEntityClass = clazz.kotlin.annotations.filterIsInstance<PEntityClass>().first().clazz
+    val unmodifiableEntityClass = clazz.kotlin.annotations.filterIsInstance<PEntityClass>().first().clazz as KClass<T>
     val entities = getEntitiesToModify(unmodifiableEntityClass.java).entities
-    val pEntityData = entityDataClass.primaryConstructor!!.call()
+    val pEntityData = entityDataClass.primaryConstructor!!.call() as PEntityData<T>
 
     pEntityData.entitySource = source
     pEntityData.id = entities.size // set.size - index of the next inserted entity
-    entities += pEntityData
+    entities.add(pEntityData)
 
     val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
     modifiableEntity.initializer()
     modificationCount++
 
-    return pEntityData.createEntity(this) as T
+    return pEntityData.createEntity(this)
   }
 
   // modificationCount is not incremented
-  private fun addEntity(entity: PEntityData, clazz: Class<out PTypedEntity>) {
+  private fun <T : TypedEntity> addEntity(entity: PEntityData<T>, clazz: Class<T>) {
     val entities = getEntitiesToModify(clazz).entities
     entity.id = entities.size // set.size - index of the next inserted entity
     entities += entity
   }
 
   // modificationCount is not incremented
-  private fun replaceEntity(newEntity: PEntityData, clazz: Class<out PTypedEntity>) {
+  private fun <T : TypedEntity> replaceEntity(newEntity: PEntityData<T>, clazz: Class<T>) {
     val entities = getEntitiesToModify(clazz).entities
     entities[newEntity.id] = newEntity
   }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
-    val unmodifiableEntityClass = clazz.kotlin.annotations.filterIsInstance<PEntityClass>().first().clazz
+    val unmodifiableEntityClass = clazz.kotlin.annotations.filterIsInstance<PEntityClass>().first().clazz as KClass<T>
     val list = getEntitiesToModify(unmodifiableEntityClass.java).entities
     val idx = (e as PTypedEntity).id.arrayId
     val copiedData = list[idx]!!.clone()
@@ -140,11 +180,11 @@ class PEntityStorageBuilder(
     return copiedData.createEntity(this) as T
   }
 
-  private fun <T : TypedEntity> getEntities(unmodifiableEntityClass: Class<T>): EntityFamily {
+  private fun <T : TypedEntity> getEntities(unmodifiableEntityClass: Class<T>): EntityFamily<T> {
     return modified[unmodifiableEntityClass] ?: entitiesByType[unmodifiableEntityClass] ?: EntityFamily.empty()
   }
 
-  private fun <T : TypedEntity> getEntitiesToModify(unmodifiableEntityClass: Class<T>): MutableEntityFamily {
+  private fun <T : TypedEntity> getEntitiesToModify(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
     return modified[unmodifiableEntityClass] ?: let {
       val origSet = entitiesByType[unmodifiableEntityClass]?.copyToMutable() ?: MutableEntityFamily.createEmpty()
       modified[unmodifiableEntityClass] = origSet
@@ -159,7 +199,7 @@ class PEntityStorageBuilder(
     copiedData.entitySource = newSource
     list[idx] = copiedData
     modificationCount++
-    return copiedData.createEntity(this) as T
+    return copiedData.createEntity(this)
   }
 
   override fun removeEntity(e: TypedEntity) {
@@ -170,8 +210,12 @@ class PEntityStorageBuilder(
 
   // modificationCount is not incremented
   private fun removeEntity(idx: PId) {
-    val list = getEntitiesToModify(idx.clazz.java).entities
-    list[idx.arrayId] = null
+    removeEntity(idx.arrayId, idx.clazz.java)
+  }
+
+  private fun <T : PTypedEntity> removeEntity(idx: Int, entityClass: Class<T>) {
+    val list = getEntitiesToModify(entityClass).entities
+    list[idx] = null
   }
 
   override fun <T : TypedEntity, SUBT : TypedEntity> extractRefs(local: KProperty1<T, Sequence<SUBT>>,
@@ -179,7 +223,7 @@ class PEntityStorageBuilder(
                                                                  id: PId): Sequence<SUBT> {
 
     // TODO: 24.03.2020 Check if already removed
-    val entitiesList = getEntities(remote.javaField!!.declaringClass as Class<SUBT>)
+    val entitiesList = getEntities(remote.declaringClass())
     return getRefs(local, remote, id.arrayId, entitiesList, clonedRefs)
            ?: getRefs(local, remote, id.arrayId, entitiesList, refs)
            ?: emptySequence()
@@ -188,7 +232,7 @@ class PEntityStorageBuilder(
   override fun <T : TypedEntity, SUBT : TypedEntity> extractBackRef(local: KProperty1<SUBT, T?>,
                                                                     remote: KProperty1<T, Sequence<SUBT>>,
                                                                     index: PId): T? {
-    val entitiesList = getEntities(remote.javaField!!.declaringClass as Class<T>)
+    val entitiesList = getEntities(remote.declaringClass())
     return getBackRefs(local, remote, index.arrayId, entitiesList, clonedRefs)
            ?: getBackRefs(local, remote, index.arrayId, entitiesList, refs)
   }
@@ -226,10 +270,10 @@ class PEntityStorageBuilder(
     TODO("Not yet implemented")
   }
 
-  sealed class EntityDataChange<T : PEntityData> {
-    data class Added<T : PEntityData>(val entity: T) : EntityDataChange<T>()
-    data class Removed<T : PEntityData>(val entity: T) : EntityDataChange<T>()
-    data class Replaced<T : PEntityData>(val oldEntity: T, val newEntity: T) : EntityDataChange<T>()
+  sealed class EntityDataChange<T : PEntityData<out TypedEntity>> {
+    data class Added<T : PEntityData<out TypedEntity>>(val entity: T) : EntityDataChange<T>()
+    data class Removed<T : PEntityData<out TypedEntity>>(val entity: T) : EntityDataChange<T>()
+    data class Replaced<T : PEntityData<out TypedEntity>>(val oldEntity: T, val newEntity: T) : EntityDataChange<T>()
   }
 
   private fun collectDataChanges(): Map<Class<*>, List<EntityDataChange<*>>> {
@@ -306,8 +350,7 @@ class PEntityStorageBuilder(
   }
 
   override fun toStorage(): TypedEntityStorage {
-    val newEntities = HashMap(origStorage.entitiesByType)
-    newEntities.putAll(modified)
+    val newEntities = origStorage.entitiesByType.join(modified)
     val newRefs = origStorage.refs.joinWith(clonedRefs)
     return PEntityStorage(newEntities, newRefs)
   }
@@ -320,9 +363,11 @@ class PEntityStorageBuilder(
     for ((entityClass, changeLog) in changes) {
       for (change in changeLog) {
         when (change) {
-          is EntityDataChange.Removed<*> -> this.removeEntity(PId(change.entity.id, entityClass.kotlin as KClass<out PTypedEntity>))
-          is EntityDataChange.Added<*> -> this.addEntity(change.entity, entityClass as Class<out PTypedEntity>)
-          is EntityDataChange.Replaced<*> -> this.replaceEntity(change.newEntity, entityClass as Class<out PTypedEntity>)
+          is EntityDataChange.Removed<*> -> this.removeEntity(change.entity.id, entityClass as Class<out PTypedEntity>)
+          is EntityDataChange.Added<*> -> this.addEntity(change.entity as PEntityData<TypedEntity>, entityClass as Class<TypedEntity>)
+          is EntityDataChange.Replaced<*> -> {
+            this.replaceEntity(change.newEntity as PEntityData<TypedEntity>, entityClass as Class<TypedEntity>)
+          }
         }
       }
     }
@@ -333,21 +378,21 @@ class PEntityStorageBuilder(
   }
 }
 
-open class EntityFamily(open val entities: List<PEntityData?>) {
+open class EntityFamily<E : TypedEntity>(open val entities: List<PEntityData<E>?>) {
   operator fun get(idx: Int) = entities[idx]
 
   fun copyToMutable() = MutableEntityFamily(entities.toMutableList())
 
   companion object {
-    fun empty(): EntityFamily = Empty
+    fun <E : TypedEntity> empty(): EntityFamily<E> = Empty as EntityFamily<E>
 
-    private object Empty : EntityFamily(emptyList())
+    private object Empty : EntityFamily<PTypedEntity>(emptyList())
   }
 }
 
-class MutableEntityFamily(override val entities: MutableList<PEntityData?>) : EntityFamily(entities) {
+class MutableEntityFamily<E : TypedEntity>(override val entities: MutableList<PEntityData<E>?>) : EntityFamily<E>(entities) {
   companion object {
-    fun createEmpty() = MutableEntityFamily(mutableListOf())
+    fun <E : TypedEntity> createEmpty() = MutableEntityFamily<E>(mutableListOf())
   }
 }
 
@@ -365,45 +410,45 @@ data class PId(val arrayId: Int, val clazz: KClass<out PTypedEntity>) {
   }
 }
 
-interface PEntityData {
+interface PEntityData<E : TypedEntity> {
   var entitySource: EntitySource
   var id: Int
-  fun createEntity(snapshot: PEntityStorage): PTypedEntity
-  fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<*>
-  fun clone(): PEntityData
+  fun createEntity(snapshot: PEntityStorage): E
+  fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E>
+  fun clone(): PEntityData<E>
 }
 
-class PFolderEntityData : PEntityData {
+class PFolderEntityData : PEntityData<PFolderEntity> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
   lateinit var data: String
 
-  override fun createEntity(snapshot: PEntityStorage): PTypedEntity = PFolderEntity(entitySource, PId(id, PFolderEntity::class), data,
-                                                                                    snapshot)
+  override fun createEntity(snapshot: PEntityStorage) = PFolderEntity(entitySource, PId(id, PFolderEntity::class), data,
+                                                                      snapshot)
 
   override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PFolderModifiableEntity(this, diff)
 
-  override fun clone(): PEntityData = PFolderEntityData().also {
+  override fun clone() = PFolderEntityData().also {
     it.id = this.id
     it.entitySource = this.entitySource
     it.data = this.data
   }
 }
 
-class PSubFolderEntityData : PEntityData {
+class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
   lateinit var data: String
 
-  override fun createEntity(snapshot: PEntityStorage): PTypedEntity {
+  override fun createEntity(snapshot: PEntityStorage): PSubFolderEntity {
     return PSubFolderEntity(entitySource, PId(id, PSubFolderEntity::class), data, snapshot)
   }
 
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<*> {
+  override fun wrapAsModifiable(diff: PEntityStorageBuilder): PSubFolderModifiableEntity {
     return PSubFolderModifiableEntity(this, diff)
   }
 
-  override fun clone(): PEntityData = PSubFolderEntityData().also {
+  override fun clone() = PSubFolderEntityData().also {
     it.id = id
     it.entitySource = entitySource
     it.data = data
@@ -520,5 +565,5 @@ fun main() {
   println(pStoreBuilder.entities(PFolderEntity::class.java).first().children.toList())
 }
 
-annotation class PEntityDataClass(val clazz: KClass<out PEntityData>)
+annotation class PEntityDataClass(val clazz: KClass<out PEntityData<*>>)
 annotation class PEntityClass(val clazz: KClass<out PTypedEntity>)
