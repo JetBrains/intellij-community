@@ -34,6 +34,12 @@ public class NlsUI {
   public @interface ComboboxItem {
   }
 
+  @NlsContext(prefix = "titled.border")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface TitledBorder {
+  }
+
   @NlsContext(prefix = "checkbox.tooltip")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)

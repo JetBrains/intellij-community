@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.util.NlsUI.ListItem;
+
 /**
  * Common base interface for quick fixes provided by local and global inspections.
  *
@@ -18,7 +20,7 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
   /**
    * @return the name of the quick fix.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Nls @ListItem
   @NotNull
   default String getName() {
     return getFamilyName();
@@ -29,7 +31,7 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
    * if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
    * If the name of the quickfix does not depend on a specific element, simply return {@link #getName()}.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Nls @ListItem
   @NotNull
   String getFamilyName();
 

@@ -11,6 +11,8 @@ import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.*;
 
+import static com.intellij.openapi.util.NlsUI.Label;
+
 /**
  * @author yole
  */
@@ -23,12 +25,12 @@ public abstract class TemplateContextType {
   private final String myPresentableName;
   private final VolatileNullableLazyValue<TemplateContextType> myBaseContextType;
 
-  protected TemplateContextType(@NotNull @NonNls String id, @Nls @NotNull String presentableName) {
+  protected TemplateContextType(@NotNull @NonNls String id, @Nls @Label @NotNull String presentableName) {
     this(id, presentableName, EverywhereContextType.class);
   }
 
   protected TemplateContextType(@NotNull @NonNls String id,
-                                @Nls @NotNull String presentableName,
+                                @Nls @Label @NotNull String presentableName,
                                 @Nullable Class<? extends TemplateContextType> baseContextType) {
     myContextId = id;
     myPresentableName = presentableName;

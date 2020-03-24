@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.util.NlsUI.ListItem;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -15,7 +17,7 @@ public abstract class LocalQuickFixBase implements LocalQuickFix {
   /**
    * @param name the name of the quick fix
    */
-  protected LocalQuickFixBase(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name) {
+  protected LocalQuickFixBase(@Nls @ListItem @NotNull String name) {
     this(name, name);
   }
 
@@ -25,8 +27,8 @@ public abstract class LocalQuickFixBase implements LocalQuickFix {
    *                   if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
    *                   If the name of the quickfix does not depend on a specific element, simply return getName().
    */
-  protected LocalQuickFixBase(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
-                              @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String familyName) {
+  protected LocalQuickFixBase(@Nls @ListItem @NotNull String name,
+                              @Nls @ListItem @NotNull String familyName) {
     myName = name;
     myFamilyName = familyName;
   }
