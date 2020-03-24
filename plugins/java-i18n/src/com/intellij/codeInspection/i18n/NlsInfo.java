@@ -4,10 +4,11 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -32,14 +33,15 @@ import java.util.stream.IntStream;
  */
 public abstract class NlsInfo {
   private static final @NotNull Set<String> ANNOTATION_NAMES = ContainerUtil.immutableSet(AnnotationUtil.NLS, AnnotationUtil.NON_NLS);
+  private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
 
   /**
    * Describes a string that should be localized
    */
   public static class Localized extends NlsInfo {
-    private static final NlsInfo NLS = new Localized(Capitalization.NotSpecified, "", "");
-    private static final NlsInfo NLS_TITLE = new Localized(Capitalization.Title, "", "");
-    private static final NlsInfo NLS_SENTENCE = new Localized(Capitalization.Sentence, "", "");
+    private static final Localized NLS = new Localized(Capitalization.NotSpecified, "", "");
+    private static final Localized NLS_TITLE = new Localized(Capitalization.Title, "", "");
+    private static final Localized NLS_SENTENCE = new Localized(Capitalization.Sentence, "", "");
     private final @NotNull Capitalization myCapitalization;
     private final @NotNull @NonNls String myPrefix;
     private final @NotNull @NonNls String mySuffix;
@@ -75,6 +77,13 @@ public abstract class NlsInfo {
      */
     public @NotNull @NonNls String getSuffix() {
       return mySuffix;
+    }
+
+    private @NotNull NlsInfo withPrefixAndSuffix(@NotNull String prefix, @NotNull String suffix) {
+      if (prefix.equals(myPrefix) && suffix.equals(mySuffix)) {
+        return this;
+      }
+      return new Localized(myCapitalization, prefix, suffix);
     }
   }
 
@@ -123,6 +132,20 @@ public abstract class NlsInfo {
    */
   public @NotNull ThreeState getNlsStatus() {
     return myNls;
+  }
+
+  /**
+   * @return "localized" info object without specified capitalization, prefix and suffix
+   */
+  public static @NotNull Localized localized() {
+    return Localized.NLS;
+  }
+
+  /**
+   * @return "non-localized" info object
+   */
+  public static @NotNull NonLocalized nonLocalized() {
+    return NonLocalized.INSTANCE;
   }
 
   /**
@@ -249,8 +272,21 @@ public abstract class NlsInfo {
 
   private static @NotNull NlsInfo fromAnnotationOwner(@Nullable PsiAnnotationOwner owner) {
     if (owner == null) return Unspecified.UNKNOWN;
+    if (owner instanceof PsiModifierList) {
+      return CachedValuesManager.getCachedValue((PsiModifierList)owner, () ->
+        CachedValueProvider.Result.create(computeFromAnnotationOwner(owner), PsiModificationTracker.MODIFICATION_COUNT));
+    }
+    return computeFromAnnotationOwner(owner);
+  }
+
+  @NotNull
+  private static NlsInfo computeFromAnnotationOwner(@NotNull PsiAnnotationOwner owner) {
     for (PsiAnnotation annotation : owner.getAnnotations()) {
       NlsInfo info = fromAnnotation(annotation);
+      if (info != Unspecified.UNKNOWN) {
+        return info;
+      }
+      info = fromMetaAnnotation(annotation);
       if (info != Unspecified.UNKNOWN) {
         return info;
       }
@@ -265,8 +301,33 @@ public abstract class NlsInfo {
         }
       }
     }
-    // TODO: for meta-annotations
     return Unspecified.UNKNOWN;
+  }
+
+  private static @NotNull NlsInfo fromMetaAnnotation(@NotNull PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
+    if (element == null) return Unspecified.UNKNOWN;
+    PsiClass annotationClass = ObjectUtils.tryCast(element.resolve(), PsiClass.class);
+    if (annotationClass == null) return Unspecified.UNKNOWN;
+    NlsInfo baseInfo = Unspecified.UNKNOWN;
+    String prefix = "";
+    String suffix = "";
+    for (PsiAnnotation metaAnno : annotationClass.getAnnotations()) {
+      if (metaAnno.hasQualifiedName(NLS_CONTEXT)) {
+        prefix = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(metaAnno, "prefix"));
+        suffix = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(metaAnno, "suffix"));
+      }
+      else {
+        NlsInfo info = fromAnnotation(metaAnno);
+        if (info != Unspecified.UNKNOWN) {
+          baseInfo = info;
+        }
+      }
+    }
+    if (baseInfo instanceof Localized) {
+      return ((Localized)baseInfo).withPrefixAndSuffix(prefix, suffix);
+    }
+    return baseInfo;
   }
 
   private static @NotNull NlsInfo fromAnnotation(@NotNull PsiAnnotation annotation) {

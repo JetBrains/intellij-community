@@ -61,7 +61,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
   public boolean ignoreForAssertStatements = true;
@@ -559,7 +558,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
-      if (canBeI18ned(myManager.getProject(), expression, stringValue, nonNlsTargets)) {
+      NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets);
+      if (info instanceof NlsInfo.Localized) {
         UField parentField =
           UastUtils.getParentOfType(expression, UField.class); // PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (parentField != null) {
@@ -573,9 +573,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         if (myOnTheFly) {
           if (sourcePsi instanceof PsiLiteralExpression) {
             if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
-              fixes.add(new I18nizeConcatenationQuickFix());
+              fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
             }
-            fixes.add(new I18nizeQuickFix());
+            fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
 
             if (!isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
               fixes.add(createIntroduceConstantFix());
@@ -665,13 +665,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
     return expressions;
   }
-  
-  private boolean canBeI18ned(@NotNull Project project,
-                              @NotNull UInjectionHost expression,
-                              @NotNull String value,
-                              @NotNull Set<? super PsiModifierListOwner> nonNlsTargets) {
+
+  private NlsInfo getExpectedNlsInfo(@NotNull Project project,
+                                     @NotNull UInjectionHost expression,
+                                     @NotNull String value,
+                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets) {
     if (ignoreForNonAlpha && !StringUtil.containsAlphaCharacters(value)) {
-      return false;
+      return NlsInfo.nonLocalized();
     }
 
     List<UExpression> usages = findIndirectUsages(expression);
@@ -682,7 +682,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     for (UExpression usage : usages) {
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
-        case YES: return true;
+        case YES: return info;
         case UNSURE: {
           if (ignoreForAllButNls) {
             break;
@@ -691,16 +691,16 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
             break;
           }
           if (isSuppressedByComment(project, expression)) {
-            return false;
+            return NlsInfo.nonLocalized();
           }
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.Unspecified)info).getAnnotationCandidate());
-          return true;
+          return NlsInfo.localized();
         }
         case NO:
           break;
       }
     }
-    return false;
+    return NlsInfo.nonLocalized();
   }
 
   private boolean isSuppressedByComment(@NotNull Project project, @NotNull UInjectionHost expression) {
