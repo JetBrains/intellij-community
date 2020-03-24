@@ -3,12 +3,10 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.application.ConfigImportHelper.getCustomConfigMarkerFilePath
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -27,7 +25,7 @@ sealed class CustomConfigMigrationOption {
       if (!markerFile.exists()) return null
 
       try {
-        val content = FileUtil.loadFile(markerFile.toFile())
+        val content = markerFile.toFile().readText()
         if (content.isEmpty()) return StartWithCleanConfig
         val configToMigrate = Paths.get(content)
         if (!configToMigrate.exists()) {
