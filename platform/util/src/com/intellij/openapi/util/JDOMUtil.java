@@ -317,7 +317,7 @@ public final class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(@NotNull File file) throws JDOMException, IOException {
-    return loadDocumentUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)));
+    return loadDocumentUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file))), StandardCharsets.UTF_8));
   }
 
   @NotNull
