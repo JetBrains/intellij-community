@@ -147,7 +147,7 @@ public final class PyExtractSuperclassHelper {
       psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON27, PsiWhiteSpace.class, "\n\n"));
     }
     newClass = (PyClass)psiFile.add(newClass);
-    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
+    PyPsiRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
     return newClass;
   }
 
