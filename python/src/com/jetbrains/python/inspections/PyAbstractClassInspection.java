@@ -9,15 +9,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.SmartList;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +43,7 @@ public class PyAbstractClassInspection extends PyInspection {
       if (isAbstract(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
         return;
       }
-      final List<PyFunction> toImplement = PyOverrideImplementUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext);
+      final List<PyFunction> toImplement = PyPsiRefactoringUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext);
       final ASTNode nameNode = pyClass.getNameNode();
       if (!toImplement.isEmpty() && nameNode != null) {
         final SmartList<LocalQuickFix> quickFixes = new SmartList<>(
@@ -57,7 +56,7 @@ public class PyAbstractClassInspection extends PyInspection {
         }
 
         registerProblem(nameNode.getPsi(),
-                        PyBundle.message("INSP.NAME.abstract.class.$0.must.implement", pyClass.getName()),
+                        PyPsiBundle.message("INSP.NAME.abstract.class.$0.must.implement", pyClass.getName()),
                         quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
@@ -86,7 +85,7 @@ public class PyAbstractClassInspection extends PyInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return PyBundle.message("INSP.abstract.class.add.to.superclasses", PyNames.ABC);
+        return PyPsiBundle.message("INSP.abstract.class.add.to.superclasses", PyNames.ABC);
       }
 
       @Override
@@ -97,7 +96,7 @@ public class PyAbstractClassInspection extends PyInspection {
         final PyClass abcClass = PyPsiFacade.getInstance(project).createClassByQName(PyNames.ABC, cls);
         if (abcClass == null) return;
 
-        PyClassRefactoringUtil.addSuperclasses(project, cls, abcClass);
+        PyPsiRefactoringUtil.addSuperclasses(project, cls, abcClass);
       }
     }
 
@@ -107,7 +106,7 @@ public class PyAbstractClassInspection extends PyInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return PyBundle.message("INSP.abstract.class.set.as.metaclass", PyNames.ABC_META);
+        return PyPsiBundle.message("INSP.abstract.class.set.as.metaclass", PyNames.ABC_META);
       }
 
       @Override
@@ -119,7 +118,7 @@ public class PyAbstractClassInspection extends PyInspection {
         if (abcMetaClass == null) return;
 
         final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
-        PyClassRefactoringUtil.addMetaClassIfNotExist(cls, abcMetaClass, context);
+        PyPsiRefactoringUtil.addMetaClassIfNotExist(cls, abcMetaClass, context);
       }
     }
   }
