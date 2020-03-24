@@ -618,7 +618,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void showModalProgress() {
-    NoAccessDuringPsiEvents.checkCallContext();
+    NoAccessDuringPsiEvents.checkCallContext("modal indexing");
     try {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IdeBundle.message("progress.indexing"), () -> {
         assertState(State.SCHEDULED_TASKS);
