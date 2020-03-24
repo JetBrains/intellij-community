@@ -959,6 +959,7 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticParametersRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory"/>
+    <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticGetterSetterRenamerFactory"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.PsiPackageRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
