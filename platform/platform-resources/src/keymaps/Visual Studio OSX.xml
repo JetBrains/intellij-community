@@ -268,12 +268,6 @@
     <keyboard-shortcut first-keystroke="meta E" second-keystroke="U"/>
     <keyboard-shortcut first-keystroke="meta E" second-keystroke="meta U"/>
   </action>
-  <action id="TypeHierarchyBase.BaseOnThisType">
-    <keyboard-shortcut first-keystroke="meta UP"/>
-  </action>
-  <action id="UsageView.ShowRecentFindUsages">
-    <keyboard-shortcut first-keystroke="control COMMA"/>
-  </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="meta M"/>
   </action>
@@ -420,7 +414,6 @@
     <keyboard-shortcut first-keystroke="meta 3"/>
     <keyboard-shortcut first-keystroke="meta alt F12"/>
   </action>
-  <action id="Jdbc.OpenConsole"/>
   <action id="EditorToggleShowWhitespaces">
     <keyboard-shortcut first-keystroke="meta R" second-keystroke="W"/>
     <keyboard-shortcut first-keystroke="meta R" second-keystroke="meta W"/>
@@ -453,12 +446,6 @@
   <action id="MoveLineUp"/>
   <action id="NextEditorTab"/>
   <action id="PreviousEditorTab"/>
-  <action id="CloneCaretAboveWithVirtualSpace">
-    <keyboard-shortcut first-keystroke="control shift UP"/>
-  </action>
-  <action id="CloneCaretBelowWithVirtualSpace">
-    <keyboard-shortcut first-keystroke="control shift DOWN"/>
-  </action>
   <action id="EditorLeftWithSelection">
     <keyboard-shortcut first-keystroke="shift left" />
     <keyboard-shortcut first-keystroke="control shift LEFT" />
