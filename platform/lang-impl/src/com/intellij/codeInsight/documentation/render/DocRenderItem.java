@@ -269,6 +269,7 @@ class DocRenderItem {
         }
         foldingModel.removeFoldRegion(foldRegion);
         foldRegion = null;
+        textToRender = null;
       };
       if (foldingTasks == null) {
         foldingModel.runBatchFoldingOperation(foldingTask, true, false);
