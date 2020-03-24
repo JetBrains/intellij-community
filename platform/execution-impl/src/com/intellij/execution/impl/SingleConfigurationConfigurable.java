@@ -779,6 +779,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         .setHideOnAction(false)
         .setHideOnLinkClick(false)
         .setHideOnKeyOutside(false) // otherwise any keypress in file chooser hides the underlying balloon
+        .setBlockClicksThroughBalloon(true)
         .setRequestFocus(true)
         .createBalloon();
       balloon.setAnimationEnabled(false);
