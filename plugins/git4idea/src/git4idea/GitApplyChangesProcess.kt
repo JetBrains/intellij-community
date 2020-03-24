@@ -115,6 +115,8 @@ class GitApplyChangesProcess(private val project: Project,
           val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
                                                 VcsUserUtil.getShortPresentation(commit.author), commit.subject,
                                                 operationName).merge()
+
+          refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
           changeListManager.waitForUpdate(operationName)
 
