@@ -313,7 +313,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun installPopup(list: GHPRList) {
     val popupHandler = object : PopupHandler() {
-      override fun invokePopup(comp: java.awt.Component, x: Int, y: Int) {
+      override fun invokePopup(comp: Component, x: Int, y: Int) {
         if (ListUtil.isPointOnSelection(list, x, y)) {
           val popupMenu = actionManager
             .createActionPopupMenu("GithubPullRequestListPopup",
