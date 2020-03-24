@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -62,6 +63,17 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     if (knownExtensions != null) {
       //if file is already supported by IDE then only plugins exactly matching fileName should be suggested
       if (alreadySupported) {
+        Set<PluginsAdvertiser.Plugin> availablePlugins = knownExtensions.find(fileName);
+        if (availablePlugins != null) {
+          Set<String> plugins = ContainerUtil.map2Set(availablePlugins, plugin -> plugin.myPluginId);
+          for (IdeaPluginDescriptor loadedPlugin : PluginManagerCore.getLoadedPlugins()) {
+            if (loadedPlugin.isEnabled() && plugins.contains(loadedPlugin.getPluginId().getIdString())) {
+              LOG.debug(String.format("File '%s' (type: '%s') is already supported by fileName via '%s'(id: '%s') plugin",
+                                      fileName, file.getFileType(), loadedPlugin.getName(), loadedPlugin.getPluginId().getIdString()));
+              return null;
+            }
+          }
+        }
         LOG.debug(String.format("File '%s' (type: '%s') is already supported therefore looking only for plugins exactly matching fileName",
                                 fileName, file.getFileType()));
         return createPanel(fileName, knownExtensions, project);
