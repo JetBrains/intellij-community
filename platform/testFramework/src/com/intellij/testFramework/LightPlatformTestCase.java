@@ -491,30 +491,38 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     runBareImpl(this::startRunAndTear);
   }
 
-  protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
+  protected void runBareImpl(ThrowableRunnable<?> start) throws Throwable {
     if (!shouldRunTest()) {
       return;
     }
 
     TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    ThrowableRunnable<Throwable> testRunnable = () -> {
       try {
         start.run();
       }
       finally {
-        try {
-          Application application = ApplicationManager.getApplication();
-          if (application instanceof ApplicationEx) {
-            HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
+        EdtTestUtil.runInEdtAndWait(() -> {
+          try {
+            Application application = ApplicationManager.getApplication();
+            if (application instanceof ApplicationEx) {
+              HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
+            }
+            resetAllFields();
           }
-          resetAllFields();
-        }
-        catch (Throwable e) {
-          //noinspection CallToPrintStackTrace
-          e.printStackTrace();
-        }
+          catch (Throwable e) {
+            //noinspection CallToPrintStackTrace
+            e.printStackTrace();
+          }
+        });
       }
-    });
+    };
+    if (runInDispatchThread()) {
+      EdtTestUtil.runInEdtAndWait(testRunnable);
+    }
+    else {
+      testRunnable.run();
+    }
 
     // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
@@ -534,7 +542,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     finally {
       //try{
-      tearDown();
+      EdtTestUtil.runInEdtAndWait(() -> tearDown());
       //}
       //catch(Throwable th){
       //th.printStackTrace();

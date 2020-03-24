@@ -1,11 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.idea.IdeaLogger;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -14,9 +11,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EdtTestUtilKt;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Semaphore;
@@ -30,7 +27,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.model.Statement;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -76,17 +72,15 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      try {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-      catch (Throwable e) {
-        addSuppressedException(e);
-      }
-      finally {
-        super.tearDown();
-      }
-    });
+    try {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Test
@@ -359,49 +353,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     }
     else {
       runnable.run();
-    }
-  }
-
-  @Override
-  protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
-    if (!shouldRunTest()) {
-      return;
-    }
-
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        start.run();
-      });
-    }
-    else {
-      try {
-        start.run();
-      }
-      catch (Throwable throwable) {
-        ExceptionUtil.rethrow(throwable);
-      }
-    }
-
-    EdtTestUtil.runInEdtAndWait(() -> {
-      try {
-        Application application = ApplicationManager.getApplication();
-        if (application instanceof ApplicationEx) {
-          HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
-        }
-        resetAllFields();
-      }
-      catch (Throwable e) {
-        //noinspection CallToPrintStackTrace
-        e.printStackTrace();
-      }
-    });
-
-    // just to make sure all deferred Runnables to finish
-    SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
-
-    if (IdeaLogger.ourErrorsOccurred != null) {
-      throw IdeaLogger.ourErrorsOccurred;
     }
   }
 
