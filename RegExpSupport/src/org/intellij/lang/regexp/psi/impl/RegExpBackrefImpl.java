@@ -71,26 +71,8 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
             return resolveRelativeGroup(Math.abs(index));
         }
 
-        final PsiElementProcessor.FindFilteredElement<PsiElement> processor =
-          new PsiElementProcessor.FindFilteredElement<>(new PsiElementFilter() {
-            int groupCount;
-
-            @Override
-            public boolean isAccepted(@NotNull PsiElement element) {
-              if (element instanceof RegExpGroup) {
-                if (((RegExpGroup)element).isCapturing() && ++groupCount == index) {
-                  return true;
-                }
-              }
-              return element == RegExpBackrefImpl.this;
-            }
-          });
-
-        PsiTreeUtil.processElements(getContainingFile(), processor);
-        if (processor.getFoundElement() instanceof RegExpGroup) {
-            return (RegExpGroup)processor.getFoundElement();
-        }
-        return null;
+        return SyntaxTraverser.psiTraverser(getContainingFile()).traverse().takeWhile(e -> e != RegExpBackrefImpl.this)
+          .filter(RegExpGroup.class).skip(index - 1).first();
     }
 
     @Nullable

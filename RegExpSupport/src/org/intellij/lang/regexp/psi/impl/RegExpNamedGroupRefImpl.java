@@ -38,17 +38,9 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   @Override
   @Nullable
   public RegExpGroup resolve() {
-    final PsiElementProcessor.FindFilteredElement<PsiElement> processor = new PsiElementProcessor.FindFilteredElement<>(
-      element -> {
-        if (!(element instanceof RegExpGroup)) {
-          return false;
-        }
-        final RegExpGroup group = (RegExpGroup)element;
-        return group.isAnyNamedGroup() && Comparing.equal(getGroupName(), group.getGroupName());
-      }
-    );
-    PsiTreeUtil.processElements(getContainingFile(), processor);
-    return (RegExpGroup)processor.getFoundElement();
+    return SyntaxTraverser.psiTraverser(getContainingFile()).filter(RegExpGroup.class)
+      .filter(group -> group.isAnyNamedGroup() && Comparing.equal(getGroupName(), group.getGroupName()))
+      .first();
   }
 
   @Override
