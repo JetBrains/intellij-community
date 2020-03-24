@@ -51,6 +51,10 @@ public final class PluginsAdvertiser {
   public static final String FUS_GROUP_ID = "plugins.advertiser";
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
+  private static boolean startupActivityCompleted = false;
+  static void startupActivityCompleted() {
+    startupActivityCompleted = true;
+  }
 
   @Nullable
   public static List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) throws IOException {
@@ -144,6 +148,7 @@ public final class PluginsAdvertiser {
   }
 
   public static @Nullable KnownExtensions loadExtensions() {
+    if (!startupActivityCompleted) return null;
     KnownExtensions knownExtensions = ourKnownExtensions.get();
     if (knownExtensions != null) return knownExtensions;
     try {

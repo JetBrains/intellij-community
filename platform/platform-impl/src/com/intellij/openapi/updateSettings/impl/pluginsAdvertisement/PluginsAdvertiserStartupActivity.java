@@ -76,6 +76,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     }
     if (extensions == null) {
       PluginsAdvertiser.loadSupportedExtensions(allPlugins);
+      PluginsAdvertiser.startupActivityCompleted();
       if (project.isDisposed()) return;
       EditorNotifications.getInstance(project).updateAllNotifications();
     }
