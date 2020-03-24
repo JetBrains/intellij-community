@@ -31,7 +31,8 @@ import java.util.function.Consumer;
  * @author Konstantin Bulenkov
  */
 public class ActionsCollectorImpl extends ActionsCollector {
-  private static final String GROUP = "actions";
+  public static final String GROUP = "actions";
+  public static final String ACTION_INVOKED_EVENT_ID = "action.invoked";
   public static final String DEFAULT_ID = "third.party";
 
   private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
@@ -53,7 +54,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   @Override
   public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
-    record(GROUP, "action.invoked", project, action, event, data -> {
+    record(GROUP, ACTION_INVOKED_EVENT_ID, project, action, event, data -> {
       if (lang != null) data.addCurrentFile(lang);
     });
   }
