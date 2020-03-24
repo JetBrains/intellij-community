@@ -304,14 +304,8 @@ public class ShelvedChangesViewManager implements Disposable {
   public void openEditorPreview() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myContent == null) {
-      return;
-    }
-
-    ChangesViewPreview diffPreview = myPanel.myDiffPreview;
-    if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).openPreview(false);
-    }
+    if (myContent == null) return;
+    myPanel.openEditorPreview();
   }
 
   public void updateOnVcsMappingsChanged() {
@@ -615,6 +609,8 @@ public class ShelvedChangesViewManager implements Disposable {
 
   private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
     @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
+    @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
+      Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
     private final Project myProject;
     private final ShelveChangesManager myShelveChangesManager;
@@ -684,6 +680,12 @@ public class ShelvedChangesViewManager implements Disposable {
           setDiffPreview();
         }
       }, this);
+      isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          if (!isSplitterPreview()) setDiffPreview(true);
+        }
+      }, this);
       myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
 
       DataManager.registerDataProvider(myRootPanel, myTree);
@@ -713,9 +715,15 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void setDiffPreview() {
+      setDiffPreview(false);
+    }
+
+    private void setDiffPreview(boolean force) {
       boolean isEditorPreview = isCommitToolWindow(myProject) || isEditorDiffPreview.asBoolean();
-      if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
-      if (!isEditorPreview && isSplitterPreview()) return;
+      if (!force) {
+        if (isEditorPreview && myDiffPreview instanceof EditorTabPreview) return;
+        if (!isEditorPreview && isSplitterPreview()) return;
+      }
 
       if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
 
@@ -741,7 +749,11 @@ public class ShelvedChangesViewManager implements Disposable {
 
         @Override
         protected boolean skipPreviewUpdate() {
-          return super.skipPreviewUpdate() || !myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner());
+          if (super.skipPreviewUpdate()) return true;
+          if (!myTree.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
+          if (!isEditorPreviewAllowed()) return true;
+
+          return false;
         }
       };
       editorPreview.setEscapeHandler(() -> {
@@ -750,7 +762,12 @@ public class ShelvedChangesViewManager implements Disposable {
         ToolWindow toolWindow = getToolWindowFor(myProject, SHELF);
         if (toolWindow != null) toolWindow.activate(null);
       });
-      editorPreview.installOn(myTree);
+      if (isOpenEditorDiffPreviewWithSingleClick.asBoolean()) {
+        editorPreview.openWithSingleClick(myTree);
+      }
+      else {
+        editorPreview.openWithDoubleClick(myTree);
+      }
       editorPreview.installNextDiffActionOn(myTreeScrollPane);
 
       return editorPreview;
@@ -781,6 +798,17 @@ public class ShelvedChangesViewManager implements Disposable {
       return myDiffPreview instanceof PreviewDiffSplitterComponent;
     }
 
+    private boolean isEditorPreviewAllowed() {
+      return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
+    }
+
+    private void openEditorPreview() {
+      if (isSplitterPreview()) return;
+      if (!isEditorPreviewAllowed()) return;
+
+      ((EditorTabPreview)myDiffPreview).openPreview(false);
+    }
+
     @Nullable
     private DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
       if (info.isMove()) {
@@ -801,7 +829,7 @@ public class ShelvedChangesViewManager implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setEnabledAndVisible(isSplitterPreview());
+        e.getPresentation().setEnabledAndVisible(isSplitterPreview() || isOpenEditorDiffPreviewWithSingleClick.asBoolean());
       }
 
       @Override
