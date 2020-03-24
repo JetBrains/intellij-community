@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.SystemProperties;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,11 +53,27 @@ public class ProjectWizardUtil {
       }
     }
 
-    if (SystemInfo.isUnix && !Files.isWritable(dir)) {
+    if (!isWritable(dir)) {
       Messages.showErrorDialog(JavaUiBundle.message("error.directory.read.only", dir), CommonBundle.getErrorTitle());
       return false;
     }
 
     return true;
+  }
+
+  private static boolean isWritable(Path dir) {
+    if (SystemInfo.isWindows) {
+      try {
+        Files.deleteIfExists(Files.createTempFile(dir, "probe_", ".txt"));
+        return true;
+      }
+      catch (IOException e) {
+        Logger.getInstance(ProjectWizardUtil.class).debug(e);
+        return false;
+      }
+    }
+    else  {
+      return Files.isWritable(dir);
+    }
   }
 }
