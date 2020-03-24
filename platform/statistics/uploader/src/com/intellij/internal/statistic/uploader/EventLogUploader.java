@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class EventLogUploader {
-  private static final int WAIT_FOR_IDE_MS = 1000;
+  private static final int WAIT_FOR_IDE_MS = 2000;
 
   public static void main(String[] args) {
     execute(args);
@@ -56,7 +56,7 @@ public class EventLogUploader {
     }
 
     if (!waitForIde(logger, options, 20)) {
-      logger.warn("Cannot send logs because IDE didn't close during " + (10 * WAIT_FOR_IDE_MS) + "ms");
+      logger.warn("Cannot send logs because IDE didn't close during " + (20 * WAIT_FOR_IDE_MS) + "ms");
       eventsLogger.logSendingLogsFinished("IDE_NOT_CLOSING");
       return;
     }
