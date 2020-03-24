@@ -894,7 +894,7 @@ public final class FormSourceCodeGenerator {
         pushBorderFactoryMethod(container, borderType, borderSize, borderFactoryMethodName);
       }
       else {
-        push("null");
+        push((String) null);
       }
       pushBorderProperties(container, variable, borderTitle);
 
