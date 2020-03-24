@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -26,6 +26,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * Provides utility methods for navigating, locating and collecting PSI elements.
+ *
+ * @see SyntaxTraverser
+ */
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance(PsiTreeUtil.class);
 
@@ -36,12 +41,12 @@ public class PsiTreeUtil {
     WS_COMMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
   /**
-   * Checks whether one element in the psi tree is under another.
+   * Checks whether one element in the PSI tree is under another.
    *
-   * @param ancestor parent candidate. {@code false} will be returned if ancestor is null.
+   * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether return true if ancestor and parent are the same.
-   * @return true if element has ancestor as its parent somewhere in the hierarchy and false otherwise.
+   * @param strict   whether to return {@code true} if ancestor and parent are the same.
+   * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract("null, _, _ -> false")
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
@@ -64,12 +69,12 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Checks whether one element in the psi tree is under another in a {@link PsiElement#getContext()} hierarchy.
+   * Checks whether one element in the PSI tree is under another in a {@link PsiElement#getContext()} hierarchy.
    *
-   * @param ancestor parent candidate. {@code false} will be returned if ancestor is null.
+   * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
-   * @param strict   whether return true if ancestor and parent are the same.
-   * @return true if element has ancestor as its parent somewhere in the hierarchy and false otherwise.
+   * @param strict   whether to return {@code true} if ancestor and parent are the same.
+   * @return {@code true} if element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract("null, _, _ -> false")
   public static boolean isContextAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
@@ -220,7 +225,7 @@ public class PsiTreeUtil {
    * Recursive (depth first) search for first element of a given class.
    *
    * @param element a PSI element to start search from
-   * @param strict  if false the {@code element} is also included in the search
+   * @param strict  if {@code false} {@code element} is also included in the search
    * @param aClass  element type to search for
    * @param stopAt  element type to abort the search at
    * @param <T>     type to cast found element to
@@ -258,7 +263,7 @@ public class PsiTreeUtil {
    * Recursive (depth first) search for first element of any of given {@code classes}.
    *
    * @param element a PSI element to start search from.
-   * @param strict  if false the {@code element} is also included in the search.
+   * @param strict  if {@code false} {@code element} is also included in the search.
    * @param classes element types to search for.
    * @param <T>     type to cast found element to.
    * @return first found element, or {@code null} if nothing found.
@@ -305,7 +310,7 @@ public class PsiTreeUtil {
    * Recursive (depth first) search for all elements of any of given {@code classes}.
    *
    * @param element a PSI element to start search from.
-   * @param strict  if false the {@code element} is also included in the search.
+   * @param strict  if {@code false} {@code element} is also included in the search.
    * @param classes element types to search for.
    * @param <T>     type to cast found elements to.
    * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
@@ -333,12 +338,12 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Non-recursive search for an element of type T amongst given {@code element} children.
+   * Non-recursive search for an element of type {@link T} amongst given {@code element} children.
    *
    * @param element a PSI element to start search from.
    * @param aClass  element type to search for.
    * @param <T>     element type to search for.
-   * @return first found element, or null if nothing found.
+   * @return first found element, or {@code null} if nothing found.
    */
   @Nullable
   @Contract("null, _ -> null")
@@ -502,7 +507,7 @@ public class PsiTreeUtil {
    *
    * @param element the element to get the child for.
    * @param classes the array of classes.
-   * @return the element, or null if none was found.
+   * @return the element, or {@code null} if none was found.
    */
   @SafeVarargs
   @Nullable
@@ -914,11 +919,12 @@ public class PsiTreeUtil {
 
   /**
    * Recursively process children elements that are instances of given class. Root element is processed as well.
+   * 
    * @param element root element to process.
-   * @param elementClass the class of elements to process. All other elements are skipped
+   * @param elementClass the class of elements to process. All other elements are skipped.
    * @param processor processor to consume elements
    * @param <T> type of elements to process
-   * @return true if processing was not cancelled (processor.execute method returned true for all the elements)
+   * @return {@code true} if processing was not cancelled ({@code Processor.execute()} method returned {@code true} for all elements).
    */
   @Contract("null, _, _ -> true")
   public static <T extends PsiElement> boolean processElements(@Nullable PsiElement element, @NotNull Class<T> elementClass, @NotNull PsiElementProcessor<? super T> processor) {
@@ -930,10 +936,11 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Recursively process children elements, including the root element
+   * Recursively process children elements, including the root element.
+   * 
    * @param element root element to process
    * @param processor processor to consume elements
-   * @return true if processing was not cancelled (processor.execute method returned true for all the elements)
+   * @return {@code true} if processing was not cancelled ({@code Processor.execute()} method returned {@code true} for all elements).
    */
   @Contract("null, _ -> true")
   public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor<PsiElement> processor) {
@@ -1048,7 +1055,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * @return maximal element of specified Class starting at startOffset exactly and ending not farther than endOffset
+   * @return maximal element of specified Class starting at {@code startOffset} exactly and ending not farther than {@code endOffset}.
    */
   @Nullable
   @Contract(pure=true)
