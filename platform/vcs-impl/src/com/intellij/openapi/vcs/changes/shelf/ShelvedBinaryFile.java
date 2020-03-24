@@ -32,7 +32,7 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
   @Nullable public String SHELVED_PATH;         // null if binary file was deleted
   private Change myChange;
 
-  public ShelvedBinaryFile() {
+  ShelvedBinaryFile() {
   }
 
   public ShelvedBinaryFile(final String beforePath, final String afterPath, @Nullable final String shelvedPath) {
