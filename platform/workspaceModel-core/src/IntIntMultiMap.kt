@@ -194,20 +194,32 @@ class IntIntMultiMap(
 
     private var hasNext = true
     private var idx = startIndex
+    private var nextValue = -1
 
     protected open fun hasNext(): Boolean {
       if (!hasNext) return false
-      if (values!![idx] < 0) hasNext = false
+      if (values!![idx] < 0) {
+        nextValue = values[idx].unpack()
+        hasNext = false
+      }
+      else {
+        nextValue = values[idx]
+      }
       return true
     }
 
     protected open fun next(): Int {
-      val value = values!![idx++]
-      return if (value >= 0) value else value.unpack()
+      idx++
+      return nextValue
     }
 
     fun forEach(action: (Int) -> Unit) {
       while (hasNext()) action(next())
+    }
+
+    fun <T> first(transformation: (Int) -> T): T? {
+      if (!hasNext) return null
+      return transformation(next())
     }
 
     open fun <T> map(transformation: (Int) -> T): Sequence<T> {
