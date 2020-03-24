@@ -194,7 +194,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     }
 
     if (interpreterPath != null && new File(interpreterPath).canExecute()
-        || scriptPath != null && new File(scriptPath).canExecute()) {
+        || scriptPath != null && (scriptPath.endsWith("cmd") || scriptPath.endsWith("bat"))) {
       return null;
     }
     if (EnvironmentUtil.getValue("SHELL") != null) {
