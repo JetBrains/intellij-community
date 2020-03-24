@@ -85,8 +85,8 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator, Di
   }
 
   @Override
-  public void decorateChangeList(LocalChangeList changeList,
-                                 ColoredTreeCellRenderer renderer,
+  public void decorateChangeList(@NotNull LocalChangeList changeList,
+                                 @NotNull ColoredTreeCellRenderer renderer,
                                  boolean selected,
                                  boolean expanded,
                                  boolean hasFocus) {

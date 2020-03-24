@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.serialization.SerializationException;
 import com.intellij.tasks.*;
 import com.intellij.tasks.context.WorkingContextManager;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
@@ -60,7 +59,7 @@ import java.util.concurrent.TimeoutException;
  * @author Dmitry Avdeev
  */
 @State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, ChangeListDecorator, Disposable {
+public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
   private static final DecimalFormat LOCAL_TASK_ID_FORMAT = new DecimalFormat("LOCAL-00000");
@@ -929,18 +928,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     addTask(task);
     if (changeList.isDefault()) {
       activateTask(task, false);
-    }
-  }
-
-  @Override
-  public void decorateChangeList(@NotNull LocalChangeList changeList,
-                                 @NotNull ColoredTreeCellRenderer cellRenderer,
-                                 boolean selected,
-                                 boolean expanded,
-                                 boolean hasFocus) {
-    LocalTask task = getAssociatedTask(changeList);
-    if (task != null && task.isIssue()) {
-      cellRenderer.setIcon(task.getIcon());
     }
   }
 
