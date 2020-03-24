@@ -72,7 +72,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
         }
 
         return SyntaxTraverser.psiTraverser(getContainingFile()).traverse().takeWhile(e -> e != RegExpBackrefImpl.this)
-          .filter(RegExpGroup.class).skip(index - 1).first();
+          .filter(RegExpGroup.class).filter(RegExpGroup::isCapturing).skip(index - 1).first();
     }
 
     @Nullable
