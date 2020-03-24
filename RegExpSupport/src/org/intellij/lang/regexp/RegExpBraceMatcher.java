@@ -33,6 +33,7 @@ public class RegExpBraceMatcher implements PairedBraceMatcher {
       new BracePair(RegExpTT.POS_LOOKBEHIND, RegExpTT.GROUP_END, true), new BracePair(RegExpTT.NEG_LOOKBEHIND, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.PYTHON_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.PYTHON_NAMED_GROUP_REF, RegExpTT.GROUP_END, true),
+      new BracePair(RegExpTT.PCRE_COND_REF, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.RUBY_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.RUBY_QUOTED_NAMED_GROUP, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.RUBY_NAMED_GROUP_REF, RegExpTT.GT, true),

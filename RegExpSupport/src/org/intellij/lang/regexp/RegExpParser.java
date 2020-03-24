@@ -61,7 +61,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   /**
    * PATTERN ::= BRANCH "|" PATTERN | BRANCH
    */
-  private void parsePattern(PsiBuilder builder) {
+  protected void parsePattern(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
     parseBranch(builder);
@@ -414,14 +414,9 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else if (type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF || type == RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.QUOTE);
     }
-    else if (type == RegExpTT.PYTHON_COND_REF) {
+    else if (type == RegExpTT.PYTHON_COND_REF || type == RegExpTT.PCRE_COND_REF) {
       builder.advanceLexer();
-      if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
-        builder.advanceLexer();
-      }
-      else {
-        builder.error(RegExpBundle.message("parse.error.group.name.or.number.expected"));
-      }
+      parseCondRefName(builder);
       checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
       parseBranch(builder);
       if (builder.getTokenType() == RegExpTT.UNION) {
@@ -448,6 +443,15 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       return null;
     }
     return marker;
+  }
+
+  protected void parseCondRefName(PsiBuilder builder) {
+    if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
+      builder.advanceLexer();
+    }
+    else {
+      builder.error(RegExpBundle.message("parse.error.group.name.or.number.expected"));
+    }
   }
 
   private void parseGroupEnd(PsiBuilder builder) {

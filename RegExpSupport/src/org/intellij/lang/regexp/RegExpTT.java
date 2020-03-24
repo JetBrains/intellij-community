@@ -15,10 +15,10 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.StringEscapesTokenTypes;
 
 public interface RegExpTT {
     IElementType NUMBER = new RegExpElementType("NUMBER");
@@ -144,8 +144,9 @@ public interface RegExpTT {
     /** (?P=name) */
     IElementType PYTHON_NAMED_GROUP_REF = new RegExpElementType("PYTHON_NAMED_GROUP_REF");
     /** (?(id/name)yes-pattern|no-pattern) */
-    IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF"); 
-  
+    IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF");
+    /** (?(condition pattern)yes-pattern|no-pattern) */
+    IElementType PCRE_COND_REF = new RegExpElementType("PCRE_COND_REF");
     /** (?<name>... */
     IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
     /** \k<name> */
