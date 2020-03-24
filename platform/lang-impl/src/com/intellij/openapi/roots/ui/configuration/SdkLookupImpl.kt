@@ -20,7 +20,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsProgress.ProgressTitle
+//import com.intellij.openapi.util.NlsProgress.ProgressTitle
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.Consumer
 import org.jetbrains.annotations.Nls
@@ -31,7 +31,7 @@ private data class SdkLookupBuilderImpl(
   val project: Project? = null,
 
   @Nls
-  val progressMessageTitle: @ProgressTitle String? = null,
+  val progressMessageTitle: /*@ProgressTitle*/ String? = null,
   val progressIndicator: ProgressIndicator? = null,
 
   val sdkName: String? = null,
@@ -51,7 +51,7 @@ private data class SdkLookupBuilderImpl(
   private val onSdkResolved: (Sdk?) -> Unit = { }
 ) : SdkLookupBuilder {
   override fun withProject(project: Project?) = copy(project = project)
-  override fun withProgressMessageTitle(@Nls message: @ProgressTitle String) = copy(progressMessageTitle = message)
+  override fun withProgressMessageTitle(@Nls message: /*@ProgressTitle*/ String) = copy(progressMessageTitle = message)
   override fun withSdkName(name: String) = copy(sdkName = name)
   override fun withSdkType(sdkType: SdkType) = copy(sdkType = sdkType)
   override fun withVersionFilter(filter: (String) -> Boolean) = copy(versionFilter = filter)
