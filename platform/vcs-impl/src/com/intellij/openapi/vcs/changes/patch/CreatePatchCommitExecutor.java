@@ -106,10 +106,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
       PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_TO_CLIPBOARD, myPanel.isToClipboard());
       try {
         if (myPanel.isToClipboard()) {
-          String base = myPanel.getBaseDirName();
-          List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, base, myPanel.isReversePatch(), true);
-          writeAsPatchToClipboard(myProject, patches, base, myCommitContext);
-          VcsNotifier.getInstance(myProject).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
+          writePatchToClipboard(myProject, myPanel.getBaseDirName(), changes, myPanel.isReversePatch(), true, myCommitContext);
         }
         else {
           validateAndWritePatchToFile(changes);
@@ -230,5 +227,16 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
     RevealFileAction.showDialog(myProject, message, title, file, option);
 
     return ref[0];
+  }
+
+  public static void writePatchToClipboard(Project project,
+                                           String baseDir,
+                                           @NotNull Collection<? extends Change> changes,
+                                           boolean isReverse,
+                                           boolean honorExcludedFromCommit,
+                                           @Nullable CommitContext context) throws VcsException, IOException {
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, baseDir, isReverse, honorExcludedFromCommit);
+    writeAsPatchToClipboard(project, patches, baseDir, context);
+    VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
   }
 }
