@@ -147,6 +147,8 @@ public interface RegExpTT {
     IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF");
     /** (?(condition pattern)yes-pattern|no-pattern) */
     IElementType PCRE_COND_REF = new RegExpElementType("PCRE_COND_REF");
+    /** (?|regex) */
+    IElementType PCRE_BRANCH_RESET = new RegExpElementType("PCRE_BRANCH_RESET");
     /** (?<name>... */
     IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
     /** \k<name> */
@@ -176,7 +178,7 @@ public interface RegExpTT {
 
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 
-    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, ATOMIC_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND);
+    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, ATOMIC_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND, PCRE_BRANCH_RESET);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }

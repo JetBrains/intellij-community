@@ -109,6 +109,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     ourMap.put(RegExpTT.POS_LOOKBEHIND, PARENTHS);
     ourMap.put(RegExpTT.NEG_LOOKBEHIND, PARENTHS);
     ourMap.put(RegExpTT.POS_LOOKAHEAD, PARENTHS);
+    ourMap.put(RegExpTT.PCRE_BRANCH_RESET, PARENTHS);
     ourMap.put(RegExpTT.NEG_LOOKAHEAD, PARENTHS);
     ourMap.put(RegExpTT.SET_OPTIONS, PARENTHS);
     ourMap.put(RegExpTT.PYTHON_NAMED_GROUP, PARENTHS);

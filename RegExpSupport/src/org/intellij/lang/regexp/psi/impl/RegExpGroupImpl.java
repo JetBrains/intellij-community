@@ -106,6 +106,9 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
     else if (elementType == RegExpTT.NEG_LOOKBEHIND) {
       return Type.NEGATIVE_LOOKBEHIND;
     }
+    else if (elementType == RegExpTT.PCRE_BRANCH_RESET) {
+      return Type.PCRE_BRANCH_RESET;
+    }
     throw new AssertionError();
   }
 
