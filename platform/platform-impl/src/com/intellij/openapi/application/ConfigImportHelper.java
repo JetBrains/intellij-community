@@ -221,7 +221,7 @@ public final class ConfigImportHelper {
       return false;
     }
     return PluginManagerCore.isRunningFromSources() ||
-           System.getProperty(PLUGINS) != null ||
+           System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
            "true".equals(showImportDialog);
   }
 
