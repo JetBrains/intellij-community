@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.PsiClassType.ClassResolveResult
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil.getNonWildcardParameterization
@@ -81,6 +82,7 @@ class FunctionalExpressionConstraint(private val expression: GrFunctionalExpress
    * com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil.getFunctionalTypeExplicit
    */
   private fun groundTypeForExplicitlyTypedClosure(sam: PsiMethod, groundClass: PsiClass): PsiClassType? {
+    if (!Registry.`is`("groovy.use.explicitly.typed.closure.in.inference", true)) return null
     val closureType = expression.type as? GroovyClosureType ?: return null
     val parameters = expression.parameters
     val types = parameters.map { it.declaredType }

@@ -321,6 +321,8 @@
                  description="Whether to throw error if the element is unexpected in resolve processor"/>
     <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
                  description="Allows to collect method usages for more precise type inference"/>
+    <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
+                 description="Enable type inference with using info from explicitly typed closures"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
 
