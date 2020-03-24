@@ -12,9 +12,9 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.i18n.GitBundle
-import git4idea.index.GitFileStatus
-import git4idea.index.GitStageTracker
-import git4idea.index.isRenamed
+import git4idea.index.*
+import git4idea.index.vfs.GitIndexVirtualFile
+import git4idea.index.vfs.filePath
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -38,10 +38,24 @@ abstract class GitStageTree(project: Project) : ChangesTree(project, false, true
         NodeKind.values().forEach { kind ->
           if (kind.`is`(status)) {
             val parentNode = parentNodes.getOrPut(kind) { ChangesBrowserKindNode(kind) }
-            val fileStatusInfo = GitFileStatusNode(root, status, kind)
+            val fileStatusInfo = GitFileStatusNode.Saved(root, status, kind)
             builder.insertPath(fileStatusInfo, parentNode)
           }
         }
+      }
+    }
+    state.unsavedIndex.forEach { (root, files) ->
+      files.forEach { file ->
+        val parentNode = parentNodes.getOrPut(NodeKind.STAGED) { ChangesBrowserKindNode(NodeKind.STAGED) }
+        val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
+        builder.insertPath(fileStatusInfo, parentNode)
+      }
+    }
+    state.unsavedWorkTree.forEach { (root, files) ->
+      files.forEach { file ->
+        val parentNode = parentNodes.getOrPut(NodeKind.UNSTAGED) { ChangesBrowserKindNode(NodeKind.UNSTAGED) }
+        val fileStatusInfo = GitFileStatusNode.Unsaved(root, file)
+        builder.insertPath(fileStatusInfo, parentNode)
       }
     }
 
@@ -130,29 +144,63 @@ enum class NodeKind(@PropertyKey(resourceBundle = GitBundle.BUNDLE) @NonNls val 
   open fun origPath(status: GitFileStatus): FilePath? = null
 }
 
-class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, val kind: NodeKind) {
-  val filePath: FilePath get() = status.path
-  val origPath: FilePath? get() = kind.origPath(status)
-  val fileStatus: FileStatus get() = kind.status(status)
+sealed class GitFileStatusNode(val root: VirtualFile, val kind: NodeKind) {
+  abstract val filePath: FilePath
+  abstract val origPath: FilePath?
+  abstract val fileStatus: FileStatus
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
+  class Saved(root: VirtualFile, val status: GitFileStatus, kind: NodeKind) : GitFileStatusNode(root, kind) {
+    override val filePath: FilePath get() = status.path
+    override val origPath: FilePath? get() = kind.origPath(status)
+    override val fileStatus: FileStatus get() = kind.status(status)
 
-    other as GitFileStatusNode
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
 
-    if (root != other.root) return false
-    if (status != other.status) return false
-    if (kind != other.kind) return false
+      other as Saved
 
-    return true
+      if (root != other.root) return false
+      if (status != other.status) return false
+      if (kind != other.kind) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return Objects.hashCode(root, fileStatus, kind)
+    }
+
+    override fun toString(): String {
+      return "GitFileStatusNode.Saved(root=$root, status=$fileStatus, kind=$kind)"
+    }
   }
 
-  override fun hashCode(): Int {
-    return Objects.hashCode(root, fileStatus, kind)
-  }
+  class Unsaved(root: VirtualFile, val file: VirtualFile) : GitFileStatusNode(root, file.kind()) {
+    override val filePath: FilePath get() = file.filePath()
+    override val origPath: FilePath? get() = null
+    override val fileStatus: FileStatus get() = FileStatus.MODIFIED
 
-  override fun toString(): String {
-    return "GitFileStatusNode.Saved(root=$root, status=$fileStatus, kind=$kind)"
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as Unsaved
+
+      if (root != other.root) return false
+      if (file != other.file) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return Objects.hashCode(root, file)
+    }
+
+    override fun toString(): String {
+      return "GitFileStatusNode.Unsaved(root=$root, file=$file"
+    }
   }
 }
+
+private fun VirtualFile.kind() = if (this is GitIndexVirtualFile) NodeKind.STAGED else NodeKind.UNSTAGED

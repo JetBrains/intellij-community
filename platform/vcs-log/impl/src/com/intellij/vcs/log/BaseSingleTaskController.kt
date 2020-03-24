@@ -70,3 +70,15 @@ fun ExecutorService.submitSafe(log: Logger, task: () -> Unit): Future<*> = this.
     log.error(t)
   }
 }
+
+fun <R> SingleTaskController<R, *>.sendRequests(vararg requests: R?): Boolean {
+  val notNullRequests = mutableListOf<R>()
+  for (request in requests) {
+    if (request != null) notNullRequests.add(request)
+  }
+  if (notNullRequests.isNotEmpty()) {
+    request(notNullRequests)
+    return true
+  }
+  return false
+}

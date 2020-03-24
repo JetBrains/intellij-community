@@ -20,7 +20,7 @@ internal abstract class PredictionController(private val project: Project,
       inProgressChanged(value)
     }
 
-  override fun cancelRunningTasks(requests: Array<out PredictionRequest>) = true
+  override fun cancelRunningTasks(requests: List<PredictionRequest>) = true
 
   override fun startNewBackgroundTask(): SingleTask {
     val task: Task.Backgroundable = object : Task.Backgroundable(

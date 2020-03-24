@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcs.log.runInEdt
+import com.intellij.vcs.log.sendRequests
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
@@ -59,8 +60,8 @@ class LightGitTracker : Disposable {
 
     singleTaskController.request(Request.CheckGit)
     runInEdt(this) {
-      sendRequests(locationRequest(lightEditService.selectedFile),
-                   statusRequest(lightEditorManager.openFiles))
+      singleTaskController.sendRequests(locationRequest(lightEditService.selectedFile),
+                                        statusRequest(lightEditorManager.openFiles))
     }
   }
 
@@ -124,15 +125,6 @@ class LightGitTracker : Disposable {
     return Request.Status(filesForRequest)
   }
 
-  private fun sendRequests(vararg requests: Request?): Boolean {
-    val notNullRequests = requests.filterNotNullTo(mutableListOf())
-    if (notNullRequests.isNotEmpty()) {
-      singleTaskController.request(*notNullRequests.toTypedArray())
-      return true
-    }
-    return false
-  }
-
   fun addUpdateListener(listener: LightGitTrackerListener, parent: Disposable) {
     eventDispatcher.addListener(listener, parent)
   }
@@ -145,15 +137,15 @@ class LightGitTracker : Disposable {
       if (!hasGit) return
 
       val targetFiles = events.filter { it.isFromSave || it.isFromRefresh }.mapNotNullTo(mutableSetOf()) { it.file }
-      sendRequests(statusRequest(lightEditorManager.openFiles.intersect(targetFiles)))
+      singleTaskController.sendRequests(statusRequest(lightEditorManager.openFiles.intersect(targetFiles)))
     }
   }
 
   private inner class MyFrameStateListener : FrameStateListener {
     override fun onFrameActivated() {
-      sendRequests(Request.CheckGit,
-                   locationRequest(lightEditService.selectedFile),
-                   statusRequest(lightEditorManager.openFiles))
+      singleTaskController.sendRequests(Request.CheckGit,
+                                        locationRequest(lightEditService.selectedFile),
+                                        statusRequest(lightEditorManager.openFiles))
     }
   }
 
@@ -164,7 +156,7 @@ class LightGitTracker : Disposable {
       state = state.copy(location = null)
 
       val selectedFile = editorInfo?.file
-      if (!sendRequests(locationRequest(selectedFile), statusRequest(listOf(selectedFile)))) {
+      if (!singleTaskController.sendRequests(locationRequest(selectedFile), statusRequest(listOf(selectedFile)))) {
         runInEdt(this@LightGitTracker) { eventDispatcher.multicaster.update() }
       }
     }

@@ -59,11 +59,15 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
    * Otherwise just remembers requests in the queue. Later they can be retrieved by {@link #popRequests()}.
    */
   public final void request(Request @NotNull ... requests) {
+    request(Arrays.asList(requests));
+  }
+
+  public void request(@NotNull List<Request> requestList) {
     synchronized (LOCK) {
       if (myIsClosed) return;
-      myAwaitingRequests.addAll(Arrays.asList(requests));
-      debug("Added requests: " + Arrays.toString(requests));
-      if (myRunningTask != null && cancelRunningTasks(requests)) {
+      myAwaitingRequests.addAll(requestList);
+      debug("Added requests: " + requestList);
+      if (myRunningTask != null && cancelRunningTasks(requestList)) {
         cancelTask(myRunningTask);
       }
       if (myRunningTask == null) {
@@ -73,7 +77,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
   }
 
-  protected boolean cancelRunningTasks(Request @NotNull [] requests) {
+  protected boolean cancelRunningTasks(@NotNull List<Request> requests) {
     return false;
   }
 

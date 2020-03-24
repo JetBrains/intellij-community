@@ -204,3 +204,8 @@ class GitIndexVirtualFile(private val project: Project,
 
   internal data class CachedData(val hash: Hash, val length: Long, val isExecutable: Boolean = false)
 }
+
+internal fun VirtualFile.filePath(): FilePath {
+  return if (this is GitIndexVirtualFile) this.filePath
+  else VcsUtil.getFilePath(this)
+}

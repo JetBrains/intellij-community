@@ -146,11 +146,17 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
 }
 
 private fun GitFileStatusNode.has(contentVersion: ContentVersion): Boolean {
-  return status.has(contentVersion)
+  return when (this) {
+    is GitFileStatusNode.Saved -> status.has(contentVersion)
+    is GitFileStatusNode.Unsaved -> true
+  }
 }
 
 private fun GitFileStatusNode.path(contentVersion: ContentVersion): FilePath {
-  return status.path(contentVersion)
+  return when (this) {
+    is GitFileStatusNode.Saved -> status.path(contentVersion)
+    is GitFileStatusNode.Unsaved -> filePath
+  }
 }
 
 private fun getTitle(statusNode: GitFileStatusNode): String {
