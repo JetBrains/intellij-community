@@ -56,6 +56,18 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
   public static final Key<Change> CHANGE_KEY = Key.create("DiffRequestPresentable.Change");
   public static final Key<Change> TAG_KEY = Key.create("DiffRequestPresentable.Tag");
 
+  /**
+   * Use {@link #getYourVersion()} instead
+   */
+  @Deprecated
+  public static final String YOUR_VERSION = DiffBundle.message("merge.version.title.our");
+
+  /**
+   * Use {@link #getBaseVersion()} instead
+   */
+  @Deprecated
+  public static final String BASE_VERSION = DiffBundle.message("merge.version.title.base");
+
   @Nullable private final Project myProject;
   @NotNull private final Change myChange;
   @NotNull private final Map<Key, Object> myChangeContext;
