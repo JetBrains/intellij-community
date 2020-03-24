@@ -130,8 +130,6 @@ class XDebugSessionTab2(
     session.rebuildViews()
   }
 
-  override fun initListeners(ui: RunnerLayoutUi?) = Unit
-
   override fun initDebuggerTab(session: XDebugSessionImpl) {
     val framesView = xThreadsFramesView
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView)
