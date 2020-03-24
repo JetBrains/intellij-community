@@ -58,6 +58,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     Set<InspectionSuppressor> suppressors = getSuppressors(element);
+    if (suppressors.isEmpty()) return false;
+
     String toolId = getSuppressId();
     for (InspectionSuppressor suppressor : suppressors) {
       if (isSuppressed(toolId, suppressor, element)) {
