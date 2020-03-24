@@ -27,12 +27,24 @@ public class YAMLMappingModificationTest extends BasePlatformTestCase {
   public void testCreateSecondTopLevelKey() {
     doMappingTest("key2", "value2");
   }
-  
+
+  public void testCreateSecondTopLevelKeyWithTailLines() {
+    doMappingTest("key2", "value2");
+  }
+
   public void testReplaceTopLevelKey() {
     doMappingTest("key", "value2");
   }
   
   public void testCreateSecondKeyLevelTwo() {
+    doMappingTest("key", "value");
+  }
+
+  public void testCreateSecondKeyLevelTwoWithTailLines() {
+    doMappingTest("key", "value");
+  }
+
+  public void testCreateSecondKeyLevelTwoWithComment() {
     doMappingTest("key", "value");
   }
 

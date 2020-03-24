@@ -1,0 +1,4 @@
+foo:
+  bar: <caret>baz
+  #hello world
+
