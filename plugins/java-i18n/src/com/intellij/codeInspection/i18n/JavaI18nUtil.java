@@ -26,7 +26,6 @@ import java.text.ChoiceFormat;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.IntStream;
 
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
@@ -56,7 +55,7 @@ public class JavaI18nUtil extends I18nUtil {
         return true;
       }
     }
-    return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, resourceBundleRef, null);
+    return isPassedToResourceParam(expression, resourceBundleRef);
   }
 
   public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
@@ -80,21 +79,20 @@ public class JavaI18nUtil extends I18nUtil {
     if (parameter == null) return false;
     int paramIndex = ArrayUtil.indexOf(psiMethod.getParameterList().getParameters(), parameter);
     if (paramIndex == -1) return false;
-    @Nullable Ref<PsiAnnotationMemberValue> ref = resourceBundleRef != null ? new Ref<>() : null;
-    boolean isAnnotated = isMethodParameterAnnotatedWith(psiMethod, paramIndex, null, AnnotationUtil.PROPERTY_KEY, ref, null);
-    if (ref != null) {
-      PsiAnnotationMemberValue memberValue = ref.get();
-      if (memberValue != null) {
-        resourceBundleRef.set(UastContextKt.toUElementOfExpectedTypes(memberValue, UExpression.class));
-      }
+    if (resourceBundleRef == null) {
+      return isPropertyKeyParameter(psiMethod, paramIndex, null, null);
+    }
+    @Nullable Ref<PsiAnnotationMemberValue> ref = new Ref<>();
+    boolean isAnnotated = isPropertyKeyParameter(psiMethod, paramIndex, null, ref);
+    PsiAnnotationMemberValue memberValue = ref.get();
+    if (memberValue != null) {
+      resourceBundleRef.set(UastContextKt.toUElementOfExpectedTypes(memberValue, UExpression.class));
     }
     return isAnnotated;
   }
 
-  static boolean isPassedToAnnotatedParam(@NotNull PsiExpression expression,
-                                          final String annFqn,
-                                          @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
-                                          @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  static boolean isPassedToResourceParam(@NotNull PsiExpression expression,
+                                         @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
     expression = getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiExpressionList)) return false;
@@ -109,46 +107,9 @@ public class JavaI18nUtil extends I18nUtil {
 
     if (grParent instanceof PsiCall) {
       PsiMethod method = ((PsiCall)grParent).resolveMethod();
-      return method != null && isMethodParameterAnnotatedWith(method, idx, null, annFqn, resourceBundleRef, nonNlsTargets);
+      return method != null && isPropertyKeyParameter(method, idx, null, resourceBundleRef);
     }
 
-    return false;
-  }
-
-  static boolean isPassedToAnnotatedParam(@NotNull UExpression expression,
-                                          String annFqn,
-                                          @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
-    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    if (parent instanceof UPolyadicExpression) {
-      parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
-    }
-    UCallExpression callExpression = UastUtils.getUCallExpression(parent);
-    if (callExpression == null) return false;
-
-    List<UExpression> arguments = callExpression.getValueArguments();
-    OptionalInt idx = IntStream.range(0, arguments.size())
-      .filter(i -> UastUtils.isUastChildOf(expression, arguments.get(i), false))
-      .findFirst();
-
-    if (!idx.isPresent()) return false;
-
-    PsiMethod method = callExpression.resolve();
-    if (method == null) return false;
-    if (isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, annFqn, null, nonNlsTargets)) {
-      return true;
-    }
-    PsiParameter parameter = method.getParameterList().getParameter(idx.getAsInt());
-    if (parameter != null) {
-      PsiType parameterType = parameter.getType();
-      PsiElement psi = callExpression.getSourcePsi();
-      if (psi instanceof PsiMethodCallExpression) {
-        PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
-        parameterType = substitutor.substitute(parameterType);
-      }
-      if (AnnotationUtil.findAnnotationInTypeHierarchy(parameterType, Collections.singleton(annFqn)) != null) {
-        return true;
-      }
-    }
     return false;
   }
 
@@ -183,12 +144,10 @@ public class JavaI18nUtil extends I18nUtil {
     return expression;
   }
 
-  static boolean isMethodParameterAnnotatedWith(final PsiMethod method,
-                                                final int idx,
-                                                @Nullable Collection<? super PsiMethod> processed,
-                                                final String annFqn,
-                                                @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
-                                                @Nullable final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  static boolean isPropertyKeyParameter(final PsiMethod method,
+                                        final int idx,
+                                        @Nullable Collection<? super PsiMethod> processed,
+                                        @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
     if (processed != null) {
       if (processed.contains(method)) return false;
     }
@@ -200,62 +159,24 @@ public class JavaI18nUtil extends I18nUtil {
     final PsiParameter[] params = method.getParameterList().getParameters();
     PsiParameter param;
     if (idx >= params.length) {
-      if (params.length == 0) {
-        return false;
-      }
-      PsiParameter lastParam = params[params.length - 1];
-      if (lastParam.isVarArgs()) {
-        param = lastParam;
-      }
-      else {
-        return false;
-      }
+      PsiParameter lastParam = ArrayUtil.getLastElement(params);
+      if (lastParam == null || !lastParam.isVarArgs()) return false;
+      param = lastParam;
     }
     else {
       param = params[idx];
     }
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, annFqn);
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, AnnotationUtil.PROPERTY_KEY);
     if (annotation != null) {
       processAnnotationAttributes(resourceBundleRef, annotation);
       return true;
     }
-    if (nonNlsTargets != null) {
-      nonNlsTargets.add(param);
-    }
 
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
-      if (isMethodParameterAnnotatedWith(superMethod, idx, processed, annFqn, resourceBundleRef, null)) return true;
+      if (isPropertyKeyParameter(superMethod, idx, processed, resourceBundleRef)) return true;
     }
 
-    if (annFqn.equals(AnnotationUtil.NON_NLS) || annFqn.equals(AnnotationUtil.NLS)) {
-      String oppositeFQN = annFqn.equals(AnnotationUtil.NON_NLS) ? AnnotationUtil.NLS
-                                                                 : AnnotationUtil.NON_NLS;
-      if (AnnotationUtil.findAnnotation(param, oppositeFQN) != null) {
-        return false;
-      }
-
-      PsiClass containingClass = method.getContainingClass();
-      while (containingClass != null) {
-        PsiAnnotation classAnnotation = AnnotationUtil.findAnnotation(containingClass, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
-        if (classAnnotation != null) {
-          return classAnnotation.hasQualifiedName(annFqn);
-        }
-        containingClass = containingClass.getContainingClass();
-      }
-
-      PsiFile containingFile = method.getContainingFile();
-      if (containingFile instanceof PsiClassOwner) {
-        String packageName = ((PsiClassOwner)containingFile).getPackageName();
-        PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
-        if (aPackage != null) {
-          final PsiAnnotation packageAnnotation = AnnotationUtil.findAnnotation(aPackage, AnnotationUtil.NON_NLS, AnnotationUtil.NLS);
-          if (packageAnnotation != null) {
-            return packageAnnotation.hasQualifiedName(annFqn);
-          }
-        }
-      }
-    }
     return false;
   }
 

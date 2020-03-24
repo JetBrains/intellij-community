@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.i18n.NlsInfo;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -45,7 +46,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           List<PsiExpression> children = ExpressionUtils.nonStructuralChildren(expression).collect(Collectors.toList());
           for (PsiExpression e : children) {
             if (capitalization == null) {
-              capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno(method);
+              capitalization = NlsInfo.getCapitalization(method);
               if (capitalization == Nls.Capitalization.NotSpecified) return;
             }
             Value titleValue = getTitleValue(e, new HashSet<>());
@@ -65,7 +66,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
             PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
             for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
               PsiParameter parameter = parameters[i];
-              Nls.Capitalization capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno(parameter);
+              Nls.Capitalization capitalization = NlsInfo.getCapitalization(parameter);
               if (capitalization == Nls.Capitalization.NotSpecified) continue;
               ExpressionUtils.nonStructuralChildren(args[i])
                 .forEach(e -> checkCapitalization(e, getTitleValue(e, new HashSet<>()), holder, capitalization));

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.i18n.NlsInfo;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
@@ -162,7 +163,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
     final PsiElement declaration = childrenDescription.getDeclaration(extension.getManager().getProject());
     if (declaration instanceof PsiField) {
-      final Nls.Capitalization capitalization = NlsCapitalizationUtil.getCapitalizationFromAnno((PsiModifierListOwner)declaration);
+      final Nls.Capitalization capitalization = NlsInfo.getCapitalization((PsiModifierListOwner)declaration);
       if (capitalization == Nls.Capitalization.NotSpecified) return;
 
       checkCapitalizationWithKey(holder, genericDomValue, capitalization);
