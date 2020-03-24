@@ -194,7 +194,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
   }
 
   @Override
-  public boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target) {
+  public boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target, @Nullable Executor executor) {
     if (configuration == null) {
       return false;
     }
@@ -217,10 +217,13 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
         return false;
       }
 
-      TargetAwareRunProfile targetAwareProfile = (TargetAwareRunProfile)subConfiguration;
-      return target.canRun(subConfiguration) && targetAwareProfile.canRunOn(target)
-             || (checkFallbackToDefault && defaultTarget.canRun(subConfiguration) && targetAwareProfile.canRunOn(defaultTarget));
+      return canRun(target, subConfiguration, executor) || (checkFallbackToDefault && canRun(defaultTarget, subConfiguration, executor));
     });
+  }
+
+  private static boolean canRun(@NotNull ExecutionTarget target, @NotNull RunConfiguration configuration, @Nullable Executor executor) {
+    return (executor == null ? target.canRun(configuration) : target.canRun(configuration, executor)) &&
+           ((TargetAwareRunProfile)configuration).canRunOn(target);
   }
 
   @NotNull
@@ -255,7 +258,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
         result.add(MULTIPLE_TARGETS);
       }
     }
-    return Collections.unmodifiableList(ContainerUtil.filter(result, it -> doCanRun(configuration, it)));
+    return Collections.unmodifiableList(ContainerUtil.filter(result, it -> doCanRun(configuration, it, null)));
   }
 
   private boolean doWithEachNonCompoundWithSpecifiedTarget(@NotNull RunConfiguration configuration, @NotNull BiPredicate<? super RunConfiguration, ? super ExecutionTarget> action) {

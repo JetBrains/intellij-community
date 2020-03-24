@@ -54,7 +54,16 @@ public abstract class ExecutionTargetManager {
       return false;
     }
     else {
-      return getInstance(configuration.getProject()).doCanRun(configuration, target);
+      return getInstance(configuration.getProject()).doCanRun(configuration, target, null);
+    }
+  }
+
+  public static boolean canRun(@Nullable RunConfiguration configuration, @Nullable ExecutionTarget target, @NotNull Executor executor) {
+    if (configuration == null || target == null) {
+      return false;
+    }
+    else {
+      return getInstance(configuration.getProject()).doCanRun(configuration, target, executor);
     }
   }
 
@@ -63,7 +72,7 @@ public abstract class ExecutionTargetManager {
     return settings != null && canRun(settings.getConfiguration(), environment.getExecutionTarget());
   }
 
-  public abstract boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target);
+  public abstract boolean doCanRun(@Nullable RunConfiguration configuration, @NotNull ExecutionTarget target, @Nullable Executor executor);
 
   public static void update(@NotNull Project project) {
     getInstance(project).update();

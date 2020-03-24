@@ -574,7 +574,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     var runner = environment.runner
     if (runnerAndConfigurationSettings != null) {
       val targetManager = ExecutionTargetManager.getInstance(project)
-      if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
+      if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget, environment.executor)) {
         ExecutionUtil.handleExecutionError(environment, ExecutionException(ProgramRunnerUtil.getCannotRunOnErrorMessage(environment.runProfile, environment.executionTarget)))
         return
       }

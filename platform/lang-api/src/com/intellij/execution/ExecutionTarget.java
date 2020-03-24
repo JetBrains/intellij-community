@@ -54,6 +54,10 @@ public abstract class ExecutionTarget {
     throw new AbstractMethodError();
   }
 
+  public boolean canRun(@NotNull RunConfiguration configuration, @NotNull Executor executor) {
+    return canRun(configuration);
+  }
+
   /**
    * Checks if the target is ready to be selected as a default choice in the Run Configurations popup
    * @return true if the target is ready, false otherwise

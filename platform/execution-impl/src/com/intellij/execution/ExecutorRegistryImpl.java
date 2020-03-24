@@ -184,7 +184,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         ProgramRunner<?> runner = ProgramRunner.getRunner(myExecutor.getId(), configuration);
         if (runner == null
-            || !ExecutionTargetManager.canRun(configuration, pair.getTarget())
+            || !ExecutionTargetManager.canRun(configuration, pair.getTarget(), myExecutor)
             || ExecutionManager.getInstance(project).isStarting(myExecutor.getId(), runner.getRunnerId())) {
           return false;
         }
