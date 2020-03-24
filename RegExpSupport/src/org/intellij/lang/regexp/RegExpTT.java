@@ -141,6 +141,8 @@ public interface RegExpTT {
 
     /** (?P<name>... */
     IElementType PYTHON_NAMED_GROUP = new RegExpElementType("PYTHON_NAMED_GROUP");
+    /** (?P>name) or (?&name) */
+    IElementType PCRE_RECURSIVE_NAMED_GROUP_REF = new RegExpElementType("PCRE_RECURSIVE_NAMED_GROUP");
     /** (?P=name) */
     IElementType PYTHON_NAMED_GROUP_REF = new RegExpElementType("PYTHON_NAMED_GROUP_REF");
     /** (?(id/name)yes-pattern|no-pattern) */

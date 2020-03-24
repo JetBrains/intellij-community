@@ -114,6 +114,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     ourMap.put(RegExpTT.SET_OPTIONS, PARENTHS);
     ourMap.put(RegExpTT.PYTHON_NAMED_GROUP, PARENTHS);
     ourMap.put(RegExpTT.PYTHON_NAMED_GROUP_REF, PARENTHS);
+    ourMap.put(RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF, PARENTHS);
     ourMap.put(RegExpTT.PYTHON_COND_REF, PARENTHS);
     ourMap.put(RegExpTT.PCRE_COND_REF, PARENTHS);
     ourMap.put(RegExpTT.RUBY_NAMED_GROUP, PARENTHS);

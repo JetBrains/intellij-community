@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
+import static org.intellij.lang.regexp.RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF;
+
 public class RegExpParser implements PsiParser, LightPsiParser {
   private static final TokenSet PROPERTY_TOKENS = TokenSet.create(RegExpTT.NUMBER, RegExpTT.COMMA, RegExpTT.NAME, RegExpTT.RBRACE);
   private final EnumSet<RegExpCapability> myCapabilities;
@@ -405,7 +407,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       parseGroupEnd(builder);
       marker.done(RegExpElementTypes.GROUP);
     }
-    else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
+    else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF || type == PCRE_RECURSIVE_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
     else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
