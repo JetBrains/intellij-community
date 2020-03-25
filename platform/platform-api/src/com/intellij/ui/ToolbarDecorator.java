@@ -363,6 +363,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   public JPanel createPanel() {
     CommonActionsPanel.Buttons[] buttons = getButtons();
     JComponent contextComponent = getComponent();
+    contextComponent.putClientProperty("forceVisibleRowCount", true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition,
                              myExtraActions.toArray(new AnActionButton[0]),

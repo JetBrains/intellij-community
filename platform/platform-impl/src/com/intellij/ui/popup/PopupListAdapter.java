@@ -39,7 +39,6 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   PopupListAdapter(PopupChooserBuilder<T> builder, JList<T> list) {
     myBuilder = builder;
     myList = list;
-    myList.putClientProperty("visibleRowCountIsMax", true);
   }
 
   @Override

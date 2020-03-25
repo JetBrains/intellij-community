@@ -558,7 +558,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private class MyList extends JBList implements DataProvider {
     MyList() {
       super(myListModel);
-      putClientProperty("visibleRowCountIsMax", true);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
