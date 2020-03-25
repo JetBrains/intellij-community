@@ -68,7 +68,7 @@ public class IterateOverIterableIntention implements IntentionAction {
 
   @Nullable
   private static TemplateImpl getTemplate() {
-    return TemplateSettings.getInstance().getTemplate("I", "surround");
+    return TemplateSettings.getInstance().getTemplate("I", "Java");
   }
 
 

@@ -170,14 +170,14 @@ class Outer {
 
   void testToar() throws Throwable {
     configure()
-    startTemplate("toar", "other")
+    startTemplate("toar", "Java")
     state.gotoEnd(false)
     checkResult()
   }
 
   void testIter() throws Throwable {
     configure()
-    startTemplate("iter", "iterations")
+    startTemplate("iter", "Java")
     WriteCommandAction.runWriteCommandAction(project) { state.nextTab() }
     myFixture.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR)
     checkResult()
@@ -185,21 +185,21 @@ class Outer {
 
   void testIter1() throws Throwable {
     configure()
-    startTemplate("iter", "iterations")
+    startTemplate("iter", "Java")
     myFixture.performEditorAction("NextTemplateVariable")
     checkResult()
   }
 
   void testIterParameterizedInner() {
     configure()
-    startTemplate("iter", "iterations")
+    startTemplate("iter", "Java")
     stripTrailingSpaces()
     checkResult()
   }
 
   void testIterParameterizedInnerInMethod() {
     configure()
-    startTemplate("iter", "iterations")
+    startTemplate("iter", "Java")
     stripTrailingSpaces()
     checkResult()
   }
@@ -213,26 +213,26 @@ class Outer {
 
   void testAsListToar() {
     configure()
-    startTemplate("toar", "other")
+    startTemplate("toar", "Java")
     myFixture.type('\n\t')
     checkResult()
   }
 
   void testVarargToar() {
     configure()
-    startTemplate("toar", "other")
+    startTemplate("toar", "Java")
     checkResult()
   }
 
   void testSoutp() {
     configure()
-    startTemplate("soutp", "output")
+    startTemplate("soutp", "Java")
     checkResult()
   }
   
   void testSoutConsumerApplicability() {
     for (String name : ["soutc", "serrc"]) {
-      TemplateImpl template = (TemplateImpl)TemplateSettings.getInstance().getTemplate(name, "output")
+      TemplateImpl template = (TemplateImpl)TemplateSettings.getInstance().getTemplate(name, "Java")
       assert !isApplicable('class Foo {void x(){ <caret>JUNK }}', template)
       assert !isApplicable('class Foo {void x(java.util.stream.IntStream is){ is.map(<caret>JUNK) }}', template)
       assert isApplicable('class Foo {void x(java.util.stream.IntStream is){ is.peek(<caret>JUNK) }}', template)
@@ -241,13 +241,13 @@ class Outer {
 
   void testSoutConsumer() {
     configure()
-    startTemplate("soutc", "output")
+    startTemplate("soutc", "Java")
     checkResult()
   }
 
   void testSerrConsumerConflict() {
     configure()
-    startTemplate("serrc", "output")
+    startTemplate("serrc", "Java")
     checkResult()
   }
 
@@ -263,7 +263,7 @@ class Outer {
   }
 
   void testJavaStatementContext() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "other")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("inst", "Java")
     assertFalse(isApplicable("class Foo {{ if (a inst<caret>) }}", template))
     assertTrue(isApplicable("class Foo {{ <caret>inst }}", template))
     assertTrue(isApplicable("class Foo {{ <caret>inst\n a=b; }}", template))
@@ -277,7 +277,7 @@ class Outer {
   }
 
   void testJavaExpressionContext() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("toar", "other")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("toar", "Java")
     assert !isApplicable("class Foo {{ if (a <caret>toar) }}", template)
     assert isApplicable("class Foo {{ <caret>toar }}", template)
     assert isApplicable("class Foo {{ return (<caret>toar) }}", template)
@@ -297,7 +297,7 @@ class Outer {
   }
 
   void testJavaDeclarationContext() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "other")
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java")
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template))
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template))
     assertFalse(isApplicable("class Foo {{ if (a <caret>xxx) }}", template))

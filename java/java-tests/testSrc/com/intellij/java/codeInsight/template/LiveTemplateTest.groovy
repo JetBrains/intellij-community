@@ -286,7 +286,7 @@ class Foo {
 
   void testPreferStartMatchesInLookups() throws Throwable {
     configure()
-    startTemplate("iter", "iterations")
+    startTemplate("iter", "Java")
     myFixture.type('ese\n') //for entrySet
     assert myFixture.lookupElementStrings == ['barGooStringBuilderEntry', 'gooStringBuilderEntry', 'stringBuilderEntry', 'builderEntry', 'entry']
     myFixture.type('e')
@@ -297,7 +297,7 @@ class Foo {
   void testClassNameDotInTemplate() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     configure()
-    startTemplate("soutv", "output")
+    startTemplate("soutv", "Java")
     myFixture.type('File')
     assert myFixture.lookupElementStrings == ['file']
     myFixture.type('.')
@@ -308,7 +308,7 @@ class Foo {
   void testFinishTemplateVariantWithDot() {
     CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
     configure()
-    startTemplate("soutv", "output")
+    startTemplate("soutv", "Java")
     myFixture.type('fil')
     assert myFixture.lookupElementStrings == ['file']
     myFixture.type('.')
@@ -318,7 +318,7 @@ class Foo {
 
   void testAllowTypingRandomExpressionsWithLookupOpen() {
     configure()
-    startTemplate("iter", "iterations")
+    startTemplate("iter", "Java")
     myFixture.type('file.')
     checkResult()
     assert !state.finished
@@ -330,7 +330,7 @@ class Foo {
 
     try {
       configure()
-      startTemplate("iter", "iterations")
+      startTemplate("iter", "Java")
       checkResult()
     }
     finally {
@@ -355,7 +355,7 @@ class Foo {
 
     configureFromFileText("a.java", "class Foo {{ iter<caret>  }}")
 
-    TemplateImpl template = TemplateSettings.instance.getTemplate("iter", "iterations")
+    TemplateImpl template = TemplateSettings.instance.getTemplate("iter", "Java")
     assert (template in templateManager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
 
     assert template.templateContext.getOwnValue(stmtContext)
