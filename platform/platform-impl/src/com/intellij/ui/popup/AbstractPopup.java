@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -53,6 +53,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static java.awt.event.MouseEvent.*;
@@ -86,7 +87,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private Computable<Boolean> myCallBack;
   private Project              myProject;
   private boolean              myCancelOnClickOutside;
-  private Set<JBPopupListener> myListeners;
+  private final List<JBPopupListener> myListeners = new CopyOnWriteArrayList<>();
   private boolean              myUseDimServiceForXYLocation;
   private MouseChecker         myCancelOnMouseOutCallback;
   private Canceller            myMouseOutCanceller;
@@ -312,7 +313,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myCallBack = callback;
     myCancelOnClickOutside = cancelOnClickOutside;
     myCancelOnMouseOutCallback = cancelOnMouseOutCallback;
-    myListeners = listeners == null ? new HashSet<>() : listeners;
+    if (listeners != null) myListeners.addAll(listeners);
     myUseDimServiceForXYLocation = useDimServiceForXYLocation;
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;
@@ -609,10 +610,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return new Point(preferredBounds.x, adjustedY);
   }
 
-  protected void addPopupListener(JBPopupListener listener) {
-    myListeners.add(listener);
-  }
-
   private RelativePoint relativePointWithDominantRectangle(final JLayeredPane layeredPane, final Rectangle bounds) {
     Dimension size = getSizeForPositioning();
     List<Supplier<Point>> optionsToTry = Arrays.asList(() -> new Point(bounds.x + bounds.width, bounds.y),
@@ -731,11 +728,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       disposePopup();
     }
 
-    if (myListeners != null) {
-      for (JBPopupListener each : myListeners) {
-        each.onClosed(new LightweightWindowEvent(this, myOk));
-      }
-    }
+    myListeners.forEach(listener -> listener.onClosed(new LightweightWindowEvent(this, myOk)));
 
     Disposer.dispose(this, false);
     if (myProjectDisposable != null) {
@@ -974,9 +967,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       myMoveListener = moveListener;
     }
 
-    for (JBPopupListener listener : myListeners) {
-      listener.beforeShown(new LightweightWindowEvent(this));
-    }
+    myListeners.forEach(listener -> listener.beforeShown(new LightweightWindowEvent(this)));
 
     myPopup.setRequestFocus(myRequestFocus);
 
@@ -1430,7 +1421,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myPreferredFocusedComponent = null;
     myComponent = null;
     myCallBack = null;
-    myListeners = null;
+    myListeners.clear();
 
     if (myMouseOutCanceller != null) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -1861,12 +1852,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   @Override
-  public void addListener(@NotNull final JBPopupListener listener) {
-    myListeners.add(listener);
+  public void addListener(@NotNull JBPopupListener listener) {
+    myListeners.add(0, listener); // last added first notified
   }
 
   @Override
-  public void removeListener(@NotNull final JBPopupListener listener) {
+  public void removeListener(@NotNull JBPopupListener listener) {
     myListeners.remove(listener);
   }
 

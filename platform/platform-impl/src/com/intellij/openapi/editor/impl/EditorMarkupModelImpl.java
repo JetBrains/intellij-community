@@ -1965,7 +1965,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
             analyzerStatus.getController().onClosePopup();
           }
           myEditor.getComponent().removeAncestorListener(myAncestorListener);
-          myPopup.removeListener(myPopupListener);
         }
       };
     }
