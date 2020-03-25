@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -21,6 +22,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -294,7 +296,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     mySplittersElement = element;
   }
 
-  public @NotNull List<VirtualFile> getOpenFileList() {
+  @NotNull List<VirtualFile> getOpenFileList() {
     List<VirtualFile> files = new ArrayList<>();
     for (EditorWindow myWindow : myWindows) {
       for (EditorWithProviderComposite editor : myWindow.getEditors()) {
@@ -895,18 +897,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
         Activity activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR);
         VirtualFile virtualFile = null;
-        try {
-          HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
-          virtualFile = entry.getFile();
-          if (virtualFile == null) {
-            throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
-          }
-
+        HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
+        virtualFile = entry.getFile();
+        if (virtualFile == null) {
+          throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
+        }
+        try (AccessToken ignored = ProjectLocator.runWithPreferredProject(virtualFile, myManager.getProject())) {
           virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
           VirtualFile finalVirtualFile = virtualFile;
-          Document document = ReadAction.compute(() -> {
-            return finalVirtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(finalVirtualFile) : null;
-          });
+          Document document = ReadAction.compute(() -> finalVirtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(finalVirtualFile) : null);
 
           boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
@@ -931,9 +930,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           }
         }
         finally {
-          if (virtualFile != null) {
-            virtualFile.putUserData(OPENED_IN_BULK, null);
-          }
+          virtualFile.putUserData(OPENED_IN_BULK, null);
         }
         activity.end();
       }
