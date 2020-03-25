@@ -2,6 +2,7 @@
 package com.intellij.workspace.api
 
 import kotlin.properties.ReadOnlyProperty
+import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -485,15 +486,22 @@ class PSubFolderEntity(
   val snapshot: PEntityStorage
 ) : PTypedEntity {
 
-  val parent: PFolderEntity? by lazy {
-    snapshot.extractBackRef(PSubFolderEntity::parent, PFolderEntity::children, id)
-  }
+  val parent: PFolderEntity? by BackRefs(snapshot, PFolderEntity::children)
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     TODO("Not yet implemented")
   }
 
   override fun toString(): String = asStr()
+}
+
+class BackRefs<T : PTypedEntity, SUBT : PTypedEntity>(
+  private val snapshot: PEntityStorage,
+  private val remote: KProperty1<T, Sequence<SUBT>>
+) : ReadOnlyProperty<SUBT, T?> {
+  override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
+    return snapshot.extractBackRef(property as KProperty1<SUBT, T?>, remote, thisRef.id)
+  }
 }
 
 @PEntityDataClass(PFolderEntityData::class)
@@ -510,13 +518,22 @@ class PFolderModifiableEntity(val original: PFolderEntityData,
       original.data = value
     }
 
-  var children: Sequence<PSubFolderEntity>
-    get() = diff.extractRefs(PFolderEntity::children, PSubFolderEntity::parent, id)
-    set(value) {
-      diff.updateRef(PFolderEntity::children, PSubFolderEntity::parent, id, value)
-    }
+  var children: Sequence<PSubFolderEntity> by RwRefs(diff, PSubFolderEntity::parent)
 
   override val id: PId = PId(original.id, PFolderEntity::class)
+}
+
+class RwRefs<T : PTypedEntity, SUBT : PTypedEntity>(
+  private val snapshot: PEntityStorageBuilder,
+  private val remote: KProperty1<SUBT, T?>
+) : ReadWriteProperty<T, Sequence<SUBT>> {
+  override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
+    return snapshot.extractRefs(property as KProperty1<T, Sequence<SUBT>>, remote, thisRef.id)
+  }
+
+  override fun setValue(thisRef: T, property: KProperty<*>, value: Sequence<SUBT>) {
+    snapshot.updateRef(property as KProperty1<T, Sequence<SUBT>>, remote, thisRef.id, value)
+  }
 }
 
 @PEntityDataClass(PSubFolderEntityData::class)
@@ -531,16 +548,25 @@ class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
       original.data = value
     }
 
-  var parent: PFolderEntity?
-    get() = diff.extractBackRef(PSubFolderEntity::parent, PFolderEntity::children, id)
-    set(value) {
-      diff.updateBackRef(PSubFolderEntity::parent, PFolderEntity::children, id, value)
-    }
+  var parent: PFolderEntity? by RwBackRefs(diff, PFolderEntity::children)
 
   override val entitySource: EntitySource = original.entitySource
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     TODO("Not yet implemented")
+  }
+}
+
+class RwBackRefs<T : PTypedEntity, SUBT : PTypedEntity>(
+  private val snapshot: PEntityStorageBuilder,
+  private val remote: KProperty1<T, Sequence<SUBT>>
+) : ReadWriteProperty<SUBT, T?> {
+  override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
+    return snapshot.extractBackRef(property as KProperty1<SUBT, T?>, remote, thisRef.id)
+  }
+
+  override fun setValue(thisRef: SUBT, property: KProperty<*>, value: T?) {
+    return snapshot.updateBackRef(property as KProperty1<SUBT, T?>, remote, thisRef.id, value)
   }
 }
 
