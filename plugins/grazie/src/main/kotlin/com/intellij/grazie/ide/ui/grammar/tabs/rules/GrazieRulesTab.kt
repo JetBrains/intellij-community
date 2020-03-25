@@ -18,7 +18,7 @@ class GrazieRulesTab : GrazieUIComponent.Delegating, Disposable {
   override val impl = GrazieTreeComponent(description.listener)
 
   override val component = panel(MigLayout(createLayoutConstraints(), AC().grow(), AC().grow())) {
-    border = JBUI.Borders.emptyTop(13)
+    border = JBUI.Borders.empty()
     add(impl.component, CC().grow().width("45%").minWidth("250px"))
     add(description.component, CC().grow().width("55%"))
 

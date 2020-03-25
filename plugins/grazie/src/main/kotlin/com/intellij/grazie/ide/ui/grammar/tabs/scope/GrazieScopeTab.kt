@@ -51,23 +51,23 @@ class GrazieScopeTab : GrazieUIComponent {
   )
 
   override val component = panel(MigLayout(createLayoutConstraints())) {
-    border = JBUI.Borders.emptyTop(13)
-
-    add(
-      panel(MigLayout(createLayoutConstraints().insets("1", "0", "0", "0"))) {
-        border = border(msg("grazie.settings.grammar.scope.places-to-check.text"), true, JBUI.emptyInsets(), false)
-        add(cbLiterals, CC().wrap())
-        add(cbComments, CC().wrap())
-        add(cbDocumentation, CC().wrap())
-        add(cbCommits, CC().wrap())
-      }, CC().width("218px").alignY("top")
-    )
+    border = JBUI.Borders.empty()
 
     add(
       panel {
         border = border(msg("grazie.settings.grammar.scope.file-types.text"), false, JBUI.emptyInsets(), false)
         add(strategies.component)
-      }, CC().grow().width("180px").alignX("left")
+      }, CC().grow().width("180px").height("50%").alignX("left")
+    )
+
+    add(
+      panel(MigLayout(createLayoutConstraints().insets("1", "0", "0", "0"))) {
+        border = border(msg("grazie.settings.grammar.scope.places-to-check.text"), true, JBUI.insetsLeft(50), false)
+        add(cbLiterals, CC().wrap())
+        add(cbComments, CC().wrap())
+        add(cbDocumentation, CC().wrap())
+        add(cbCommits, CC().wrap())
+      }, CC().width("218px").alignY("top")
     )
   }
 }
