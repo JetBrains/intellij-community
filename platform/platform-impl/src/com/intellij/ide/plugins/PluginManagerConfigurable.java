@@ -689,16 +689,6 @@ public class PluginManagerConfigurable
                   result.descriptors.addAll(0, builtinList);
                 }
 
-                //TODO: WT
-                if (result.descriptors.isEmpty() && "/tag:Paid".equals(query)) {
-                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
-                    if (descriptor.getProductCode() != null) {
-                      result.descriptors.add(descriptor);
-                    }
-                  }
-                  result.sortByName();
-                }
-
                 ContainerUtil.removeDuplicates(result.descriptors);
 
                 if (!result.descriptors.isEmpty()) {
