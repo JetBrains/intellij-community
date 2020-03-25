@@ -224,8 +224,8 @@ public class PluginManagerConfigurable
 
     myTabHeaderComponent.setListener();
 
-    int selectionTab = getStoredSelectionTab();
-    myTabHeaderComponent.setSelection(selectInstalledTab ? INSTALLED_TAB : selectionTab);
+    int selectionTab = selectInstalledTab ? INSTALLED_TAB : getStoredSelectionTab();
+    myTabHeaderComponent.setSelection(selectionTab);
     myCardPanel.select(selectionTab, true);
 
     if (selectInstalledTab) {
