@@ -30,7 +30,7 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
     }
   }
 
-  override fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage {
+  override fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage? {
     // service container ensures that one key is never requested from different threads
     return storages.getOrPut(componentClass) { ReadOnlyStorage(configurationSchemaKey, componentClass, this) }
   }
