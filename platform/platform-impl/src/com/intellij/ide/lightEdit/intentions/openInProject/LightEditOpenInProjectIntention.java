@@ -48,10 +48,7 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
       ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
     if (editorInfo != null) {
       Project openProject = findOpenProject(currFile);
-      if (openProject != null) {
-        OpenFileAction.openFile(currFile, openProject);
-      }
-      else {
+      if (openProject == null) {
         VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
         if (projectRoot != null) {
           openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);
