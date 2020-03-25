@@ -772,8 +772,11 @@ class DistributionJARsBuilder {
                             ProjectStructureMapping parentMapping) {
     addSearchableOptions(layoutBuilder)
     pluginsToInclude.each { plugin ->
-      checkOutputOfPluginModules(plugin.mainModule, plugin.getActualModules(enabledPluginModules).values(), plugin.moduleExcludes)
-      patchPluginXml(layoutBuilder, plugin)
+      boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
+      if (!isHelpPlugin) {
+        checkOutputOfPluginModules(plugin.mainModule, plugin.getActualModules(enabledPluginModules).values(), plugin.moduleExcludes)
+        patchPluginXml(layoutBuilder, plugin)
+      }
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
         File resourceFile = it.first.generateResources(buildContext)
         resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
