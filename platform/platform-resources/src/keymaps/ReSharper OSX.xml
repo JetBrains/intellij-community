@@ -38,7 +38,7 @@
     <mouse-shortcut keystroke="meta alt button1"/>
   </action>
   <action id="GotoRelated">
-    <keyboard-shortcut first-keystroke="F7"/>
+    <keyboard-shortcut first-keystroke="meta shift alt G"/>
   </action>
   <action id="Refactorings.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="meta shift R"/>
@@ -173,6 +173,7 @@
   </action>
   <action id="VcsShowNextChangeMarker"/>
   <action id="VcsShowPrevChangeMarker"/>
+  <action id="CallHierarchy"/>
 
   <!--  Rider-specific actions-->
 
