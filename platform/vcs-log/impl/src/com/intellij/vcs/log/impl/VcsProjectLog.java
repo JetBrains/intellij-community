@@ -91,7 +91,7 @@ public class VcsProjectLog implements Disposable {
   private void subscribeToMappingsAndEPsChanges() {
     myMessageBus.connect(myListenersDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
     LOG_PROVIDER_EP.getPoint(myProject).addExtensionPointListener(() -> disposeLog(true), false, myListenersDisposable);
-    LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.getPoint(myProject).addExtensionPointListener(() -> disposeLog(true), false, myListenersDisposable);
+    LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.addExtensionPointListener(myProject, () -> disposeLog(true), myListenersDisposable);
   }
 
   @Nullable
