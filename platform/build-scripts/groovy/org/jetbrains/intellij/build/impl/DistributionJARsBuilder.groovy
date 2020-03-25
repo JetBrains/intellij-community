@@ -21,6 +21,9 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
@@ -671,48 +674,13 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-      def pluginXmlFiles = new LinkedHashMap<PluginLayout, String>()
-
-      pluginsToPublish.each { plugin ->
-        def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
-        def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-        if (!new File(pluginXmlPath).exists()) {
-          buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
-        }
-
-        pluginXmlFiles.put(plugin, pluginXmlPath)
-      }
+      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
+      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir, null)
 
       def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
-                                                                         : buildContext.buildNumber
-      if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
-        pluginsToPublish.each { plugin ->
-          def pluginXmlPath = pluginXmlFiles[plugin]
-          def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
-          def patchedPluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
-          pluginXmlFiles.put(plugin, patchedPluginXmlPath)
-
-          ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
-
-          def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-                                                 buildContext.proprietaryBuildTools.artifactsServer != null
-          CompatibleBuildRange compatibleBuildRange =
-            //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-            includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
-            //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
-            buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
-                                               : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
-
-          setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, buildContext.buildNumber, compatibleBuildRange)
-          layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
-        }
-      }
-
-      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
+              : buildContext.buildNumber
       def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
-      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir, null)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
-
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
       def whiteList = new File("$buildContext.paths.communityHome/../build/plugins-autoupload-whitelist.txt").readLines()
         .stream().map { it.trim() }.filter { !it.isEmpty() && !it.startsWith("//") }.collect(Collectors.toSet())
@@ -728,7 +696,11 @@ class DistributionJARsBuilder {
         def destFile = "$targetDirectory/$directory${suffix}.zip"
 
         if (includeInCustomRepository) {
-          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXmlFiles[plugin]))
+          def pluginXmlPath = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule/META-INF/plugin.xml"
+          if (!new File(pluginXmlPath).exists()) {
+            buildContext.messages.error("patched plugin.xml not found for $plugin.mainModule module: $pluginXmlPath")
+          }
+          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXmlPath))
         }
 
         ant.zip(destfile: destFile) {
@@ -801,6 +773,7 @@ class DistributionJARsBuilder {
     addSearchableOptions(layoutBuilder)
     pluginsToInclude.each { plugin ->
       checkOutputOfPluginModules(plugin.mainModule, plugin.getActualModules(enabledPluginModules).values(), plugin.moduleExcludes)
+      patchPluginXml(layoutBuilder, plugin)
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
         File resourceFile = it.first.generateResources(buildContext)
         resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
@@ -815,6 +788,36 @@ class DistributionJARsBuilder {
         buildContext.messages.warning("Scrambling plugin $plugin.directoryName skipped: 'scrambleTool' isn't defined, but plugin defines paths to be scrambled")
       }
     }
+  }
+
+  private void patchPluginXml(LayoutBuilder layoutBuilder, PluginLayout plugin) {
+    def bundled = !pluginsToPublish.contains(plugin)
+    def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
+    def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
+    if (!new File(pluginXmlPath).exists()) {
+      buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
+    }
+
+    def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
+    def patchedPluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
+
+    buildContext.ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
+
+    def productLayout = buildContext.productProperties.productLayout
+    def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+            buildContext.proprietaryBuildTools.artifactsServer != null
+    CompatibleBuildRange compatibleBuildRange = bundled ||
+            //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
+            includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
+                    //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
+                    buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+                            : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+
+    def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
+            : buildContext.buildNumber
+
+    setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, buildContext.buildNumber, compatibleBuildRange)
+    layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
   }
 
   private void processPluginLayout(PluginLayout plugin, LayoutBuilder layoutBuilder, String targetDir,
@@ -847,6 +850,9 @@ class DistributionJARsBuilder {
     def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
+    }
+    if (modulesWithPluginXml.size() == 0) {
+      buildContext.messages.error("No module from '$mainPluginModule' plugin contains plugin.xml")
     }
 
     moduleNames.each {
@@ -1070,9 +1076,6 @@ class DistributionJARsBuilder {
 
   private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber,
                                         CompatibleBuildRange compatibleBuildRange) {
-    buildContext.ant.replaceregexp(file: pluginXmlPath,
-                                   match: "<version>[\\d.]*</version>",
-                                   replace: "<version>${version}</version>")
     def sinceBuild
     def untilBuild
     if (compatibleBuildRange != CompatibleBuildRange.EXACT && buildNumber.matches(/(\d+\.)+\d+/)) {
@@ -1096,25 +1099,38 @@ class DistributionJARsBuilder {
       sinceBuild = buildNumber
       untilBuild = buildNumber
     }
-    buildContext.ant.replaceregexp(file: pluginXmlPath,
-                                   match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
-                                   replace: "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"")
-    buildContext.ant.replaceregexp(file: pluginXmlPath,
-                                   match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
-                                   replace: "<idea-version since-build=\"${sinceBuild}\"")
-    buildContext.ant.replaceregexp(file: pluginXmlPath,
-                                   match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
-                                   replace: "<change-notes>\n<![CDATA[\nPlugin version: ${version}")
     def file = new File(pluginXmlPath)
     def text = file.text
+            .replaceFirst(
+                    "<version>[\\d.]*</version>",
+                    "<version>${version}</version>")
+            .replaceFirst(
+                    "<idea-version\\s+since-build=\"\\d+\\.\\d+\"\\s+until-build=\"\\d+\\.\\d+\"",
+                    "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"")
+            .replaceFirst(
+                    "<idea-version\\s+since-build=\"\\d+\\.\\d+\"",
+                    "<idea-version since-build=\"${sinceBuild}\"")
+            .replaceFirst(
+                    "<change-notes>\\s+<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
+                    "<change-notes>\n<![CDATA[\nPlugin version: ${version}")
+
+    if (text.contains("<product-descriptor ")) {
+      def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
+              ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
+      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersion}00"
+      text = text.replaceFirst(
+              "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
+              "<product-descriptor code=\"\$1\" release-date=\"$releaseDate\" release-version=\"$releaseVersion\"/>")
+    }
+
     def anchor = text.contains("</id>") ? "</id>" : "</name>"
     if (!text.contains("<version>")) {
-      file.text = text.replace(anchor, "${anchor}\n  <version>${version}</version>")
-      text = file.text
+      text = text.replace(anchor, "${anchor}\n  <version>${version}</version>")
     }
     if (!text.contains("<idea-version since-build")) {
-      file.text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>")
+      text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>")
     }
+    file.text = text
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
