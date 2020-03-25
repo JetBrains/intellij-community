@@ -3,12 +3,15 @@ package git4idea.index.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
+import com.intellij.vcs.log.ui.frame.ProgressStripe
+import git4idea.i18n.GitBundle
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
 import java.awt.BorderLayout
@@ -21,6 +24,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   private val project = tracker.project
 
   private val tree: GitStageTree
+  private val progressStripe: ProgressStripe
 
   private val state: GitStageTracker.State
     get() = tracker.state
@@ -38,10 +42,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     toolbar.setTargetComponent(tree)
 
     val scrolledTree = ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP)
+    progressStripe = ProgressStripe(scrolledTree, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     add(toolbar.component, BorderLayout.NORTH)
-    add(scrolledTree, BorderLayout.CENTER)
+    add(progressStripe, BorderLayout.CENTER)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
+    if (tracker.isRefreshInProgress) {
+      tree.setEmptyText(GitBundle.message("stage.loading.status"))
+      progressStripe.startLoadingImmediately()
+    }
     tracker.scheduleUpdateAll()
 
     Disposer.register(disposableParent, this)
@@ -67,6 +76,16 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
   inner class MyGitStageTrackerListener : GitStageTrackerListener {
     override fun update() {
       this@GitStagePanel.update()
+    }
+
+    override fun progressStarted() {
+      tree.setEmptyText(GitBundle.message("stage.loading.status"))
+      progressStripe.startLoading()
+    }
+
+    override fun progressStopped() {
+      progressStripe.stopLoading()
+      tree.setEmptyText("")
     }
   }
 }

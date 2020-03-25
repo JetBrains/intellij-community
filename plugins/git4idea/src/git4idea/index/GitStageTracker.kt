@@ -2,6 +2,8 @@
 package git4idea.index
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -19,13 +21,15 @@ import com.intellij.vcs.log.runInEdt
 import git4idea.GitVcs
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
-import org.jetbrains.annotations.NotNull
 import java.util.*
 import kotlin.collections.HashSet
 
 class GitStageTracker(val project: Project) : Disposable {
   private val eventDispatcher = EventDispatcher.create(GitStageTrackerListener::class.java)
   private val singleTaskController = MySingleTaskController()
+
+  var isRefreshInProgress = false
+    private set
 
   @Volatile
   var state: State = State(emptyMap())
@@ -63,7 +67,7 @@ class GitStageTracker(val project: Project) : Disposable {
     scheduleUpdateRoots(gitRoots())
   }
 
-  private fun scheduleUpdateRoots(roots: List<@NotNull VirtualFile>): Boolean {
+  private fun scheduleUpdateRoots(roots: List<VirtualFile>): Boolean {
     if (roots.isNotEmpty()) {
       singleTaskController.request(Request(roots))
       return true
@@ -121,9 +125,31 @@ class GitStageTracker(val project: Project) : Disposable {
       val newState = State(gitState)
       return previousState?.updatedWith(newState) ?: newState
     }
+
+    override fun createProgressIndicator(): ProgressIndicator = MyProgressIndicator()
+  }
+
+  private inner class MyProgressIndicator : ProgressIndicatorBase() {
+    override fun start() {
+      super.start()
+      runInEdt(this@GitStageTracker) {
+        isRefreshInProgress = true
+        eventDispatcher.multicaster.progressStarted()
+      }
+    }
+
+    override fun stop() {
+      super.stop()
+      runInEdt(this@GitStageTracker) {
+        eventDispatcher.multicaster.progressStopped()
+        isRefreshInProgress = false
+      }
+    }
   }
 }
 
 interface GitStageTrackerListener : EventListener {
   fun update()
+  fun progressStarted() = Unit
+  fun progressStopped() = Unit
 }

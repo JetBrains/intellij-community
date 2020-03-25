@@ -42,7 +42,7 @@ abstract class BaseSingleTaskController<Request, Result>(name: String, resultCon
     }
   }
 
-  protected open fun createProgressIndicator() = EmptyProgressIndicator()
+  protected open fun createProgressIndicator(): ProgressIndicator = EmptyProgressIndicator()
 
   abstract fun process(requests: List<Request>, previousResult: Result?): Result
 }
