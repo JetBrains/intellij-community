@@ -891,19 +891,19 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
         val otherInfo = otherEntry.readOnlyWindowInfo
         if (otherInfo.isVisible && otherInfo.type == info.type && otherInfo.anchor == info.anchor && otherInfo.isSplit == info.isSplit) {
-          val mutableOtherInfo = layout.getInfo(otherEntry.id)!!.copy()
+          val otherLayoutInto = layout.getInfo(otherEntry.id)!!
           // hide and deactivate tool window
-          setHiddenState(mutableOtherInfo, otherEntry)
+          setHiddenState(otherLayoutInto, otherEntry)
 
-          otherEntry.applyWindowInfo(mutableOtherInfo)
-
+          val otherInfoCopy = otherLayoutInto.copy()
+          otherEntry.applyWindowInfo(otherInfoCopy)
           otherEntry.toolWindow.decoratorComponent?.let { decorator ->
-            toolWindowPane!!.removeDecorator(mutableOtherInfo, decorator, false, this)
+            toolWindowPane!!.removeDecorator(otherInfoCopy, decorator, false, this)
           }
 
           // store WindowInfo into the SideStack
           if (isStackEnabled && otherInfo.isDocked && !otherInfo.isAutoHide) {
-            sideStack.push(mutableOtherInfo)
+            sideStack.push(otherInfoCopy)
           }
         }
       }
