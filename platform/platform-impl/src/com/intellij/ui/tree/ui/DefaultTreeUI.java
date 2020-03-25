@@ -26,6 +26,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -250,6 +251,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected void installDefaults() {
     super.installDefaults();
+    if (!is("ide.tree.large.model.allowed")) largeModel = false;
     JTree tree = getTree();
     if (tree != null) {
       LookAndFeel.installBorder(tree, "Tree.border");
@@ -305,6 +307,17 @@ public final class DefaultTreeUI extends BasicTreeUI {
     else {
       super.setRootVisible(newValue);
     }
+  }
+
+  @Override
+  protected void setLargeModel(boolean large) {
+    super.setLargeModel(large && is("ide.tree.large.model.allowed"));
+  }
+
+  @Override
+  protected void setModel(TreeModel model) {
+    if (!is("ide.tree.large.model.allowed")) largeModel = false;
+    super.setModel(model);
   }
 
   @Override
