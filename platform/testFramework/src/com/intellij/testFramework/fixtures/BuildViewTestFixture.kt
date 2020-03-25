@@ -206,7 +206,7 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
     private val semaphore = Semaphore()
     private lateinit var recentBuild: BuildDescriptor
     override fun waitForPendingBuilds() {
-      TestCase.assertTrue(semaphore.waitFor(1000))
+      TestCase.assertTrue(semaphore.waitFor(2000))
       runInEdtAndWait { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
     }
 
