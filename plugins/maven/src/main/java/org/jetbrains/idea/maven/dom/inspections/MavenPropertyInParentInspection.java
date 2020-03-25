@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -15,6 +16,7 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericDomValue;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
@@ -94,7 +96,12 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
 
       if (!unresolvedValue.equals(resolvedValue) && !isEmpty(resolvedValue)) {
         String finalResolvedValue = resolvedValue;
-        fix = new LocalQuickFixBase(MavenDomBundle.message("refactoring.inline.property")) {
+        fix = new LocalQuickFix() {
+          @Override
+          public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+            return MavenDomBundle.message("refactoring.inline.property");
+          }
+
           @Override
           public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             PsiElement psiElement = descriptor.getPsiElement();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,8 @@ import static com.intellij.openapi.util.NlsUI.ListItem;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated using {@link LocalQuickFixBase} is error-prone regarding i18n as
+ * calculated UI-visible string can be stored somewhere and leaked and it will never updated on language change.
  */
 public abstract class LocalQuickFixBase implements LocalQuickFix {
   private final String myName;

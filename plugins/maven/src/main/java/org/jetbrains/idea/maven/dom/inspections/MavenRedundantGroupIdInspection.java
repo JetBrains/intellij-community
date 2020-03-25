@@ -1,14 +1,17 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
@@ -56,7 +59,12 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
           if (groupId.equals(parentGroupId)) {
             XmlTag xmlTag = projectModel.getGroupId().getXmlTag();
 
-            LocalQuickFix fix = new LocalQuickFixBase(MavenDomBundle.message("inspection.redundant.groupId.fix")) {
+            LocalQuickFix fix = new LocalQuickFix() {
+              @Override
+              public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+                return MavenDomBundle.message("inspection.redundant.groupId.fix");
+              }
+
               @Override
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 descriptor.getPsiElement().delete();

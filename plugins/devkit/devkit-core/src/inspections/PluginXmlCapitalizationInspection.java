@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.NlsInfo;
@@ -10,6 +9,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
@@ -219,11 +219,20 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
       return;
     }
 
-    final LocalQuickFix quickFix = new LocalQuickFixBase("Properly capitalize '" + escapedValue + '\'', "Properly capitalize") {
-
+    final LocalQuickFix quickFix = new LocalQuickFix() {
       @Override
       public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
         return property != null ? property : currentFile;
+      }
+
+      @Override
+      public @Nls @NlsUI.ListItem @NotNull String getName() {
+        return "Properly capitalize '" + escapedValue + '\'';
+      }
+
+      @Override
+      public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+        return "Properly capitalize";
       }
 
       @Override

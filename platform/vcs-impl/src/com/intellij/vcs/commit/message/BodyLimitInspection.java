@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ui.CommitMessage;
@@ -68,8 +69,9 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
   }
 
   protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
-    protected WrapLineQuickFix() {
-      super("Wrap line");
+    @Override
+    public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+      return "Wrap line";
     }
 
     @Override
