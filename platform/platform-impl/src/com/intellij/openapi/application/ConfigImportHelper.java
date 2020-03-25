@@ -70,6 +70,9 @@ public final class ConfigImportHelper {
   private static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
+  // constant is used instead of util method to ensure that ConfigImportHelper class is not loaded by StartupUtil
+  public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
+
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(boolean veryFirstStartOnThisComputer, @NotNull Path newConfigDir, @NotNull Logger log) {
@@ -168,13 +171,8 @@ public final class ConfigImportHelper {
     }
   }
 
-  public static boolean needsCustomConfigMigration() {
-    return Files.exists(getCustomConfigMarkerFilePath());
-  }
-
-  @NotNull
-  static Path getCustomConfigMarkerFilePath() {
-    return Paths.get(PathManager.getConfigPath(), "migrate.config");
+  static @NotNull Path getCustomConfigMarkerFilePath() {
+    return PathManager.getConfigDir().resolve(CUSTOM_MARKER_FILE_NAME);
   }
 
   @NotNull
@@ -227,7 +225,7 @@ public final class ConfigImportHelper {
 
   @Nullable
   private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<Path> guessedOldConfigDirs) {
-    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
+    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
 

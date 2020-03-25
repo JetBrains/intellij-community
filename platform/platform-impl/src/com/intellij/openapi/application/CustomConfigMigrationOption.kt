@@ -13,7 +13,6 @@ import java.nio.file.Paths
 private val log = logger<CustomConfigMigrationOption>()
 
 sealed class CustomConfigMigrationOption {
-
   object StartWithCleanConfig : CustomConfigMigrationOption()
 
   class MigrateFromCustomPlace(val location: Path) : CustomConfigMigrationOption()
