@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -379,7 +378,7 @@ public class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadRepositoryPlugins();
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = getCustomRepositoryPlugins();
             try {
               addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
                                          "/sortBy:featured");
@@ -642,7 +641,7 @@ public class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadRepositoryPlugins();
+                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = getCustomRepositoryPlugins();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
@@ -1558,7 +1557,7 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private Map<String, List<IdeaPluginDescriptor>> loadRepositoryPlugins() {
+  private Map<String, List<IdeaPluginDescriptor>> getCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsMap != null) {
         return myCustomRepositoryPluginsMap;
