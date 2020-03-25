@@ -78,6 +78,11 @@ final class ConfigurableWebBrowser extends WebBrowser {
         return AllIcons.Xml.Browsers.Edge;
       }
     }
+    else if (family == BrowserFamily.FIREFOX) {
+      if (checkNameAndPath("dev") || checkNameAndPath("Dev")) {
+        return AllIcons.Xml.Browsers.FirefoxDeveloper;
+      }
+    }
 
     return family.getIcon();
   }

@@ -1129,6 +1129,7 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Edge = load("/xml/browsers/edge.svg");
       /** 16x16 */ public static final @NotNull Icon Explorer = load("/xml/browsers/explorer.svg");
       /** 16x16 */ public static final @NotNull Icon Firefox = load("/xml/browsers/firefox.svg");
+      /** 16x16 */ public static final @NotNull Icon FirefoxDeveloper = load("/xml/browsers/firefoxDeveloper.svg");
       /** 16x16 */ public static final @NotNull Icon Nwjs = load("/xml/browsers/nwjs.svg");
       /** 16x16 */ public static final @NotNull Icon Opera = load("/xml/browsers/opera.svg");
       /** 16x16 */ public static final @NotNull Icon Safari = load("/xml/browsers/safari.svg");
