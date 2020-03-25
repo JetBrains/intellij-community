@@ -118,6 +118,7 @@
       </action>
 
       <action class="org.intellij.images.thumbnail.actions.ShowBorderAction" id="Images.ShowBorder"/>
+      <action class="org.intellij.images.editor.actions.ChangeBackgroundAction" id="Images.ChangeBackground"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
@@ -130,6 +131,7 @@
       <reference id="Images.Editor.ActualSize"/>
       <reference id="Images.Editor.FitZoomToWindow"/>
       <reference id="ShowColorPicker"/>
+      <reference id="Images.ChangeBackground"/>
     </group>
     <group id="Images.EditorPopupMenu">
       <reference id="CutCopyPasteGroup"/>
