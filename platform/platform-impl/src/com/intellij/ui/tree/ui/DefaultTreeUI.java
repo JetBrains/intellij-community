@@ -321,6 +321,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   @Override
+  protected void updateSize() {
+    if (getTree() != null) super.updateSize();
+  }
+
+  @Override
   protected AbstractLayoutCache.NodeDimensions createNodeDimensions() {
     return new AbstractLayoutCache.NodeDimensions() {
       @Override
