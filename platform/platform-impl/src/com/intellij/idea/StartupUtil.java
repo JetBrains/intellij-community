@@ -7,7 +7,10 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.*;
+import com.intellij.ide.AssertiveRepaintManager;
+import com.intellij.ide.CliResult;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -188,7 +191,7 @@ public final class StartupUtil {
     // this check must be performed before system directories are locked
     boolean configImportNeeded = !Main.isHeadless() &&
                                  (!Files.exists(configPath) ||
-                                  ConfigImportHelper.needsCustomConfigMigration());
+                                  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)));
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
