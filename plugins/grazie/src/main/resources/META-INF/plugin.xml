@@ -8,7 +8,7 @@
 
     <ul>
         <li>Supports over 15 languages, including English, German, Russian, Chinese, and others.</li>
-        <li>Recognizes natural language constructs in programming languages (Kotlin, Python, Java and others),
+        <li>Recognizes natural language constructs in programming languages (Python, Java and others),
             markup languages (Latex, Markdown, XML, HTML), comments, commits messages, and more.</li>
         <li>Uses LanguageTool as its proofreading engine.</li>
     </ul>
