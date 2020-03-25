@@ -106,9 +106,15 @@ class DocRenderer implements EditorCustomElementRenderer {
     if (filledHeight <= 0) return;
     int filledStartY = targetRegion.y + topMargin;
 
-    g.setColor(((EditorEx)inlay.getEditor()).getBackgroundColor());
+    EditorEx editor = (EditorEx)inlay.getEditor();
+    Color defaultBgColor = editor.getBackgroundColor();
+    Color currentBgColor = textAttributes.getBackgroundColor();
+    Color bgColor = currentBgColor == null ? defaultBgColor
+                                           : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(),
+                                                           Registry.doubleValue("editor.render.doc.comments.bg.transparency"));
+    g.setColor(bgColor);
     g.fillRect(startX, filledStartY, endX - startX, filledHeight);
-    g.setColor(inlay.getEditor().getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
+    g.setColor(editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
     g.fillRect(startX, filledStartY, scale(LINE_WIDTH), filledHeight);
 
     int topBottomInset = scale(TOP_BOTTOM_INSETS);
@@ -116,6 +122,7 @@ class DocRenderer implements EditorCustomElementRenderer {
     int componentHeight = filledHeight - topBottomInset * 2;
     if (componentWidth > 0 && componentHeight > 0) {
       JComponent component = getRendererComponent(inlay, componentWidth, componentHeight);
+      component.setBackground(bgColor);
       Graphics dg = g.create(startX + scale(LEFT_INSET), filledStartY + topBottomInset, componentWidth, componentHeight);
       GraphicsUtil.setupAntialiasing(dg);
       component.paint(dg);
@@ -191,7 +198,6 @@ class DocRenderer implements EditorCustomElementRenderer {
       fontAttributes.put(TextAttribute.KERNING, 0);
       myPane.setFont(myPane.getFont().deriveFont(fontAttributes));
       myPane.setForeground(getTextColor(editor.getColorsScheme()));
-      myPane.setBackground(editor.getBackgroundColor());
       String textToRender = myItem.textToRender;
       if (textToRender == null) {
         textToRender = CodeInsightBundle.message("doc.render.loading.text");
