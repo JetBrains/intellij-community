@@ -1,53 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.api
+package com.intellij.workspace.api.pstorage
 
-import gnu.trove.TIntHashSet
-import kotlin.properties.ReadOnlyProperty
-import kotlin.properties.ReadWriteProperty
+import com.intellij.workspace.api.*
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaField
 
-open class EntitiesStore private constructor(
-  entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
-) : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
-
-  constructor() : this(emptyMap())
-
-  protected open val entitiesByType: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>> = HashMap(entities)
-
-  @Suppress("UNCHECKED_CAST")
-  open operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entitiesByType[clazz] as EntityFamily<T>?
-
-  fun all() = entitiesByType
-
-  override fun iterator(): Iterator<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
-    return entitiesByType.iterator()
-  }
-
-  fun copy(): EntitiesStore = EntitiesStore(this.entitiesByType)
-  fun join(other: EntitiesStore): EntitiesStore = EntitiesStore(entitiesByType + other.entitiesByType)
-}
-
-class MutableEntitiesStore() : EntitiesStore() {
-  override val entitiesByType: MutableMap<Class<out TypedEntity>, MutableEntityFamily<out TypedEntity>> = mutableMapOf()
-
-  @Suppress("UNCHECKED_CAST")
-  override operator fun <T : TypedEntity> get(clazz: Class<T>): MutableEntityFamily<T>? = entitiesByType[clazz] as MutableEntityFamily<T>?
-
-  fun clear() = entitiesByType.clear()
-
-  fun isEmpty() = entitiesByType.isEmpty()
-
-  operator fun <T : TypedEntity> set(clazz: Class<T>, newFamily: MutableEntityFamily<T>) {
-    entitiesByType[clazz] = newFamily
-  }
-}
-
 open class PEntityStorage constructor(
-  open val entitiesByType: EntitiesStore,
+  open val entitiesByType: EntitiesBarrel,
   val refs: RefsTable
 ) : TypedEntityStorage {
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
@@ -126,9 +87,9 @@ class PEntityStorageBuilder(
   private val origStorage: PEntityStorage
 ) : TypedEntityStorageBuilder, PEntityStorage(origStorage.entitiesByType, origStorage.refs) {
 
-  constructor() : this(PEntityStorage(EntitiesStore(), RefsTable()))
+  constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()))
 
-  private val modified: MutableEntitiesStore = MutableEntitiesStore()
+  private val modified: MutableEntitiesBarrel = MutableEntitiesBarrel()
   private val clonedRefs: MutableRefsTable = MutableRefsTable()
 
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
@@ -373,264 +334,6 @@ class PEntityStorageBuilder(
   }
 }
 
-open class EntityFamily<E : TypedEntity> protected constructor(
-  protected open val entities: List<PEntityData<E>?>,
-  protected val emptySlots: TIntHashSet
-) {
-
-  operator fun get(idx: Int) = entities[idx]
-
-  fun copyToMutable() = MutableEntityFamily(entities.toMutableList())
-
-  fun all() = entities.asSequence().filterNotNull()
-
-  fun exists(id: Int) = entities[id] != null
-
-  val size: Int
-    get() = entities.size - emptySlots.size()
-
-  companion object {
-    fun <E : TypedEntity> empty(): EntityFamily<E> = Empty as EntityFamily<E>
-
-    private object Empty : EntityFamily<PTypedEntity<*>>(emptyList(), TIntHashSet())
-  }
-}
-
-class MutableEntityFamily<E : TypedEntity>(
-  override val entities: MutableList<PEntityData<E>?>
-) : EntityFamily<E>(
-  entities,
-  TIntHashSet().also { entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) } }
-) {
-
-  private val copiedToModify: TIntHashSet = TIntHashSet()
-
-  fun remove(id: Int) {
-    if (id in emptySlots) return
-
-    emptySlots.add(id)
-    copiedToModify.remove(id)
-    entities[id] = null
-  }
-
-  fun add(other: PEntityData<E>) {
-    if (emptySlots.isEmpty) {
-      other.id = entities.size
-      entities += other
-    }
-    else {
-      val emptySlot = emptySlots.pop()
-      other.id = emptySlot
-      entities[emptySlot] = other
-    }
-    copiedToModify.add(other.id)
-  }
-
-  fun replaceById(entity: PEntityData<E>) {
-    val id = entity.id
-    emptySlots.remove(id)
-    entities[id] = entity
-    copiedToModify.add(id)
-  }
-
-  fun getEntityDataForModification(id: PId<E>): PEntityData<E> {
-    val entity = entities[id.arrayId] ?: error("Nothing to modify")
-    if (id.arrayId in copiedToModify) return entity
-
-    val clonedEntity = entity.clone()
-    entities[id.arrayId] = clonedEntity
-    copiedToModify.add(id.arrayId)
-    return clonedEntity
-  }
-
-  private fun TIntHashSet.pop(): Int {
-    val iterator = this.iterator()
-    if (!iterator.hasNext()) error("Set is empty")
-    val res = iterator.next()
-    iterator.remove()
-    return res
-  }
-
-  companion object {
-    fun <E : TypedEntity> createEmpty() = MutableEntityFamily<E>(mutableListOf())
-  }
-}
-
-interface PTypedEntity<E : TypedEntity> : TypedEntity {
-  val id: PId<E>
-
-  fun asStr(): String = "${javaClass.simpleName}@$id"
-}
-
-interface PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEntity<T>, ModifiableTypedEntity<T>
-
-data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
-  init {
-    if (arrayId < 0) error("")
-  }
-}
-
-interface PEntityData<E : TypedEntity> {
-  var entitySource: EntitySource
-  var id: Int
-  fun createEntity(snapshot: PEntityStorage): E
-  fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E>
-  fun clone(): PEntityData<E>
-}
-
-class PFolderEntityData : PEntityData<PFolderEntity> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
-  lateinit var data: String
-
-  override fun createEntity(snapshot: PEntityStorage) = PFolderEntity(entitySource, PId(id, PFolderEntity::class), data,
-                                                                      snapshot)
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PFolderModifiableEntity(this, diff)
-
-  override fun clone() = PFolderEntityData().also {
-    it.id = this.id
-    it.entitySource = this.entitySource
-    it.data = this.data
-  }
-}
-
-class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
-  lateinit var data: String
-
-  override fun createEntity(snapshot: PEntityStorage): PSubFolderEntity {
-    return PSubFolderEntity(entitySource, PId(id, PSubFolderEntity::class), data, snapshot)
-  }
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder): PSubFolderModifiableEntity {
-    return PSubFolderModifiableEntity(this, diff)
-  }
-
-  override fun clone() = PSubFolderEntityData().also {
-    it.id = id
-    it.entitySource = entitySource
-    it.data = data
-  }
-}
-
-class PFolderEntity(
-  override val entitySource: EntitySource,
-  override val id: PId<PFolderEntity>,
-  val data: String,
-  val snapshot: PEntityStorage
-) : PTypedEntity<PFolderEntity> {
-
-  val children: Sequence<PSubFolderEntity> by Refs(snapshot, PSubFolderEntity::parent)
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
-
-  override fun toString(): String = asStr()
-}
-
-class Refs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-  private val snapshot: PEntityStorage,
-  private val remote: KProperty1<SUBT, T?>
-) : ReadOnlyProperty<T, Sequence<SUBT>> {
-  override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
-    return snapshot.extractRefs(property as KProperty1<T, Sequence<SUBT>>, remote, thisRef.id)
-  }
-}
-
-class PSubFolderEntity(
-  override val entitySource: EntitySource,
-  override val id: PId<PSubFolderEntity>,
-  val data: String,
-  val snapshot: PEntityStorage
-) : PTypedEntity<PSubFolderEntity> {
-
-  val parent: PFolderEntity? by BackRefs(snapshot, PFolderEntity::children)
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  override fun toString(): String = asStr()
-}
-
-class BackRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
-  private val snapshot: PEntityStorage,
-  private val remote: KProperty1<T, Sequence<SUBT>>
-) : ReadOnlyProperty<SUBT, T?> {
-  override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
-    return snapshot.extractBackRef(property as KProperty1<SUBT, T?>, remote, thisRef.id)
-  }
-}
-
-@PEntityDataClass(PFolderEntityData::class)
-class PFolderModifiableEntity(val original: PFolderEntityData,
-                              val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity> {
-  override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
-
-  override var entitySource: EntitySource = original.entitySource
-
-  var data: String
-    get() = original.data
-    set(value) {
-      original.data = value
-    }
-
-  var children: Sequence<PSubFolderEntity> by RwRefs(diff, PFolderEntity::children, PSubFolderEntity::parent)
-
-  override val id: PId<PFolderEntity> = PId(original.id, PFolderEntity::class)
-}
-
-class RwRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
-  private val snapshot: PEntityStorageBuilder,
-  private val local: KProperty1<T, Sequence<SUBT>>,
-  private val remote: KProperty1<SUBT, T?>
-) : ReadWriteProperty<MODT, Sequence<SUBT>> {
-  override fun getValue(thisRef: MODT, property: KProperty<*>): Sequence<SUBT> {
-    return snapshot.extractRefs(local, remote, thisRef.id)
-  }
-
-  override fun setValue(thisRef: MODT, property: KProperty<*>, value: Sequence<SUBT>) {
-    snapshot.updateRef(local, remote, thisRef.id, value)
-  }
-}
-
-@PEntityDataClass(PSubFolderEntityData::class)
-class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
-                                 val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity> {
-  override val id: PId<PSubFolderEntity> = PId(original.id, PSubFolderEntity::class)
-
-  var data: String
-    get() = original.data
-    set(value) {
-      original.data = value
-    }
-
-  var parent: PFolderEntity? by RwBackRefs(diff, PSubFolderEntity::parent, PFolderEntity::children)
-
-  override val entitySource: EntitySource = original.entitySource
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
-}
-
-class RwBackRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
-  private val snapshot: PEntityStorageBuilder,
-  private val local: KProperty1<SUBT, T?>,
-  private val remote: KProperty1<T, Sequence<SUBT>>
-) : ReadWriteProperty<MODSUBT, T?> {
-  override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
-    return snapshot.extractBackRef(local, remote, thisRef.id)
-  }
-
-  override fun setValue(thisRef: MODSUBT, property: KProperty<*>, value: T?) {
-    return snapshot.updateBackRef(local, remote, thisRef.id, value)
-  }
-}
-
-object MySource : EntitySource
-
 fun main() {
   val pStoreBuilder = PEntityStorage.create()
   val createdEntity = pStoreBuilder.addEntity(PFolderModifiableEntity::class.java, MySource) {
@@ -650,4 +353,3 @@ fun main() {
   println(pStoreBuilder.entities(PFolderEntity::class.java).first().children.toList())
 }
 
-annotation class PEntityDataClass(val clazz: KClass<out PEntityData<*>>)

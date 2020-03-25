@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.api
+package com.intellij.workspace.api.pstorage
 
 import kotlin.reflect.KProperty1
 
@@ -43,9 +43,9 @@ class MutableRefsTable : RefsTable() {
   }
 
   fun <E : PTypedEntity<E>> updateRef(left: KProperty1<*, *>,
-                                   right: KProperty1<*, *>,
-                                   id: Int,
-                                   updateTo: Sequence<E>) {
+                                                                                             right: KProperty1<*, *>,
+                                                                                             id: Int,
+                                                                                             updateTo: Sequence<E>) {
     when {
       left to right in container -> {
         val table = container[left to right]!!
