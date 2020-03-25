@@ -6,7 +6,7 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
-class Refs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   private val snapshot: PEntityStorage,
   private val remote: KProperty1<SUBT, T?>
 ) : ReadOnlyProperty<T, Sequence<SUBT>> {
@@ -15,7 +15,7 @@ class Refs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   }
 }
 
-class BackRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+class HardBackRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   private val snapshot: PEntityStorage,
   private val remote: KProperty1<T, Sequence<SUBT>>
 ) : ReadOnlyProperty<SUBT, T?> {
@@ -24,7 +24,7 @@ class BackRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   }
 }
 
-class RwRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
+class MutableHardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
   private val snapshot: PEntityStorageBuilder,
   private val local: KProperty1<T, Sequence<SUBT>>,
   private val remote: KProperty1<SUBT, T?>
@@ -38,7 +38,7 @@ class RwRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableT
   }
 }
 
-class RwBackRefs<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
+class MutableHardBackRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
   private val snapshot: PEntityStorageBuilder,
   private val local: KProperty1<SUBT, T?>,
   private val remote: KProperty1<T, Sequence<SUBT>>
