@@ -100,7 +100,9 @@ class LegacyBridgeRootsWatcher(
       private fun updateRoots(map: MutableMap<VirtualFileUrl, Disposable>, oldUrl: String, newUrl: String) {
         map.filter { it.key.url == oldUrl }.forEach { (url, disposable) ->
           map.remove(url)
-          map[VirtualFileUrlManager.fromUrl(newUrl)] = disposable
+          val newVirtualFileUrl = VirtualFileUrlManager.fromUrl(newUrl)
+          map[newVirtualFileUrl]?.let { Disposer.dispose(it) }
+          map[newVirtualFileUrl] = disposable
         }
       }
 
@@ -194,7 +196,7 @@ class LegacyBridgeRootsWatcher(
     }
   }
 
-  fun clear() {
+  private fun clear() {
     currentRoots.values.forEach { Disposer.dispose(it) }
     currentJarDirectories.values.forEach { Disposer.dispose(it) }
     currentRecursiveJarDirectories.values.forEach { Disposer.dispose(it) }
