@@ -42,7 +42,7 @@ class MutableRefsTable : RefsTable() {
     }
   }
 
-  fun <E : PTypedEntity> updateRef(left: KProperty1<*, *>,
+  fun <E : PTypedEntity<E>> updateRef(left: KProperty1<*, *>,
                                    right: KProperty1<*, *>,
                                    id: Int,
                                    updateTo: Sequence<E>) {

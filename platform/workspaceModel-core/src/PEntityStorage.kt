@@ -55,7 +55,7 @@ open class PEntityStorage constructor(
   }
 
   protected fun <E : TypedEntity> getEntities(listToSearch: EntityFamily<E>?) =
-    listToSearch?.all()?.filterNotNull()?.map { it.createEntity(this) } ?: emptySequence()
+    listToSearch?.all()?.map { it.createEntity(this) } ?: emptySequence()
 
   override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
                                                             entityClass: KClass<R>,
@@ -107,7 +107,7 @@ open class PEntityStorage constructor(
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
     val res = mutableMapOf<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
     entitiesByType.all().forEach { (type, entities) ->
-      entities.all().filterNotNull().forEach {
+      entities.all().forEach {
         if (sourceFilter(it.entitySource)) {
           val mutableMapRes = res.getOrPut(it.entitySource, { mutableMapOf() })
           mutableMapRes.getOrPut(type, { mutableListOf() }).add(it.createEntity(this))
@@ -279,7 +279,7 @@ class PEntityStorageBuilder(
     for ((key, entitiesList) in modified) {
       val originalEntitiesList = entitiesByType[key]
       if (originalEntitiesList == null) {
-        res += key to entitiesList.all().filterNotNull().map { EntityDataChange.Added(it) }.toList()
+        res += key to entitiesList.all().map { EntityDataChange.Added(it) }.toList()
       }
       else {
         val localChanges = mutableListOf<EntityDataChange<*>>()
@@ -377,7 +377,6 @@ open class EntityFamily<E : TypedEntity> protected constructor(
   protected open val entities: List<PEntityData<E>?>,
   protected val emptySlots: TIntHashSet
 ) {
-
 
   operator fun get(idx: Int) = entities[idx]
 
