@@ -44,6 +44,14 @@ object MarketplaceRequests {
     return marketplaceSearchPluginData.map { it.toPluginNode() }
   }
 
+  //TODO: send request to MarketPlace
+  @JvmStatic
+  fun getAllPluginsVendors() = listOf("JetBrains", "Prendota", "Chirkov")
+
+  //TODO: send request to MarketPlace
+  @JvmStatic
+  fun getAllPluginsTags() = listOf("Tools integration", "Languages", "Theme", "Paid")
+
   private fun createSearchUrl(query: String, count: Int): Url {
     val repoUrl = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl
     return newFromEncoded(
