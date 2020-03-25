@@ -115,7 +115,7 @@ public class ShelvedChangesViewManager implements Disposable {
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
 
   public static ShelvedChangesViewManager getInstance(Project project) {
-    return project.getComponent(ShelvedChangesViewManager.class);
+    return project.getService(ShelvedChangesViewManager.class);
   }
 
   public ShelvedChangesViewManager(Project project) {

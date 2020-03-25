@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -79,8 +80,11 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getT
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Objects.requireNonNull;
 
-@State(name = "ShelveChangesManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public final class ShelveChangesManager implements PersistentStateComponent<Element>, ProjectComponent {
+@State(
+  name = "ShelveChangesManager",
+  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
+)
+public final class ShelveChangesManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ShelveChangesManager.class);
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
@@ -101,7 +105,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   @Nullable private Set<VirtualFile> myShelvingFiles;
 
   public static ShelveChangesManager getInstance(@NotNull Project project) {
-    return project.getComponent(ShelveChangesManager.class);
+    return project.getService(ShelveChangesManager.class);
   }
 
   public static final class State {
@@ -210,7 +214,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
               }, null, customPath != null ? Paths.get(customPath) : null);
   }
 
-  @Override
   public void projectOpened() {
     try {
       mySchemeManager.loadSchemes();
@@ -1379,5 +1382,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   public void setGrouping(@NotNull Set<String> grouping) {
     myState.groupingKeys = grouping;
+  }
+
+  public static class PostStartupActivity implements StartupActivity.DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      getInstance(project).projectOpened();
+    }
   }
 }
