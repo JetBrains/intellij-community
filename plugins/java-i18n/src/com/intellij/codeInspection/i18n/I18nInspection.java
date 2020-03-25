@@ -682,7 +682,12 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     for (UExpression usage : usages) {
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
-        case YES: return info;
+        case YES: {
+          if (isSuppressedByComment(project, expression)) {
+            return NlsInfo.nonLocalized();
+          }
+          return info;
+        }
         case UNSURE: {
           if (ignoreForAllButNls) {
             break;
