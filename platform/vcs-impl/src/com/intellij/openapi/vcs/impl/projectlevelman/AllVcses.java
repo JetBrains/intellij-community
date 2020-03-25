@@ -144,7 +144,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   @Nullable
   @Override
   public VcsDescriptor getDescriptor(String name) {
-    synchronized (myExtensions) {
+    synchronized (myLock) {
       final VcsEP ep = myExtensions.get(name);
       return ep == null ? null : ep.createDescriptor();
     }
