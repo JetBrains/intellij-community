@@ -5,7 +5,7 @@ import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.ProjectTopHitCache;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.ArrayUtil;
@@ -18,9 +18,9 @@ public abstract class VcsOptionsTopHitProviderBase implements OptionsSearchTopHi
     return vcs != null && ArrayUtil.contains(vcs, ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
   }
 
-  public static class InitMappingsListenerActivity implements StartupActivity {
+  public static class InitMappingsListenerActivity implements ProjectManagerListener {
     @Override
-    public void runActivity(@NotNull Project project) {
+    public void projectOpened(@NotNull Project project) {
       project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> invalidateTopHitCaches(project));
     }
 
