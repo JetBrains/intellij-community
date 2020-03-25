@@ -527,7 +527,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       if (writableStatus.hasReadonlyFiles()) {
         return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
       }
-      assert file.isWritable();
+      assert file.isWritable() : file;
     }
     if (document.isWritable()) {
       return WriteAccessStatus.WRITABLE;
