@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogFilterCollection.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
@@ -44,6 +45,8 @@ import com.intellij.vcs.log.util.VcsLogUiUtil.isDiffPreviewInEditor
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.with
+import com.intellij.vcs.log.visible.filters.without
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
@@ -79,7 +82,13 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
     val ui = logUi
     val branchNames = tree.getSelectedBranchNames()
-    ui.filterUi.setFilter(if (branchNames.isNotEmpty()) VcsLogFilterObject.fromBranches(branchNames) else null)
+    val oldFilters = ui.filterUi.filters
+    val newFilters = if (branchNames.isNotEmpty()) {
+      oldFilters.with(VcsLogFilterObject.fromBranches(branchNames)).without(RANGE_FILTER).without(REVISION_FILTER)
+    } else {
+      oldFilters.without(BRANCH_FILTER).without(RANGE_FILTER).without(REVISION_FILTER)
+    }
+    ui.filterUi.filters = newFilters
   }
 
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
