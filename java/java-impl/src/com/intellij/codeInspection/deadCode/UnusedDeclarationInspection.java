@@ -201,7 +201,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       add(myServletToEntries, gc);
       gc.gridy++;
 
-      for (final EntryPoint extension : myExtensions) {
+      for (final EntryPoint extension : getExtensions()) {
         if (extension.showUI()) {
           final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
           extCheckbox.setSelected(extension.isSelected());

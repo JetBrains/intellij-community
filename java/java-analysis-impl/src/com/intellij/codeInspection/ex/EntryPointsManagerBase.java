@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -80,18 +79,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       if (ADDITIONAL_ANNOS != null) {
         ADDITIONAL_ANNOS = null;
       }
-
-      updateLoadedProfiles(InspectionProfileManager.getInstance());
-      updateLoadedProfiles(InspectionProfileManager.getInstance(project));
-
     }, this);
-  }
-
-  //need to create unused declaration from scratch as entry points are cached there
-  private static void updateLoadedProfiles(InspectionProfileManager instance) {
-    for (InspectionProfileImpl profile : instance.getProfiles()) {
-      profile.modifyProfile(m -> {});
-    }
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {
