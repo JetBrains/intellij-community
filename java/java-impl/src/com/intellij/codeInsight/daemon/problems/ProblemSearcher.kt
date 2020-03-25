@@ -74,6 +74,8 @@ internal class ProblemSearcher(private val file: PsiFile): JavaElementVisitor() 
     override fun visitClass(psiClass: PsiClass) {
       val modifiers = psiClass.modifierList
       if (modifiers != null) findProblem(modifiers)
+      val nameIdentifier = psiClass.nameIdentifier
+      if (nameIdentifier != null) findProblem(nameIdentifier)
       findProblem(psiClass)
     }
 
