@@ -127,6 +127,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
 
     @Override
     public FileStatus getFileStatus() {
+      if (myMethodPointer.getProject().isDisposed()) return null;
       PsiFile file = myMethodPointer.getContainingFile();
       return file == null ? null : NavigationItemFileStatus.get(file);
     }
