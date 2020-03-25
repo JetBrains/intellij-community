@@ -483,7 +483,10 @@ public class PluginManagerConfigurable
                 return Arrays.asList("downloads", "name", "rating", "updated");
               case "/vendor:":
                 if (ContainerUtil.isEmpty(myVendorsSorted)) {
-                  myVendorsSorted = MyPluginModel.getVendors(getRepositoryPlugins());
+                  List<String> customRepositoriesVendors = MyPluginModel.getVendors(myCustomRepositoryPluginsList);
+                  LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
+                  vendors.addAll(MarketplaceRequests.getAllPluginsVendors());
+                  myVendorsSorted = new ArrayList<>(vendors);
                 }
                 return myVendorsSorted;
               case "/repository:":
@@ -644,18 +647,6 @@ public class PluginManagerConfigurable
                 Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = getCustomRepositoryPlugins();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
-
-                // TODO: parser.vendors on server
-                if (!parser.vendors.isEmpty()) {
-                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
-                    if (MyPluginModel.isVendor(descriptor, parser.vendors)) {
-                      result.descriptors.add(descriptor);
-                    }
-                  }
-                  ContainerUtil.removeDuplicates(result.descriptors);
-                  result.sortByName();
-                  return;
-                }
 
                 if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
@@ -1382,6 +1373,7 @@ public class PluginManagerConfigurable
     public void setState(@NotNull SearchQueryParser.Marketplace parser) {
       if (myOption == SortBySearchOption.Relevance) {
         myState = parser.sortBy == null;
+        //TODO: should we check `vendors` here?
         getTemplatePresentation().setVisible(parser.sortBy == null || !parser.tags.isEmpty() || parser.searchQuery != null);
       }
       else {
