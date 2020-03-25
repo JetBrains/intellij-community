@@ -42,7 +42,7 @@
     <mouse-shortcut keystroke="ctrl alt button1"/>
   </action>
   <action id="GotoRelated">
-    <keyboard-shortcut first-keystroke="F7"/>
+    <keyboard-shortcut first-keystroke="ctrl shift alt G"/>
   </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="ctrl shift T"/>
@@ -186,6 +186,11 @@
   <action id="VcsShowNextChangeMarker"/>
   <action id="VcsShowPrevChangeMarker"/>
   <action id="Print"/>
+  <action id="CallHierarchy"/>
+  <action id="ImplementMethods">
+    <keyboard-shortcut first-keystroke="control I"/>
+  </action>
+  <action id="IncrementalSearch"/>
 
   <!--  Rider-specific actions-->
 

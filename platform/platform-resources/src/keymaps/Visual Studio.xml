@@ -41,7 +41,6 @@
   </action>
   <action id="ShowExecutionPoint">
     <keyboard-shortcut first-keystroke="alt MULTIPLY"/>
-    <keyboard-shortcut first-keystroke="control L"/>
   </action>
   <action id="$Paste">
     <keyboard-shortcut first-keystroke="control V"/>
@@ -223,7 +222,7 @@
     <mouse-shortcut keystroke="ctrl alt button1"/>
   </action>
   <action id="GotoRelated">
-    <keyboard-shortcut first-keystroke="F7"/>
+    <keyboard-shortcut first-keystroke="ctrl alt F7"/>
   </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="ctrl shift F11"/>
@@ -430,9 +429,8 @@
   </action>
   <action id="SurroundWith"/>
   <action id="MethodHierarchy"/>
-  <action id="NextEditorTab">
-    <keyboard-shortcut first-keystroke="F7"/>
-  </action>
+  <action id="NextEditorTab"/>
+  <action id="PreviousEditorTab"/>
   <action id="QuickImplementations">
     <keyboard-shortcut first-keystroke="alt F12"/>
   </action>
@@ -488,6 +486,11 @@
   </action>
   <action id="ShelvedChanges.Rename">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  </action>
+  <action id="ToggleRenderedDocPresentation"/>
+  <action id="ForceRefresh"/>
+  <action id="IncrementalSearch">
+    <keyboard-shortcut first-keystroke="control I"/>
   </action>
 
   <!--  Rider-specific actions-->
