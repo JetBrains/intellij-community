@@ -35,6 +35,7 @@ import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +178,8 @@ public class VcsLogUiUtil {
   }
 
   public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @Nls @NotNull StatusText emptyText) {
-    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"), () -> filterUi.setFilter(null));
+    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"),
+                            () -> filterUi.setFilters(VcsLogFilterObject.EMPTY_COLLECTION));
   }
 
   public static boolean isDiffPreviewInEditor() {
