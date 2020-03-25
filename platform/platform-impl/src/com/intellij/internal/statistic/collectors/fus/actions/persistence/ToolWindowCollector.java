@@ -27,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.ACTIVATED;
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.CLICKED;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowEventType.*;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 import static com.intellij.openapi.wm.ToolWindowId.*;
@@ -98,8 +97,16 @@ public final class ToolWindowCollector {
     }
   }
 
-  public static void recordActivation(String toolWindowId, @Nullable WindowInfoImpl info) {
+  public static void recordActivation(@Nullable String toolWindowId, @Nullable WindowInfoImpl info) {
     record(toolWindowId, ACTIVATED, info);
+  }
+
+  public static void recordHidden(@NotNull WindowInfoImpl info) {
+    record(info.getId(), HIDDEN, info);
+  }
+
+  public static void recordShown(@NotNull WindowInfoImpl info) {
+    record(info.getId(), SHOWN, info);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
@@ -107,7 +114,7 @@ public final class ToolWindowCollector {
     record(toolWindowId, CLICKED, info);
   }
 
-  private static void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source, @Nullable WindowInfoImpl windowInfo) {
+  private static void record(@Nullable String toolWindowId, @NotNull ToolWindowEventType eventType, @Nullable WindowInfoImpl windowInfo) {
     if (StringUtil.isEmpty(toolWindowId)) {
       return;
     }
@@ -120,7 +127,7 @@ public final class ToolWindowCollector {
       data.addData("ViewMode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
       data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
     }
-    FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
+    FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(eventType.name()), data);
   }
 
   @NotNull
@@ -150,8 +157,8 @@ public final class ToolWindowCollector {
     return null;
   }
 
-  enum ToolWindowActivationSource {
-    ACTIVATED, CLICKED
+  enum ToolWindowEventType {
+    ACTIVATED, CLICKED, SHOWN, HIDDEN
   }
 
   public static class ToolWindowUtilValidator extends CustomWhiteListRule {
