@@ -73,7 +73,6 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
   @NotNull
   private JBList<T> createTemplatesList(@NotNull ListModel<T> model, ListCellRenderer<T> renderer) {
     JBList<T> list = new JBList<>(model);
-    list.putClientProperty("visibleRowCountIsMax", true);
     MouseAdapter mouseListener = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
