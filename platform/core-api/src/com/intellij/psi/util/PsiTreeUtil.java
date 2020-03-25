@@ -756,6 +756,12 @@ public class PsiTreeUtil {
     return null;
   }
 
+  /**
+   * Finds the closest next sibling, skipping elements of supplied types.
+   * @param element element to start search from
+   * @param elementClasses element types to skip 
+   * @return found next sibling; null if not found.
+   */
   @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
@@ -769,18 +775,34 @@ public class PsiTreeUtil {
     return null;
   }
 
+  /**
+   * Finds the closest next sibling, ignoring {@linkplain PsiWhiteSpace white spaces}.
+   * @param element element to start search from
+   * @return found next sibling; null if not found.
+   */
   @Nullable
   @Contract("null -> null")
   public static PsiElement skipWhitespacesForward(@Nullable PsiElement element) {
     return skipSiblingsForward(element, WS);
   }
 
+  /**
+   * Finds the closest next sibling, ignoring {@linkplain PsiWhiteSpace white spaces} and {@linkplain PsiComment comments}.
+   * @param element element to start search from
+   * @return found next sibling; null if not found.
+   */
   @Nullable
   @Contract("null -> null")
   public static PsiElement skipWhitespacesAndCommentsForward(@Nullable PsiElement element) {
     return skipSiblingsForward(element, WS_COMMENTS);
   }
 
+  /**
+   * Finds the closest previous sibling, skipping elements of supplied types.
+   * @param element element to start search from
+   * @param elementClasses element types to skip 
+   * @return found previous sibling; null if not found.
+   */
   @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
@@ -794,18 +816,35 @@ public class PsiTreeUtil {
     return null;
   }
 
+  /**
+   * Finds the closest previous sibling, ignoring {@linkplain PsiWhiteSpace white spaces}.
+   * @param element element to start search from
+   * @return found previous sibling; null if not found.
+   */
   @Nullable
   @Contract("null -> null")
   public static PsiElement skipWhitespacesBackward(@Nullable PsiElement element) {
     return skipSiblingsBackward(element, WS);
   }
 
+  /**
+   * Finds the closest previous sibling, ignoring {@linkplain PsiWhiteSpace white spaces} and {@linkplain PsiComment comments}.
+   * @param element element to start search from
+   * @return found previous sibling; null if not found.
+   */
   @Nullable
   @Contract("null -> null")
   public static PsiElement skipWhitespacesAndCommentsBackward(@Nullable PsiElement element) {
     return skipSiblingsBackward(element, WS_COMMENTS);
   }
 
+  /**
+   * Finds the closest parent that is not an instance of one of supplied classes.
+   *
+   * @param element element to start traversal from
+   * @param parentClasses element types to skip 
+   * @return the found parent; null if not found.
+   */
   @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
@@ -819,6 +858,14 @@ public class PsiTreeUtil {
     return null;
   }
 
+  /**
+   * Finds the closest parent that is an instance of one of supplied classes. Traversal stops at {@link PsiFile} level.
+   * 
+   * @param element element to start traversal from
+   * @param classes wanted element types 
+   * @param <T> common supertype for all wanted types
+   * @return the found parent; null if not found.
+   */
   @SafeVarargs
   @Nullable
   @Contract("null, _ -> null")
