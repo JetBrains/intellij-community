@@ -61,7 +61,7 @@
 
     <action id="ToggleRenderedDocPresentation" class="com.intellij.codeInsight.documentation.render.ToggleRenderedDocPresentationAction"/>
     <group id="DocCommentGutterIconContextMenu">
-      <action id="ToggleRenderDocsOnFileOpening" class="com.intellij.codeInsight.documentation.render.ToggleRenderDocsOnFileOpeningAction"/>
+      <action id="ToggleRenderedDocPresentationForAll" class="com.intellij.codeInsight.documentation.render.ToggleRenderAllDocs"/>
     </group>
 
     <group id="CodeInsightEditorActions">
