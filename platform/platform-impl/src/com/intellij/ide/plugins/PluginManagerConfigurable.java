@@ -468,7 +468,7 @@ public class PluginManagerConfigurable
               case "/tag:":
                 if (ContainerUtil.isEmpty(myTagsSorted)) {
                   Set<String> allTags = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
+                  for (IdeaPluginDescriptor descriptor : myCustomRepositoryPluginsList) {
                     if (descriptor instanceof PluginNode) {
                       List<String> tags = ((PluginNode)descriptor).getTags();
                       if (!ContainerUtil.isEmpty(tags)) {
@@ -476,6 +476,7 @@ public class PluginManagerConfigurable
                       }
                     }
                   }
+                  allTags.addAll(MarketplaceRequests.getAllPluginsTags());
                   myTagsSorted = ContainerUtil.sorted(allTags, String::compareToIgnoreCase);
                 }
                 return myTagsSorted;
