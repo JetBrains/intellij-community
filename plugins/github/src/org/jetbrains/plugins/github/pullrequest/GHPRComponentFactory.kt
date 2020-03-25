@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
@@ -86,8 +86,12 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val contextDisposable = Disposer.newDisposable()
     val contextValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
-      dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
-        Disposer.register(contextDisposable, it)
+      dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also { ctx ->
+        Disposer.register(contextDisposable, ctx)
+        Disposer.register(ctx, Disposable {
+          val editorManager = FileEditorManager.getInstance(project)
+          editorManager.openFiles.filter { it is GHPRVirtualFile && it.dataContext === ctx }.forEach(editorManager::closeFile)
+        })
       }
     }
     Disposer.register(parentDisposable, contextDisposable)
