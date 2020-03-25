@@ -55,6 +55,6 @@ public class ColorChooserServiceImpl extends ColorChooserService {
 
   @Override
   public void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
-    ColorPicker.showColorPickerPopup(project, currentColor, listener, location);
+    ColorPicker.showColorPickerPopup(project, currentColor, listener, location, showAlpha);
   }
 }
