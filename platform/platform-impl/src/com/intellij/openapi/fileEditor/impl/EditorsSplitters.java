@@ -8,7 +8,6 @@ import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -896,33 +895,31 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         Element historyElement = file.getChild(HistoryEntry.TAG);
         String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
         Activity activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR);
-        VirtualFile virtualFile = null;
         HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
-        virtualFile = entry.getFile();
+        VirtualFile virtualFile = entry.getFile();
         if (virtualFile == null) {
           throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
         }
-        try (AccessToken ignored = ProjectLocator.runWithPreferredProject(virtualFile, myManager.getProject())) {
+        FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+          .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
+          .withIndex(i)
+          .withReopeningEditorsOnStartup();
+        try {
           virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
-          VirtualFile finalVirtualFile = virtualFile;
-          Document document = ReadAction.compute(() -> finalVirtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(finalVirtualFile) : null);
+          focusedFile = ObjectUtils.chooseNotNull(focusedFile, ProjectLocator.computeWithPreferredProject(virtualFile, myManager.getProject(), ()-> {
+            Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
 
-          boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
-          FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
-            .withPin(Boolean.valueOf(file.getAttributeValue(PINNED)))
-            .withIndex(i)
-            .withReopeningEditorsOnStartup();
+            boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 
-          fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
-          if (isCurrentTab) {
-            focusedFile = virtualFile;
-          }
-          if (document != null) {
-            // This is just to make sure document reference is kept on stack till this point
-            // so that document is available for folding state deserialization in HistoryEntry constructor
-            // and that document will be created only once during file opening
-            document.putUserData(DUMMY_KEY, null);
-          }
+            fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
+            if (document != null) {
+              // This is just to make sure document reference is kept on stack till this point
+              // so that document is available for folding state deserialization in HistoryEntry constructor
+              // and that document will be created only once during file opening
+              document.putUserData(DUMMY_KEY, null);
+            }
+            return isCurrentTab ? virtualFile : null;
+          }));
         }
         catch (InvalidDataException e) {
           if (ApplicationManager.getApplication().isUnitTestMode()) {

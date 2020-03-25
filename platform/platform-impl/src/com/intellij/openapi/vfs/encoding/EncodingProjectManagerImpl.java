@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -229,9 +228,10 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   private static void reload(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull FileDocumentManagerImpl documentManager) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      try (AccessToken ignored = ProjectLocator.runWithPreferredProject(virtualFile, project)) {
+      ProjectLocator.computeWithPreferredProject(virtualFile, project, ()-> {
         documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
-      }
+        return null;
+      });
     });
   }
 
