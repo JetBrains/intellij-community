@@ -56,6 +56,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   fun testAllFilesWithMemberNameReported() {
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     PropertyChecker.customized()
+      .withIterationCount(50)
       .checkScenarios { ImperativeCommand(this::doTestAllFilesWithMemberNameReported) }
   }
 
@@ -72,6 +73,9 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
         val members = findMembers(fileToChange)
         if (members.isEmpty()) continue
+
+        rehighlight(fileToChange)
+        if (getFilesReportedByProblemSearch(fileToChange).isNotEmpty()) continue
 
         env.logMessage("Selected file: ${fileToChange.name}")
 
