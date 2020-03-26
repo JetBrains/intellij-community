@@ -4,21 +4,40 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.containers.IntIntBiMap
 import com.intellij.workspace.api.pstorage.containers.IntIntMultiMap
-import gnu.trove.TIntObjectHashMap
+import kotlin.reflect.KProperty1
+import kotlin.reflect.jvm.javaField
 
-inline class ConnectionId(val id: Int)
-
-open class RefsTable private constructor(
-  protected open val oneToManyContainer: Map<ConnectionId, IntIntBiMap>,
-  protected val isHardLink: TIntObjectHashMap<Boolean>
+data class ConnectionId private constructor(
+  val leftClass: String,
+  val leftProperty: String,
+  val rightClass: String,
+  val rightProperty: String,
+  val isHard: Boolean
 ) {
 
-  fun checkConnectionId(connectionId: ConnectionId, isHard: Boolean) {
-    if (connectionId.id in isHardLink) return
-    isHardLink.put(connectionId.id, isHard)
-  }
+  companion object {
+    private fun KProperty1<*, *>.declaringClass() = this.javaField!!.declaringClass
 
-  constructor() : this(HashMap(), TIntObjectHashMap())
+    fun create(left: KProperty1<*, *>, right: KProperty1<*, *>, isHard: Boolean): ConnectionId {
+      val ordering = left.toString().compareTo(right.toString())
+      val (myLeft, myRight) = if (ordering > 0) left to right else right to left
+
+      return ConnectionId(
+        myLeft.declaringClass().toString(),
+        myLeft.name,
+        myRight.declaringClass().toString(),
+        myRight.name,
+        isHard
+      )
+    }
+  }
+}
+
+open class RefsTable private constructor(
+  protected open val oneToManyContainer: Map<ConnectionId, IntIntBiMap>
+) {
+
+  constructor() : this(HashMap())
 
   internal fun getOneToManyTable(connectionId: ConnectionId): IntIntBiMap? {
     return oneToManyContainer[connectionId]
@@ -35,13 +54,7 @@ open class RefsTable private constructor(
     return transformer(res)
   }
 
-  fun overlapBy(other: RefsTable): RefsTable = RefsTable(
-    this.oneToManyContainer + other.oneToManyContainer,
-    TIntObjectHashMap<Boolean>().also { map ->
-      this.isHardLink.forEachEntry { k, v -> map.put(k, v) }
-      other.isHardLink.forEachEntry { k, v -> map.put(k, v) }
-    }
-  )
+  fun overlapBy(other: RefsTable): RefsTable = RefsTable(this.oneToManyContainer + other.oneToManyContainer)
 }
 
 class MutableRefsTable : RefsTable() {

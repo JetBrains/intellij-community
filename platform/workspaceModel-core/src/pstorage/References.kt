@@ -8,11 +8,6 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.javaField
 
-fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> calculateConnectionId(local: KProperty1<SUBT, T?>,
-                                                                           remote: KProperty1<T, Sequence<SUBT>>): ConnectionId {
-  return ConnectionId((local.toString() + remote.toString()).hashCode())
-}
-
 fun <E : TypedEntity> KProperty1<E, *>.declaringClass(): Class<E> = this.javaField!!.declaringClass as Class<E>
 
 sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
@@ -20,15 +15,14 @@ sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   protected val remote: KProperty1<SUBT, T?>
 ) : ReadOnlyProperty<T, Sequence<SUBT>> {
 
-  var connectionId = ConnectionId(0)
+  lateinit var connectionId: ConnectionId
   lateinit var remoteClass: Class<SUBT>
 
   class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
     snapshot: PEntityStorage, remote: KProperty1<SUBT, T?>
   ) : OneToMany<T, SUBT>(snapshot, remote) {
     operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, Sequence<SUBT>> {
-      connectionId = calculateConnectionId(remote, property as KProperty1<T, Sequence<SUBT>>)
-      snapshot.refs.checkConnectionId(connectionId, true)
+      connectionId = ConnectionId.create(property as KProperty1<*, *>, remote, true)
       remoteClass = remote.declaringClass()
       return this
     }
@@ -38,8 +32,7 @@ sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
     snapshot: PEntityStorage, remote: KProperty1<SUBT, T?>
   ) : OneToMany<T, SUBT>(snapshot, remote) {
     operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, Sequence<SUBT>> {
-      connectionId = calculateConnectionId(remote, property as KProperty1<T, Sequence<SUBT>>)
-      snapshot.refs.checkConnectionId(connectionId, false)
+      connectionId = ConnectionId.create(property as KProperty1<*, *>, remote, false)
       remoteClass = remote.declaringClass()
       return this
     }
@@ -55,7 +48,7 @@ sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   protected val remote: KProperty1<T, Sequence<SUBT>>
 ) : ReadOnlyProperty<SUBT, T?> {
 
-  var connectionId = ConnectionId(0)
+  lateinit var connectionId: ConnectionId
   lateinit var remoteClass: Class<T>
 
   class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
@@ -63,8 +56,7 @@ sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
     remote: KProperty1<T, Sequence<SUBT>>
   ) : ManyToOne<T, SUBT>(snapshot, remote) {
     operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
-      connectionId = calculateConnectionId(property as KProperty1<SUBT, T?>, remote)
-      snapshot.refs.checkConnectionId(connectionId, true)
+      connectionId = ConnectionId.create(property as KProperty1<*, *>, remote, true)
       remoteClass = remote.declaringClass()
       return this
     }
@@ -75,8 +67,7 @@ sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
     remote: KProperty1<T, Sequence<SUBT>>
   ) : ManyToOne<T, SUBT>(snapshot, remote) {
     operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
-      connectionId = calculateConnectionId(property as KProperty1<SUBT, T?>, remote)
-      snapshot.refs.checkConnectionId(connectionId, false)
+      connectionId = ConnectionId.create(property as KProperty1<*, *>, remote, false)
       remoteClass = remote.declaringClass()
       return this
     }
@@ -91,7 +82,7 @@ sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MO
   protected val remote: KProperty1<SUBT, T?>
 ) : ReadWriteProperty<MODT, Sequence<SUBT>> {
 
-  var connectionId = ConnectionId(0)
+  lateinit var connectionId: ConnectionId
   lateinit var remoteClass: Class<SUBT>
 
   class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
@@ -100,8 +91,7 @@ sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MO
     remote: KProperty1<SUBT, T?>
   ) : MutableOneToMany<T, SUBT, MODT>(snapshot, local, remote) {
     operator fun provideDelegate(thisRef: MODT, property: KProperty<*>): ReadWriteProperty<MODT, Sequence<SUBT>> {
-      connectionId = calculateConnectionId(remote, local)
-      snapshot.refs.checkConnectionId(connectionId, true)
+      connectionId = ConnectionId.create(remote, local, true)
       remoteClass = remote.declaringClass()
       return this
     }
@@ -113,8 +103,7 @@ sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MO
     remote: KProperty1<SUBT, T?>
   ) : MutableOneToMany<T, SUBT, MODT>(snapshot, local, remote) {
     operator fun provideDelegate(thisRef: MODT, property: KProperty<*>): ReadWriteProperty<MODT, Sequence<SUBT>> {
-      connectionId = calculateConnectionId(remote, local)
-      snapshot.refs.checkConnectionId(connectionId, false)
+      connectionId = ConnectionId.create(remote, local, false)
       remoteClass = remote.declaringClass()
       return this
     }
@@ -135,7 +124,7 @@ sealed class MutableManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MO
   protected val remote: KProperty1<T, Sequence<SUBT>>
 ) : ReadWriteProperty<MODSUBT, T?> {
 
-  var connectionId = ConnectionId(0)
+  lateinit var connectionId: ConnectionId
   lateinit var remoteClass: Class<T>
 
   class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
@@ -144,8 +133,7 @@ sealed class MutableManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MO
     remote: KProperty1<T, Sequence<SUBT>>
   ) : MutableManyToOne<T, SUBT, MODSUBT>(snapshot, local, remote) {
     operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
-      connectionId = calculateConnectionId(local, remote)
-      snapshot.refs.checkConnectionId(connectionId, true)
+      connectionId = ConnectionId.create(local, remote, true)
       remoteClass = remote.declaringClass()
       return this
     }
@@ -157,8 +145,7 @@ sealed class MutableManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MO
     remote: KProperty1<T, Sequence<SUBT>>
   ) : MutableManyToOne<T, SUBT, MODSUBT>(snapshot, local, remote) {
     operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
-      connectionId = calculateConnectionId(local, remote)
-      snapshot.refs.checkConnectionId(connectionId, false)
+      connectionId = ConnectionId.create(local, remote, false)
       remoteClass = remote.declaringClass()
       return this
     }
