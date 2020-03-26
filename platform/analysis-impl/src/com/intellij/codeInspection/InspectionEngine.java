@@ -71,18 +71,6 @@ public class InspectionEngine {
     }
   }
 
-  private static boolean intersect(@NotNull Set<String> ids1, @NotNull Set<String> ids2) {
-    if (ids1.size() > ids2.size()) {
-      Set<String> tmp = ids1;
-      ids1 = ids2;
-      ids2 = tmp;
-    }
-    for (String id : ids1) {
-      if (ids2.contains(id)) return true;
-    }
-    return false;
-  }
-
   @NotNull
   private static List<ProblemDescriptor> inspect(@NotNull final List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                  @NotNull final PsiFile file,
@@ -248,18 +236,21 @@ public class InspectionEngine {
   @NotNull
   public static List<LocalInspectionToolWrapper> filterToolsApplicableByLanguage(@NotNull Collection<? extends LocalInspectionToolWrapper> tools,
                                                                                  @NotNull Set<String> elementDialectIds) {
+    Map<String, Boolean> resultsWithDialects = new HashMap<>();
+    Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {
-      Set<String> dialectIdsSpecifiedForTool = getDialectIdsSpecifiedForTool(tool);
-      return dialectIdsSpecifiedForTool == null || intersect(elementDialectIds, dialectIdsSpecifiedForTool);
+      String language = tool.getLanguage();
+      if (language == null) return true;
+
+      boolean applyToDialects = tool.applyToDialects();
+      Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
+      return map.computeIfAbsent(language, __ ->
+        ContainerUtil.intersects(elementDialectIds, getDialectIdsSpecifiedForTool(language, applyToDialects)));
     });
   }
 
-  @Nullable("null means not specified")
-  private static Set<String> getDialectIdsSpecifiedForTool(@NotNull LocalInspectionToolWrapper wrapper) {
-    String langId = wrapper.getLanguage();
-    if (langId == null) {
-      return null;
-    }
+  @NotNull
+  private static Set<String> getDialectIdsSpecifiedForTool(String langId, boolean applyToDialects) {
     Language language = Language.findLanguageByID(langId);
     Set<String> result;
     if (language == null) {
@@ -270,24 +261,23 @@ public class InspectionEngine {
       Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
       result = new THashSet<>();
       for (Language matchingLanguage : matchingLanguages) {
-        result.addAll(getLanguageWithDialects(wrapper, matchingLanguage));
+        result.addAll(getLanguageWithDialects(matchingLanguage, applyToDialects));
       }
     }
     else {
-      result = getLanguageWithDialects(wrapper, language);
+      result = getLanguageWithDialects(language, applyToDialects);
     }
     return result;
   }
 
   @NotNull
-  private static Set<String> getLanguageWithDialects(@NotNull LocalInspectionToolWrapper wrapper, @NotNull Language language) {
+  private static Set<String> getLanguageWithDialects(@NotNull Language language, boolean applyToDialects) {
     List<Language> dialects = language.getDialects();
-    boolean applyToDialects = wrapper.applyToDialects();
-    Set<String> result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
+    if (!applyToDialects || dialects.isEmpty()) return Collections.singleton(language.getID());
+
+    Set<String> result = new THashSet<>(1 + dialects.size());
     result.add(language.getID());
-    if (applyToDialects) {
-      addDialects(language, result);
-    }
+    addDialects(language, result);
     return result;
   }
 
