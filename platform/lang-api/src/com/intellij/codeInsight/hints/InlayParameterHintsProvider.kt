@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.KeyedLazyInstance
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.util.function.Supplier
 
 val PARAMETER_NAME_HINTS_EP = ExtensionPointName.create<KeyedLazyInstance<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
 
@@ -99,9 +100,16 @@ sealed class HintInfo {
 }
 
 data class Option(@NonNls val id: String,
-                  @Nls val name: String,
+                  private val nameSupplier: Supplier<String>,
                   val defaultValue: Boolean) {
-  var extendedDescription: String? = null
+
+  @Deprecated("Use default constructor")
+  constructor(@NonNls id: String, @Nls name: String, defaultValue: Boolean) : this(id, Supplier { name }, defaultValue)
+
+  val name: String
+    get() = nameSupplier.get()
+
+  var extendedDescriptionSupplier: Supplier<String>? = null
 
   fun isEnabled(): Boolean = get()
 
