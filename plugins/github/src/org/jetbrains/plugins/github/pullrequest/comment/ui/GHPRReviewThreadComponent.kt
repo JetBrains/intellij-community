@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRReviewThreadDiff
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
-import java.awt.FlowLayout
+import javax.swing.Box
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -122,10 +122,12 @@ object GHPRReviewThreadComponent {
     model.addStateChangeListener(::update)
     update()
 
-    return NonOpaquePanel(FlowLayout(FlowLayout.LEADING, UI.scale(8), 0)).apply {
+    return HorizontalBox().apply {
+      isOpaque = false
       border = JBUI.Borders.empty(6, 28, 6, 0)
 
       add(toggleReplyLink)
+      add(Box.createHorizontalStrut(UI.scale(8)))
       add(resolveLink)
       add(unresolveLink)
     }
