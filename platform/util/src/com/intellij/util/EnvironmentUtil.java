@@ -63,7 +63,7 @@ public final class EnvironmentUtil {
   private EnvironmentUtil() { }
 
   @ApiStatus.Internal
-  public static synchronized CompletableFuture<Map<String, String>> loadEnv(boolean macEnvUnlocked) {
+  public static synchronized CompletableFuture<Map<String, String>> loadShellEnvironment(boolean macEnvUnlocked) {
     CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
     if (getter != null) {
       return getter;
@@ -114,7 +114,7 @@ public final class EnvironmentUtil {
     try {
       CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
       if (getter == null) {
-        getter = loadEnv("unlocked".equals(System.getProperty("__idea.mac.env.lock")));
+        getter = loadShellEnvironment(false);
       }
       return getter.join();
     }

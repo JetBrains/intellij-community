@@ -587,7 +587,7 @@ public final class StartupUtil {
 
   private static void scheduleProcessEnvironmentFixing() {
     Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
-    EnvironmentUtil.loadEnv(true)
+    EnvironmentUtil.loadShellEnvironment(true)
       .thenRun(subActivity::end);
   }
 
