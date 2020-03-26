@@ -48,13 +48,17 @@ internal class InstallPluginService : RestService() {
     }
   }
 
-  private fun checkCompatibility(request: FullHttpRequest,
-                                 context: ChannelHandlerContext,
-                                 pluginId: String): Nothing? {
+  private fun checkCompatibility(
+    request: FullHttpRequest,
+    context: ChannelHandlerContext,
+    pluginId: String
+  ): Nothing? {
     //check if there is an update for this IDE with this ID.
     val buildNumber = MarketplaceRequests.getBuildForPluginRepositoryRequests()
-    PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber))
-    val compatibleUpdateExists = PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber)).isNotEmpty()
+    val compatibleUpdateExists = PluginsMetaLoader.getLastCompatiblePluginUpdate(
+      listOf(pluginId),
+      BuildNumber.fromString(buildNumber)
+    ).isNotEmpty()
 
     val out = BufferExposingByteArrayOutputStream()
 
