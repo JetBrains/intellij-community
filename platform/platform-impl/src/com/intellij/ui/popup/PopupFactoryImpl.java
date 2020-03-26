@@ -40,17 +40,18 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.nls.NlsContexts.PopupTitle;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -503,36 +504,24 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
     else if (component instanceof JTree) { // JTree
       JTree tree = (JTree)component;
-      int[] selectionRows = tree.getSelectionRows();
-      if (selectionRows != null) {
-        Arrays.sort(selectionRows);
-        for (int row : selectionRows) {
-          Rectangle rowBounds = tree.getRowBounds(row);
-          if (visibleRect.contains(rowBounds)) {
-            popupMenuPoint = new Point(rowBounds.x + 2, rowBounds.y + rowBounds.height - 1);
-            break;
-          }
-        }
-        if (popupMenuPoint == null) {//All selected rows are out of visible rect
-          Point visibleCenter = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height / 2);
-          double minDistance = Double.POSITIVE_INFINITY;
-          int bestRow = -1;
-          for (int row : selectionRows) {
-            Rectangle rowBounds = tree.getRowBounds(row);
-            Point rowCenter = new Point(rowBounds.x + rowBounds.width / 2, rowBounds.y + rowBounds.height / 2);
-            double distance = visibleCenter.distance(rowCenter);
-            if (minDistance > distance) {
-              minDistance = distance;
-              bestRow = row;
+      TreePath[] paths = tree.getSelectionPaths();
+      if (paths != null && paths.length > 0) {
+        TreePath pathFound = null;
+        int distanceFound = Integer.MAX_VALUE;
+        int center = visibleRect.y + visibleRect.height / 2;
+        for (TreePath path : paths) {
+          Rectangle bounds = tree.getPathBounds(path);
+          if (bounds != null) {
+            int distance = Math.abs(bounds.y + bounds.height / 2 - center);
+            if (distance < distanceFound) {
+              popupMenuPoint = new Point(bounds.x + 2, bounds.y + bounds.height - 1);
+              distanceFound = distance;
+              pathFound = path;
             }
           }
-
-          if (bestRow != -1) {
-            Rectangle rowBounds = tree.getRowBounds(bestRow);
-            tree.scrollRectToVisible(
-              new Rectangle(rowBounds.x, rowBounds.y, Math.min(visibleRect.width, rowBounds.width), rowBounds.height));
-            popupMenuPoint = new Point(rowBounds.x + 2, rowBounds.y + rowBounds.height - 1);
-          }
+        }
+        if (pathFound != null) {
+          TreeUtil.scrollToVisible(tree, pathFound, false);
         }
       }
     }
