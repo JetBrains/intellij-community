@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
@@ -494,13 +495,13 @@ public final class IdeEventQueue extends EventQueue {
           return;
         }
         if (ourRunnablesWithWrite.contains(runnableClass)) {
-          ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
+          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable);
           return;
         }
       }
 
       if (ourDefaultEventWithWrite) {
-        ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
+        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable);
       }
       else {
         processEventRunnable.run();
@@ -666,8 +667,9 @@ public final class IdeEventQueue extends EventQueue {
   @Override
   @NotNull
   public AWTEvent getNextEvent() throws InterruptedException {
-    AWTEvent event = appIsLoaded() ? ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> super.getNextEvent())
-                                   : super.getNextEvent();
+    AWTEvent event = appIsLoaded() ?
+                     ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> super.getNextEvent()) :
+                     super.getNextEvent();
     if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
       throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
     }

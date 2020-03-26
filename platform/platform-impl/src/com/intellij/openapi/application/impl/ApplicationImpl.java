@@ -823,22 +823,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public boolean acquireWriteIntentLockIfNeeded(@NotNull String invokedClassFqn) {
-    if (myLock.isWriteThread()) return false;
-    acquireWriteIntentLock(invokedClassFqn);
-    return true;
-  }
-
-  @Override
-  public void releaseWriteIntentLockIfNeeded(boolean needed) {
-    if (needed) {
-      releaseWriteIntentLock();
-    }
-  }
-
-  @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
-    if (myLock.isWriteThread()) {
+    if (isWriteThread()) {
       action.run();
     }
     else {
@@ -855,7 +841,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     // Do not ever unlock IW in legacy mode (EDT is holding lock at all times)
-    if (myLock.isWriteThread() && USE_SEPARATE_WRITE_THREAD) {
+    if (isWriteThread() && USE_SEPARATE_WRITE_THREAD) {
       releaseWriteIntentLock();
       try {
         return action.compute();
@@ -943,12 +929,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     acquireWriteIntentLock(invokedClass.getName());
   }
 
-  private void acquireWriteIntentLock(@NotNull String invokedClassFqn) {
+  @Override
+  public void acquireWriteIntentLock(@NotNull String invokedClassFqn) {
     myLock.writeIntentLock();
     lockAcquired(invokedClassFqn, LockKind.WRITE_INTENT);
   }
 
-  private void releaseWriteIntentLock() {
+  @Override
+  public void releaseWriteIntentLock() {
     myLock.writeIntentUnlock();
   }
 
@@ -1067,11 +1055,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public boolean isReadAccessAllowed() {
-    return myLock.isWriteThread() || myLock.isReadLockedByThisThread();
+    return isWriteThread() || myLock.isReadLockedByThisThread();
   }
 
   private boolean checkReadAccessAllowedAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
-    return myLock.isWriteThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
+    return isWriteThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
   }
 
   @Override

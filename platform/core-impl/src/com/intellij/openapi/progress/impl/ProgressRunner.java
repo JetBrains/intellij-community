@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -392,13 +393,13 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   }
 
   private static void pollLaterInvocatorActively(CompletableFuture<?> resultFuture, @NotNull Runnable pollAction) {
-    ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+    ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
       while (true) {
         try {
           resultFuture.get(10, TimeUnit.MILLISECONDS);
         }
         catch (TimeoutException ignore) {
-          ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(pollAction);
+          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(pollAction);
           continue;
         }
         catch (Throwable ignored) {
