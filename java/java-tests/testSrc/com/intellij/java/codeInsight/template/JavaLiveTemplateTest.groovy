@@ -118,21 +118,6 @@ public class Main {
     assert !state.finished
   }
 
-  void "test non-imported classes in className macro"() {
-    myFixture.addClass('package bar; public class Bar {}')
-    myFixture.configureByText 'a.java', '''
-class Foo {
-  void foo(int a) {}
-  { <caret> }
-}
-'''
-    Template template = templateManager.createTemplate("frm", "user", '$VAR$')
-    template.addVariable('VAR', new MacroCallNode(new ClassNameCompleteMacro()), new EmptyNode(), true)
-    startTemplate(template)
-    assert !state.finished
-    assert 'Bar' in myFixture.lookupElementStrings
-  }
-
   void "test variableOfType suggests inner static classes"() {
     myFixture.addClass('public interface MyCallback {}')
     myFixture.addClass('''
