@@ -73,6 +73,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
      type("expr");
    });
   }
+  
+  public void testNoNameSuggested() {
+    doTest(introducer -> type("xyz"));
+  }
 
   public void testPlaceInsideLoopAndRename() {
     doTest(introducer -> type("expr"));
