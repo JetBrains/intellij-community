@@ -149,7 +149,7 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_TOP_TOOLBAR = "UnitTests.TopToolbar";
   public static final String RIDER_UNIT_TESTS_SESSION_POPUP = "UnitTests.SessionPopup";
   public static final String RIDER_UNIT_TESTS_EXPLORER_POPUP = "UnitTests.ExplorerPopup";
-  public static final String RIDER_UNIT_TESTS_PROGRESSBAR_POPUP = "UnitTests.ProgressBarPopup";
+  public static final String RIDER_UNIT_TESTS_COMPONENT_POPUP = "UnitTests.ComponentPopup";
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
   public static boolean isMainMenuOrActionSearch(String place) {
@@ -170,7 +170,7 @@ public abstract class ActionPlaces {
     COMPOSER_LOG_RERUN, EDITOR_GUTTER, TOOLWINDOW_CONTENT, SERVICES_TOOLBAR, REFACTORING_QUICKLIST, INTENTION_MENU,
     TEXT_EDITOR_WITH_PREVIEW, NOTIFICATION,
     RIDER_UNIT_TESTS_LEFT_TOOLBAR, RIDER_UNIT_TESTS_TOP_TOOLBAR, RIDER_UNIT_TESTS_SESSION_POPUP, RIDER_UNIT_TESTS_EXPLORER_POPUP,
-    RIDER_UNIT_TESTS_PROGRESSBAR_POPUP, RIDER_UNIT_TESTS_QUICKLIST
+    RIDER_UNIT_TESTS_COMPONENT_POPUP, RIDER_UNIT_TESTS_QUICKLIST
   );
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
