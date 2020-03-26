@@ -615,14 +615,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         oneOfTheIndicatorsIsCanceled |= thisIndicator.isCanceled();
       }
 
-      if (oneOfTheIndicatorsIsCanceled) {
-        threadsUnderCanceledIndicator.add(currentThread);
-      }
-      else {
-        threadsUnderCanceledIndicator.remove(currentThread);
-      }
-
-      updateShouldCheckCanceled();
+      updateThreadUnderCanceledIndicator(currentThread, oneOfTheIndicatorsIsCanceled);
     }
 
     try {
@@ -647,15 +640,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             }
           }
           // by this time oldIndicator may have been canceled
-          if (oldIndicator != null && oldIndicator.isCanceled()) {
-            threadsUnderCanceledIndicator.add(currentThread);
-          }
-          else {
-            threadsUnderCanceledIndicator.remove(currentThread);
-          }
         }
-        updateShouldCheckCanceled();
+        updateThreadUnderCanceledIndicator(currentThread, oldIndicator != null && oldIndicator.isCanceled());
       }
+    }
+  }
+
+  private void updateThreadUnderCanceledIndicator(@NotNull Thread thread, boolean underCanceledIndicator) {
+    boolean changed = underCanceledIndicator ? threadsUnderCanceledIndicator.add(thread) : threadsUnderCanceledIndicator.remove(thread);
+    if (changed) {
+      updateShouldCheckCanceled();
     }
   }
 
