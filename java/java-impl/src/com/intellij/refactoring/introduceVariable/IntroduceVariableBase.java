@@ -1255,6 +1255,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     private void generateScopeBasedChoices(PsiExpression expr,
                                            LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap) {
+      // This comparator can correctly compare only elements that represent a single ancestor chain
+      // i.e. for two compared elements a and b either a is ancestor of b or vice versa
       Comparator<PsiElement> treeOrder = (e1, e2) -> {
         if (PsiTreeUtil.isAncestor(e1, e2, true)) return 1;
         if (PsiTreeUtil.isAncestor(e2, e1, true)) return -1;
@@ -1264,7 +1266,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       TreeMap<PsiElement, List<PsiExpression>> groupByBlock =
         StreamEx.of(myOccurrences).groupingBy(e -> PsiTreeUtil.findCommonParent(e, physical),
                                               () -> new TreeMap<>(treeOrder), Collectors.toList());
-      assert !groupByBlock.isEmpty();
+      LOG.assertTrue(!groupByBlock.isEmpty());
       List<PsiExpression> currentOccurrences = new ArrayList<>();
       Map<String, Integer> counts = new HashMap<>();
       groupByBlock.forEach((parent, occurrences) -> {
