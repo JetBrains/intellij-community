@@ -7,10 +7,7 @@ import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
@@ -19,8 +16,10 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.hash.EqualityPolicy
 import com.intellij.util.containers.hash.LinkedHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.Comparator
+import kotlin.collections.ArrayList
 import kotlin.math.max
 
 open class BaseCompletionLookupArranger(@JvmField protected val myProcess: CompletionProcessEx) : LookupArranger(), CompletionLookupArranger {
@@ -127,8 +126,43 @@ open class BaseCompletionLookupArranger(@JvmField protected val myProcess: Compl
     }
     val context = createContext()
     classifier!!.addElement(element, context)
-    super.addElement(element, presentation)
-    trimToLimit(context)
+    if (isInBatchUpdate) {
+      batchItems.add(element to presentation)
+    } else {
+      super.addElement(element, presentation)
+      trimToLimit(context)
+    }
+  }
+
+  private var isInBatchUpdate = false
+  private val batchItems = mutableListOf<kotlin.Pair<LookupElement, LookupElementPresentation>>()
+
+  /**
+   * Returns a "finishing" action to be run under Lookup lock. This method should be executed on a single (weighing) thread only.
+   */
+  @ApiStatus.Internal
+  fun batchUpdate(runnable: Runnable): Runnable {
+    if (isInBatchUpdate) {
+      runnable.run()
+    } else {
+      isInBatchUpdate = true
+      try {
+        runnable.run()
+      } finally {
+        isInBatchUpdate = false
+      }
+      if (batchItems.isNotEmpty()) {
+        val copy = ArrayList(batchItems)
+        batchItems.clear()
+        return Runnable {
+          for ((element, presentation) in copy) {
+            super.addElement(element, presentation)
+          }
+          trimToLimit(createContext())
+        }
+      }
+    }
+    return EmptyRunnable.INSTANCE
   }
 
   override fun itemSelected(lookupItem: LookupElement?, completionChar: Char) {
