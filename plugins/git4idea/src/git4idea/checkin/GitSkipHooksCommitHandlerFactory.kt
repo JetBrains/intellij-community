@@ -24,8 +24,11 @@ private val IS_SKIP_HOOKS_KEY = Key.create<Boolean>("Git.Commit.IsSkipHooks")
 internal var CommitContext.isSkipHooks: Boolean by commitProperty(IS_SKIP_HOOKS_KEY)
 
 class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    GitSkipHooksCommitHandler(panel, commitContext)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    if (!panel.vcsIsAffected(GitVcs.NAME)) return CheckinHandler.DUMMY
+
+    return GitSkipHooksCommitHandler(panel, commitContext)
+  }
 }
 
 private class GitSkipHooksCommitHandler(
