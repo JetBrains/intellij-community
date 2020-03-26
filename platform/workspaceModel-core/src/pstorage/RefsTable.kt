@@ -3,16 +3,19 @@ package com.intellij.workspace.api.pstorage
 
 import kotlin.reflect.KProperty1
 
-open class RefsTable {
-  internal open val container: Map<Pair<KProperty1<*, *>, KProperty1<*, *>>, IntIntBiMultiMap> = mapOf()
+open class RefsTable(
+  protected open val container: Map<Pair<KProperty1<*, *>, KProperty1<*, *>>, IntIntBiMultiMap>
+) {
+
+  constructor() : this(mapOf())
 
   operator fun get(local: KProperty1<*, *>, remote: KProperty1<*, *>, localIndex: Int): IntIntMultiMap.IntSequence? {
-    val searchByKeys = container[local to remote]
+    val searchByKeys = this[local, remote]
     if (searchByKeys != null) {
       return searchByKeys.getValues(localIndex)
     }
 
-    val searchByValues = container[remote to local]
+    val searchByValues = this[remote, local]
     if (searchByValues != null) {
       return searchByValues.getKeys(localIndex)
     }
@@ -20,12 +23,11 @@ open class RefsTable {
     return null
   }
 
-  fun joinWith(other: RefsTable): RefsTable {
-    val newTable = MutableRefsTable()
-    newTable.container.putAll(this.container)
-    newTable.container.putAll(other.container)
-    return newTable
-  }
+  operator fun contains(other: Pair<KProperty1<*, *>, KProperty1<*, *>>) = other in container
+
+  operator fun get(left: KProperty1<*, *>, right: KProperty1<*, *>) = container[left to right]
+
+  fun joinWith(other: RefsTable): RefsTable = RefsTable(this.container + other.container)
 }
 
 class MutableRefsTable : RefsTable() {
@@ -35,45 +37,49 @@ class MutableRefsTable : RefsTable() {
              right: KProperty1<*, *>,
              id: Int) {
     if (left to right in container) {
-      container[left to right]!!.removeKey(id)
+      this[left, right]!!.removeKey(id)
     }
     else if (right to left in container) {
-      container[right to left]!!.removeValue(id)
+      this[right, left]!!.removeValue(id)
     }
   }
 
   fun <E : PTypedEntity<E>> updateRef(left: KProperty1<*, *>,
-                                                                                             right: KProperty1<*, *>,
-                                                                                             id: Int,
-                                                                                             updateTo: Sequence<E>) {
+                                      right: KProperty1<*, *>,
+                                      id: Int,
+                                      updateTo: Sequence<E>) {
     when {
       left to right in container -> {
-        val table = container[left to right]!!
+        val table = this[left, right]!!
         table.removeKey(id)
         updateTo.forEach { table.put(id, it.id.arrayId) }
       }
       right to left in container -> {
-        val table = container[right to left]!!
+        val table = this[right, left]!!
         table.removeValue(id)
         updateTo.forEach { table.put(it.id.arrayId, id) }
       }
       else -> {
         val table = IntIntBiMultiMap()
         updateTo.forEach { table.put(id, it.id.arrayId) }
-        container[left to right] = table
+        this[left, right] = table
       }
     }
   }
 
   fun unorderedCloneTableFrom(local: KProperty1<*, *>, remote: KProperty1<*, *>, other: RefsTable) {
-    if (local to remote in other.container) {
-      val table = other.container[local to remote]
-      this.container[local to remote] = table!!.copy()
+    if (local to remote in other) {
+      val table = other[local, remote]
+      this[local, remote] = table!!.copy()
     }
-    else if (remote to local in other.container) {
-      val table = other.container[remote to local]
-      this.container[remote to local] = table!!.copy()
+    else if (remote to local in other) {
+      val table = other[remote, local]
+      this[remote, local] = table!!.copy()
     }
+  }
+
+  private operator fun set(left: KProperty1<*, *>, right: KProperty1<*, *>, value: IntIntBiMultiMap) {
+    container[left to right] = value
   }
 
   fun clear() = container.clear()
