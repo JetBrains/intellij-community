@@ -36,6 +36,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
   private final WatchRootsManager myWatchRootsManager;
+  private volatile boolean myDisposed;
 
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -57,6 +58,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   @Override
   public void dispose() {
+    myDisposed = true;
     myWatcher.dispose();
   }
 
@@ -130,6 +132,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequestsToRemove,
                                                @Nullable Collection<String> recursiveRootsToAdd,
                                                @Nullable Collection<String> flatRootsToAdd) {
+    if (myDisposed) return Collections.emptySet();
     Collection<WatchRequest> nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
     return myWatchRootsManager.replaceWatchedRoots(nonNullWatchRequestsToRemove,
