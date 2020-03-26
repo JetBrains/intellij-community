@@ -136,7 +136,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertTrue(classFile.exists());
 
     final LwRootContainer rootContainer = loadFormData(formPath);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false, true, new ClassWriter(ClassWriter.COMPUTE_FRAMES));
     final FileInputStream classStream = new FileInputStream(classFile);
     try {
       codeGenerator.patchClass(classStream);
