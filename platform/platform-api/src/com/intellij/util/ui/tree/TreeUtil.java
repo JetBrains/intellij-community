@@ -452,23 +452,22 @@ public final class TreeUtil {
    */
   @ApiStatus.Internal
   public static void selectPaths(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
-    if (paths.isEmpty()) return;
-    paths.forEach(tree::makeVisible);
-    internalSelect(tree, paths);
+    if (!paths.isEmpty()) selectPaths(tree, paths.toArray(EMPTY_TREE_PATH));
   }
 
   /**
-   * @deprecated use {{@link #selectPaths(JTree, Collection)}} instead
+   * Makes visible specified tree paths and select them.
+   * It does not clear selection if there are no paths to select.
+   *
+   * @param tree  a tree to select in
+   * @param paths an array of paths to select
+   * @see JTree#clearSelection
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void selectPaths(@NotNull JTree tree, TreePath @NotNull ... paths) {
+  @ApiStatus.Internal
+  public static void selectPaths(@NotNull JTree tree, @NotNull TreePath @NotNull ... paths) {
     if (paths.length == 0) return;
-    for (TreePath path : paths) {
-      tree.makeVisible(path);
-    }
-    tree.setSelectionPaths(paths);
-    tree.scrollPathToVisible(paths[0]);
+    for (TreePath path : paths) tree.makeVisible(path);
+    internalSelect(tree, paths);
   }
 
   @NotNull
@@ -1579,25 +1578,15 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<List<TreePath>> promiseSelect(@NotNull JTree tree, @NotNull Stream<? extends TreeVisitor> visitors) {
-    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelect(tree, paths));
+    return promiseMakeVisibleAll(tree, visitors, paths -> internalSelect(tree, paths.toArray(EMPTY_TREE_PATH)));
   }
 
-  private static void internalSelect(@NotNull JTree tree, @NotNull Collection<? extends TreePath> paths) {
-    assert EventQueue.isDispatchThread();
-    if (paths.isEmpty()) return;
-    internalSelect(tree, paths.toArray(EMPTY_TREE_PATH));
-  }
-
-  private static void internalSelect(@NotNull JTree tree, TreePath @NotNull ... paths) {
-    internalSelect(tree, true, paths);
-  }
-
-  private static void internalSelect(@NotNull JTree tree, boolean centered, TreePath @NotNull ... paths) {
+  private static void internalSelect(@NotNull JTree tree, @NotNull TreePath @NotNull ... paths) {
     assert EventQueue.isDispatchThread();
     if (paths.length == 0) return;
     tree.setSelectionPaths(paths);
     for (TreePath path : paths) {
-      if (scrollToVisible(tree, path, centered)) {
+      if (scrollToVisible(tree, path, true)) {
         break;
       }
     }
@@ -1606,7 +1595,7 @@ public final class TreeUtil {
   /**
    * @param tree     a tree to scroll
    * @param path     a visible tree path to scroll
-   * @param centered {@code true} to show the specified path
+   * @param centered {@code true} to show the specified path in the center
    * @return {@code false} if a path is hidden (under a collapsed parent)
    */
   public static boolean scrollToVisible(@NotNull JTree tree, @NotNull TreePath path, boolean centered) {
