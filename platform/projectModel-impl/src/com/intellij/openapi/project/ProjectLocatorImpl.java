@@ -59,9 +59,9 @@ final class ProjectLocatorImpl extends ProjectLocator {
     });
   }
 
-  // true if the file is either is in the project content or in some excluded folder of the project
+  // true if the file is either in the project content or in some excluded folder of the project
   private static boolean isUnder(@NotNull Project project, @NotNull VirtualFile file) {
-    if (!project.isInitialized() || project.isDisposed()) {
+    if (project.isDisposed()) {
       return false;
     }
 
