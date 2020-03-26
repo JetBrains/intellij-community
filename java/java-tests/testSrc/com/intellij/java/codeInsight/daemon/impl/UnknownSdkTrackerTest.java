@@ -1,19 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.EditorNotificationPanel;
@@ -25,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.java.codeInsight.daemon.impl.SdkSetupNotificationTestBase.openTextInEditor;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,11 +74,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testMissingModuleJdk() {
-    WriteAction.run(() -> {
-      ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-      model.setInvalidSdk("missingSDK", JavaSdk.getInstance().getName());
-      model.commit();
-    });
+    setModuleSdk("missingSDK", JavaSdk.getInstance());
 
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
@@ -82,11 +84,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testMissingModuleUnknownSdk() {
-    WriteAction.run(() -> {
-      ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-      model.setInvalidSdk("missingSDK", "foo-bar-baz");
-      model.commit();
-    });
+    setModuleSdk("missingSDK", "foo-bar-baz");
 
     final List<String> fixes = detectMissingSdks();
     assertThat(fixes)
@@ -122,6 +120,62 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
     assertThat(fixes)
       .withFailMessage(String.valueOf(fixes))
       .isNotEmpty();
+  }
+
+  @TestFor(issues = "IDEA-236153")
+  public void testItIgnoresSameSnapshot() {
+    AtomicInteger lookupCalls = new AtomicInteger();
+    UnknownSdkResolver.EP_NAME.getPoint(null).registerExtension(new UnknownSdkResolver() {
+      @Override
+      public boolean supportsResolution(@NotNull SdkTypeId sdkTypeId) {
+        return true;
+      }
+
+      @Nullable
+      @Override
+      public UnknownSdkLookup createResolver(@Nullable Project project, @NotNull ProgressIndicator indicator) {
+        lookupCalls.incrementAndGet();
+        return null;
+      }
+    }, getTestRootDisposable());
+
+    setModuleSdk("foo-bar-baz", JavaSdk.getInstance());
+
+    detectMissingSdks();
+    detectMissingSdks();
+    detectMissingSdks();
+
+    assertThat(lookupCalls).hasValue(1);
+
+    //do the same change
+    setModuleSdk("foo-bar-baz", JavaSdk.getInstance());
+    detectMissingSdks();
+    detectMissingSdks();
+    detectMissingSdks();
+
+    //it must not re-compute it
+    assertThat(lookupCalls).hasValue(1);
+
+    //change it finally
+    setModuleSdk("foo-bar-baz-NEW", JavaSdk.getInstance());
+    detectMissingSdks();
+    detectMissingSdks();
+    detectMissingSdks();
+
+    //it must not re-compute it
+    assertThat(lookupCalls).hasValue(2);
+  }
+
+  private void setModuleSdk(@NotNull String sdkName, @NotNull SdkTypeId type) {
+    setModuleSdk(sdkName, type.getName());
+  }
+
+  private void setModuleSdk(@NotNull String sdkName, @NotNull String sdkType) {
+    WriteAction.run(() -> {
+      ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      model.setInvalidSdk(sdkName, sdkType);
+      model.commit();
+    });
   }
 
   @Override
