@@ -45,6 +45,24 @@ class PFolderEntityData : PEntityData<PFolderEntity> {
   }
 }
 
+class PSoftSubfolderEntityData : PEntityData<PSoftSubFolder> {
+  override var id: Int = -1
+  override lateinit var entitySource: EntitySource
+
+  override fun createEntity(snapshot: PEntityStorage): PSoftSubFolder {
+    return PSoftSubFolder(entitySource, PId(id, PSoftSubFolder::class), snapshot)
+  }
+
+  override fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<PSoftSubFolder> {
+    return PSoftSubFolderModifiableEntity(this, diff)
+  }
+
+  override fun clone() = PSoftSubfolderEntityData().also {
+    it.id = this.id
+    it.entitySource = this.entitySource
+  }
+}
+
 class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
@@ -75,6 +93,20 @@ class PFolderEntity(
   val children: Sequence<PSubFolderEntity> by HardRef(snapshot, PSubFolderEntity::parent)
 
   override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
+
+  override fun toString(): String = asStr()
+}
+
+class PSoftSubFolder(
+  override val entitySource: EntitySource,
+  override val id: PId<PSoftSubFolder>,
+  val snapshot: PEntityStorage
+) : PTypedEntity<PSoftSubFolder> {
+
+
+  override fun hasEqualProperties(e: TypedEntity): Boolean {
+    TODO("Not yet implemented")
+  }
 
   override fun toString(): String = asStr()
 }
@@ -117,8 +149,7 @@ class PFolderModifiableEntity(val original: PFolderEntityData,
 @PEntityDataClass(PSubFolderEntityData::class)
 class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
                                  val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity> {
-  override val id: PId<PSubFolderEntity> = PId(
-    original.id, PSubFolderEntity::class)
+  override val id: PId<PSubFolderEntity> = PId(original.id, PSubFolderEntity::class)
 
   var data: String
     get() = original.data
@@ -127,6 +158,20 @@ class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
     }
 
   var parent: PFolderEntity? by MutableHardBackRef(diff, PSubFolderEntity::parent, PFolderEntity::children)
+
+  override val entitySource: EntitySource = original.entitySource
+
+  override fun hasEqualProperties(e: TypedEntity): Boolean {
+    TODO("Not yet implemented")
+  }
+}
+
+@PEntityDataClass(PSoftSubfolderEntityData::class)
+class PSoftSubFolderModifiableEntity(
+  val original: PSoftSubfolderEntityData,
+  val diff: PEntityStorageBuilder
+): PModifiableTypedEntity<PSoftSubFolder> {
+  override val id: PId<PSoftSubFolder> = PId(original.id, PSoftSubFolder::class)
 
   override val entitySource: EntitySource = original.entitySource
 
