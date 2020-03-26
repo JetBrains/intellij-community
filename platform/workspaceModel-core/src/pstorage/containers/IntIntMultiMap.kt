@@ -235,11 +235,6 @@ sealed class IntIntMultiMap(
       while (hasNext()) action(next())
     }
 
-    fun <T> first(transformation: (Int) -> T): T? {
-      if (!hasNext) return null
-      return transformation(next())
-    }
-
     open fun <T> map(transformation: (Int) -> T): Sequence<T> {
       return Sequence {
         object : Iterator<T> {

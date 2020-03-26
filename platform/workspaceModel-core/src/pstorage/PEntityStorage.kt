@@ -5,7 +5,6 @@ import com.intellij.workspace.api.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.javaField
 
 open class PEntityStorage constructor(
   open val entitiesByType: EntitiesBarrel,
@@ -28,36 +27,29 @@ open class PEntityStorage constructor(
     TODO("Not yet implemented")
   }
 
-  protected fun <E : TypedEntity> KProperty1<E, *>.declaringClass(): Class<E> {
-    return this.javaField!!.declaringClass as Class<E>
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId,
+                                                                      remoteClass: Class<SUBT>,
+                                                                      id: PId<T>): Sequence<SUBT> {
+    val entitiesList = entitiesByType[remoteClass] ?: return emptySequence()
+    return getOneToManyRefs(connectionId, id, entitiesList, refs) ?: emptySequence()
   }
 
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractRefs(local: KProperty1<T, Sequence<SUBT>>,
-                                                             remote: KProperty1<SUBT, T?>,
-                                                             id: PId<T>): Sequence<SUBT> {
-    val entitiesList = entitiesByType[remote.declaringClass()] ?: return emptySequence()
-    return getRefs(local, remote, id, entitiesList, refs) ?: emptySequence()
+  protected fun <T : TypedEntity, SUBT : TypedEntity> getOneToManyRefs(connectionId: ConnectionId,
+                                                                       index: PId<T>,
+                                                                       entitiesList: EntityFamily<SUBT>,
+                                                                       searchedTable: RefsTable
+  ): Sequence<SUBT>? = searchedTable.getOneToMany(connectionId, index.arrayId)?.map { entitiesList[it]!!.createEntity(this) }
+
+  protected fun <T : TypedEntity> getManyToOneRef(connectionId: ConnectionId, index: Int,
+                                                  entitiesList: EntityFamily<T>, searchedTable: RefsTable): T? {
+    return searchedTable.getManyToOne(connectionId, index) { entitiesList[it]!!.createEntity(this) }
   }
 
-  protected fun <T : TypedEntity, SUBT : TypedEntity> getRefs(local: KProperty1<T, Sequence<SUBT>>,
-                                                              remote: KProperty1<SUBT, T?>,
-                                                              index: PId<T>,
-                                                              entitiesList: EntityFamily<SUBT>,
-                                                              searchedTable: RefsTable
-  ): Sequence<SUBT>? = searchedTable[local, remote, index.arrayId]?.map { entitiesList[it]!!.createEntity(this) }
-
-  protected fun <T : TypedEntity, SUBT : TypedEntity> getBackRefs(local: KProperty1<SUBT, T?>,
-                                                                  remote: KProperty1<T, Sequence<SUBT>>,
-                                                                  index: Int,
-                                                                  entitiesList: EntityFamily<T>,
-                                                                  searchedTable: RefsTable
-  ): T? = searchedTable[local, remote, index]?.first { entitiesList[it]!!.createEntity(this) }
-
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractBackRef(local: KProperty1<SUBT, T?>,
-                                                                remote: KProperty1<T, Sequence<SUBT>>,
-                                                                index: PId<SUBT>): T? {
-    val entitiesList = entitiesByType[remote.declaringClass()] ?: return null
-    return getBackRefs(local, remote, index.arrayId, entitiesList, refs)
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId,
+                                                                     remoteClass: Class<T>,
+                                                                     index: PId<SUBT>): T? {
+    val entitiesList = entitiesByType[remoteClass] ?: return null
+    return getManyToOneRef(connectionId, index.arrayId, entitiesList, refs)
   }
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
@@ -66,7 +58,7 @@ open class PEntityStorage constructor(
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
-    val res = mutableMapOf<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
+    val res = HashMap<EntitySource, MutableMap<Class<out TypedEntity>, MutableList<TypedEntity>>>()
     entitiesByType.all().forEach { (type, entities) ->
       entities.all().forEach {
         if (sourceFilter(it.entitySource)) {
@@ -104,18 +96,18 @@ class PEntityStorageBuilder(
                                                                          source: EntitySource,
                                                                          initializer: M.() -> Unit): T {
     val entityDataClass = clazz.kotlin.annotations.filterIsInstance<PEntityDataClass>().first().clazz
+    val unmodifiableEntityClass = clazz.kotlin.annotations.filterIsInstance<PEntityClass>().first().clazz.java as Class<T>
 
     val pEntityData = entityDataClass.primaryConstructor!!.call() as PEntityData<T>
 
     pEntityData.entitySource = source
 
+    val entities = getEntitiesToModify(unmodifiableEntityClass)
+    entities.add(pEntityData)
+
     val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
     modifiableEntity.initializer()
     modificationCount++
-
-    val unmodifiableEntityClass = (modifiableEntity as PModifiableTypedEntity<*>).id.clazz.java as Class<T>
-    val entities = getEntitiesToModify(unmodifiableEntityClass)
-    entities.add(pEntityData)
 
     return pEntityData.createEntity(this)
   }
@@ -174,47 +166,41 @@ class PEntityStorageBuilder(
     getEntitiesToModify(entityClass).remove(idx)
   }
 
-  override fun <T : TypedEntity, SUBT : TypedEntity> extractRefs(local: KProperty1<T, Sequence<SUBT>>,
-                                                                 remote: KProperty1<SUBT, T?>,
-                                                                 id: PId<T>): Sequence<SUBT> {
+  override fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId,
+                                                                          remoteClass: Class<SUBT>,
+                                                                          id: PId<T>): Sequence<SUBT> {
 
     // TODO: 24.03.2020 Check if already removed
-    val entitiesList = getEntities(remote.declaringClass())
-    return getRefs(local, remote, id, entitiesList, clonedRefs)
-           ?: getRefs(local, remote, id, entitiesList, refs)
+    val entitiesList = getEntities(remoteClass)
+    return getOneToManyRefs(connectionId, id, entitiesList, clonedRefs)
+           ?: getOneToManyRefs(connectionId, id, entitiesList, refs)
            ?: emptySequence()
   }
 
-  override fun <T : TypedEntity, SUBT : TypedEntity> extractBackRef(local: KProperty1<SUBT, T?>,
-                                                                    remote: KProperty1<T, Sequence<SUBT>>,
-                                                                    index: PId<SUBT>): T? {
-    val entitiesList = getEntities(remote.declaringClass())
-    return getBackRefs(local, remote, index.arrayId, entitiesList, clonedRefs)
-           ?: getBackRefs(local, remote, index.arrayId, entitiesList, refs)
+  override fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId,
+                                                                         remoteClass: Class<T>,
+                                                                         index: PId<SUBT>): T? {
+    val entitiesList = getEntities(remoteClass)
+    return getManyToOneRef(connectionId, index.arrayId, entitiesList, clonedRefs)
+           ?: getManyToOneRef(connectionId, index.arrayId, entitiesList, refs)
   }
 
-  private fun copyTable(local: KProperty1<*, *>, remote: KProperty1<*, *>) {
-    clonedRefs.unorderedCloneTableFrom(local, remote, refs)
+  private fun copyTable(connectionId: ConnectionId) {
+    clonedRefs.cloneTableFrom(connectionId, refs)
   }
 
-  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateRef(left: KProperty1<T, Sequence<SUBT>>,
-                                                                 right: KProperty1<SUBT, T?>,
-                                                                 id: PId<T>,
-                                                                 updateTo: Sequence<SUBT>) {
-    copyTable(left, right)
-    clonedRefs.updateRef(left, right, id.arrayId, updateTo)
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToMany(connectionId: ConnectionId, id: PId<T>, updateTo: Sequence<SUBT>) {
+    copyTable(connectionId)
+    clonedRefs.updateOneToMany(connectionId, id.arrayId, updateTo)
   }
 
-  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateBackRef(left: KProperty1<SUBT, T?>,
-                                                                     right: KProperty1<T, Sequence<SUBT>>,
-                                                                     id: PId<SUBT>,
-                                                                     updateTo: T?) {
-    copyTable(left, right)
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateManyToOne(connectionId: ConnectionId, id: PId<SUBT>, updateTo: T?) {
+    copyTable(connectionId)
     if (updateTo != null) {
-      clonedRefs.updateRef(left, right, id.arrayId, sequenceOf(updateTo))
+      clonedRefs.updateManyToOne(connectionId, id.arrayId, updateTo)
     }
     else {
-      clonedRefs.remove(left, right, id.arrayId)
+      clonedRefs.removeManyToOne(connectionId, id.arrayId)
     }
   }
 
@@ -307,7 +293,7 @@ class PEntityStorageBuilder(
 
   override fun toStorage(): TypedEntityStorage {
     val newEntities = origStorage.entitiesByType.join(modified)
-    val newRefs = origStorage.refs.joinWith(clonedRefs)
+    val newRefs = origStorage.refs.overlapBy(clonedRefs)
     return PEntityStorage(newEntities, newRefs)
   }
 

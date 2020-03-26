@@ -1,88 +1,81 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.pstorage.containers.IntIntBiMultiMap
+import com.intellij.workspace.api.TypedEntity
+import com.intellij.workspace.api.pstorage.containers.IntIntBiMap
 import com.intellij.workspace.api.pstorage.containers.IntIntMultiMap
-import kotlin.reflect.KProperty1
+import gnu.trove.TIntObjectHashMap
 
-open class RefsTable(
-  protected open val container: Map<Pair<KProperty1<*, *>, KProperty1<*, *>>, IntIntBiMultiMap>
+inline class ConnectionId(val id: Int)
+
+open class RefsTable private constructor(
+  protected open val oneToManyContainer: Map<ConnectionId, IntIntBiMap>,
+  protected val isHardLink: TIntObjectHashMap<Boolean>
 ) {
 
-  constructor() : this(mapOf())
-
-  operator fun get(local: KProperty1<*, *>, remote: KProperty1<*, *>, localIndex: Int): IntIntMultiMap.IntSequence? {
-    val searchByKeys = this[local, remote]
-    if (searchByKeys != null) {
-      return searchByKeys.getValues(localIndex)
-    }
-
-    val searchByValues = this[remote, local]
-    if (searchByValues != null) {
-      return searchByValues.getKeys(localIndex)
-    }
-
-    return null
+  fun checkConnectionId(connectionId: ConnectionId, isHard: Boolean) {
+    if (connectionId.id in isHardLink) return
+    isHardLink.put(connectionId.id, isHard)
   }
 
-  operator fun contains(other: Pair<KProperty1<*, *>, KProperty1<*, *>>) = other in container
+  constructor() : this(HashMap(), TIntObjectHashMap())
 
-  operator fun get(left: KProperty1<*, *>, right: KProperty1<*, *>) = container[left to right]
+  internal fun getOneToManyTable(connectionId: ConnectionId): IntIntBiMap? {
+    return oneToManyContainer[connectionId]
+  }
 
-  fun joinWith(other: RefsTable): RefsTable = RefsTable(this.container + other.container)
+  fun getOneToMany(connectionId: ConnectionId, localIndex: Int): IntIntMultiMap.IntSequence? {
+    // TODO: 26.03.2020 What about missing values?
+    return oneToManyContainer[connectionId]?.getKeys(localIndex)
+  }
+
+  fun <T : TypedEntity> getManyToOne(connectionId: ConnectionId, localIndex: Int, transformer: (Int) -> T?): T? {
+    val res = oneToManyContainer[connectionId]?.get(localIndex) ?: return null
+    if (res == -1) return null
+    return transformer(res)
+  }
+
+  fun overlapBy(other: RefsTable): RefsTable = RefsTable(
+    this.oneToManyContainer + other.oneToManyContainer,
+    TIntObjectHashMap<Boolean>().also { map ->
+      this.isHardLink.forEachEntry { k, v -> map.put(k, v) }
+      other.isHardLink.forEachEntry { k, v -> map.put(k, v) }
+    }
+  )
 }
 
 class MutableRefsTable : RefsTable() {
-  override val container: MutableMap<Pair<KProperty1<*, *>, KProperty1<*, *>>, IntIntBiMultiMap> = mutableMapOf()
+  override val oneToManyContainer: MutableMap<ConnectionId, IntIntBiMap> = HashMap()
 
-  fun remove(left: KProperty1<*, *>,
-             right: KProperty1<*, *>,
-             id: Int) {
-    if (left to right in container) {
-      this[left, right]!!.removeKey(id)
+  fun removeManyToOne(connectionId: ConnectionId, id: Int) {
+    oneToManyContainer[connectionId]?.removeKey(id)
+  }
+
+  fun <SUBT : PTypedEntity<SUBT>> updateOneToMany(connectionId: ConnectionId, id: Int, updateTo: Sequence<SUBT>) {
+    val table = if (connectionId in oneToManyContainer) {
+      oneToManyContainer[connectionId]!!.also { it.removeValue(id) }
     }
-    else if (right to left in container) {
-      this[right, left]!!.removeValue(id)
+    else {
+      IntIntBiMap().also { oneToManyContainer[connectionId] = it }
+    }
+    updateTo.forEach { table.put(it.id.arrayId, id) }
+  }
+
+  fun <T : PTypedEntity<T>> updateManyToOne(connectionId: ConnectionId, id: Int, updateTo: T) {
+    val table = if (connectionId in oneToManyContainer) {
+      oneToManyContainer[connectionId]!!.also { it.removeKey(id) }
+    }
+    else {
+      IntIntBiMap().also { oneToManyContainer[connectionId] = it }
+    }
+    table.put(id, updateTo.id.arrayId)
+  }
+
+  fun cloneTableFrom(connectionId: ConnectionId, other: RefsTable) {
+    other.getOneToManyTable(connectionId)?.let {
+      oneToManyContainer[connectionId] = it.copy()
     }
   }
 
-  fun <E : PTypedEntity<E>> updateRef(left: KProperty1<*, *>,
-                                      right: KProperty1<*, *>,
-                                      id: Int,
-                                      updateTo: Sequence<E>) {
-    when {
-      left to right in container -> {
-        val table = this[left, right]!!
-        table.removeKey(id)
-        updateTo.forEach { table.put(id, it.id.arrayId) }
-      }
-      right to left in container -> {
-        val table = this[right, left]!!
-        table.removeValue(id)
-        updateTo.forEach { table.put(it.id.arrayId, id) }
-      }
-      else -> {
-        val table = IntIntBiMultiMap()
-        updateTo.forEach { table.put(id, it.id.arrayId) }
-        this[left, right] = table
-      }
-    }
-  }
-
-  fun unorderedCloneTableFrom(local: KProperty1<*, *>, remote: KProperty1<*, *>, other: RefsTable) {
-    if (local to remote in other) {
-      val table = other[local, remote]
-      this[local, remote] = table!!.copy()
-    }
-    else if (remote to local in other) {
-      val table = other[remote, local]
-      this[remote, local] = table!!.copy()
-    }
-  }
-
-  private operator fun set(left: KProperty1<*, *>, right: KProperty1<*, *>, value: IntIntBiMultiMap) {
-    container[left to right] = value
-  }
-
-  fun clear() = container.clear()
+  fun clear() = oneToManyContainer.clear()
 }
