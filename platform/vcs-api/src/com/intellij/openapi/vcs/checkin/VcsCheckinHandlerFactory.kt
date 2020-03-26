@@ -10,13 +10,22 @@ import com.intellij.openapi.vcs.changes.CommitContext
 abstract class VcsCheckinHandlerFactory protected constructor(val key: VcsKey) :
   BaseCheckinHandlerFactory {
 
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+  final override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     if (!panel.vcsIsAffected(key.name)) return CheckinHandler.DUMMY
 
-    return createVcsHandler(panel)
+    return createVcsHandler(panel, commitContext)
   }
 
-  protected abstract fun createVcsHandler(panel: CheckinProjectPanel): CheckinHandler
+  @Deprecated(
+    "Use `createVcsHandler(CheckinProjectPanel, CommitContext)` instead",
+    ReplaceWith("createVcsHandler(panel, commitContext)")
+  )
+  protected open fun createVcsHandler(panel: CheckinProjectPanel): CheckinHandler = throw AbstractMethodError()
+
+  protected open fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    @Suppress("DEPRECATION")
+    return createVcsHandler(panel)
+  }
 
   override fun createSystemReadyHandler(project: Project): BeforeCheckinDialogHandler? = null
 

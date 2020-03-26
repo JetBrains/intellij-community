@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
@@ -15,7 +16,7 @@ import git4idea.repo.GitRepository
 
 class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey()) {
 
-  override fun createVcsHandler(panel: CheckinProjectPanel): CheckinHandler {
+  override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return object : CheckinHandler() {
       private var active: Boolean = false
 
