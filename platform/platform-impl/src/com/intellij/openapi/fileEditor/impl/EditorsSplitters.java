@@ -21,7 +21,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -110,9 +109,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myManager = manager;
 
     myFocusWatcher = new MyFocusWatcher();
-    Disposer.register(parentDisposable, () -> {
-      myFocusWatcher.deinstall(this);
-    });
+    Disposer.register(parentDisposable, () -> myFocusWatcher.deinstall(this));
 
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
@@ -191,6 +188,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  @NotNull
   private Element writePanel(@NotNull Component comp) {
     if (comp instanceof Splitter) {
       final Splitter splitter = (Splitter)comp;
@@ -216,8 +214,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return result;
     }
     else {
-      LOG.error(comp.getClass().getName());
-      return null;
+      throw new IllegalArgumentException(comp.getClass().getName());
     }
   }
 
@@ -271,9 +268,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return;
     }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      doOpenFiles(componentRef.get());
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> doOpenFiles(componentRef.get()), ModalityState.any());
   }
 
   void doOpenFiles(@Nullable JPanel component) {
@@ -906,20 +901,20 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           .withReopeningEditorsOnStartup();
         try {
           virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
-          focusedFile = ObjectUtils.chooseNotNull(focusedFile, ProjectLocator.computeWithPreferredProject(virtualFile, myManager.getProject(), ()-> {
-            Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+          Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
 
-            boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
+          boolean isCurrentTab = Boolean.parseBoolean(file.getAttributeValue(CURRENT_IN_TAB));
 
-            fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
-            if (document != null) {
-              // This is just to make sure document reference is kept on stack till this point
-              // so that document is available for folding state deserialization in HistoryEntry constructor
-              // and that document will be created only once during file opening
-              document.putUserData(DUMMY_KEY, null);
-            }
-            return isCurrentTab ? virtualFile : null;
-          }));
+          fileEditorManager.openFileImpl4(window, virtualFile, entry, openOptions);
+          if (document != null) {
+            // This is just to make sure document reference is kept on stack till this point
+            // so that document is available for folding state deserialization in HistoryEntry constructor
+            // and that document will be created only once during file opening
+            document.putUserData(DUMMY_KEY, null);
+          }
+          if (isCurrentTab) {
+            focusedFile = virtualFile;
+          }
         }
         catch (InvalidDataException e) {
           if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -1050,10 +1045,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     EditorWindow window = splittersToFocus.getCurrentWindow();
     EditorWithProviderComposite editor = window == null ? null : window.getSelectedEditor();
     if (editor != null) {
-      JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-      if (defaultFocusedComponentInEditor != null) {
-        return defaultFocusedComponentInEditor;
-      }
+      return editor.getPreferredFocusedComponent();
     }
     return null;
   }
