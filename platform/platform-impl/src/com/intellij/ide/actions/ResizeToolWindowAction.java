@@ -133,7 +133,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   @Override
-  public void recordFeatureUsageStatistics(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
     Project project = event.getProject();
     if (project != null) {
       ToolWindow toolWindow = getToolWindow(project);
