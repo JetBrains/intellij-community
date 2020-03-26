@@ -51,10 +51,7 @@ public final class PluginsAdvertiser {
   public static final String FUS_GROUP_ID = "plugins.advertiser";
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
-  private static boolean startupActivityCompleted = false;
-  static void startupActivityCompleted() {
-    startupActivityCompleted = true;
-  }
+  private static boolean extensionsHaveBeenUpdated = false;
 
   @Nullable
   public static List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) throws IOException {
@@ -148,7 +145,7 @@ public final class PluginsAdvertiser {
   }
 
   public static @Nullable KnownExtensions loadExtensions() {
-    if (!startupActivityCompleted) return null;
+    if (!extensionsHaveBeenUpdated) return null;
     KnownExtensions knownExtensions = ourKnownExtensions.get();
     if (knownExtensions != null) return knownExtensions;
     try {
@@ -175,6 +172,7 @@ public final class PluginsAdvertiser {
       FileUtil.ensureCanCreateFile(plugins);
     }
     JDOMUtil.write(XmlSerializer.serialize(new KnownExtensions(extensions)), plugins);
+    extensionsHaveBeenUpdated = true;
   }
 
   public static void openDownloadPage() {
