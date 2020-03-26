@@ -618,7 +618,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.removeFromSideBar(id)
     }
 
-    override fun recordFeatureUsageStatistics(event: AnActionEvent, data: FeatureUsageData) {
+    override fun addAdditionalUsageData(event: AnActionEvent, data: FeatureUsageData) {
       data.addData("toolwindow", id)
     }
   }
@@ -644,7 +644,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.setContentUiType(id, if (state) ToolWindowContentUiType.COMBO else ToolWindowContentUiType.TABBED)
     }
 
-    override fun recordFeatureUsageStatistics(event: AnActionEvent, data: FeatureUsageData) {
+    override fun addAdditionalUsageData(event: AnActionEvent, data: FeatureUsageData) {
       data.addData("toolwindow", id)
     }
   }

@@ -152,7 +152,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
   }
 
   @Override
-  public void recordFeatureUsageStatistics(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
     ToolWindow toolWindow = getToolWindow(event);
     if (toolWindow != null) {
       data.addData("toolwindow", toolWindow.getId());

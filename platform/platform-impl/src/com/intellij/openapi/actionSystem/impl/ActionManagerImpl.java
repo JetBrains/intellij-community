@@ -1437,7 +1437,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         featureUsageData.addCurrentFile(language);
       }
       if (action instanceof FusAwareAction) {
-        ((FusAwareAction) action).recordFeatureUsageStatistics(event, featureUsageData);
+        ((FusAwareAction) action).addAdditionalUsageData(event, featureUsageData);
       }
     });
     for (AnActionListener listener : myActionListeners) {

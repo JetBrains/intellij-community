@@ -6,5 +6,5 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
 public interface FusAwareAction {
-  void recordFeatureUsageStatistics(@NotNull AnActionEvent event, @NotNull FeatureUsageData data);
+  void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data);
 }

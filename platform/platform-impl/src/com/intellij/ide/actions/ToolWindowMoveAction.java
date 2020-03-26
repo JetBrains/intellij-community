@@ -165,7 +165,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   }
 
   @Override
-  public void recordFeatureUsageStatistics(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
     ToolWindow toolWindow = getToolWindow(event);
     if (toolWindow != null) {
       data.addData("toolwindow", toolWindow.getId());

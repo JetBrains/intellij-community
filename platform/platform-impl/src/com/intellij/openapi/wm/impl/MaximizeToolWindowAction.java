@@ -62,7 +62,7 @@ public class MaximizeToolWindowAction extends AnAction implements DumbAware, Fus
   }
 
   @Override
-  public void recordFeatureUsageStatistics(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
     ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
     if (toolWindow != null) {
       data.addData("toolwindow", toolWindow.getId());
