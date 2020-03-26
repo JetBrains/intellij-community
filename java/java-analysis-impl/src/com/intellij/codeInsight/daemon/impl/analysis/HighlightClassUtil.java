@@ -269,9 +269,9 @@ public class HighlightClassUtil {
    * @return true if given name cannot be used as a type name at given language level
    */
   public static boolean isRestrictedIdentifier(String typeName, @NotNull LanguageLevel level) {
-    return PsiKeyword.VAR.equals(typeName) && HighlightUtil.Feature.LVTI.isSufficient(level) ||
-           PsiKeyword.YIELD.equals(typeName) && HighlightUtil.Feature.SWITCH_EXPRESSION.isSufficient(level) ||
-           PsiKeyword.RECORD.equals(typeName) && HighlightUtil.Feature.RECORDS.isSufficient(level);
+    return PsiKeyword.VAR.equals(typeName) && HighlightingFeature.LVTI.isSufficient(level) ||
+           PsiKeyword.YIELD.equals(typeName) && HighlightingFeature.SWITCH_EXPRESSION.isSufficient(level) ||
+           PsiKeyword.RECORD.equals(typeName) && HighlightingFeature.RECORDS.isSufficient(level);
   }
 
   static HighlightInfo checkClassAndPackageConflict(@NotNull PsiClass aClass) {

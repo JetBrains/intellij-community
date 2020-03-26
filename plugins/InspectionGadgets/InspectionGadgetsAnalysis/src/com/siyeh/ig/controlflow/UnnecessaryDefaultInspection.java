@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -86,7 +86,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(PsiFile file) {
-    return !onlyReportSwitchExpressions || HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(file);
+    return !onlyReportSwitchExpressions || HighlightingFeature.ENHANCED_SWITCH.isAvailable(file);
   }
 
   @Override

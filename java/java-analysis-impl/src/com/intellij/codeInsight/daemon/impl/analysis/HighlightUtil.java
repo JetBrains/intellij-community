@@ -222,7 +222,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                                    @NotNull PsiFile file) {
     PsiTypeElement castTypeElement = expression.getCastType();
     if (castTypeElement != null && isIntersection(castTypeElement, castTypeElement.getType())) {
-      HighlightInfo info = checkFeature(expression, Feature.INTERSECTION_CASTS, languageLevel, file);
+      HighlightInfo info = checkFeature(expression, HighlightingFeature.INTERSECTION_CASTS, languageLevel, file);
       if (info != null) return info;
 
       final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
@@ -863,7 +863,7 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
     }
 
-    if (Feature.ENHANCED_SWITCH.isSufficient(level)) {
+    if (HighlightingFeature.ENHANCED_SWITCH.isSufficient(level)) {
       PsiSwitchExpression expression = PsiImplUtil.findEnclosingSwitchExpression(statement);
       if (expression != null && (target == null || PsiTreeUtil.isAncestor(target, expression, true))) {
         String message = JavaErrorBundle.message(crossingKey);
@@ -1066,19 +1066,19 @@ public class HighlightUtil extends HighlightUtilBase {
     if (file != null) {
       if (isFP) {
         if (text.startsWith(PsiLiteralUtil.HEX_PREFIX)) {
-          final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS, level, file);
+          final HighlightInfo info = checkFeature(expression, HighlightingFeature.HEX_FP_LITERALS, level, file);
           if (info != null) return info;
         }
       }
       if (isInt) {
         if (text.startsWith(PsiLiteralUtil.BIN_PREFIX)) {
-          final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS, level, file);
+          final HighlightInfo info = checkFeature(expression, HighlightingFeature.BIN_LITERALS, level, file);
           if (info != null) return info;
         }
       }
       if (isInt || isFP) {
         if (text.contains("_")) {
-          HighlightInfo info = checkFeature(expression, Feature.UNDERSCORES, level, file);
+          HighlightInfo info = checkFeature(expression, HighlightingFeature.UNDERSCORES, level, file);
           if (info != null) return info;
           info = checkUnderscores(expression, text, isInt);
           if (info != null) return info;
@@ -1220,13 +1220,13 @@ public class HighlightUtil extends HighlightUtilBase {
         }
         else {
           if (file != null && containsUnescaped(text, "\\\n")) {
-            final HighlightInfo info = checkFeature(expression, Feature.TEXT_BLOCK_ESCAPES, level, file);
+            final HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
             if (info != null) return info;
           }
         }
       }
       if (file != null && containsUnescaped(text, "\\s")) {
-        final HighlightInfo info = checkFeature(expression, Feature.TEXT_BLOCK_ESCAPES, level, file);
+        final HighlightInfo info = checkFeature(expression, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
         if (info != null) return info;
       }
     }
@@ -2662,7 +2662,7 @@ public class HighlightUtil extends HighlightUtilBase {
       while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
         if (element instanceof PsiSwitchLabeledRuleStatement) {
           if (!levelChecked) {
-            HighlightInfo info = checkFeature(element, Feature.ENHANCED_SWITCH, languageLevel, file);
+            HighlightInfo info = checkFeature(element, HighlightingFeature.ENHANCED_SWITCH, languageLevel, file);
             if (info != null) return info;
             levelChecked = true;
           }
@@ -2683,7 +2683,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (!levelChecked && element instanceof PsiSwitchLabelStatementBase) {
           PsiExpressionList values = ((PsiSwitchLabelStatementBase)element).getCaseValues();
           if (values != null && values.getExpressionCount() > 1) {
-            HighlightInfo info = checkFeature(values, Feature.ENHANCED_SWITCH, languageLevel, file);
+            HighlightInfo info = checkFeature(values, HighlightingFeature.ENHANCED_SWITCH, languageLevel, file);
             if (info != null) return info;
             levelChecked = true;
           }
@@ -3206,85 +3206,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(init).descriptionAndTooltip(message).create();
   }
 
-  public enum Feature {
-    GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
-    ANNOTATIONS(LanguageLevel.JDK_1_5, "feature.annotations"),
-    STATIC_IMPORTS(LanguageLevel.JDK_1_5, "feature.static.imports"),
-    FOR_EACH(LanguageLevel.JDK_1_5, "feature.for.each"),
-    VARARGS(LanguageLevel.JDK_1_5, "feature.varargs"),
-    HEX_FP_LITERALS(LanguageLevel.JDK_1_5, "feature.hex.fp.literals"),
-    DIAMOND_TYPES(LanguageLevel.JDK_1_7, "feature.diamond.types"),
-    MULTI_CATCH(LanguageLevel.JDK_1_7, "feature.multi.catch"),
-    TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources"),
-    BIN_LITERALS(LanguageLevel.JDK_1_7, "feature.binary.literals"),
-    UNDERSCORES(LanguageLevel.JDK_1_7, "feature.underscores.in.literals"),
-    EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods"),
-    METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references"),
-    LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
-    TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
-    RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
-    INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
-    STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
-    REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
-    MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
-    LVTI(LanguageLevel.JDK_10, "feature.lvti"),
-    ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"){
-      @Override
-      boolean isSufficient(LanguageLevel useSiteLevel) {
-        return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
-      }
-
-      @Override
-      LanguageLevel getStandardLevel() {
-        return LanguageLevel.JDK_14;
-      }
-    },
-    SWITCH_EXPRESSION(LanguageLevel.JDK_13_PREVIEW, "feature.switch.expressions") {
-      @Override
-      boolean isSufficient(LanguageLevel useSiteLevel) {
-        return useSiteLevel.isAtLeast(LanguageLevel.JDK_13_PREVIEW);//enabled in jdk 14 as standard
-      }
-
-      @Override
-      LanguageLevel getStandardLevel() {
-        return LanguageLevel.JDK_14;
-      }
-    },
-    TEXT_BLOCKS(LanguageLevel.JDK_13_PREVIEW, "feature.text.blocks"),
-    RECORDS(LanguageLevel.JDK_14_PREVIEW, "feature.records"),
-    PATTERNS(LanguageLevel.JDK_14_PREVIEW, "feature.patterns.instanceof"),
-    TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_14_PREVIEW, "feature.text.block.escape.sequences");
-
-    private final LanguageLevel level;
-    @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
-    private final String key;
-
-    Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String key) {
-      this.level = level;
-      this.key = key;
-    }
-
-    /**
-     * @param element a valid PsiElement to check (it's better to supply PsiFile if already known; any element is accepted for convenience)
-     * @return true if this feature is available in the PsiFile the supplied element belongs to
-     */
-    public boolean isAvailable(PsiElement element) {
-      return isSufficient(PsiUtil.getLanguageLevel(element));
-    }
-
-    boolean isSufficient(LanguageLevel useSiteLevel) {
-      return useSiteLevel.isAtLeast(level) && (!level.isPreview() || useSiteLevel.isPreview());
-    }
-
-    /**
-     * Override if feature was preview and then accepted as standard
-     */
-    LanguageLevel getStandardLevel() {
-      return level.isPreview() ? null : level;
-    }
-  }
-
-  private static LanguageLevel getApplicableLevel(PsiFile file, Feature feature) {
+  private static LanguageLevel getApplicableLevel(PsiFile file, HighlightingFeature feature) {
     LanguageLevel standardLevel = feature.getStandardLevel();
     if (standardLevel != null && feature.level.isPreview()) {
       JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
@@ -3296,7 +3218,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   static HighlightInfo checkFeature(@NotNull PsiElement element,
-                                    @NotNull Feature feature,
+                                    @NotNull HighlightingFeature feature,
                                     @NotNull LanguageLevel level,
                                     @NotNull PsiFile file) {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
@@ -3311,7 +3233,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   private static String getUnsupportedFeatureMessage(@NotNull PsiElement element,
-                                                     @NotNull Feature feature,
+                                                     @NotNull HighlightingFeature feature,
                                                      @NotNull LanguageLevel level,
                                                      @NotNull PsiFile file) {
     String name = JavaAnalysisBundle.message(feature.key);

@@ -46,7 +46,7 @@ public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
-                                          RefCountHolder refCountHolder) {
+                                          @Nullable RefCountHolder refCountHolder) {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
     if (annotation == null) return null;
     PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
@@ -353,7 +353,7 @@ public class AnnotationsHighlightUtil {
     }
 
     if (!(owner instanceof PsiModifierList)) {
-      HighlightInfo info = HighlightUtil.checkFeature(annotation, HighlightUtil.Feature.TYPE_ANNOTATIONS, level, file);
+      HighlightInfo info = HighlightUtil.checkFeature(annotation, HighlightingFeature.TYPE_ANNOTATIONS, level, file);
       if (info != null) return info;
     }
 

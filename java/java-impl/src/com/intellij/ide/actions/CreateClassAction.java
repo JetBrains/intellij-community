@@ -4,7 +4,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -39,7 +39,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       .setTitle(JavaBundle.message("action.create.new.class"))
       .addKind(JavaPsiBundle.message("node.class.tooltip"), PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)
       .addKind(JavaPsiBundle.message("node.interface.tooltip"), PlatformIcons.INTERFACE_ICON, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
-    if (HighlightUtil.Feature.RECORDS.isAvailable(directory)) {
+    if (HighlightingFeature.RECORDS.isAvailable(directory)) {
       builder.addKind(JavaPsiBundle.message("node.record.tooltip"), PlatformIcons.RECORD_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
     }
     LanguageLevel level = PsiUtil.getLanguageLevel(directory);
