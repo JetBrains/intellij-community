@@ -62,7 +62,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
         String epName = extensionPoint.getEffectiveQualifiedName();
         if (LocalInspectionEP.LOCAL_INSPECTION.getName().equals(epName) || InspectionEP.GLOBAL_INSPECTION.getName().equals(epName)) {
-          if (isInternal(element) || getAttribute(element, "shortName") == null) return;
+          if (isInternal(element)) {
+            return;
+          }
+          GenericAttributeValue implementationClass = getAttribute(element, "implementationClass");
+          if (implementationClass == null || implementationClass.getStringValue() == null) {
+            return;
+          }
           GenericAttributeValue displayNameAttr = getAttribute(element, "displayName");
           if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
             holder.createProblem(element, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getText(), null, new InspectionI18NQuickFix());
@@ -202,7 +208,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (displayName == null) return;
       xml.setAttribute("displayName", null);
       String shortName = xml.getAttributeValue( "shortName");
-      if (shortName == null) return;
+      if (shortName == null) {
+        String implementationClass = xml.getAttributeValue("implementationClass");
+        if (implementationClass == null) {
+          return;
+        }
+        shortName = InspectionProfileEntry.getShortName(implementationClass);
+      }
       String key = "inspection." + StringUtil.join(NameUtilCore.splitNameIntoWords(shortName), s -> StringUtil.decapitalize(s), ".") + ".display.name";
       xml.setAttribute("key", key);
       xml.setAttribute("bundle", getBundleQName(project, propertiesFile));
