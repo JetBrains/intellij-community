@@ -35,7 +35,8 @@
                     dynamic="true"/>
 
     <extensionPoint name="vcsCheckinHandlerFactory"
-                    interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"/>
+                    interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"
+                    dynamic="true"/>
 
     <extensionPoint name="unresolvedMergeCheckProvider"
                     interface="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider"

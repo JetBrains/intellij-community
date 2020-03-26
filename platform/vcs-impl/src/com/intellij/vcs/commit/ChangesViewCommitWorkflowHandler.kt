@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
@@ -76,6 +77,7 @@ class ChangesViewCommitWorkflowHandler(
 
     ProjectManager.TOPIC.subscribe(this, this)
     CheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
+    VcsCheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
