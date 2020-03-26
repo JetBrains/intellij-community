@@ -14,20 +14,25 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.compiler.JavacRunner;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
@@ -41,6 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -282,5 +289,32 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   @Override
   protected Location getLocation(SuspendContext context) {
     return ((SuspendContextImpl)context).getLocation();
+  }
+
+  @NotNull
+  public static String getIdeaRtPath() {
+    if (PluginManagerCore.isRunningFromSources()) {
+      Class<JavacRunner> aClass = JavacRunner.class;
+      try {
+        String resourcePath = aClass.getName().replace('.', '/') + ".class";
+        Enumeration<URL> urls = aClass.getClassLoader().getResources(resourcePath);
+        while (urls.hasMoreElements()) {
+          URL url = urls.nextElement();
+          // prefer dir
+          if (url.getProtocol().equals(URLUtil.FILE_PROTOCOL)) {
+            String path = URLUtil.urlToFile(url).getPath();
+            String testPath = path.replace('\\', '/');
+            String testResourcePath = resourcePath.replace('\\', '/');
+            if (StringUtilRt.endsWithIgnoreCase(testPath, testResourcePath)) {
+              return path.substring(0, path.length() - resourcePath.length() - 1);
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    return JavaSdkUtil.getIdeaRtJarPath();
   }
 }
