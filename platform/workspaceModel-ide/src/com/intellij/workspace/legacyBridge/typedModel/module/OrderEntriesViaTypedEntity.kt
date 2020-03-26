@@ -2,7 +2,6 @@ package com.intellij.workspace.legacyBridge.typedModel.module
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -19,10 +18,7 @@ import com.intellij.workspace.api.LibraryId
 import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.api.ModuleDependencyItem
 import com.intellij.workspace.api.ModuleId
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
-import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
+import com.intellij.workspace.legacyBridge.intellij.*
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -104,8 +100,12 @@ internal class ModuleOrderEntryViaTypedEntity(
 
   override fun getModule(): Module? {
     // TODO It's better to resolve modules via id when it'll be possible
-    // val module = moduleDependencyItem.module.resolve(model.storage)?.findModule(model.module.project)
-    val module = ModuleManager.getInstance(module.project).findModuleByName(moduleName)
+    val moduleManager = ModuleManager.getInstance(module.project) as LegacyBridgeModuleManagerComponent
+    val module = moduleManager.findModuleByName(moduleName) ?: {
+      getRootModel().storage.resolve(moduleDependencyItem.module)?.let {
+        moduleManager.findUncommittedModuleByName(it.name)
+      }
+    }.invoke()
     return getRootModel().accessor.getModule(module, moduleName)
   }
 

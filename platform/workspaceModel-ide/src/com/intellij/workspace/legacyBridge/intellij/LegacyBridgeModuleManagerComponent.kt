@@ -48,11 +48,12 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
   private val idToModule = Collections.synchronizedMap(LinkedHashMap<ModuleId, LegacyBridgeModule>())
   internal val unloadedModules: MutableMap<String, UnloadedModuleDescriptionImpl> = mutableMapOf()
-  private val newModuleInstances = mutableMapOf<ModuleId, LegacyBridgeModule>()
+  private val uncommittedModules = mutableMapOf<String, LegacyBridgeModule>()
 
   override fun dispose() {
     val modules = idToModule.values.toList()
     idToModule.clear()
+    uncommittedModules.clear()
 
     for (module in modules) {
       Disposer.dispose(module)
@@ -154,7 +155,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
                 is EntityChange.Added -> {
                   val moduleId = change.entity.persistentId()
-                  val alreadyCreatedModule = newModuleInstances.remove(moduleId)
+                  val alreadyCreatedModule = uncommittedModules.remove(moduleId.name)
                   val module = if (alreadyCreatedModule != null) {
                     unloadedModulesSet.remove(change.entity.name)
                     unloadedModules.remove(change.entity.name)
@@ -238,27 +239,12 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                   newModuleLibraries.clear()
                 }
               }
-
-              if (newModuleInstances.isNotEmpty()) {
-                LOG.error("Not all module instances were handled in change event. Leftovers:\n" +
-                          newModuleInstances.keys.joinToString(separator = "\n"))
-                newModuleInstances.clear()
-              }
-
               incModificationCount()
             }
           }
         }
       })
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, FacetEntityChangeListener(project))
-    }
-  }
-
-  @ApiStatus.Internal
-  internal fun setNewModuleInstances(addedInstances: List<LegacyBridgeModule>) {
-    if (newModuleInstances.isNotEmpty()) error("newModuleInstances are not empty")
-    for (instance in addedInstances) {
-      newModuleInstances[instance.moduleEntityId] = instance
     }
   }
 
@@ -451,6 +437,19 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun getSortedModules(): Array<Module> = entityStore.cachedValue(sortedModulesValue, idToModule.keys.toSet())
 
   override fun findModuleByName(name: String): Module? = idToModule[ModuleId(name)]
+
+  @ApiStatus.Internal
+  internal fun findUncommittedModuleByName(name: String): Module? = uncommittedModules[name]
+
+  @ApiStatus.Internal
+  internal fun addUncommittedModule(module: LegacyBridgeModule) {
+    uncommittedModules[module.name] = module
+  }
+
+  @ApiStatus.Internal
+  internal fun removeUncommittedModule(name: String) {
+    uncommittedModules.remove(name)
+  }
 
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
     val modifiableModel = modifiableModel
