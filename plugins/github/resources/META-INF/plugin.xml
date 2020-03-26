@@ -124,7 +124,7 @@
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
     </group>
-    <group>
+    <group id="Githun.PullRequest.Commits.GroupBy">
       <action id="Github.PullRequest.Zip.Commits.Toggle"
               class="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser$ToggleZipCommitsAction"/>
 
