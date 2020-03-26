@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.marketplace.PluginsMetaLoader
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl

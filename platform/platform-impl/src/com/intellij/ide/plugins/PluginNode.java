@@ -285,7 +285,7 @@ public class PluginNode implements IdeaPluginDescriptor {
     myTags = new ArrayList<>(tags);
   }
 
-  void addTags(@NotNull String tag) {
+  public void addTags(@NotNull String tag) {
     (myTags != null ? myTags : (myTags = new ArrayList<>())).add(tag);
   }
 

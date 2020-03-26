@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.PluginsMetaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -25,7 +26,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.intellij.ide.plugins.PluginsMetaLoader.parsePluginList;
+import static com.intellij.ide.plugins.marketplace.PluginsMetaLoader.parsePluginList;
 import static java.util.Collections.singletonMap;
 
 /**
