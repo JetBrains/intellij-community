@@ -16,7 +16,7 @@ class IntIntMultiMap(
 
   operator fun get(key: Int): IntSequence {
     val idx = links[key]
-    if (idx == -1) return EmptyIntSequence
+    if (idx == -1) return IntSequence.Empty
 
     return IntSequence(values, idx)
   }
@@ -233,13 +233,13 @@ class IntIntMultiMap(
         }
       }
     }
-  }
 
-  object EmptyIntSequence : IntIntMultiMap.IntSequence(null, 0) {
-    override fun hasNext(): Boolean = false
+    object Empty : IntSequence(null, 0) {
+      override fun hasNext(): Boolean = false
 
-    override fun next(): Int = throw NoSuchElementException()
+      override fun next(): Int = throw NoSuchElementException()
 
-    override fun <T> map(transformation: (Int) -> T): Sequence<T> = emptySequence()
+      override fun <T> map(transformation: (Int) -> T): Sequence<T> = emptySequence()
+    }
   }
 }
