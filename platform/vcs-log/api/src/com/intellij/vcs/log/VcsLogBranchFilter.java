@@ -11,7 +11,7 @@ import static com.intellij.vcs.log.VcsLogFilterCollection.BRANCH_FILTER;
 /**
  * Tells to filter by branches with given names.
  */
-public interface VcsLogBranchFilter extends VcsLogFilter {
+public interface VcsLogBranchFilter extends VcsLogBranchLikeFilter {
   /**
    * Tells if a branch matches the filter.
    *

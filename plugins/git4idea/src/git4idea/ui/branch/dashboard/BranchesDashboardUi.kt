@@ -26,6 +26,7 @@ import com.intellij.util.ui.StatusText.getDefaultEmptyText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
+import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterCollection.*
 import com.intellij.vcs.log.data.VcsLogData
@@ -84,9 +85,9 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     val branchNames = tree.getSelectedBranchNames()
     val oldFilters = ui.filterUi.filters
     val newFilters = if (branchNames.isNotEmpty()) {
-      oldFilters.with(VcsLogFilterObject.fromBranches(branchNames)).without(RANGE_FILTER).without(REVISION_FILTER)
+      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(branchNames))
     } else {
-      oldFilters.without(BRANCH_FILTER).without(RANGE_FILTER).without(REVISION_FILTER)
+      oldFilters.without(VcsLogBranchLikeFilter::class.java)
     }
     ui.filterUi.filters = newFilters
   }
