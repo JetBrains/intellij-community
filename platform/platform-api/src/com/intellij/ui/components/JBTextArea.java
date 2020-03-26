@@ -81,6 +81,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
 
   @Override
   public Dimension getPreferredSize() {
+    if (isPreferredSizeSet()) return super.getPreferredSize();
     int width = 0;
     FontMetrics fontMetrics = getFontMetrics(getFont());
     for (String line : getText().split("\n")) {
