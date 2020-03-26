@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -167,7 +166,7 @@ class ClosureFolding {
 
   private static boolean hasOnlyOneLambdaMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
     PsiField[] fields = anonymousClass.getFields();
-    if (fields.length != 0 && (fields.length != 1 || !HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) ||
+    if (fields.length != 0 && (fields.length != 1 || !CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) ||
                                !fields[0].hasModifierProperty(PsiModifier.STATIC))) {
       return false;
     }
