@@ -1000,7 +1000,7 @@ public class LambdaUtil {
     return true;
   }
 
-  public static PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
+  public static @NotNull PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
     String canonicalText = type.getCanonicalText();
     if (!PsiUtil.isLanguageLevel8OrHigher(expression)) {
       final String arrayInitializer = "new " + canonicalText + "[]{0}";
