@@ -43,7 +43,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +63,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new THashMap<>();
 
-  // value==1: no info if the parameter was reassigned (but the parameter is present in current file), value==2: parameter was reassigned
-  private final TObjectIntHashMap<PsiParameter> myReassignedParameters = new TObjectIntHashMap<>();
+  private enum ReassignedState {
+    DUNNO, INSIDE_FILE, REASSIGNED
+  }
+  private final Map<PsiParameter, ReassignedState> myReassignedParameters = new THashMap<>();
 
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new THashMap<>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<>();
@@ -688,7 +689,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
       boolean isMethodParameter = variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiMethod;
       if (isMethodParameter) {
-        myReassignedParameters.put((PsiParameter)variable, 1); // mark param as present in current file
+        myReassignedParameters.put((PsiParameter)variable, ReassignedState.INSIDE_FILE); // mark param as present in current file
       }
       else {
         // method params are highlighted in visitMethod since we should make sure the method body was visited before
@@ -917,12 +918,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
 
     for (PsiParameter parameter : parameters) {
-      int info = myReassignedParameters.get(parameter);
-      if (info == 0) continue; // out of this file
+      ReassignedState info = myReassignedParameters.getOrDefault(parameter, ReassignedState.DUNNO);
+      if (info == ReassignedState.DUNNO) continue; // out of this file
 
       PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
       if (nameIdentifier != null) {
-        if (info == 2) { // reassigned
+        if (info == ReassignedState.REASSIGNED) { // reassigned
           myHolder.add(HighlightNamesUtil.highlightReassignedVariable(parameter, nameIdentifier));
         }
         else {
@@ -1218,7 +1219,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
 
       if (variable instanceof PsiParameter && ref instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
-        myReassignedParameters.put((PsiParameter)variable, 2);
+        myReassignedParameters.put((PsiParameter)variable, ReassignedState.REASSIGNED);
       }
 
       final TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
@@ -1825,7 +1826,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     try {
       boolean reassigned;
       if (variable instanceof PsiParameter) {
-        reassigned = myReassignedParameters.get((PsiParameter)variable) == 2;
+        reassigned = myReassignedParameters.get(variable) == ReassignedState.REASSIGNED;
       }
       else  {
         reassigned = HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems);
