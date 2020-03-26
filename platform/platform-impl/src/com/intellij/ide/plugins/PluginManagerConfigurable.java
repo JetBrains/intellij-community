@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -1516,14 +1517,24 @@ public class PluginManagerConfigurable
         return myCustomRepositoryPluginsMap;
       }
     }
-    List<IdeaPluginDescriptor> list = new ArrayList<>();
-    Map<String, List<IdeaPluginDescriptor>> custom = new HashMap<>();
+    Map<PluginId, IdeaPluginDescriptor> latestCustomPluginsAsMap = new HashMap<>();
+    Map<String, List<IdeaPluginDescriptor>> customRepositoryPluginsMap = new HashMap<>();
     for (String host : RepositoryHelper.getPluginHosts()) {
       try {
         if (host != null) {
           List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null);
-          list.addAll(descriptors);  // TODO to extract to method - list should contains only latest version
-          custom.put(host, descriptors);
+          for (IdeaPluginDescriptor descriptor : descriptors) {
+            PluginId pluginId = descriptor.getPluginId();
+            IdeaPluginDescriptor savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
+            if (savedDescriptor == null) {
+              latestCustomPluginsAsMap.put(pluginId, descriptor);
+            } else {
+              if (StringUtil.compareVersionNumbers(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
+                latestCustomPluginsAsMap.put(pluginId, descriptor);
+              }
+            }
+          }
+          customRepositoryPluginsMap.put(host, descriptors);
         }
       }
       catch (IOException e) {
@@ -1537,8 +1548,8 @@ public class PluginManagerConfigurable
 
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsMap == null) {
-        myCustomRepositoryPluginsMap = custom;
-        myCustomRepositoryPluginsList = list;
+        myCustomRepositoryPluginsMap = customRepositoryPluginsMap;
+        myCustomRepositoryPluginsList = new ArrayList<>(latestCustomPluginsAsMap.values());
       }
       return myCustomRepositoryPluginsMap;
     }
