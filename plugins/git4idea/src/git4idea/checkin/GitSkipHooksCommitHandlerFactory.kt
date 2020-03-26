@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
 import com.intellij.openapi.util.Key
@@ -51,7 +51,7 @@ private class GitSkipHooksConfigurationPanel(
 
   override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)
 
-  override fun onChangeListSelected(list: LocalChangeList?) {
+  override fun onChangeListSelected(list: LocalChangeList) {
     if (runHooks.isEnabled) selectedState = runHooks.isSelected
     val affectedGitRoots = panel.roots.intersect(setOf(*ProjectLevelVcsManager.getInstance(panel.project).getRootsUnderVcs(vcs)))
     val repositoryManager = GitRepositoryManager.getInstance(panel.project)
