@@ -90,7 +90,7 @@ class PFolderEntity(
   val snapshot: PEntityStorage
 ) : PTypedEntity<PFolderEntity> {
 
-  val children: Sequence<PSubFolderEntity> by HardRef(snapshot, PSubFolderEntity::parent)
+  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::parent)
 
   override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
 
@@ -118,7 +118,7 @@ class PSubFolderEntity(
   val snapshot: PEntityStorage
 ) : PTypedEntity<PSubFolderEntity> {
 
-  val parent: PFolderEntity? by HardBackRef(snapshot, PFolderEntity::children)
+  val parent: PFolderEntity? by ManyToOne.HardRef(snapshot, PFolderEntity::children)
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     TODO("Not yet implemented")
@@ -140,7 +140,7 @@ class PFolderModifiableEntity(val original: PFolderEntityData,
       original.data = value
     }
 
-  var children: Sequence<PSubFolderEntity> by MutableHardRef(diff, PFolderEntity::children, PSubFolderEntity::parent)
+  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(diff, PFolderEntity::children, PSubFolderEntity::parent)
 
   override val id: PId<PFolderEntity> = PId(
     original.id, PFolderEntity::class)
@@ -157,7 +157,7 @@ class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
       original.data = value
     }
 
-  var parent: PFolderEntity? by MutableHardBackRef(diff, PSubFolderEntity::parent, PFolderEntity::children)
+  var parent: PFolderEntity? by MutableManyToOne.HardRef(diff, PSubFolderEntity::parent, PFolderEntity::children)
 
   override val entitySource: EntitySource = original.entitySource
 
@@ -170,7 +170,7 @@ class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
 class PSoftSubFolderModifiableEntity(
   val original: PSoftSubfolderEntityData,
   val diff: PEntityStorageBuilder
-): PModifiableTypedEntity<PSoftSubFolder> {
+) : PModifiableTypedEntity<PSoftSubFolder> {
   override val id: PId<PSoftSubFolder> = PId(original.id, PSoftSubFolder::class)
 
   override val entitySource: EntitySource = original.entitySource

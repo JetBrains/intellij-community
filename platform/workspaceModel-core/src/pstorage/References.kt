@@ -6,29 +6,62 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
-class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   private val snapshot: PEntityStorage,
   private val remote: KProperty1<SUBT, T?>
 ) : ReadOnlyProperty<T, Sequence<SUBT>> {
+
+  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+    snapshot: PEntityStorage, remote: KProperty1<SUBT, T?>
+  ) : OneToMany<T, SUBT>(snapshot, remote)
+
+  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+    snapshot: PEntityStorage, remote: KProperty1<SUBT, T?>
+  ) : OneToMany<T, SUBT>(snapshot, remote)
+
   override fun getValue(thisRef: T, property: KProperty<*>): Sequence<SUBT> {
     return snapshot.extractRefs(property as KProperty1<T, Sequence<SUBT>>, remote, thisRef.id)
   }
 }
 
-class HardBackRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+sealed class ManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   private val snapshot: PEntityStorage,
   private val remote: KProperty1<T, Sequence<SUBT>>
 ) : ReadOnlyProperty<SUBT, T?> {
+
+  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+    snapshot: PEntityStorage,
+    remote: KProperty1<T, Sequence<SUBT>>
+  ) : ManyToOne<T, SUBT>(snapshot, remote)
+
+  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
+    snapshot: PEntityStorage,
+    remote: KProperty1<T, Sequence<SUBT>>
+  ) : ManyToOne<T, SUBT>(snapshot, remote)
+
   override fun getValue(thisRef: SUBT, property: KProperty<*>): T? {
     return snapshot.extractBackRef(property as KProperty1<SUBT, T?>, remote, thisRef.id)
   }
 }
 
-class MutableHardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
+sealed class MutableOneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
   private val snapshot: PEntityStorageBuilder,
   private val local: KProperty1<T, Sequence<SUBT>>,
   private val remote: KProperty1<SUBT, T?>
 ) : ReadWriteProperty<MODT, Sequence<SUBT>> {
+
+  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
+    snapshot: PEntityStorageBuilder,
+    local: KProperty1<T, Sequence<SUBT>>,
+    remote: KProperty1<SUBT, T?>
+  ) : MutableOneToMany<T, SUBT, MODT>(snapshot, local, remote)
+
+  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PModifiableTypedEntity<T>>(
+    snapshot: PEntityStorageBuilder,
+    local: KProperty1<T, Sequence<SUBT>>,
+    remote: KProperty1<SUBT, T?>
+  ) : MutableOneToMany<T, SUBT, MODT>(snapshot, local, remote)
+
   override fun getValue(thisRef: MODT, property: KProperty<*>): Sequence<SUBT> {
     return snapshot.extractRefs(local, remote, thisRef.id)
   }
@@ -38,11 +71,24 @@ class MutableHardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODT : PMod
   }
 }
 
-class MutableHardBackRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
+sealed class MutableManyToOne<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
   private val snapshot: PEntityStorageBuilder,
   private val local: KProperty1<SUBT, T?>,
   private val remote: KProperty1<T, Sequence<SUBT>>
 ) : ReadWriteProperty<MODSUBT, T?> {
+
+  class HardRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
+    snapshot: PEntityStorageBuilder,
+    local: KProperty1<SUBT, T?>,
+    remote: KProperty1<T, Sequence<SUBT>>
+  ) : MutableManyToOne<T, SUBT, MODSUBT>(snapshot, local, remote)
+
+  class SoftRef<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>, MODSUBT : PModifiableTypedEntity<SUBT>>(
+    snapshot: PEntityStorageBuilder,
+    local: KProperty1<SUBT, T?>,
+    remote: KProperty1<T, Sequence<SUBT>>
+  ) : MutableManyToOne<T, SUBT, MODSUBT>(snapshot, local, remote)
+
   override fun getValue(thisRef: MODSUBT, property: KProperty<*>): T? {
     return snapshot.extractBackRef(local, remote, thisRef.id)
   }
