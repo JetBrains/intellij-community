@@ -5,8 +5,9 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,13 +18,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Executor;
 
 /**
  * @author peter
  */
-final class Preloader implements ApplicationInitializedListener {
+public final class Preloader {
   private static final Logger LOG = Logger.getInstance(Preloader.class);
 
   private final Executor myExecutor;
@@ -32,10 +34,6 @@ final class Preloader implements ApplicationInitializedListener {
 
   Preloader() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !Registry.is("enable.activity.preloading")) {
-      throw ExtensionNotApplicableException.INSTANCE;
-    }
-
     myIndicator = new ProgressIndicatorBase();
     Disposer.register(app, () -> myIndicator.cancel());
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Preloader Pool", 1);
@@ -59,37 +57,50 @@ final class Preloader implements ApplicationInitializedListener {
     }
   }
 
-  @Override
-  public void componentsInitialized() {
-    PreloadingActivity.EP_NAME.processWithPluginDescriptor((activity, descriptor) -> {
-      myExecutor.execute(() -> {
-        if (myIndicator.isCanceled()) {
+  private static class AppInitListener implements ApplicationInitializedListener {
+    @Override
+    public void componentsInitialized() {
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !Registry.is("enable.activity.preloading")) {
+        return;
+      }
+      PreloadingActivity.EP_NAME.processWithPluginDescriptor((activity, descriptor) -> {
+        ServiceManager.getService(Preloader.class).preload(activity, descriptor);
+      });
+    }
+  }
+
+  public void preload(PreloadingActivity activity, @Nullable PluginDescriptor descriptor) {
+    myExecutor.execute(() -> {
+      if (myIndicator.isCanceled()) {
+        return;
+      }
+
+      checkHeavyProcessRunning();
+      if (myIndicator.isCanceled()) {
+        return;
+      }
+
+      ProgressManager.getInstance().runProcess(() -> {
+        Activity measureActivity =
+          descriptor == null ? null : StartUpMeasurer.startActivity(activity.getClass().getName(), ActivityCategory.PRELOAD_ACTIVITY,
+                                                                    descriptor.getPluginId().getIdString());
+        try {
+          activity.preload(myWrappingIndicator);
+        }
+        catch (ProcessCanceledException ignore) {
           return;
         }
-
-        checkHeavyProcessRunning();
-        if (myIndicator.isCanceled()) {
-          return;
-        }
-
-        ProgressManager.getInstance().runProcess(() -> {
-          Activity measureActivity = StartUpMeasurer.startActivity(activity.getClass().getName(), ActivityCategory.PRELOAD_ACTIVITY,
-                                                                   descriptor.getPluginId().getIdString());
-          try {
-            activity.preload(myWrappingIndicator);
-          }
-          catch (ProcessCanceledException ignore) {
-            return;
-          }
-          finally {
+        finally {
+          if (measureActivity != null) {
             measureActivity.end();
           }
+        }
 
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(activity.getClass().getName() + " finished");
-          }
-        }, myIndicator);
-      });
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(activity.getClass().getName() + " finished");
+        }
+      }, myIndicator);
     });
   }
 }
