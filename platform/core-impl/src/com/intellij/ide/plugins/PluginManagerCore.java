@@ -1947,7 +1947,7 @@ public final class PluginManagerCore {
         case TERMINATE:
           return false;
         case CONTINUE:
-          if (depProcessed.add(descriptor)) {
+          if (descriptor != null && depProcessed.add(descriptor)) {
             processAllDependencies(descriptor, withOptionalDeps, idToMap, depProcessed, consumer);
           }
           break;
