@@ -1070,7 +1070,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     CodeStyleSettingsManager.removeListener(myProject, this);
 
     Disposer.dispose(myDisposable);
-    myVerticalScrollBar.setPersistentUI(null); // clear error panel's cached image
+    myVerticalScrollBar.setPersistentUI(JBScrollBar.createUI(null)); // clear error panel's cached image
   }
 
   private void clearCaretThread() {
