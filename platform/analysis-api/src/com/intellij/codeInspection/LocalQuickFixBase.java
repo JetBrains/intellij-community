@@ -12,6 +12,7 @@ import static com.intellij.openapi.util.NlsUI.ListItem;
  * @deprecated using {@link LocalQuickFixBase} is error-prone regarding i18n as
  * calculated UI-visible string can be stored somewhere and leaked and it will never updated on language change.
  */
+@Deprecated
 public abstract class LocalQuickFixBase implements LocalQuickFix {
   private final String myName;
   private final String myFamilyName;
