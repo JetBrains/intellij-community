@@ -149,7 +149,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
 
     // we shouldn't report success if files for which write operation is requested are still non-writable
-    assert !readOnlyFiles.isEmpty() || originalFiles.stream().allMatch(VirtualFile::isWritable)
+    assert !readOnlyFiles.isEmpty() || originalFiles.stream().allMatch(file -> file == null || file.isWritable())
       : "Original files: " + originalFiles + ", files: " + files;
 
     return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
