@@ -13,7 +13,6 @@ import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
@@ -591,7 +590,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   internal fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
     toolWindow.setFocusedComponent(component)
     if (toolWindow.isAvailable && !toolWindow.isActive) {
-      toolWindow.activate(null, true, false)
+      activateToolWindow(toolWindow.id, null, autoFocusContents = true)
     }
     activeStack.push(idToEntry.get(toolWindow.id) ?: return)
   }
@@ -708,11 +707,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun getLocationIcon(id: String, fallbackIcon: Icon): Icon {
-    val info = layout.getInfo(id)
-    if (info == null) {
-      return fallbackIcon
-    }
-
+    val info = layout.getInfo(id) ?: return fallbackIcon
     val type = info.type
     if (type == ToolWindowType.FLOATING || type == ToolWindowType.WINDOWED) {
       return AllIcons.Actions.MoveToWindow
@@ -1240,7 +1235,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       .setHideOnFrameResize(false)
       .createBalloon() as BalloonImpl
     NotificationsManagerImpl.frameActivateBalloonListener(balloon) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(Runnable { balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
+      AppExecutorUtil.getAppScheduledExecutorService().schedule({ balloon.setHideOnClickOutside(true) }, 100, TimeUnit.MILLISECONDS)
     }
 
     listenerWrapper.balloon = balloon
@@ -1368,7 +1363,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun addStripeButton(button: StripeButton, anchor: ToolWindowAnchor) {
     val stripe = toolWindowPane!!.getStripeFor(anchor)
-    stripe.addButton(button, Comparator { o1, o2 -> windowInfoComparator.compare(o1.windowInfo, o2.windowInfo) })
+    stripe.addButton(button) { o1, o2 -> windowInfoComparator.compare(o1.windowInfo, o2.windowInfo) }
     stripe.revalidate()
   }
 
@@ -2001,7 +1996,7 @@ private fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescripto
     return Supplier { label }
   }
   catch (e: MissingResourceException) {
-    LOG.warn("Missing bundle ${bundleName} at ${classLoader}", e)
+    LOG.warn("Missing bundle $bundleName at $classLoader", e)
   }
   return null
 }

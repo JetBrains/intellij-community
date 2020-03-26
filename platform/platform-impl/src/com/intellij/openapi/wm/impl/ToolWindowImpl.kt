@@ -542,7 +542,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     return group
   }
 
-  private inner class GearActionGroup internal constructor() : DefaultActionGroup(), DumbAware {
+  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       templatePresentation.text = IdeBundle.message("show.options.menu")
@@ -572,7 +572,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  private inner class HideAction internal constructor() : AnAction(), DumbAware {
+  private inner class HideAction : AnAction(), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowManager.hideToolWindow(id, false)
     }

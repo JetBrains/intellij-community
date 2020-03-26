@@ -253,7 +253,7 @@ public final class StartupUtil {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("checking screen readers");
       if (configImportNeeded) {
-        runInEdtAndWait(log, () -> AccessibilityUtils.enableScreenReaderSupportIfNecessary(), initUiTask);
+        runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, initUiTask);
       }
 
       activity = activity.endAndStart("eua showing");
