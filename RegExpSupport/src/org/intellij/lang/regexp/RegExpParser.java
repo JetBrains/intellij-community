@@ -419,7 +419,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else if (type == RegExpTT.PYTHON_COND_REF || type == RegExpTT.PCRE_COND_REF) {
       builder.advanceLexer();
-      parseCondRefName(builder);
+      parseCondRefName(builder, type);
       checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
       parseBranch(builder);
       if (builder.getTokenType() == RegExpTT.UNION) {
@@ -448,7 +448,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     return marker;
   }
 
-  protected void parseCondRefName(PsiBuilder builder) {
+  protected void parseCondRefName(PsiBuilder builder, IElementType condRefType) {
     if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
       builder.advanceLexer();
     }
