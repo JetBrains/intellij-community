@@ -210,7 +210,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                     Collections.singletonList(propertiesFile),
                                                                     key,
-                                                                    displayName,
+                                                                    StringUtil.unescapeXmlEntities(displayName),
                                                                     PsiExpression.EMPTY_ARRAY);
     }
 
