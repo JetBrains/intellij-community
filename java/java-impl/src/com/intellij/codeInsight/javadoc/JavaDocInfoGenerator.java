@@ -757,10 +757,9 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateApiSection(StringBuilder buffer, PsiDocComment comment) {
-    String[] tagNames = {"apiNote", "implSpec", "implNote"};
-    for (String tagName : tagNames) {
-      generateSingleTagSection(buffer, comment, tagName, () -> tagName + ':');
-    }
+    generateSingleTagSection(buffer, comment, "apiNote", JavaBundle.messagePointer("javadoc.apiNote"));
+    generateSingleTagSection(buffer, comment, "implSpec", JavaBundle.messagePointer("javadoc.implSpec"));
+    generateSingleTagSection(buffer, comment, "implNote", JavaBundle.messagePointer("javadoc.implNote"));
   }
 
   private void generatePackageHtmlJavaDoc(StringBuilder buffer, PsiFile packageHtmlFile, boolean generatePrologue) {
