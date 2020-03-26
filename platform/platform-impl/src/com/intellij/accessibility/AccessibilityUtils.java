@@ -14,11 +14,15 @@ import com.sun.jna.platform.win32.WinDef.UINT;
 public class AccessibilityUtils {
 
   public static void enableScreenReaderSupportIfNecessary() {
-    if (!GeneralSettings.isSupportScreenReadersOverridden() && isScreenReaderDetected()) {
+    if (GeneralSettings.isSupportScreenReadersOverridden()) return;
+
+    if (isScreenReaderDetected()) {
+      AccessibilityUsageTrackerCollector.trigger(AccessibilityUsageTrackerCollector.SCREEN_READER_DETECTED);
       int answer = Messages.showYesNoDialog(ApplicationBundle.message("confirmation.screen.reader.enable"),
                                             ApplicationBundle.message("title.screen.reader.support"),
                                             Messages.getQuestionIcon());
       if (answer == Messages.YES) {
+        AccessibilityUsageTrackerCollector.trigger(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED);
         System.setProperty(GeneralSettings.SCREEN_READERS_DETECTED_PROPERTY, "true");
       }
     }
