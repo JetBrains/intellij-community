@@ -60,6 +60,7 @@ public final class PluginInstaller {
                                          PluginManagerMain.PluginEnabler pluginEnabler,
                                          Runnable onSuccess,
                                          @NotNull ProgressIndicator indicator) {
+    //TODO: `PluginInstallOperation` expects only `customPlugins` and not `allPlugins`
     PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, pluginEnabler, indicator);
     operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
     operation.run();

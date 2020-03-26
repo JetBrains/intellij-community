@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -29,7 +30,7 @@ public class PluginInstallOperation {
   private static final Logger LOG = Logger.getInstance(PluginInstallOperation.class);
 
   private final List<PluginNode> myPluginsToInstall;
-  private final List<? extends IdeaPluginDescriptor> myAllPlugins;
+  private final List<? extends IdeaPluginDescriptor> myCustomReposPlugins;
   private final PluginManagerMain.PluginEnabler myPluginEnabler;
   private final ProgressIndicator myIndicator;
   private boolean mySuccess = true;
@@ -40,12 +41,12 @@ public class PluginInstallOperation {
   private boolean myShownErrors;
 
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
-                                List<? extends IdeaPluginDescriptor> allPlugins,
+                                List<? extends IdeaPluginDescriptor> customReposPlugins,
                                 PluginManagerMain.PluginEnabler pluginEnabler,
                                 @NotNull ProgressIndicator indicator) {
 
     myPluginsToInstall = pluginsToInstall;
-    myAllPlugins = allPlugins;
+    myCustomReposPlugins = customReposPlugins;
     myPluginEnabler = pluginEnabler;
     myIndicator = indicator;
   }
@@ -278,6 +279,21 @@ public class PluginInstallOperation {
 
   @Nullable
   private IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId) {
-    return myAllPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
+    IdeaPluginDescriptor pluginFromCustomRepos =
+      myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
+    //TODO: we assume here that plugin from custom repo should always be chosen over plugin from main repo. Maybe latest should be chosen?
+    if (pluginFromCustomRepos == null) {
+      String xmlId = depPluginId.getIdString();
+      //TODO: do we need a method in MarketplaceRequests to do boh these calls
+      List<IdeCompatibleUpdate> updates =
+        PluginsMetaLoader.getLastCompatiblePluginUpdate(Collections.singletonList(xmlId));
+      if (!updates.isEmpty()) {
+        IdeCompatibleUpdate compatibleUpdate = updates.get(0);
+        return PluginsMetaLoader.loadPluginDescriptor(xmlId, compatibleUpdate);
+      }
+      return null;
+    } else {
+      return pluginFromCustomRepos;
+    }
   }
 }

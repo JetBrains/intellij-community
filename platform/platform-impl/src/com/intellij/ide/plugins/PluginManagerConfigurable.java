@@ -112,15 +112,14 @@ public class PluginManagerConfigurable
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
-    public List<IdeaPluginDescriptor> getAllRepoPlugins() {
-      return getRepositoryPlugins();
+    public List<IdeaPluginDescriptor> getCustomRepoPlugins() {
+      return getCustomRepositoryPlugins();
     }
   };
 
   private PluginUpdatesService myPluginUpdatesService;
 
   private List<IdeaPluginDescriptor> myCustomRepositoryPluginsList;
-  private List<IdeaPluginDescriptor> myAllRepositoryPluginsList;
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myTagsSorted;
@@ -312,7 +311,6 @@ public class PluginManagerConfigurable
 
   private void resetPanels() {
     synchronized (myRepositoriesLock) {
-      myAllRepositoryPluginsList = null;
       myCustomRepositoryPluginsList = null;
       myCustomRepositoryPluginsMap = null;
     }
@@ -378,7 +376,7 @@ public class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = getCustomRepositoryPlugins();
+            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadCustomRepositoryPlugins();
             try {
               addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
                                          "/sortBy:featured");
@@ -645,7 +643,7 @@ public class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = getCustomRepositoryPlugins();
+                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = loadCustomRepositoryPlugins();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
@@ -1501,46 +1499,18 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private List<IdeaPluginDescriptor> getRepositoryPlugins() {
+  private List<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
-      if (myAllRepositoryPluginsList != null) {
-        return myAllRepositoryPluginsList;
-      }
-    }
-    try {
       if (myCustomRepositoryPluginsList != null) {
-        ApplicationManager.getApplication().executeOnPooledThread(
-          () ->
-          {
-            try {
-              myAllRepositoryPluginsList = RepositoryHelper.loadPlugins(null, null);
-            }
-            catch (IOException e) {
-              LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
-            }
-          });
-        while (myAllRepositoryPluginsList == null) Thread.sleep(100);
-        //TODO: actually choose latest plugin for deduplication
-        {
-          myAllRepositoryPluginsList.addAll(myCustomRepositoryPluginsList);
-          ContainerUtil.removeDuplicates(myCustomRepositoryPluginsList);
-          return myAllRepositoryPluginsList;
-        }
-      } else {
-        List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
-        if (list != null) {
-          return list;
-        }
+        return myCustomRepositoryPluginsList;
       }
     }
-    catch (IOException | InterruptedException e) {
-      LOG.info(e);
-    }
-    return Collections.emptyList();
+    loadCustomRepositoryPlugins();
+    return myCustomRepositoryPluginsList;
   }
 
   @NotNull
-  private Map<String, List<IdeaPluginDescriptor>> getCustomRepositoryPlugins() {
+  private Map<String, List<IdeaPluginDescriptor>> loadCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsMap != null) {
         return myCustomRepositoryPluginsMap;

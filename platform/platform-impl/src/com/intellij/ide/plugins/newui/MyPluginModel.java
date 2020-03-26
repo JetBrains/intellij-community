@@ -352,12 +352,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
 
-    installPlugin(pluginsToInstall, getAllRepoPlugins(), prepareToInstall(descriptor, updateDescriptor), allowUninstallWithoutRestart,
+    installPlugin(pluginsToInstall, getCustomRepoPlugins(), prepareToInstall(descriptor, updateDescriptor), allowUninstallWithoutRestart,
                   modalityState);
   }
 
   private void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
-                             @NotNull List<? extends IdeaPluginDescriptor> allPlugins,
+                             @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
                              @NotNull InstallPluginInfo info, boolean allowInstallWithoutRestart,
                              @NotNull ModalityState modalityState) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -367,7 +367,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       boolean restartRequired = true;
       List<PendingDynamicPluginInstall> pluginsToInstallSynchronously = new ArrayList<>();
       try {
-        PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, this, info.indicator);
+        PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, customPlugins, this, info.indicator);
         operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
         operation.run();
         for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
@@ -1008,7 +1008,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return message;
   }
 
-  protected List<IdeaPluginDescriptor> getAllRepoPlugins() {
+  protected List<IdeaPluginDescriptor> getCustomRepoPlugins() {
+    //TODO: this default implementation actually takes cached plugins from main repo instead of custom repos...
     try {
       List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
       if (list != null) {

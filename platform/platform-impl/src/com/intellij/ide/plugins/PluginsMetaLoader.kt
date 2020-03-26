@@ -60,7 +60,9 @@ object PluginsMetaLoader {
     )
   }
 
-  fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator?): PluginNode {
+  @JvmStatic
+  @JvmOverloads
+  fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginNode {
     return readOrUpdateFile(
       getUpdateMetadataFile(ideCompatibleUpdate),
       getUpdateMetadataUrl(ideCompatibleUpdate),
@@ -114,7 +116,8 @@ object PluginsMetaLoader {
   }
 
   @JvmStatic
-  fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> {
+  @JvmOverloads
+  fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
     return HttpRequests
