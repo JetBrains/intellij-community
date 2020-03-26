@@ -53,6 +53,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1456,7 +1457,7 @@ public final class PluginManagerCore {
       Set<IdeaPluginDescriptor> finalExplicitlyEnabled = explicitlyEnabled;
       Set<IdeaPluginDescriptor> depProcessed = new HashSet<>();
       for (IdeaPluginDescriptor descriptor : new ArrayList<>(explicitlyEnabled)) {
-        processAllDependencies(descriptor, false, idMap, depProcessed, dependency -> {
+        processAllDependencies(descriptor, false, idMap, depProcessed, (id, dependency) -> {
           finalExplicitlyEnabled.add(dependency);
           return FileVisitResult.CONTINUE;
         });
@@ -1914,6 +1915,14 @@ public final class PluginManagerCore {
                                                boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+    return processAllDependencies(rootDescriptor, withOptionalDeps, idToMap, new HashSet<>(), (id, descriptor) -> descriptor != null ? consumer.apply(descriptor) : FileVisitResult.SKIP_SUBTREE);
+  }
+
+  @ApiStatus.Internal
+  public static boolean processAllDependencies(@NotNull IdeaPluginDescriptor rootDescriptor,
+                                               boolean withOptionalDeps,
+                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
+                                               @NotNull BiFunction<? super @NotNull PluginId, ? super @Nullable IdeaPluginDescriptor, FileVisitResult> consumer) {
     return processAllDependencies(rootDescriptor, withOptionalDeps, idToMap, new HashSet<>(), consumer);
   }
 
@@ -1922,14 +1931,9 @@ public final class PluginManagerCore {
                                                boolean withOptionalDeps,
                                                @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
                                                @NotNull Set<IdeaPluginDescriptor> depProcessed,
-                                               @NotNull Function<IdeaPluginDescriptor, FileVisitResult> consumer) {
+                                               @NotNull BiFunction<? super PluginId, ? super IdeaPluginDescriptor, FileVisitResult> consumer) {
     loop:
     for (PluginId id : rootDescriptor.getDependentPluginIds()) {
-      IdeaPluginDescriptorImpl descriptor = idToMap.get(id);
-      if (descriptor == null) {
-        continue;
-      }
-
       if (!withOptionalDeps) {
         for (PluginId otherId : rootDescriptor.getOptionalDependentPluginIds()) {
           if (otherId == id) {
@@ -1938,7 +1942,8 @@ public final class PluginManagerCore {
         }
       }
 
-      switch (consumer.apply(descriptor)) {
+      IdeaPluginDescriptorImpl descriptor = idToMap.get(id);
+      switch (consumer.apply(id, descriptor)) {
         case TERMINATE:
           return false;
         case CONTINUE:

@@ -88,8 +88,7 @@ public class InstalledPluginsTableModel {
         pluginIdMap = PluginManagerCore.buildPluginIdMap();
       }
 
-      PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, descriptor -> {
-        PluginId depId = descriptor.getPluginId();
+      PluginManagerCore.processAllDependencies(rootDescriptor, false, pluginIdMap, (depId, descriptor) -> {
         if (depId.equals(pluginId)) {
           return FileVisitResult.CONTINUE;
         }
@@ -175,8 +174,7 @@ public class InstalledPluginsTableModel {
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     for (final IdeaPluginDescriptor descriptorToCheckDependencies : descriptorsToCheckDependencies) {
       PluginId pluginId = descriptorToCheckDependencies.getPluginId();
-      PluginManagerCore.processAllDependencies(descriptorToCheckDependencies, false, pluginIdMap, descriptor -> {
-        PluginId depId = descriptor.getPluginId();
+      PluginManagerCore.processAllDependencies(descriptorToCheckDependencies, false, pluginIdMap, (depId, descriptor) -> {
         if (depId == pluginId) {
           return FileVisitResult.CONTINUE;
         }
