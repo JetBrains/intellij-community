@@ -43,10 +43,7 @@ import com.intellij.util.containers.WeakList;
 import com.intellij.util.nls.NlsContexts;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -608,6 +605,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       return originalLocation;
     }
     return new Point(preferredBounds.x, adjustedY);
+  }
+
+  /**
+   * @see #addListener
+   * @deprecated use public API instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  protected void addPopupListener(JBPopupListener listener) {
+    myListeners.add(listener);
   }
 
   private RelativePoint relativePointWithDominantRectangle(final JLayeredPane layeredPane, final Rectangle bounds) {
