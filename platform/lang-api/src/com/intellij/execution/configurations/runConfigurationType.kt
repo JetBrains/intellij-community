@@ -29,7 +29,7 @@ abstract class ConfigurationTypeBase protected constructor(@NonNls private val i
                                                            @Nls private val displayName: String,
                                                            @Nls private val description: String? = null,
                                                            private val icon: NotNullLazyValue<Icon>?) : ConfigurationType {
-  constructor(id: String, displayName: String, description: String?, icon: Icon?)
+  constructor(id: String, @Nls displayName: String, @Nls description: String?, icon: Icon?)
     : this(id, displayName, description, icon?.let { NotNullLazyValue.createConstantValue(it) })
 
   private var factories = EMPTY_FACTORIES
