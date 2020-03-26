@@ -140,7 +140,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  public void addRequest(@NotNull final Runnable request, final int delay, boolean runWithActiveFrameOnly) {
+  public void addRequest(@NotNull Runnable request, int delayMillis, boolean runWithActiveFrameOnly) {
     if (runWithActiveFrameOnly && !ApplicationManager.getApplication().isActive()) {
       final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
       final MessageBusConnection connection = bus.connect(this);
@@ -148,12 +148,12 @@ public class Alarm implements Disposable {
         @Override
         public void applicationActivated(@NotNull IdeFrame ideFrame) {
           connection.disconnect();
-          addRequest(request, delay);
+          addRequest(request, delayMillis);
         }
       });
     }
     else {
-      addRequest(request, delay);
+      addRequest(request, delayMillis);
     }
   }
 
