@@ -29,7 +29,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -124,7 +124,6 @@ public class ShelvedChangesViewManager implements Disposable {
     myUpdateQueue = new MergingUpdateQueue("Update Shelf Content", 200, true, null, myProject, null, true);
 
     project.getMessageBus().connect().subscribe(ShelveChangesManager.SHELF_TOPIC, e -> scheduleContentUpdate());
-    StartupManager.getInstance(project).registerPostStartupDumbAwareActivity(() -> scheduleContentUpdate());
   }
 
   private void scheduleContentUpdate() {
@@ -1056,6 +1055,13 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public boolean canEat(Update update) {
       return true;
+    }
+  }
+
+  public static class PostStartupActivity implements StartupActivity.Background {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      getInstance(project).scheduleContentUpdate();
     }
   }
 }
