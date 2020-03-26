@@ -19,5 +19,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <toolWindow id="Statistics Event Log" factoryClass="com.intellij.internal.statistic.toolwindow.StatisticsEventLogToolWindowFactory"
                 anchor="bottom" canCloseContents="true"/>
+    <notificationWhitelist groupIds="FeatureUsageStatistics"/>
   </extensions>
 </idea-plugin>
