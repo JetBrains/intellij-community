@@ -62,7 +62,7 @@ public class VcsRepositoryManager implements Disposable {
                                                                         () -> checkAndUpdateRepositoriesCollection(null));
 
     VcsRepositoryCreator.EXTENSION_POINT_NAME.addExtensionPointListener(project, () -> {
-      disposeAllRepositories();
+      disposeAllRepositories(false);
       scheduleUpdate();
     }, project);
   }
@@ -70,10 +70,10 @@ public class VcsRepositoryManager implements Disposable {
   @Override
   public void dispose() {
     myDisposed = true;
-    disposeAllRepositories();
+    disposeAllRepositories(true);
   }
 
-  private void disposeAllRepositories() {
+  private void disposeAllRepositories(boolean disposeExternal) {
     REPO_LOCK.writeLock().lock();
     try {
       for (Repository repo : myRepositories.values()) {
@@ -81,10 +81,12 @@ public class VcsRepositoryManager implements Disposable {
       }
       myRepositories.clear();
 
-      for (Repository repo : myExternalRepositories.values()) {
-        Disposer.dispose(repo);
+      if (disposeExternal) {
+        for (Repository repo : myExternalRepositories.values()) {
+          Disposer.dispose(repo);
+        }
+        myExternalRepositories.clear();
       }
-      myExternalRepositories.clear();
     }
     finally {
       REPO_LOCK.writeLock().unlock();
