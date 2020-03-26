@@ -131,9 +131,9 @@ public class JUnitUtil {
   public static boolean isTestMethod(final Location<? extends PsiMethod> location, boolean checkAbstract, boolean checkRunWith, boolean checkClass) {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
+    if (MetaAnnotationUtil.isMetaAnnotated(psiMethod, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
     if (checkClass && (aClass == null || !isTestClass(aClass, checkAbstract, true))) return false;
     if (isTestAnnotated(psiMethod, false)) return !psiMethod.hasModifierProperty(PsiModifier.STATIC);
-    if (MetaAnnotationUtil.isMetaAnnotated(psiMethod, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
