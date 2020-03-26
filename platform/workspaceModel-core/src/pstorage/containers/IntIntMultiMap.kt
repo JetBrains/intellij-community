@@ -7,12 +7,23 @@ import com.intellij.util.containers.IntIntHashMap
  * @author Alex Plate
  */
 
-class IntIntMultiMap(
+sealed class IntIntMultiMap(
   private var values: IntArray,
-  private val links: IntIntHashMap
+  private val links: IntIntHashMap,
+  private val distinctValues: Boolean
 ) {
 
-  constructor() : this(IntArray(0), IntIntHashMap())
+  class BySet private constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, true) {
+    constructor() : this(IntArray(0), IntIntHashMap())
+
+    override fun copy(): BySet = doCopy().let { BySet(it.first, it.second) }
+  }
+
+  class ByList private constructor(values: IntArray, links: IntIntHashMap) : IntIntMultiMap(values, links, false) {
+    constructor() : this(IntArray(0), IntIntHashMap())
+
+    override fun copy(): ByList = doCopy().let { ByList(it.first, it.second) }
+  }
 
   operator fun get(key: Int): IntSequence {
     val idx = links[key]
@@ -66,7 +77,12 @@ class IntIntMultiMap(
     val idx = links[key]
     if (idx != -1) {
       val endIndexInclusive = idx + size(key)
-      val filteredValues = newValues.filterNot { exists(it, idx, endIndexInclusive - 1) }.toTypedArray()
+
+      val filteredValues = if (distinctValues) {
+        newValues.filterNot { exists(it, idx, endIndexInclusive - 1) }.toTypedArray().toIntArray()
+      }
+      else newValues
+
       val newValuesSize = filteredValues.size
 
       val newArray = IntArray(values.size + newValuesSize)
@@ -175,11 +191,13 @@ class IntIntMultiMap(
     values = IntArray(0)
   }
 
-  fun copy(): IntIntMultiMap {
+  abstract fun copy(): IntIntMultiMap
+
+  protected fun doCopy(): Pair<IntArray, IntIntHashMap> {
     val newLinks = IntIntHashMap()
     links.forEachEntry { key, value -> newLinks.put(key, value); true }
     val newValues = values.clone()
-    return IntIntMultiMap(newValues, newLinks)
+    return newValues to newLinks
   }
 
   companion object {

@@ -2,15 +2,15 @@
 package com.intellij.workspace.api.pstorage.containers
 
 class IntIntBiMultiMap(
-  private var key2Values: IntIntMultiMap,
-  private var value2Keys: IntIntMultiMap
+  private var key2Values: IntIntMultiMap.BySet,
+  private var value2Keys: IntIntMultiMap.BySet
 ) {
 
-  constructor() : this(IntIntMultiMap(), IntIntMultiMap())
+  constructor() : this(IntIntMultiMap.BySet(), IntIntMultiMap.BySet())
 
-  fun getValues(key: Int): IntIntMultiMap.IntSequence = key2Values.get(key)
+  fun getValues(key: Int): IntIntMultiMap.IntSequence = key2Values[key]
 
-  fun getKeys(value: Int): IntIntMultiMap.IntSequence = value2Keys.get(value)
+  fun getKeys(value: Int): IntIntMultiMap.IntSequence = value2Keys[value]
 
   fun put(key: Int, value: Int) {
     value2Keys.put(value, key)
