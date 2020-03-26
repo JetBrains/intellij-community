@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * See https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html
  */
+@Deprecated
 public final class ModuleServiceManager {
   private ModuleServiceManager() {
   }
