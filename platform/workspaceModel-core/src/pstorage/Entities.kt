@@ -92,6 +92,7 @@ class PFolderEntity(
 ) : PTypedEntity<PFolderEntity> {
 
   val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::parent)
+  val softChildren: Sequence<PSoftSubFolder> by OneToMany.SoftRef(snapshot, PSoftSubFolder::parent)
 
   override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
 
@@ -104,6 +105,7 @@ class PSoftSubFolder(
   val snapshot: PEntityStorage
 ) : PTypedEntity<PSoftSubFolder> {
 
+  val parent: PFolderEntity? by ManyToOne.SoftRef(snapshot, PFolderEntity::softChildren)
 
   override fun hasEqualProperties(e: TypedEntity): Boolean {
     TODO("Not yet implemented")
@@ -143,6 +145,7 @@ class PFolderModifiableEntity(val original: PFolderEntityData,
     }
 
   var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(diff, PFolderEntity::children, PSubFolderEntity::parent)
+  var softChildren: Sequence<PSoftSubFolder> by MutableOneToMany.SoftRef(diff, PFolderEntity::softChildren, PSoftSubFolder::parent)
 
   override val id: PId<PFolderEntity> = PId(original.id, PFolderEntity::class)
 }
@@ -174,6 +177,9 @@ class PSoftSubFolderModifiableEntity(
   val original: PSoftSubFolderEntityData,
   val diff: PEntityStorageBuilder
 ) : PModifiableTypedEntity<PSoftSubFolder> {
+
+  var parent: PFolderEntity? by MutableManyToOne.SoftRef(diff, PSoftSubFolder::parent, PFolderEntity::softChildren)
+
   override val id: PId<PSoftSubFolder> = PId(original.id, PSoftSubFolder::class)
 
   override val entitySource: EntitySource = original.entitySource

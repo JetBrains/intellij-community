@@ -333,9 +333,16 @@ fun main() {
     this.data = "XYZ2"
     this.parent = createdEntity
   }
+  pStoreBuilder.addEntity(PSoftSubFolderModifiableEntity::class.java, MySource) {
+    this.parent = createdEntity
+  }
+
   println(pStoreBuilder.entities(PFolderEntity::class.java).toList())
   println(pStoreBuilder.entities(PSubFolderEntity::class.java).toList())
+  println(pStoreBuilder.entities(PSoftSubFolder::class.java).toList())
+
   println(pStoreBuilder.entities(PSubFolderEntity::class.java).first().parent)
   println(pStoreBuilder.entities(PFolderEntity::class.java).first().children.toList())
+  println(pStoreBuilder.entities(PFolderEntity::class.java).first().softChildren.toList())
 }
 
