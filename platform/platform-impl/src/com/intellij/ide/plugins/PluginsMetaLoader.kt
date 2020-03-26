@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -75,7 +75,7 @@ object PluginsMetaLoader {
   @JvmStatic
   fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
-    return loadPluginDescriptor(xmlId, ideCompatibleUpdate, null)
+    return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
   }
 
   @JvmStatic
@@ -131,6 +131,13 @@ object PluginsMetaLoader {
             object : TypeReference<List<IdeCompatibleUpdate>>() {}
           )
       }
+  }
+
+  @JvmStatic
+  @JvmOverloads
+  fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null): PluginNode? {
+    val data = getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
+    return data?.let { loadPluginDescriptor(id, it) }
   }
 
   @JvmStatic

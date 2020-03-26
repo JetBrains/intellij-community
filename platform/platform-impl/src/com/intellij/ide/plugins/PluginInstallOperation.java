@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -101,7 +100,8 @@ public class PluginInstallOperation {
           allPlugins.put(descriptor.getPluginId(), descriptor);
         }
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
 
     for (PluginNode node : myPluginsToInstall) {
@@ -163,7 +163,7 @@ public class PluginInstallOperation {
         IdeaPluginDescriptor depPluginDescriptor = findPluginInRepo(depPluginId);
         PluginNode depPlugin;
         if (depPluginDescriptor instanceof PluginNode) {
-          depPlugin = (PluginNode) depPluginDescriptor;
+          depPlugin = (PluginNode)depPluginDescriptor;
         }
         else {
           depPlugin = new PluginNode(depPluginId, depPluginId.getIdString(), "-1");
@@ -186,7 +186,8 @@ public class PluginInstallOperation {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
             String deps = getPluginsText(depends);
             String message = IdeBundle.message("plugin.manager.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES;
+            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
+                                                  Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -204,7 +205,8 @@ public class PluginInstallOperation {
             String title = IdeBundle.message("plugin.manager.optional.dependencies.detected.title");
             String deps = getPluginsText(optionalDeps);
             String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", pluginNode.getName(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES;
+            proceed[0] = Messages.showYesNoDialog(message, title, IdeBundle.message("button.install"), Messages.getNoButton(),
+                                                  Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -228,7 +230,9 @@ public class PluginInstallOperation {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
           String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);
-          if (Messages.showYesNoDialog(message, title, IdeBundle.message("button.disable"), Messages.getNoButton(), Messages.getWarningIcon()) == Messages.YES) {
+          if (Messages
+                .showYesNoDialog(message, title, IdeBundle.message("button.disable"), Messages.getNoButton(), Messages.getWarningIcon()) ==
+              Messages.YES) {
             toDisable.set(oldPlugin);
           }
         }, ModalityState.any());
@@ -283,16 +287,9 @@ public class PluginInstallOperation {
       myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
     //TODO: we assume here that plugin from custom repo should always be chosen over plugin from main repo. Maybe latest should be chosen?
     if (pluginFromCustomRepos == null) {
-      String xmlId = depPluginId.getIdString();
-      //TODO: do we need a method in MarketplaceRequests to do boh these calls
-      List<IdeCompatibleUpdate> updates =
-        PluginsMetaLoader.getLastCompatiblePluginUpdate(Collections.singletonList(xmlId));
-      if (!updates.isEmpty()) {
-        IdeCompatibleUpdate compatibleUpdate = updates.get(0);
-        return PluginsMetaLoader.loadPluginDescriptor(xmlId, compatibleUpdate);
-      }
-      return null;
-    } else {
+      return PluginsMetaLoader.getLastCompatiblePluginUpdate(depPluginId.getIdString());
+    }
+    else {
       return pluginFromCustomRepos;
     }
   }
