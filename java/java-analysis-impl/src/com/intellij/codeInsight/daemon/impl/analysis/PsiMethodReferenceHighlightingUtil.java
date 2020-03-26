@@ -40,15 +40,15 @@ public class PsiMethodReferenceHighlightingUtil {
     return null;
   }
 
-  public static String checkMethodReferenceContext(PsiMethodReferenceExpression methodRef) {
+  static String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef) {
     final PsiElement resolve = methodRef.resolve();
 
     if (resolve == null) return null;
     return checkMethodReferenceContext(methodRef, resolve, methodRef.getFunctionalInterfaceType());
   }
 
-  public static String checkMethodReferenceContext(PsiMethodReferenceExpression methodRef,
-                                                   PsiElement resolve,
+  public static String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef,
+                                                   @NotNull PsiElement resolve,
                                                    PsiType functionalInterfaceType) {
     final PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
     final boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);

@@ -61,7 +61,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -140,6 +139,7 @@ public class HighlightUtil {
 
   private HighlightUtil() { }
 
+  @NotNull
   private static QuickFixFactory getFixFactory() {
     return QuickFixFactory.getInstance();
   }
@@ -474,7 +474,7 @@ public class HighlightUtil {
     return null;
   }
 
-  private static boolean isArray(PsiVariable variable) {
+  private static boolean isArray(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return Stream.of(variable.getChildren()).anyMatch(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
   }
@@ -633,10 +633,10 @@ public class HighlightUtil {
         oldVariable = proc.getResult(0);
       }
       else if (declarationScope instanceof PsiLambdaExpression) {
-        oldVariable = checkSameNames(variable);
+        oldVariable = findSameNameSibling(variable);
       }
       else if (variable instanceof PsiPatternVariable) {
-        oldVariable = checkSamePatternVariableInBranches((PsiPatternVariable)variable);
+        oldVariable = findSamePatternVariableInBranches((PsiPatternVariable)variable);
       }
     }
     else if (variable instanceof PsiField) {
@@ -649,7 +649,7 @@ public class HighlightUtil {
       }
     }
     else {
-      oldVariable = checkSameNames(variable);
+      oldVariable = findSameNameSibling(variable);
     }
 
     if (oldVariable != null) {
@@ -677,9 +677,8 @@ public class HighlightUtil {
     return null;
   }
 
-  private static PsiPatternVariable checkSamePatternVariableInBranches(PsiPatternVariable variable) {
+  private static PsiPatternVariable findSamePatternVariableInBranches(@NotNull PsiPatternVariable variable) {
     PsiPattern pattern = variable.getPattern();
-    if (pattern == null) return null;
     PatternResolveState hint = PatternResolveState.WHEN_TRUE;
     VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
       @Override
@@ -725,7 +724,7 @@ public class HighlightUtil {
     return proc.size() > 0 ? (PsiPatternVariable)proc.getResult(0) : null;
   }
 
-  private static PsiVariable checkSameNames(@NotNull PsiVariable variable) {
+  private static PsiVariable findSameNameSibling(@NotNull PsiVariable variable) {
     PsiElement scope = variable.getParent();
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
@@ -852,12 +851,12 @@ public class HighlightUtil {
                                       "continue.outside.switch.expr");
   }
 
-  private static HighlightInfo checkBreakOrContinueTarget(PsiStatement statement,
+  private static HighlightInfo checkBreakOrContinueTarget(@NotNull PsiStatement statement,
                                                           @Nullable PsiIdentifier label,
                                                           @Nullable PsiStatement target,
-                                                          LanguageLevel level,
-                                                          @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String misplacedKey,
-                                                          @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String crossingKey) {
+                                                          @NotNull LanguageLevel level,
+                                                          @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String misplacedKey,
+                                                          @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String crossingKey) {
     if (target == null && label != null) {
       String message = JavaErrorBundle.message("unresolved.label", label.getText());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message).create();
@@ -908,7 +907,6 @@ public class HighlightUtil {
     return false;
   }
 
-  @Contract("null -> null")
   private static Map<String, Set<String>> getIncompatibleModifierMap(@NotNull PsiElement modifierListOwner) {
     if (PsiUtilCore.hasErrorElementChild(modifierListOwner)) return null;
     if (modifierListOwner instanceof PsiClass) {
@@ -925,10 +923,8 @@ public class HighlightUtil {
   @Nullable
   static String getIncompatibleModifier(@NotNull String modifier, @NotNull PsiModifierList modifierList) {
     PsiElement parent = modifierList.getParent();
-    Map<String, Set<String>> incompatibleModifierMap = null;
-    if (parent != null) {
-      incompatibleModifierMap = getIncompatibleModifierMap(parent);
-    }
+    if (parent == null) return null;
+    Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(parent);
     return incompatibleModifierMap == null ? null : getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap);
   }
 
@@ -1540,7 +1536,7 @@ public class HighlightUtil {
   }
 
   @NotNull
-  static Collection<HighlightInfo> checkSwitchExpressionReturnTypeCompatible(PsiSwitchExpression switchExpression) {
+  static Collection<HighlightInfo> checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
     if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) return Collections.emptyList();
     List<HighlightInfo> infos = new ArrayList<>();
     PsiType switchExpressionType = switchExpression.getType();
@@ -1562,7 +1558,7 @@ public class HighlightUtil {
     return infos;
   }
 
-  static HighlightInfo checkRecordComponentName(PsiRecordComponent component) {
+  static HighlightInfo checkRecordComponentName(@NotNull PsiRecordComponent component) {
     PsiIdentifier identifier = component.getNameIdentifier();
     if (identifier != null) {
       String name = identifier.getText();
@@ -1574,7 +1570,7 @@ public class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkRecordComponentVarArg(PsiRecordComponent recordComponent) {
+  static HighlightInfo checkRecordComponentVarArg(@NotNull PsiRecordComponent recordComponent) {
     if (recordComponent.isVarArgs() && PsiTreeUtil.getNextSiblingOfType(recordComponent, PsiRecordComponent.class) != null) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(recordComponent)
           .descriptionAndTooltip(JavaErrorBundle.message("record.component.vararg.not.last")).create();
@@ -2771,20 +2767,20 @@ public class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType,
+  static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
                                                            @Nullable PsiType rType,
                                                            @NotNull TextRange textRange,
                                                            int navigationShift) {
     return createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift, getReasonForIncompatibleTypes(rType));
   }
 
-  static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType,
+  static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
                                                            @Nullable PsiType rType,
                                                            @NotNull TextRange textRange,
                                                            int navigationShift,
-                                                           String reason) {
-    lType = lType != null ? PsiUtil.convertAnonymousToBaseType(lType) : null;
-    rType = rType != null ? PsiUtil.convertAnonymousToBaseType(rType) : null;
+                                                           @NotNull String reason) {
+    lType = PsiUtil.convertAnonymousToBaseType(lType);
+    rType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
     String styledReason = reason.isEmpty() ? ""
                                            : String.format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
     String toolTip = createIncompatibleTypesTooltip(lType, rType,
@@ -2866,7 +2862,7 @@ public class HighlightUtil {
     return lType != null && rType != null && !Comparing.strEqual(lType.getPresentableText(), rType.getPresentableText());
   }
 
-  private static String getReasonForIncompatibleTypes(PsiType rType) {
+  private static @NotNull String getReasonForIncompatibleTypes(PsiType rType) {
     if (rType instanceof PsiMethodReferenceType) {
       JavaResolveResult[] results = ((PsiMethodReferenceType)rType).getExpression().multiResolve(false);
       if (results.length > 1) {
@@ -3206,7 +3202,8 @@ public class HighlightUtil {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(init).descriptionAndTooltip(message).create();
   }
 
-  private static LanguageLevel getApplicableLevel(PsiFile file, HighlightingFeature feature) {
+  @NotNull
+  private static LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull HighlightingFeature feature) {
     LanguageLevel standardLevel = feature.getStandardLevel();
     if (standardLevel != null && feature.level.isPreview()) {
       JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
@@ -3232,10 +3229,10 @@ public class HighlightUtil {
     return null;
   }
 
-  private static String getUnsupportedFeatureMessage(@NotNull PsiElement element,
-                                                     @NotNull HighlightingFeature feature,
-                                                     @NotNull LanguageLevel level,
-                                                     @NotNull PsiFile file) {
+  private static @NotNull String getUnsupportedFeatureMessage(@NotNull PsiElement element,
+                                                              @NotNull HighlightingFeature feature,
+                                                              @NotNull LanguageLevel level,
+                                                              @NotNull PsiFile file) {
     String name = JavaAnalysisBundle.message(feature.key);
     String version = JavaSdkVersion.fromLanguageLevel(level).getDescription();
     String message = JavaErrorBundle.message("insufficient.language.level", name, version);

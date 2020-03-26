@@ -37,7 +37,7 @@ public class LambdaHighlightingUtil {
     return checkInterfaceFunctional(psiClass, JavaErrorBundle.message("target.type.of.a.lambda.conversion.must.be.an.interface"));
   }
 
-  static String checkInterfaceFunctional(@NotNull PsiClass psiClass, String interfaceNonFunctionalMessage) {
+  static String checkInterfaceFunctional(@NotNull PsiClass psiClass, @NotNull String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
     final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
     if (signatures == null) return interfaceNonFunctionalMessage;
@@ -48,9 +48,9 @@ public class LambdaHighlightingUtil {
     return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.interface.0", HighlightUtil.formatClass(psiClass));
   }
 
-  static HighlightInfo checkParametersCompatible(PsiLambdaExpression expression,
-                                                 PsiParameter[] methodParameters,
-                                                 PsiSubstitutor substitutor) {
+  static HighlightInfo checkParametersCompatible(@NotNull PsiLambdaExpression expression,
+                                                 PsiParameter @NotNull [] methodParameters,
+                                                 @NotNull PsiSubstitutor substitutor) {
     final PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
     if (lambdaParameters.length != methodParameters.length) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
@@ -77,7 +77,7 @@ public class LambdaHighlightingUtil {
     return null;
   }
 
-  public static boolean insertSemicolonAfter(PsiLambdaExpression lambdaExpression) {
+  public static boolean insertSemicolonAfter(@NotNull PsiLambdaExpression lambdaExpression) {
     return lambdaExpression.getBody() instanceof PsiCodeBlock || !insertSemicolon(lambdaExpression.getParent());
   }
 
@@ -85,7 +85,7 @@ public class LambdaHighlightingUtil {
     return parent instanceof PsiExpressionList || parent instanceof PsiExpression;
   }
 
-  public static String checkInterfaceFunctional(PsiType functionalInterfaceType) {
+  public static String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
       final Set<MethodSignature> signatures = new HashSet<>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
@@ -113,7 +113,7 @@ public class LambdaHighlightingUtil {
     return JavaErrorBundle.message("not.a.functional.interface",functionalInterfaceType.getPresentableText());
   }
 
-  public static HighlightInfo checkConsistentParameterDeclaration(PsiLambdaExpression expression) {
+  static HighlightInfo checkConsistentParameterDeclaration(@NotNull PsiLambdaExpression expression) {
     PsiParameter[] parameters = expression.getParameterList().getParameters();
     if (parameters.length < 2) return null;
     boolean hasExplicitParameterTypes = hasExplicitType(parameters[0]);
@@ -129,7 +129,7 @@ public class LambdaHighlightingUtil {
     return null;
   }
 
-  private static boolean hasExplicitType(PsiParameter parameter) {
+  private static boolean hasExplicitType(@NotNull PsiParameter parameter) {
     PsiTypeElement typeElement = parameter.getTypeElement();
     return typeElement != null && !typeElement.isInferredType();
   }
