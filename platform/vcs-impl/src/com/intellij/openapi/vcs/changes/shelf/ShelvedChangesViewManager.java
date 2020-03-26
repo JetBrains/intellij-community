@@ -630,7 +630,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       myTree = new ShelfTree(myProject);
       myTree.setEditable(true);
-      myTree.setDragEnabled(true);
+      myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
       myTree.getGroupingSupport().setGroupingKeysOrSkip(myShelveChangesManager.getGrouping());
       myTree.addGroupingChangeListener(e -> {
         myShelveChangesManager.setGrouping(myTree.getGroupingSupport().getGroupingKeys());
