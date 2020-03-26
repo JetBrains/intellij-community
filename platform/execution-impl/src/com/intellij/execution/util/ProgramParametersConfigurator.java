@@ -141,26 +141,22 @@ public class ProgramParametersConfigurator {
     }
 
     workingDirectory = expandPathAndMacros(workingDirectory, module, project);
+    if (MODULE_WORKING_DIR.equals(workingDirectory)) {
+      workingDirectory = PathMacroUtil.MODULE_WORKING_DIR;
+    }
+
+    if (module != null && PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory)) {
+      String workingDir = getDefaultWorkingDir(module);
+      if (workingDir != null) return workingDir;
+    }
 
     if (!PathUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
       if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
         return defaultWorkingDir;
       }
-
-      if (MODULE_WORKING_DIR.equals(workingDirectory)) {
-        workingDirectory = PathMacroUtil.MODULE_WORKING_DIR;
-      }
-
       if (PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory)) {
-        if (module == null) {
-          return defaultWorkingDir;
-        }
-        else {
-          String workingDir = getDefaultWorkingDir(module);
-          if (workingDir != null) return workingDir;
-        }
+        return defaultWorkingDir;
       }
-
       workingDirectory = defaultWorkingDir + "/" + workingDirectory;
     }
 
