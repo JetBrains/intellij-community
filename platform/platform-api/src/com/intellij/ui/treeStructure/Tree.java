@@ -820,6 +820,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return size;
   }
 
+  @Override
+  public void scrollPathToVisible(@Nullable TreePath path) {
+    if (path == null) return; // nothing to scroll
+    makeVisible(path); // expand parent paths if needed
+    TreeUtil.scrollToVisible(this, path, false);
+  }
+
   public boolean isHorizontalAutoScrollingEnabled() {
     return myHorizontalAutoScrolling != ThreeState.UNSURE ? myHorizontalAutoScrolling == ThreeState.YES : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
