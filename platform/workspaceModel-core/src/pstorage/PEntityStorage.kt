@@ -159,9 +159,32 @@ class PEntityStorageBuilder(
   }
 
   private fun <T : TypedEntity> removeEntity(idx: Int, entityClass: Class<T>) {
-    getModifiableEntityFamily(entityClass).remove(idx)
 
+    val accumulator = HashMap<Class<out TypedEntity>, MutableSet<Int>>()
+    accumulator[entityClass] = mutableSetOf(idx)
+    accumulateEntitiesToRemove(idx, entityClass, accumulator)
 
+    for ((klass, ids) in accumulator) {
+      val modifiableEntityFamily = getModifiableEntityFamily(klass)
+      ids.forEach { id ->
+        modifiableEntityFamily.remove(id)
+      }
+    }
+  }
+
+  private fun <T : TypedEntity> accumulateEntitiesToRemove(idx: Int,
+                                                           entityClass: Class<T>,
+                                                           accumulator: MutableMap<Class<out TypedEntity>, MutableSet<Int>>) {
+    // TODO: 27.03.2020 Check original refs
+    val hardRef = clonedRefs.getHardReferencesOf(entityClass, idx)
+    for ((klass, ids) in hardRef) {
+      ids.forEach { id ->
+        if (id in accumulator.getOrPut(klass.java) { HashSet() }) return@forEach
+        accumulator.getOrPut(klass.java) { HashSet() }.add(id)
+        accumulateEntitiesToRemove(id, klass.java, accumulator)
+      }
+      clonedRefs.removeOneToMany(ConnectionId.create(entityClass.kotlin, klass, true), idx)
+    }
   }
 
   override fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
@@ -333,6 +356,13 @@ fun main() {
     this.parent = createdEntity
   }
 
+  printStorage(pStoreBuilder)
+  println("---------------")
+  pStoreBuilder.removeEntity(pStoreBuilder.entities(PFolderEntity::class.java).first())
+  printStorage(pStoreBuilder)
+}
+
+private fun printStorage(pStoreBuilder: TypedEntityStorageBuilder) {
   println(pStoreBuilder.entities(PFolderEntity::class.java).toList())
   println(pStoreBuilder.entities(PSubFolderEntity::class.java).toList())
   println(pStoreBuilder.entities(PSoftSubFolder::class.java).toList())

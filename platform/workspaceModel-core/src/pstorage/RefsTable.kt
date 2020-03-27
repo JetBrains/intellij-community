@@ -33,7 +33,7 @@ open class RefsTable private constructor(
 
   fun <T : TypedEntity> getHardReferencesOf(entityClass: Class<T>,
                                             localIndex: Int): Map<KClass<out TypedEntity>, IntIntMultiMap.IntSequence> {
-    val filtered = oneToManyContainer.filterKeys { it.toSingleClass == entityClass && it.isHard }
+    val filtered = oneToManyContainer.filterKeys { it.toSingleClass.java == entityClass && it.isHard }
     val res = HashMap<KClass<out TypedEntity>, IntIntMultiMap.IntSequence>()
     for ((connectionId, bimap) in filtered) {
       val keys = bimap.getKeys(localIndex)
@@ -64,6 +64,10 @@ open class RefsTable private constructor(
 
 class MutableRefsTable : RefsTable() {
   override val oneToManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap> = HashMap()
+
+  fun <T : TypedEntity, SUBT : TypedEntity> removeOneToMany(connectionId: ConnectionId<T, SUBT>, id: Int) {
+    oneToManyContainer[connectionId]?.removeValue(id)
+  }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeManyToOne(connectionId: ConnectionId<T, SUBT>, id: Int) {
     oneToManyContainer[connectionId]?.removeKey(id)
