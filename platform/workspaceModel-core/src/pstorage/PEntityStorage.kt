@@ -21,7 +21,8 @@ open class PEntityStorage constructor(
   override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
                                                             entityClass: KClass<R>,
                                                             property: KProperty1<R, EntityReference<E>>): Sequence<R> {
-    return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
+    TODO()
+    //return entities(entityClass.java).filter { property.get(it).resolve(this) == e }
   }
 
   override fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R> {
@@ -79,7 +80,7 @@ class PEntityStorageBuilder(
 
   constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()), MutableEntitiesBarrel(), MutableRefsTable())
 
-  sealed class ChangeEntry {
+  private sealed class ChangeEntry {
     data class AddEntity<E : TypedEntity>(val entityData: PEntityData<E>, val clazz: Class<E>) : ChangeEntry()
     data class RemoveEntity(val id: PId<*>) : ChangeEntry()
     data class ReplaceEntity(val id: PId<*>, val newData: PEntityData<*>) : ChangeEntry()
@@ -186,14 +187,10 @@ class PEntityStorageBuilder(
 
   // modificationCount is not incremented
   private fun <E : TypedEntity> removeEntity(idx: PId<E>) {
-    removeEntity(idx.arrayId, idx.clazz.java)
-  }
-
-  private fun <T : TypedEntity> removeEntity(idx: Int, entityClass: Class<T>) {
-
     val accumulator = HashMap<Class<out TypedEntity>, MutableSet<Int>>()
-    accumulator[entityClass] = mutableSetOf(idx)
-    accumulateEntitiesToRemove(idx, entityClass, accumulator)
+    accumulator[idx.clazz.java] = mutableSetOf(idx.arrayId)
+
+    accumulateEntitiesToRemove(idx.arrayId, idx.clazz.java, accumulator)
 
     for ((klass, ids) in accumulator) {
       val modifiableEntityFamily = getMutableEntityFamily(klass)
