@@ -236,6 +236,15 @@ public class JarRepositoryManager {
     return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
   }
 
+  public static @NotNull Promise<Collection<Artifact>> loadDependenciesAsyncIgnoringRoots(@NotNull Project project,
+                                                                                          JpsMavenRepositoryLibraryDescriptor desc,
+                                                                                          final Set<ArtifactKind> artifactKinds,
+                                                                                          @Nullable List<RemoteRepositoryDescription> repos
+                                                                                         ) {
+    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
+    return submitBackgroundJob(new LibraryResolveJob(desc, artifactKinds, effectiveRepos));
+  }
+
   @Nullable
   public static List<OrderRoot> loadDependenciesSync(@NotNull Project project,
                                                                JpsMavenRepositoryLibraryDescriptor desc,
@@ -508,7 +517,7 @@ public class JarRepositoryManager {
       resolved -> resolved.isEmpty() ? Collections.<OrderRoot>emptyList() : WriteAction.computeAndWait(() -> createRoots(resolved, copyTo)));
   }
 
-  private static List<OrderRoot> createRoots(@NotNull Collection<? extends Artifact> artifacts, @Nullable String copyTo) {
+  public static List<OrderRoot> createRoots(@NotNull Collection<? extends Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (Artifact each : artifacts) {

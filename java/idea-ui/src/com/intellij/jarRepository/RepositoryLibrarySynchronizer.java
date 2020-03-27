@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.ProjectTopics;
@@ -23,6 +9,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -37,24 +24,32 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import org.eclipse.aether.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static org.jetbrains.idea.maven.aether.ArtifactKind.ARTIFACT;
-import static org.jetbrains.idea.maven.utils.library.RepositoryUtils.getStorageRoot;
 
 /**
  * @author gregsh
  */
 public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
+  private static final Logger LOG = Logger.getInstance(RepositoryLibrarySynchronizer.class);
+
   private static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
     if (version == null) {
@@ -183,15 +178,57 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
 
   private static void loadDependenciesSync(@NotNull Project project) {
     final Collection<Library> toSync = collectLibrariesToSync(project);
+    final List<Pair<Promise<Collection<Artifact>>, Library>> promises = new ArrayList<>();
     for (Library library : toSync) {
       if (LibraryTableImplUtil.isValidLibrary(library)) {
         LibraryProperties<?> properties = ((LibraryEx)library).getProperties();
         if (properties instanceof RepositoryLibraryProperties) {
           RepositoryLibraryProperties repositoryProperties = (RepositoryLibraryProperties)properties;
           JpsMavenRepositoryLibraryDescriptor descriptor = new JpsMavenRepositoryLibraryDescriptor(repositoryProperties.getMavenId());
-          JarRepositoryManager.loadDependenciesSync(project, descriptor, EnumSet.of(ARTIFACT), null, getStorageRoot(library, project));
+          Promise<Collection<Artifact>> promise =
+            JarRepositoryManager.loadDependenciesAsyncIgnoringRoots(project, descriptor, EnumSet.of(ARTIFACT), null);
+          LOG.info("Submitted job for downloading artifacts of " + library);
+          promises.add(new Pair<>(promise, library));
         }
       }
+    }
+
+    try {
+      int size = promises.size();
+      BlockingQueue<DownloadResult> blockingQueue = new ArrayBlockingQueue<>(size);
+
+      for (Pair<Promise<Collection<Artifact>>, Library> pair : promises) {
+        pair.first.onProcessed((artifacts) -> {
+          try {
+            blockingQueue.put(new DownloadResult(artifacts, pair.second));
+          }
+          catch (InterruptedException e) {
+            blockingQueue.clear();
+            blockingQueue.offer(DownloadResult.POISON);
+            LOG.error(e);
+          }
+        });
+      }
+
+      for (int i = 0; i < size; i++ ) {
+        DownloadResult result = blockingQueue.poll(2, TimeUnit.HOURS);
+        if (result == DownloadResult.POISON) {
+          return;
+        }
+        if (result == null) {
+          LOG.error("Cant resolve library dependencies within two hours");
+          return;
+        }
+        Collection<Artifact> artifacts = result.getArtifacts();
+        if (artifacts != null && !artifacts.isEmpty()) {
+          LOG.info("Artifacts downloading complete. Creating roots started for - " + result.getLibrary());
+          WriteAction.computeAndWait(() -> JarRepositoryManager.createRoots(artifacts, null));
+          LOG.info("Create roots finished for - " + result.getLibrary());
+        }
+      }
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
     }
   }
 
@@ -205,5 +242,29 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
       }
       return false;
     });
+  }
+
+  static class DownloadResult {
+    @NotNull
+    private static final DownloadResult POISON = new DownloadResult(null, null);
+
+    @Nullable
+    private final Collection<Artifact> myArtifacts;
+    @Nullable
+    private final Library myLibrary;
+
+    DownloadResult(@Nullable Collection<Artifact> artifacts, @Nullable Library library) {
+
+      myArtifacts = artifacts;
+      myLibrary = library;
+    }
+
+    @Nullable Collection<Artifact> getArtifacts() {
+      return myArtifacts;
+    }
+
+    @Nullable Library getLibrary() {
+      return myLibrary;
+    }
   }
 }
