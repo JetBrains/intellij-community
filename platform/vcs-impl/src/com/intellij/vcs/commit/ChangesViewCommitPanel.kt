@@ -98,7 +98,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   private val toolbarPanel = simplePanel().apply { isOpaque = false }
   private var verticalToolbarBorder: Border? = null
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
-  private val toolbar = ActionManager.getInstance().createActionToolbar("ChangesView.CommitToolbar", actions, false).apply {
+  private val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, false).apply {
     setTargetComponent(this@ChangesViewCommitPanel)
     component.isOpaque = false
   }
@@ -415,5 +415,9 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     }
 
     override fun actionPerformed(e: AnActionEvent) = commitButton.showPopup()
+  }
+
+  companion object {
+    internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
   }
 }
