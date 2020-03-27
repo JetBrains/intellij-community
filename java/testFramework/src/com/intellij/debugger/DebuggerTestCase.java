@@ -5,13 +5,13 @@ import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -349,14 +349,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     createBreakpoints(psiFile);
   }
 
-  protected Value evaluate(CodeFragmentKind kind, String code, EvaluationContext evaluationContext) throws EvaluateException {
-    return ReadAction.compute(() ->
-                                EvaluatorBuilderImpl.build(
-                                  new TextWithImportsImpl(kind, code),
-                                  ContextUtil.getContextElement(evaluationContext),
-                                  ContextUtil.getSourcePosition(evaluationContext),
-                                  myProject))
-      .evaluate(evaluationContext);
+  protected Value evaluate(CodeFragmentKind kind, String code, EvaluationContextImpl evaluationContext) throws EvaluateException {
+    WatchItemDescriptor watchItemDescriptor = new WatchItemDescriptor(myProject, new TextWithImportsImpl(kind, code));
+    watchItemDescriptor.setContext(evaluationContext);
+    EvaluateException exception = watchItemDescriptor.getEvaluateException();
+    if (exception != null) {
+      throw exception;
+    }
+    return watchItemDescriptor.getValue();
   }
 
   protected Value evaluate(CodeFragmentKind kind, String code, SuspendContextImpl suspendContext) throws EvaluateException {
