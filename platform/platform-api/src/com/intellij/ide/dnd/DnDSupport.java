@@ -206,11 +206,10 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
 
       @Override
       public DnDSupportBuilder setDropHandler(DnDDropHandler handler) {
-        dropHandler.set(e -> {
+        return setDropHandlerWithResult(e -> {
           handler.drop(e);
           return true;
         });
-        return this;
       }
 
       @Override
