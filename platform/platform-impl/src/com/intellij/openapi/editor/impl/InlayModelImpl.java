@@ -277,7 +277,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
 
   @Override
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
-    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    int offset = myEditor.visualPositionToOffset(visualPosition);
     int inlayCount = getInlineElementsInRange(offset, offset).size();
     if (inlayCount == 0) return false;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
@@ -288,7 +288,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
-    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    int offset = myEditor.visualPositionToOffset(visualPosition);
     List<Inlay> inlays = getInlineElementsInRange(offset, offset);
     if (inlays.isEmpty()) return null;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
@@ -347,7 +347,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     }
     int offset = -1;
     if (hasInlineElements) {
-      offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+      offset = myEditor.visualPositionToOffset(visualPosition);
       List<Inlay> inlays = getInlineElementsInRange(offset, offset);
       if (!inlays.isEmpty()) {
         VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
@@ -358,7 +358,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       }
     }
     if (hasAfterLineEndElements) {
-      if (offset < 0) offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+      if (offset < 0) offset = myEditor.visualPositionToOffset(visualPosition);
       int logicalLine = myEditor.getDocument().getLineNumber(offset);
       if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && !myEditor.getFoldingModel().isOffsetCollapsed(offset)) {
         List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);

@@ -2535,8 +2535,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               else {
                 if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                  newSelection =
-                    logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
+                  newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line, 0));
                 }
               }
               if (newSelection < 0) newSelection = newCaretOffset;
@@ -2550,8 +2549,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               else {
                 if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                  newSelection =
-                    logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
+                  newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0));
                 }
               }
               if (newSelection < 0) newSelection = newCaretOffset;
@@ -2996,8 +2994,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
                 else {
                   if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection =
-                      logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
+                    newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line, 0));
                   }
                 }
                 if (newSelection < 0) newSelection = newCaretOffset;
@@ -3011,8 +3008,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
                 else {
                   if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection =
-                      logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
+                    newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0));
                   }
                 }
                 if (newSelection < 0) newSelection = newCaretOffset;
@@ -4174,7 +4170,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (clickVisLine < startVisLine) {
       // Expand selection at backward direction.
-      int startOffset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(clickVisLine, 0)));
+      int startOffset = visualPositionToOffset(new VisualPosition(clickVisLine, 0));
       getSelectionModel().setSelection(startOffset, endSelectionOffset);
       getCaretModel().moveToOffset(startOffset);
     }
@@ -4194,7 +4190,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (clickVisLine == startVisLine) {
           clickVisLine++;
         }
-        int startOffset = logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(clickVisLine, 0)));
+        int startOffset = visualPositionToOffset(new VisualPosition(clickVisLine, 0));
         getSelectionModel().setSelection(startOffset, endSelectionOffset);
         getCaretModel().moveToOffset(startOffset);
       }

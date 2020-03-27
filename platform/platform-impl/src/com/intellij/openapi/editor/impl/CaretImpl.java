@@ -252,8 +252,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
       VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
       if (!myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
-        LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber, newLeansRight));
-        int offset = myEditor.logicalPositionToOffset(log);
+        int offset = myEditor.visualPositionToOffset(new VisualPosition(newLineNumber, newColumnNumber, newLeansRight));
         if (offset >= document.getTextLength() && columnShift == 0) {
           int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength(), true, false).column;
           // We want to move caret to the last column if if it's located at the last line and 'Down' is pressed.
@@ -287,8 +286,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
       pos = new VisualPosition(newLineNumber, newColumnNumber, newLeansRight);
       if (columnShift != 0 && lineShift == 0 && myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
-        LogicalPosition logical = myEditor.visualToLogicalPosition(pos);
-        int softWrapOffset = myEditor.logicalPositionToOffset(logical);
+        int softWrapOffset = myEditor.visualPositionToOffset(pos);
         if (columnShift >= 0) {
           moveToOffset(softWrapOffset);
         }
@@ -471,8 +469,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         if (debugBuffer != null) {
           debugBuffer.append("Adjusting caret position by moving it before soft wrap. Moving to visual position ").append(visualPosition).append("\n");
         }
-        final LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(visualPosition);
-        final int tmpOffset = myEditor.logicalPositionToOffset(logicalPosition);
+        final int tmpOffset = myEditor.visualPositionToOffset(visualPosition);
         if (tmpOffset == newOffset) {
           boolean restore = myReportCaretMoves;
           myReportCaretMoves = false;
@@ -487,8 +484,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         else {
           LOG.error("Invalid editor dimension mapping", new Throwable(), AttachmentFactory.createContext(
             "Expected to map visual position '" +
-            visualPosition + "' to offset " + newOffset + " but got the following: -> logical position '" +
-            logicalPosition + "'; -> offset " + tmpOffset + ". State: " + myEditor.dumpState()));
+            visualPosition + "' to offset " + newOffset + " but got the following: -> offset " + tmpOffset +
+            ". State: " + myEditor.dumpState()));
         }
       }
     }
@@ -749,8 +746,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   private void updateVisualLineInfo() {
-    myVisualLineStart = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line, 0)));
-    myVisualLineEnd = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(new VisualPosition(myVisibleCaret.line + 1, 0)));
+    myVisualLineStart = myEditor.visualPositionToOffset(new VisualPosition(myVisibleCaret.line, 0));
+    myVisualLineEnd = myEditor.visualPositionToOffset(new VisualPosition(myVisibleCaret.line + 1, 0));
 
     int y = myEditor.visualLineToY(myVisibleCaret.line);
 

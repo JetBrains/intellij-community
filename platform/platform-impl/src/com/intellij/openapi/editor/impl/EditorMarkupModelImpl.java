@@ -545,8 +545,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private int getOffset(int visualLine, boolean startLine) {
-    LogicalPosition pos = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, startLine ? 0 : Integer.MAX_VALUE));
-    return myEditor.logicalPositionToOffset(pos);
+    return myEditor.visualPositionToOffset(new VisualPosition(visualLine, startLine ? 0 : Integer.MAX_VALUE));
   }
 
   private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<? super RangeHighlighterEx> highlighters) {

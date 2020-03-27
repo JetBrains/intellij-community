@@ -460,8 +460,7 @@ public class EditorActionUtil {
 
   private static void moveCaretToStartOfSoftWrappedLine(@NotNull Editor editor, VisualPosition currentVisual) {
     CaretModel caretModel = editor.getCaretModel();
-    LogicalPosition startLineLogical = editor.visualToLogicalPosition(new VisualPosition(currentVisual.line, 0));
-    int startLineOffset = editor.logicalPositionToOffset(startLineLogical);
+    int startLineOffset = editor.visualPositionToOffset(new VisualPosition(currentVisual.line, 0));
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     SoftWrap softWrap = softWrapModel.getSoftWrap(startLineOffset);
     if (softWrap == null) {
@@ -508,7 +507,7 @@ public class EditorActionUtil {
    *                            {@code '-1'} otherwise
    */
   public static int findFirstNonSpaceColumnOnTheLine(@NotNull Editor editor, int visualLineNumber) {
-    int startOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(visualLineNumber, 0)));
+    int startOffset = editor.visualPositionToOffset(new VisualPosition(visualLineNumber, 0));
     int endOffset = EditorUtil.getNotFoldedLineEndOffset(editor, startOffset);
     int offset = findFirstNonSpaceOffsetInRange(editor.getDocument().getImmutableCharSequence(), startOffset, endOffset);
     if (offset == -1) return -1;
@@ -577,8 +576,7 @@ public class EditorActionUtil {
     // There is a possible case that the caret is already located at the visual end of line and the line is soft wrapped.
     // We want to move the caret to the end of the logical line then.
     if (currentVisualCaret.equals(visualEndOfLineWithCaret)) {
-      LogicalPosition logical = editor.visualToLogicalPosition(visualEndOfLineWithCaret);
-      int offset = editor.logicalPositionToOffset(logical);
+      int offset = editor.visualPositionToOffset(visualEndOfLineWithCaret);
       if (offset < editor.getDocument().getTextLength()) {
         int logicalLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, offset);
         visualEndOfLineWithCaret = editor.offsetToVisualPosition(logicalLineEndOffset, true, false);
