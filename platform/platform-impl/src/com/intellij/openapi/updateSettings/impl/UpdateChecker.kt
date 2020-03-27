@@ -4,7 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.marketplace.PluginsMetaLoader
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
@@ -271,15 +271,15 @@ object UpdateChecker {
     incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
     indicator: ProgressIndicator?
   ) {
-    val marketplacePlugins = PluginsMetaLoader.getMarketplacePlugins(indicator)
+    val marketplacePlugins = MarketplaceRequests.getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.map { it.key.idString }.filter { it in marketplacePlugins }
-    val updates = PluginsMetaLoader.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
+    val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
       val isOutdated = descriptor == null || PluginDownloader.comparePluginVersions(lastUpdate.version, descriptor.version) > 0
       if (isOutdated) {
         val newDescriptor = try {
-          PluginsMetaLoader.loadPluginDescriptor(id.idString, lastUpdate, indicator)
+          MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator)
         }
         catch (e: HttpRequests.HttpStatusException) {
           if (e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) continue

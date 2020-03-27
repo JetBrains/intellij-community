@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.marketplace.PluginsMetaLoader;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -288,7 +288,7 @@ public class PluginInstallOperation {
       myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
     //TODO: we assume here that plugin from custom repo should always be chosen over plugin from main repo. Maybe latest should be chosen?
     if (pluginFromCustomRepos == null) {
-      return PluginsMetaLoader.getLastCompatiblePluginUpdate(depPluginId.getIdString());
+      return MarketplaceRequests.getLastCompatiblePluginUpdate(depPluginId.getIdString());
     }
     else {
       return pluginFromCustomRepos;

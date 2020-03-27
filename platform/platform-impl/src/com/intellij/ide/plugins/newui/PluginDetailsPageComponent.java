@@ -6,7 +6,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.marketplace.PluginsMetaLoader;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -398,7 +398,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           syncLoading = false;
           startLoading();
           ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            PluginNode meta = PluginsMetaLoader
+            PluginNode meta = MarketplaceRequests
               .loadPluginDescriptor(node.getPluginId().getIdString(), node.getExternalPluginId(), node.getExternalUpdateId());
             meta.setRating(node.getRating());
             meta.setDownloads(node.getDownloads());

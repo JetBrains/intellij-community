@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.marketplace.PluginsMetaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -26,7 +25,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.intellij.ide.plugins.marketplace.PluginsMetaLoader.parsePluginList;
+import static com.intellij.ide.plugins.marketplace.MarketplaceRequests.parsePluginList;
 import static java.util.Collections.singletonMap;
 
 /**
@@ -113,7 +112,7 @@ public final class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", url.getAuthority()));
     }
 
-    List<PluginNode> descriptors = PluginsMetaLoader.readOrUpdateFile(
+    List<PluginNode> descriptors = MarketplaceRequests.readOrUpdateFile(
       pluginListFile,
       url.toExternalForm(),
       indicator,
