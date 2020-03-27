@@ -31,9 +31,11 @@ public final class Preloader {
   private final Executor myExecutor;
   private final ProgressIndicator myIndicator;
   private final ProgressIndicator myWrappingIndicator;
+  private final boolean myDisabled;
 
   Preloader() {
     Application app = ApplicationManager.getApplication();
+    myDisabled = (app.isUnitTestMode() || app.isHeadlessEnvironment() || !Registry.is("enable.activity.preloading"));
     myIndicator = new ProgressIndicatorBase();
     Disposer.register(app, () -> myIndicator.cancel());
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Preloader Pool", 1);
@@ -60,17 +62,16 @@ public final class Preloader {
   private static class AppInitListener implements ApplicationInitializedListener {
     @Override
     public void componentsInitialized() {
-      Application app = ApplicationManager.getApplication();
-      if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !Registry.is("enable.activity.preloading")) {
-        return;
-      }
+      Preloader preloader = ServiceManager.getService(Preloader.class);
+      if (preloader.myDisabled) return;
       PreloadingActivity.EP_NAME.processWithPluginDescriptor((activity, descriptor) -> {
-        ServiceManager.getService(Preloader.class).preload(activity, descriptor);
+        preloader.preload(activity, descriptor);
       });
     }
   }
 
   public void preload(PreloadingActivity activity, @Nullable PluginDescriptor descriptor) {
+    if (myDisabled) return;
     myExecutor.execute(() -> {
       if (myIndicator.isCanceled()) {
         return;
