@@ -24,12 +24,12 @@ public interface DnDDropHandler {
   interface WithResult extends DnDDropHandler {
     @Override
     default void drop(DnDEvent event) {
-      possiblyDrop(event);
+      tryDrop(event);
     }
 
     /**
      * @return {@code true} if drop succeeded
      */
-    boolean possiblyDrop(DnDEvent event);
+    boolean tryDrop(DnDEvent event);
   }
 }

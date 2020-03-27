@@ -640,7 +640,7 @@ public final class DnDManagerImpl extends DnDManager {
       else {
         DnDTarget target = getTarget(component);
         if (target instanceof DnDDropHandler.WithResult) {
-          success = ((DnDDropHandler.WithResult)target).possiblyDrop(currentEvent);
+          success = ((DnDDropHandler.WithResult)target).tryDrop(currentEvent);
         }
         else {
           target.drop(currentEvent);
