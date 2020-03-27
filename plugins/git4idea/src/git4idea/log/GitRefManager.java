@@ -20,6 +20,7 @@ import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitTag;
 import git4idea.branch.GitBranchType;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -136,7 +137,7 @@ public class GitRefManager implements VcsLogRefManager {
 
     List<RefGroup> result = new ArrayList<>();
     result.addAll(simpleGroups);
-    if (!localBranches.isEmpty()) result.add(new SimpleRefGroup("Local", localBranches, false));
+    if (!localBranches.isEmpty()) result.add(new SimpleRefGroup(GitBundle.message("git.log.refGroup.local"), localBranches, false));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
       result.add(new RemoteRefGroup(entry.getKey(), entry.getValue()));
     }
