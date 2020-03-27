@@ -19,7 +19,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.StorageException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +76,6 @@ public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
 
   @Override
   public String toString() {
-    return myIndexId + "," + getClass().getName();
+    return "update data for " + getInputId() + " of " + myIndexId;
   }
 }
