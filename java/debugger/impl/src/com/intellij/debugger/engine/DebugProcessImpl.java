@@ -1406,11 +1406,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       ReferenceType result = null;
-      for (final ReferenceType refType : getVirtualMachineProxy().classesByName(className)) {
-        if (refType.isPrepared() && isVisibleFromClassLoader(classLoader, refType)) {
-          result = refType;
-          break;
-        }
+      List<ReferenceType> types = ContainerUtil.filter(getVirtualMachineProxy().classesByName(className), ReferenceType::isPrepared);
+      // first try to quickly find the equal classloader only
+      result = types.stream().filter(refType -> Objects.equals(classLoader, refType.classLoader())).findFirst().orElse(null);
+      // now do the full visibility check
+      if (result == null && classLoader != null) {
+        result = types.stream().filter(refType -> isVisibleFromClassLoader(classLoader, refType)).findFirst().orElse(null);
       }
       if (result == null && evaluationContext != null) {
         EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
@@ -1425,13 +1426,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean isVisibleFromClassLoader(final ClassLoaderReference fromLoader, final ReferenceType refType) {
+  private static boolean isVisibleFromClassLoader(@NotNull ClassLoaderReference fromLoader, final ReferenceType refType) {
     // IMPORTANT! Even if the refType is already loaded by some parent or bootstrap loader, it may not be visible from the given loader.
     // For example because there were no accesses yet from this loader to this class. So the loader is not in the list of "initialing" loaders
     // for this refType and the refType is not visible to the loader.
     // Attempt to evaluate method with this refType will yield ClassNotLoadedException.
     // The only way to say for sure whether the class is _visible_ to the given loader, is to use the following API call
-    return fromLoader == null || fromLoader.equals(refType.classLoader()) || fromLoader.visibleClasses().contains(refType);
+    return fromLoader.visibleClasses().contains(refType);
   }
 
   private static String reformatArrayName(String className) {
