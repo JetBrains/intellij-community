@@ -160,7 +160,7 @@ public abstract class SearchQueryParser {
         if (url.length() > 0) {
           url.append("&");
         }
-        url.append("vendors=").append(URLUtil.encodeURIComponent(vendor));
+        url.append("organization=").append(URLUtil.encodeURIComponent(vendor));
       }
 
       if (searchQuery != null) {
