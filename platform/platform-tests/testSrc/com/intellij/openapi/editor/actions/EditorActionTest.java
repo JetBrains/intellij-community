@@ -296,4 +296,11 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_REVERSE_LINES);
     checkResultByText("<selection>bar\nfoo\n<caret></selection>baz");
   }
+
+  public void testLineStartForASpecificFoldingCase() {
+    initText("\nabc<caret>");
+    addCollapsedFoldRegion(0, 4, "...");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    checkResultByText("<caret>\nabc");
+  }
 }
