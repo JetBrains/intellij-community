@@ -15,9 +15,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
@@ -134,8 +131,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
   private val commitAuthorComponent = CommitAuthorComponent(project)
-  private val commitLegendCalculator = ChangeInfoCalculator()
-  private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
   private var needUpdateCommitOptionsUi = false
 
@@ -150,14 +145,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   init {
     Disposer.register(this, commitMessage)
 
-    val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
-    commitLegend.isCompact = isCompactCommitLegend.asBoolean()
-    isCompactCommitLegend.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        commitLegend.isCompact = value.asBoolean()
-      }
-    }, this)
-
     buildLayout()
     for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
@@ -167,10 +154,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
       isShowCheckboxes = true
     }
-
-    addInclusionListener(object : InclusionListener {
-      override fun inclusionChanged() = this@ChangesViewCommitPanel.inclusionChanged()
-    }, this)
 
     setupShortcuts(rootComponent)
   }
@@ -189,8 +172,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
             add(commitButton)
             add(commitAuthorComponent)
           })
-          add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
-          add(commitLegend.component)
           add(toolbarPanel)
         }
       )
@@ -228,17 +209,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
   private fun getButtonPanelBackground() =
     JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
-
-  private fun inclusionChanged() {
-    updateLegend()
-  }
-
-  private fun updateLegend() {
-    // Displayed changes and unversioned files are not actually used in legend - so we don't pass them
-    commitLegendCalculator.update(
-      includedChanges = getIncludedChanges(), includedUnversionedFilesCount = getIncludedUnversionedFiles().size)
-    commitLegend.update()
-  }
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
