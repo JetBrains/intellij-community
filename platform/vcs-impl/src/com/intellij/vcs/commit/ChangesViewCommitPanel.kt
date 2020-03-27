@@ -35,6 +35,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
@@ -60,7 +61,6 @@ import kotlin.properties.Delegates.observable
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
 
 private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
-private fun createHorizontalPanel(): JBPanel<*> = panel(HorizontalLayout(scale(16), SwingConstants.CENTER))
 
 private fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
@@ -94,7 +94,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
-  private val buttonPanel = simplePanel()
+  private val buttonPanel = NonOpaquePanel(HorizontalLayout(0))
   private val toolbarPanel = simplePanel().apply { isOpaque = false }
   private var verticalToolbarBorder: Border? = null
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
@@ -111,7 +111,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
       setTargetComponent(this@ChangesViewCommitPanel)
       setReservePlaceAutoPopupIcon(false)
       component.isOpaque = false
-      component.border = null
+      component.border = emptyLeft(6)
     }
 
   private val commitMessage = CommitMessage(project, false, false, true).apply {
@@ -160,18 +160,11 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
   private fun buildLayout() {
     buttonPanel.apply {
-      background = getButtonPanelBackground()
       border = getButtonPanelBorder()
 
-      addToLeft(commitActionToolbar.component)
-      addToCenter(
-        createHorizontalPanel().apply {
-          background = getButtonPanelBackground()
-
-          add(commitButton)
-          add(toolbarPanel)
-        }
-      )
+      add(commitButton)
+      add(commitActionToolbar.component)
+      add(toolbarPanel)
     }
     centerPanel
       .addToCenter(commitMessage)
