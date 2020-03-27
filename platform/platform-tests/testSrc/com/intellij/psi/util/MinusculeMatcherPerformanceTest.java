@@ -75,9 +75,19 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testMatchingLongStringWithAnotherLongStringWhereOnlyEndsDiffer() {
     String pattern = "*Then the large string is '{asdbsfafds adsfadasdfasdfasdfasdfasdfasdfsfasf adsfasdf sfasdfasdfasdfasdfasdfasdfd adsfadsfsafd adsfafdadsfsdfasdf sdf asdfasdfasfadsfasdfasfd asdfafd fasdfasdfasdfdsfas dadsfasfadsfafdsafddf  dsf dsasdfasdfsdafsdfsdfsdfasdffafdadfafafasdfasdf asdfasdfasdfasdfasdfasdfasdfasdfaasdfsdfasdfds adfafddfas aa afds}' is sent into the abyss\nThen";
     String name =     "Then the large string is '{asdbsfafds adsfadasdfasdfasdfasdfasdfasdfsfasf adsfasdf sfasdfasdfasdfasdfasdfasdfd adsfadsfsafd adsfafdadsfsdfasdf sdf asdfasdfasfadsfasdfasfd asdfafd fasdfasdfasdfdsfas dadsfasfadsfafdsafddf  dsf dsasdfasdfsdafsdfsdfsdfasdffafdadfafafasdfasdf asdfasdfasdfasdfasdfasdfasdfasdfaasdfsdfasdfds adfafddfas aa afds}' is sent into the abyss\nTh' is sent into the abyss";
-    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> {
-      assertDoesntMatch(pattern, name);
-    }).assertTiming();
+    assertDoesntMatchFast(pattern, name);
+
+    pattern = "findFirstAdjLoanPlanTemplateByAdjLoanPlan_AdjLoanProgram_AdjLoanProgramCodeAndTemplateVersions";
+    name =    "findFirstAdjLoanPlanTemplateByAdjLoanPlan_AdjLoanProgram_AdjLoanProgramCodeAndTemplateVersion_TemplateVersionCode";
+    assertDoesntMatchFast(pattern, name);
+
+    pattern = "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bold";
+    name    = "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bolid";
+    assertDoesntMatchFast(pattern, name);
+  }
+
+  private void assertDoesntMatchFast(String pattern, String name) {
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> assertDoesntMatch(pattern, name)).assertTiming();
   }
 
   public void testMatchingLongRuby() {
@@ -97,13 +107,6 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
 
       assertPreference(s, s.substring(0, 10), s);
       assertPreference("*" + s, s.substring(0, 10), s);
-    }).assertTiming();
-  }
-
-  public void testPropertyWithTypoAtTheEnd() {
-    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> {
-      assertDoesntMatch("tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bold",
-                        "tip.how.to.select.a.thing.and.that.selected.things.are.shown.as.bolid");
     }).assertTiming();
   }
 
