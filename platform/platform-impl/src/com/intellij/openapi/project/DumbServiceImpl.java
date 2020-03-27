@@ -729,10 +729,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ProgressManager.getInstance().runProcess(() -> {
       try {
         taskIndicator.checkCanceled();
-
         taskIndicator.setIndeterminate(true);
-        taskIndicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-
         task.performInDumbMode(taskIndicator);
       }
       catch (ProcessCanceledException ignored) {

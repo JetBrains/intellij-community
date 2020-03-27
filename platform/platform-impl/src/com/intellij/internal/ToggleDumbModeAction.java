@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,8 @@ public class ToggleDumbModeAction extends DumbAwareAction {
       DumbServiceImpl.getInstance(project).queueTask(new DumbModeTask() {
         @Override
         public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(true);
+          indicator.setText(IndexingBundle.message("toggled.dumb.mode"));
           while (isToggledDumb(project)) {
             indicator.checkCanceled();
             TimeoutUtil.sleep(100);
