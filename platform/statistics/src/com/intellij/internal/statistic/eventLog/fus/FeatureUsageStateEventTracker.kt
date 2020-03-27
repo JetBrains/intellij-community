@@ -3,12 +3,15 @@ package com.intellij.internal.statistic.eventLog.fus
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
-private val EP_NAME = ExtensionPointName<FeatureUsageStateEventTracker>("com.intellij.statistic.eventLog.fusStateEventTracker")
-
 interface FeatureUsageStateEventTracker {
   fun initialize()
+  fun reportNow()
+
+  companion object {
+    val EP_NAME = ExtensionPointName<FeatureUsageStateEventTracker>("com.intellij.statistic.eventLog.fusStateEventTracker")
+  }
 }
 
 internal fun initStateEventTrackers() {
-  EP_NAME.forEachExtensionSafe { it.initialize() }
+  FeatureUsageStateEventTracker.EP_NAME.forEachExtensionSafe { it.initialize() }
 }

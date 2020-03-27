@@ -29,12 +29,12 @@ class SystemStateMonitor : FeatureUsageStateEventTracker {
     }
 
     JobScheduler.getScheduler().scheduleWithFixedDelay(
-      { logSystemEvent() },
+      { reportNow() },
       INITIAL_DELAY.toLong(), PERIOD_DELAY.toLong(), TimeUnit.MINUTES
     )
   }
 
-  private fun logSystemEvent() {
+  override fun reportNow() {
     val data = FeatureUsageData().addVersion(Version(1, JavaVersion.current().feature, 0))
     FUStateUsagesLogger.logStateEvent(JAVA_GROUP, getJavaVendor(), data)
 
