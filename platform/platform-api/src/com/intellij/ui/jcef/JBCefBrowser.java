@@ -50,13 +50,19 @@ public class JBCefBrowser implements JBCefDisposable {
     @Nullable protected final String myHtml;
     @NotNull protected final String myUrl;
 
-    LoadDeferrer(@NotNull String url) {
-      this(null, url);
-    }
-
-    LoadDeferrer(@Nullable String html, @NotNull String url) {
+    private LoadDeferrer(@Nullable String html, @NotNull String url) {
       myHtml = html;
       myUrl = url;
+    }
+
+    @NotNull
+    public static LoadDeferrer urlDeferrer(String url) {
+      return new LoadDeferrer(null, url);
+    }
+
+    @NotNull
+    public static LoadDeferrer htmlDeferrer(String html, String url) {
+      return new LoadDeferrer(html, url);
     }
 
     public void load(@NotNull CefBrowser browser) {
@@ -143,7 +149,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefBrowser.loadURL(url);
     }
     else {
-      myLoadDeferrer = new LoadDeferrer(url);
+      myLoadDeferrer = LoadDeferrer.urlDeferrer(url);
     }
   }
 
@@ -158,7 +164,7 @@ public class JBCefBrowser implements JBCefDisposable {
       myCefBrowser.loadString(html, url);
     }
     else {
-      myLoadDeferrer = new LoadDeferrer(html, url);
+      myLoadDeferrer = LoadDeferrer.htmlDeferrer(html, url);
     }
   }
 
