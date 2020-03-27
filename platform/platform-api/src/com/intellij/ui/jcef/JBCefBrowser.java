@@ -9,6 +9,7 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
+import org.cef.network.CefCookieManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
@@ -36,6 +38,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
   @NotNull private final CefBrowser myCefBrowser;
+  @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
@@ -45,6 +48,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @Nullable private volatile LoadDeferrer myLoadDeferrer;
   private JDialog myDevtoolsFrame = null;
   protected CefContextMenuHandler myDefaultContextMenuHandler;
+  private final ReentrantLock myCookieManagerLock = new ReentrantLock();
 
   private static class LoadDeferrer {
     @Nullable protected final String myHtml;
@@ -205,6 +209,31 @@ public class JBCefBrowser implements JBCefDisposable {
   @NotNull
   public JBCefClient getJBCefClient() {
     return myCefClient;
+  }
+
+  @NotNull
+  public JBCefCookieManager getJBCefCookieManager() {
+    myCookieManagerLock.lock();
+    try {
+      if (myJBCefCookieManager == null) {
+        myJBCefCookieManager = new JBCefCookieManager(CefCookieManager.getGlobalManager());
+      }
+      return myJBCefCookieManager;
+    }
+    finally {
+      myCookieManagerLock.unlock();
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public void setJBCefCookieManager(@NotNull JBCefCookieManager jBCefCookieManager) {
+    myCookieManagerLock.lock();
+    try {
+      myJBCefCookieManager = jBCefCookieManager;
+    }
+    finally {
+      myCookieManagerLock.unlock();
+    }
   }
 
   @Nullable
