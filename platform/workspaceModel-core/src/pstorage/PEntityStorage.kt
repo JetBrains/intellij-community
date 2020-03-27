@@ -98,7 +98,7 @@ class PEntityStorageBuilder(
 
     pEntityData.entitySource = source
 
-    val entities = getEntitiesToModify(unmodifiableEntityClass)
+    val entities = getModifiableEntityFamily(unmodifiableEntityClass)
     entities.add(pEntityData)
 
     val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
@@ -110,19 +110,19 @@ class PEntityStorageBuilder(
 
   // modificationCount is not incremented
   private fun <T : TypedEntity> addEntity(entity: PEntityData<T>, clazz: Class<T>) {
-    getEntitiesToModify(clazz).add(entity)
+    getModifiableEntityFamily(clazz).add(entity)
   }
 
   // modificationCount is not incremented
   private fun <T : TypedEntity> replaceEntity(newEntity: PEntityData<T>, clazz: Class<T>) {
-    val family = getEntitiesToModify(clazz)
+    val family = getModifiableEntityFamily(clazz)
     if (!family.exists(newEntity.id)) error("Nothing to replace")  // TODO: 25.03.2020 Or just call "add"?
     family.replaceById(newEntity)
   }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     val unmodifiableEntityClass = e.javaClass
-    val copiedData = getEntitiesToModify(unmodifiableEntityClass).getEntityDataForModification((e as PTypedEntity<T>).id)
+    val copiedData = getModifiableEntityFamily(unmodifiableEntityClass).getEntityDataForModification((e as PTypedEntity<T>).id)
     (copiedData.wrapAsModifiable(this) as M).change()
     modificationCount++
     return copiedData.createEntity(this)
@@ -132,7 +132,7 @@ class PEntityStorageBuilder(
     return modified[unmodifiableEntityClass] ?: entitiesByType[unmodifiableEntityClass] ?: EntityFamily.empty()
   }
 
-  private fun <T : TypedEntity> getEntitiesToModify(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
+  private fun <T : TypedEntity> getModifiableEntityFamily(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
     return modified[unmodifiableEntityClass] ?: let {
       val origSet = entitiesByType[unmodifiableEntityClass]?.copyToMutable() ?: MutableEntityFamily.createEmpty()
       modified[unmodifiableEntityClass] = origSet
@@ -141,7 +141,7 @@ class PEntityStorageBuilder(
   }
 
   override fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T {
-    val copiedData = getEntitiesToModify(e.javaClass).getEntityDataForModification((e as PTypedEntity<T>).id)
+    val copiedData = getModifiableEntityFamily(e.javaClass).getEntityDataForModification((e as PTypedEntity<T>).id)
     copiedData.entitySource = newSource
     modificationCount++
     return copiedData.createEntity(this)
@@ -159,7 +159,9 @@ class PEntityStorageBuilder(
   }
 
   private fun <T : TypedEntity> removeEntity(idx: Int, entityClass: Class<T>) {
-    getEntitiesToModify(entityClass).remove(idx)
+    getModifiableEntityFamily(entityClass).remove(idx)
+
+
   }
 
   override fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
