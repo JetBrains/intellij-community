@@ -27,8 +27,28 @@ open class RefsTable internal constructor(
 
   constructor() : this(HashMap())
 
-  internal fun <T : TypedEntity, SUBT : TypedEntity> getOneToManyTable(connectionId: ConnectionId<T, SUBT>): IntIntBiMap? {
-    return oneToManyContainer[connectionId]
+  fun <T : TypedEntity> getChildren(id: Int, entityClass: Class<T>): Map<ConnectionId<T, out TypedEntity>, IntIntMultiMap.IntSequence> {
+    val filtered = oneToManyContainer.filterKeys { it.toSingleClass.java == entityClass }
+    val res = HashMap<ConnectionId<T, out TypedEntity>, IntIntMultiMap.IntSequence>()
+    for ((connectionId, bimap) in filtered) {
+      val keys = bimap.getKeys(id)
+      if (!keys.isEmpty()) {
+        res[connectionId as ConnectionId<T, out TypedEntity>] = keys
+      }
+    }
+    return res
+  }
+
+  fun <T : TypedEntity> getParents(id: Int, entityClass: Class<T>): Map<ConnectionId<out TypedEntity, T>, Int> {
+    val filtered = oneToManyContainer.filterKeys { it.toSequenceClass.java == entityClass }
+    val res = HashMap<ConnectionId<out TypedEntity, T>, Int>()
+    for ((connectionId, bimap) in filtered) {
+      val keys = bimap.get(id)
+      if (keys != -1) {
+        res[connectionId as ConnectionId<out TypedEntity, T>] = keys
+      }
+    }
+    return res
   }
 
   fun <T : TypedEntity> getHardReferencesOf(entityClass: Class<T>,
@@ -58,8 +78,6 @@ open class RefsTable internal constructor(
     if (res == -1) return null
     return transformer(res)
   }
-
-  fun overlapBy(other: RefsTable): RefsTable = RefsTable(this.oneToManyContainer + other.oneToManyContainer)
 }
 
 class MutableRefsTable : RefsTable() {
@@ -82,11 +100,24 @@ class MutableRefsTable : RefsTable() {
     getMutableMap(connectionId).removeKey(id)
   }
 
+  internal fun updateOneToMany(connectionId: ConnectionId<*, *>, id: Int, updateTo: IntIntMultiMap.IntSequence) {
+    val copiedMap = getMutableMap(connectionId)
+    copiedMap.removeValue(id)
+    updateTo.forEach { copiedMap.put(it, id) }
+  }
+
   fun <T : TypedEntity, SUBT : PTypedEntity<SUBT>> updateOneToMany(connectionId: ConnectionId<T, SUBT>, id: Int, updateTo: Sequence<SUBT>) {
     val copiedMap = getMutableMap(connectionId)
     copiedMap.removeValue(id)
     updateTo.forEach { copiedMap.put(it.id.arrayId, id) }
   }
+
+  internal fun updateManyToOne(connectionId: ConnectionId<*, *>, id: Int, updateTo: Int) {
+    val copiedMap = getMutableMap(connectionId)
+    copiedMap.removeKey(id)
+    copiedMap.put(id, updateTo)
+  }
+
 
   fun <T : PTypedEntity<T>, SUBT : TypedEntity> updateManyToOne(connectionId: ConnectionId<T, SUBT>, id: Int, updateTo: T) {
     val copiedMap = getMutableMap(connectionId)

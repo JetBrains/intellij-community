@@ -80,7 +80,7 @@ class PEntityStorageBuilder(
   constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()), MutableEntitiesBarrel(), MutableRefsTable())
 
   sealed class ChangeEntry {
-    data class AddEntity(val entityData: PEntityData<*>) : ChangeEntry()
+    data class AddEntity<E : TypedEntity>(val entityData: PEntityData<E>, val clazz: Class<E>) : ChangeEntry()
     data class RemoveEntity(val id: PId<*>) : ChangeEntry()
     data class ReplaceEntity(val id: PId<*>, val newData: PEntityData<*>) : ChangeEntry()
   }
@@ -103,21 +103,45 @@ class PEntityStorageBuilder(
 
     val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
     modifiableEntity.initializer()
-    updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData)) }
+    updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, unmodifiableEntityClass)) }
 
     return pEntityData.createEntity(this)
   }
 
   // modificationCount is not incremented
-  private fun <T : TypedEntity> addEntityWithRefs(entity: PEntityData<T>, clazz: Class<T>) {
+  // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
+  private fun <T : TypedEntity, E : TypedEntity> addEntityWithRefs(entity: PEntityData<T>, clazz: Class<E>, storage: PEntityStorage) {
+    clazz as Class<T>
     getMutableEntityFamily(clazz).add(entity)
+
+    handleReferences(storage, entity, clazz)
   }
 
   // modificationCount is not incremented
-  private fun <T : TypedEntity> replaceEntity(newEntity: PEntityData<T>, clazz: Class<T>) {
+  // TODO: 27.03.2020 T and E should be the same type. Looks like an error in kotlin inheritance algorithm
+  private fun <T : TypedEntity, E : TypedEntity> replaceEntityWithRefs(newEntity: PEntityData<T>,
+                                                                       clazz: Class<E>,
+                                                                       storage: PEntityStorage) {
+    clazz as Class<T>
     val family = getMutableEntityFamily(clazz)
     if (!family.exists(newEntity.id)) error("Nothing to replace")  // TODO: 25.03.2020 Or just call "add"?
     family.replaceById(newEntity)
+
+    handleReferences<T>(storage, newEntity, clazz)
+  }
+
+  private fun <T : TypedEntity> handleReferences(storage: PEntityStorage,
+                                                 newEntity: PEntityData<T>,
+                                                 clazz: Class<T>) {
+    val childrenRefs = storage.refs.getChildren(newEntity.id, clazz)
+    for ((connection, newIds) in childrenRefs) {
+      refs.updateOneToMany(connection, newEntity.id, newIds)
+    }
+
+    val parentRefs = storage.refs.getParents(newEntity.id, clazz)
+    for ((connection, newId) in parentRefs) {
+      refs.updateManyToOne(connection, newEntity.id, newId)
+    }
   }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
@@ -155,13 +179,13 @@ class PEntityStorageBuilder(
   }
 
   override fun removeEntity(e: TypedEntity) {
-    removeEntityX((e as PTypedEntity<out TypedEntity>).id)
+    removeEntity((e as PTypedEntity<out TypedEntity>).id)
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
 
   // modificationCount is not incremented
-  private fun <E : TypedEntity> removeEntityX(idx: PId<E>) {
+  private fun <E : TypedEntity> removeEntity(idx: PId<E>) {
     removeEntity(idx.arrayId, idx.clazz.java)
   }
 
@@ -223,13 +247,16 @@ class PEntityStorageBuilder(
   }
 
   override fun collectChanges(original: TypedEntityStorage): Map<Class<*>, List<EntityChange<*>>> {
+
+    // TODO: 27.03.2020 Since we have an instance of original storage, we actually can provide a method without an argument
+
     val originalImpl = original as PEntityStorage
     //this can be optimized to avoid creation of entity instances which are thrown away and copying the results from map to list
     // LinkedHashMap<Long, EntityChange<T>>
     val changes = LinkedHashMap<Int, Pair<Class<*>, EntityChange<*>>>()
     for (change in changeLog) {
       when (change) {
-        is ChangeEntry.AddEntity -> {
+        is ChangeEntry.AddEntity<*> -> {
           val addedEntity = change.entityData.createEntity(this) as PTypedEntity<*>
           changes[change.entityData.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
         }
@@ -277,25 +304,22 @@ class PEntityStorageBuilder(
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
 
-    /*
-        val diffLog = (diff as PEntityStorageBuilder).changeLog
-        updateChangeLog { it.addAll(diffLog) }
-        for (change in diffLog) {
-          when (change) {
-            is ChangeEntry.AddEntity -> addEntityWithRefs(change.entityData, null)
-            is ChangeEntry.RemoveEntity -> {
-              if (change.id in entityById) {
-                removeEntity(change.id)
-              }
-            }
-            is ChangeEntry.ReplaceEntity -> {
-              if (change.id in entityById) {
-                replaceEntity(change.id, change.newData, null, null)
-              }
-            }
+    val diffLog = (diff as PEntityStorageBuilder).changeLog
+    updateChangeLog { it.addAll(diffLog) }
+    for (change in diffLog) {
+      when (change) {
+        is ChangeEntry.AddEntity<*> -> addEntityWithRefs(change.entityData, change.clazz, diff)
+        is ChangeEntry.RemoveEntity -> {
+          if (this.entityDataById(change.id) != null) {
+            removeEntity(change.id)
           }
         }
-    */
+        is ChangeEntry.ReplaceEntity -> {
+          replaceEntityWithRefs(change.newData, change.id.clazz.java, diff)
+        }
+      }
+    }
+    // TODO: 27.03.2020 Here should be consistency check
   }
 
   companion object {
@@ -335,8 +359,8 @@ private fun printStorage(pStoreBuilder: TypedEntityStorageBuilder) {
   println(pStoreBuilder.entities(PSubFolderEntity::class.java).toList())
   println(pStoreBuilder.entities(PSoftSubFolder::class.java).toList())
 
-  println(pStoreBuilder.entities(PSubFolderEntity::class.java).first().parent)
-  println(pStoreBuilder.entities(PFolderEntity::class.java).first().children.toList())
-  println(pStoreBuilder.entities(PFolderEntity::class.java).first().softChildren.toList())
+  println(pStoreBuilder.entities(PSubFolderEntity::class.java).firstOrNull()?.parent)
+  println(pStoreBuilder.entities(PFolderEntity::class.java).firstOrNull()?.children?.toList())
+  println(pStoreBuilder.entities(PFolderEntity::class.java).firstOrNull()?.softChildren?.toList())
 }
 
