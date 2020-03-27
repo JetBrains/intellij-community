@@ -22,6 +22,16 @@ class CompletionExtension<T> extends LanguageExtension<T> {
     return buildExtensions(getAllBaseLanguageIdsWithAny(key));
   }
 
+  @Override
+  public void invalidateCacheForExtension(String key) {
+    super.invalidateCacheForExtension(key);
+    if ("any".equals(key)) {
+      for (Language language : Language.getRegisteredLanguages()) {
+        super.invalidateCacheForExtension(keyToString(language));
+      }
+    }
+  }
+
   @NotNull
   private Set<String> getAllBaseLanguageIdsWithAny(@NotNull Language key) {
     Set<String> allowed = new THashSet<>();
