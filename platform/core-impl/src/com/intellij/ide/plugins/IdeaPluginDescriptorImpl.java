@@ -200,6 +200,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         int size = XmlReader.collapseDuplicateDependencies(myPluginDependencies);
         XmlReader.collectDependentPluginIds(this, size);
       }
+      Element productElement = element.getChild("product-descriptor");
+      if (productElement != null) {
+        readProduct(context, productElement);
+      }
       return false;
     }
 
@@ -300,10 +304,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           break;
 
         case "product-descriptor":
-          myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
-          myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context.parentContext);
-          myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
-          myIsLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
+          readProduct(context, child);
           break;
 
         case "vendor":
@@ -335,6 +336,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     return true;
+  }
+
+  private void readProduct(@NotNull DescriptorLoadingContext context, @NotNull Element child) {
+    myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
+    myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context.parentContext);
+    myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
+    myIsLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
   }
 
   private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorLoadingContext context, Element child) {
