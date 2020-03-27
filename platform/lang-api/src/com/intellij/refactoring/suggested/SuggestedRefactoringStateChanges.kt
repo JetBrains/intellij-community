@@ -126,13 +126,6 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
       null
   }
 
-  private fun parameterMarkers(declaration: PsiElement): List<RangeMarker?> {
-    val document = PsiDocumentManager.getInstance(declaration.project).getDocument(declaration.containingFile)!!
-    return parameterMarkerRanges(declaration).map { range ->
-      range?.let { document.createRangeMarker(it) }
-    }
-  }
-
   /**
    * Use this implementation of [SuggestedRefactoringStateChanges], if only Rename refactoring is supported for the language.
    */
@@ -145,5 +138,12 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> {
       return emptyList()
     }
+  }
+}
+
+fun SuggestedRefactoringStateChanges.parameterMarkers(declaration: PsiElement): List<RangeMarker?> {
+  val document = PsiDocumentManager.getInstance(declaration.project).getDocument(declaration.containingFile)!!
+  return parameterMarkerRanges(declaration).map { range ->
+    range?.let { document.createRangeMarker(it) }
   }
 }
