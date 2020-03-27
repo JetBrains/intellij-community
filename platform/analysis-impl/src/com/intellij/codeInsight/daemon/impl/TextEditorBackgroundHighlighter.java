@@ -22,7 +22,7 @@ import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
   private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
-  private static final int[] EXCEPT_OVERRIDDEN = {
+  private static final int[] IGNORE_FOR_COMPILED = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
     Pass.UPDATE_ALL,
@@ -62,10 +62,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     boolean compiled = file instanceof PsiCompiledFile;
     if (compiled) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-    }
-
-    if (compiled) {
-      passesToIgnore = EXCEPT_OVERRIDDEN;
+      passesToIgnore = IGNORE_FOR_COMPILED;
     }
     else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
       return Collections.emptyList();

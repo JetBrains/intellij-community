@@ -15,7 +15,6 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * An action which has a selected state, and which toggles its selected state when performed.
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
  */
-@SuppressWarnings("StaticInheritance")
 public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction() {
   }
