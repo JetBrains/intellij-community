@@ -178,8 +178,7 @@ public class VcsLogUiUtil {
   }
 
   public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @Nls @NotNull StatusText emptyText) {
-    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"),
-                            () -> filterUi.setFilters(VcsLogFilterObject.EMPTY_COLLECTION));
+    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"), () -> filterUi.clearFilters());
   }
 
   public static boolean isDiffPreviewInEditor() {

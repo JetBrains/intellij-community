@@ -111,7 +111,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     runnables.add(new NamedRunnable(VcsLogBundle.message("vcs.log.commit.does.not.match.view.and.reset.link")) {
       @Override
       public void run() {
-        getFilterUi().setFilters(VcsLogFilterObject.EMPTY_COLLECTION);
+        getFilterUi().clearFilters();
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false),
                        pack -> pack.getFilters().isEmpty());
       }
