@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
+import com.intellij.codeInspection.DefaultInspectionToolResultExporter;
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.codeInspection.InspectionsResultUtil;
-import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Document;
@@ -162,7 +162,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
     writer.name(MODULE).value(problem.getChildText(MODULE));
     writer.name(PACKAGE).value(problem.getChildText(PACKAGE));
 
-    Element problemClassElement = problem.getChild(DefaultInspectionToolPresentation.INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
+    Element problemClassElement = problem.getChild(DefaultInspectionToolResultExporter.INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
     if (problemClassElement != null) {
       convertProblemClass(writer, problemClassElement);
     }
@@ -193,11 +193,11 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   }
 
   private static void convertProblemClass(@NotNull JsonWriter writer, @NotNull Element problemClass) throws IOException {
-    writer.name(DefaultInspectionToolPresentation.INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
+    writer.name(DefaultInspectionToolResultExporter.INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
     writer.beginObject()
       .name(NAME).value(problemClass.getText());
 
-    String inspectionId = problemClass.getAttributeValue(DefaultInspectionToolPresentation.INSPECTION_RESULTS_ID_ATTRIBUTE);
+    String inspectionId = problemClass.getAttributeValue(DefaultInspectionToolResultExporter.INSPECTION_RESULTS_ID_ATTRIBUTE);
     if (inspectionId != null) {
       writer.name(ID).value(inspectionId);
     }

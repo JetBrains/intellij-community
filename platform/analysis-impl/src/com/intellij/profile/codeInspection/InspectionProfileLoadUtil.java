@@ -31,7 +31,7 @@ public class InspectionProfileLoadUtil {
   @NotNull
   public static InspectionProfileImpl load(@NotNull Path file,
                                            @NotNull InspectionToolRegistrar registrar,
-                                           @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
+                                           @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException {
     Element element = JDOMUtil.load(file);
     String profileName = getProfileName(file, element);
     return load(element, profileName, registrar, profileManager);

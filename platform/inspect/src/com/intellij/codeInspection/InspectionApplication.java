@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -55,7 +54,6 @@ import org.jetbrains.concurrency.AsyncPromise;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -118,7 +116,10 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, Exception>)() -> {
       final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
       reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
-                                              appInfo.getFullApplicationName() + " (build " + appInfo.getBuild().asString() + ")"));
+                                                            appInfo.getFullApplicationName() +
+                                                            " (build " +
+                                                            appInfo.getBuild().asString() +
+                                                            ")"));
       reportMessage(1, InspectionsBundle.message("inspection.done"));
 
       Disposable disposable = Disposer.newDisposable();
@@ -178,7 +179,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     myInspectionProfile = loadInspectionProfile(project);
     if (myInspectionProfile == null) return;
 
-    GlobalInspectionContextImpl context = createGlobalInspectionContext(project);
+    GlobalInspectionContextEx context = createGlobalInspectionContext(project);
 
     final AnalysisScope scope;
     if (myAnalyzeChanges) {
@@ -216,15 +217,14 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
         PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(vfsDir);
         scope = new AnalysisScope(Objects.requireNonNull(psiDirectory));
-
       }
       runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
     }
   }
 
-  private @NotNull GlobalInspectionContextImpl createGlobalInspectionContext(Project project) {
-    final InspectionManagerEx im = (InspectionManagerEx)InspectionManager.getInstance(project);
-    GlobalInspectionContextImpl context = im.createNewGlobalContext();
+  private @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
+    final InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
+    GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
     context.setExternalProfile(myInspectionProfile);
     im.setProfile(myInspectionProfile.getName());
     return context;
@@ -241,32 +241,21 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       reportMessage(1, InspectionsBundle.message("inspection.application.chosen.profile.log.message", inspectionProfile.getName()));
     }
 
-    InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
+    InspectionsReportConverter reportConverter = ReportConverterUtil.getReportConverter(myOutputFormat);
     if (reportConverter == null && myOutputFormat != null && myOutputFormat.endsWith(".xsl")) {
       // xslt converter
       reportConverter = new XSLTReportConverter(myOutputFormat);
     }
 
     final Path resultsDataPath;
-    if ((reportConverter == null || !reportConverter.useTmpDirForRawData())
-        // use default xml converter(if null( or don't store default xml report in tmp dir
-        &&
-        myOutPath != null) {  // and don't use STDOUT stream
-      resultsDataPath = Paths.get(myOutPath);
-      Files.createDirectories(resultsDataPath);
+    try {
+      resultsDataPath = ReportConverterUtil.getResultsDataPath(parentDisposable, reportConverter, myOutPath);
     }
-    else {
-      try {
-        File tmpDir = FileUtilRt.createTempDirectory("inspections", "data", false);
-        Disposer.register(parentDisposable, () -> FileUtil.delete(tmpDir));
-        resultsDataPath = tmpDir.toPath();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-        System.err.println("Cannot create tmp directory.");
-        System.exit(1);
-        return;
-      }
+    catch (IOException e) {
+      LOG.error(e);
+      System.err.println("Cannot create tmp directory.");
+      System.exit(1);
+      return;
     }
 
     runAnalysis(project, projectPath, inspectionProfile, scope, reportConverter, resultsDataPath);
@@ -286,7 +275,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
                            AnalysisScope scope,
                            InspectionsReportConverter reportConverter,
                            Path resultsDataPath) throws IOException {
-    GlobalInspectionContextImpl context = createGlobalInspectionContext(project);
+    GlobalInspectionContextEx context = createGlobalInspectionContext(project);
     if (myAnalyzeChanges) {
       scope = runAnalysisOnCodeWithoutChanges(project, projectPath, createGlobalInspectionContext(project), scope, resultsDataPath);
       setupSecondAnalysisHandler(project, context);
@@ -296,13 +285,14 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     runUnderProgress(project, projectPath, context, scope, resultsDataPath, inspectionsResults);
     final Path descriptionsFile = resultsDataPath.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
     InspectionsResultUtil.describeInspections(descriptionsFile,
-                        myRunWithEditorSettings ? null : inspectionProfile.getName(),
+                                              myRunWithEditorSettings ? null : inspectionProfile.getName(),
                                               inspectionProfile);
     inspectionsResults.add(descriptionsFile);
     // convert report
     if (reportConverter != null) {
       try {
-        reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(), ContainerUtil.map2List(inspectionsResults, path -> path.toFile()));
+        reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
+                                ContainerUtil.map2List(inspectionsResults, path -> path.toFile()));
       }
       catch (InspectionsReportConverter.ConversionException e) {
         reportError("\n" + e.getMessage());
@@ -313,7 +303,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   private @NotNull AnalysisScope runAnalysisOnCodeWithoutChanges(Project project,
                                                                  Path projectPath,
-                                                                 GlobalInspectionContextImpl context,
+                                                                 GlobalInspectionContextEx context,
                                                                  AnalysisScope scope,
                                                                  Path resultsDataPath) {
     VirtualFile[] changes = ChangesUtil.getFilesFromChanges(ChangeListManager.getInstance(project).getAllChanges());
@@ -357,14 +347,14 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     WriteAction.runAndWait(() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
   }
 
-  private void setupFirstAnalysisHandler(GlobalInspectionContextImpl context) {
+  private void setupFirstAnalysisHandler(GlobalInspectionContextEx context) {
     if (myVerboseLevel > 0) {
       reportMessage(1, "Running first analysis stage...");
     }
     context.setGlobalReportedProblemFilter(
       (entity, description) -> {
         if (!(entity instanceof RefElement)) return false;
-        Pair<VirtualFile, Integer> fileAndLine = findFileAndLineByRefElement((RefElement) entity);
+        Pair<VirtualFile, Integer> fileAndLine = findFileAndLineByRefElement((RefElement)entity);
         if (fileAndLine == null) return false;
         originalWarnings.putValue(Pair.create(fileAndLine.first.getPath(), fileAndLine.second), description);
         return false;
@@ -387,7 +377,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     );
   }
 
-  private void setupSecondAnalysisHandler(Project project, GlobalInspectionContextImpl context) {
+  private void setupSecondAnalysisHandler(Project project, GlobalInspectionContextEx context) {
     if (myVerboseLevel > 0) {
       reportMessage(1, "Running second analysis stage...");
     }
@@ -451,7 +441,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     // unused asks shouldReport not only for warnings.
     if (text.contains("unused")) return;
     reportMessage(3, "Not filtered: ");
-    reportMessage(3,file.getPath() + ":" + (line + 1) + " Original: " + (position + 1));
+    reportMessage(3, file.getPath() + ":" + (line + 1) + " Original: " + (position + 1));
     reportMessage(3, "\t\t" + text);
   }
 
@@ -473,14 +463,15 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   private void runUnderProgress(@NotNull Project project,
                                 @NotNull Path projectPath,
-                                @NotNull GlobalInspectionContextImpl context,
+                                @NotNull GlobalInspectionContextEx context,
                                 @NotNull AnalysisScope scope,
                                 @NotNull Path resultsDataPath,
                                 @NotNull List<? super Path> inspectionsResults) {
     ProgressManager.getInstance().runProcess(() -> {
       configureProject(projectPath, project, scope);
 
-      if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {})) {
+      if (!GlobalInspectionContextUtil.canRunInspections(project, false, () -> {
+      })) {
         gracefulExit();
         return;
       }
@@ -543,7 +534,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
   private static void runAnalysisAfterShelvingSync(Project project, List<? extends VirtualFile> files,
                                                    ProgressIndicator progressIndicator, Runnable afterShelve) {
-    Set<VirtualFile> versionedRoots = StreamEx.of(files).map(it -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(it)).nonNull().toSet();
+    Set<VirtualFile> versionedRoots =
+      StreamEx.of(files).map(it -> ProjectLevelVcsManager.getInstance(project).getVcsRootFor(it)).nonNull().toSet();
     String message = VcsBundle.message("searching.for.code.smells.freezing.process");
     VcsPreservingExecutor.executeOperation(project, versionedRoots, message, progressIndicator, afterShelve);
   }
@@ -603,7 +595,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   private @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) throws IOException, JDOMException {
-    InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManager.getInstanceImpl().loadProfile(profilePath);
+    InspectionProfileImpl inspectionProfile = ApplicationInspectionProfileManagerBase.getInstanceBase().loadProfile(profilePath);
     if (inspectionProfile != null) {
       reportMessage(1, "Loaded profile '" + inspectionProfile.getName() + "' from file '" + profilePath + "'");
     }
@@ -631,12 +623,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
 
-  private static @Nullable InspectionsReportConverter getReportConverter(@Nullable String outputFormat) {
-    return InspectionsReportConverter.EP_NAME.getExtensionList().stream()
-      .filter(converter -> converter.getFormatName().equals(outputFormat))
-      .findFirst().orElse(null);
-  }
-
   private ConversionListener createConversionListener() {
     return new ConversionListener() {
       @Override
@@ -648,7 +634,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       public void successfullyConverted(@NotNull File backupDir) {
         reportMessage(1, InspectionsBundle.message(
           "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
-                                                  backupDir.getAbsolutePath()));
+          backupDir.getAbsolutePath()));
       }
 
       @Override
@@ -662,7 +648,8 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         for (File file : readonlyFiles) {
           files.append(file.getAbsolutePath()).append("; ");
         }
-        reportError(InspectionsBundle.message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0", files.toString()));
+        reportError(InspectionsBundle
+                      .message("inspection.application.cannot.convert.the.project.the.following.files.are.read.only.0", files.toString()));
       }
     };
   }
