@@ -282,16 +282,24 @@ public class PluginInstallOperation {
            " and \"" + pluginNodes.get(size - 1) + "\" plugins";
   }
 
+  /**
+   * Searches for plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with bigger version number
+   */
   @Nullable
   private IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId) {
     IdeaPluginDescriptor pluginFromCustomRepos =
       myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
-    //TODO: we assume here that plugin from custom repo should always be chosen over plugin from main repo. Maybe latest should be chosen?
+    PluginNode pluginFromMarketplace = MarketplaceRequests.getLastCompatiblePluginUpdate(depPluginId.getIdString());
     if (pluginFromCustomRepos == null) {
-      return MarketplaceRequests.getLastCompatiblePluginUpdate(depPluginId.getIdString());
+      return pluginFromMarketplace;
     }
-    else {
+    if (pluginFromMarketplace == null) {
       return pluginFromCustomRepos;
+    }
+    if (StringUtil.compareVersionNumbers(pluginFromCustomRepos.getVersion(), pluginFromMarketplace.getVersion()) > 0) {
+      return pluginFromCustomRepos;
+    } else {
+      return pluginFromMarketplace;
     }
   }
 }
