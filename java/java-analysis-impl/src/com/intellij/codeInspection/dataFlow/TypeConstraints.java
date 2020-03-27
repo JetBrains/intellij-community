@@ -303,7 +303,9 @@ public class TypeConstraints {
 
     @Override
     public boolean canBeInstantiated() {
-      return !myClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+      // Abstract final type is incorrect. We, however, assume that final wins: it can be instantiated
+      // otherwise TypeConstraints.instanceOf(type) would return impossible type
+      return (myClass.hasModifierProperty(PsiModifier.FINAL) || !myClass.hasModifierProperty(PsiModifier.ABSTRACT)) &&
              !CommonClassNames.JAVA_LANG_VOID.equals(myClass.getQualifiedName());
     }
 
