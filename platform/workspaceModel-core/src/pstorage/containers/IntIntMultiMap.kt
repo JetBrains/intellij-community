@@ -235,6 +235,8 @@ sealed class IntIntMultiMap(
       while (hasNext()) action(next())
     }
 
+    fun isEmpty(): Boolean = !hasNext()
+
     open fun <T> map(transformation: (Int) -> T): Sequence<T> {
       return Sequence {
         object : Iterator<T> {

@@ -4,29 +4,27 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.containers.IntIntBiMap
 import com.intellij.workspace.api.pstorage.containers.IntIntMultiMap
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.javaField
 
 data class ConnectionId private constructor(
-  val leftClass: String,
-  val leftProperty: String,
-  val rightClass: String,
-  val rightProperty: String,
+  val toSingleClass: String,
+  val toSingleProperty: String,
+  val toSequenceClass: String,
+  val toSequenceProperty: String,
   val isHard: Boolean
 ) {
 
   companion object {
     private fun KProperty1<*, *>.declaringClass() = this.javaField!!.declaringClass
 
-    fun create(left: KProperty1<*, *>, right: KProperty1<*, *>, isHard: Boolean): ConnectionId {
-      val ordering = left.toString().compareTo(right.toString())
-      val (myLeft, myRight) = if (ordering > 0) left to right else right to left
-
+    fun create(toSingle: KProperty1<*, *>, toSequence: KProperty1<*, *>, isHard: Boolean): ConnectionId {
       return ConnectionId(
-        myLeft.declaringClass().toString(),
-        myLeft.name,
-        myRight.declaringClass().toString(),
-        myRight.name,
+        toSingle.declaringClass().toString(),
+        toSingle.name,
+        toSequence.declaringClass().toString(),
+        toSequence.name,
         isHard
       )
     }
@@ -41,6 +39,20 @@ open class RefsTable private constructor(
 
   internal fun getOneToManyTable(connectionId: ConnectionId): IntIntBiMap? {
     return oneToManyContainer[connectionId]
+  }
+
+  fun <T : TypedEntity> getHardReferencesOf(entityClass: Class<T>, localIndex: Int): Map<KClass<out TypedEntity>, IntIntMultiMap.IntSequence> {
+    val className = entityClass.name
+    val filtered = oneToManyContainer.filterKeys { it.toSingleClass == className && it.isHard }
+    val res = HashMap<KClass<out TypedEntity>, IntIntMultiMap.IntSequence>()
+    for ((connectionId, bimap) in filtered) {
+      val keys = bimap.getKeys(localIndex)
+      if (!keys.isEmpty()) {
+        val klass = Class.forName(connectionId.toSequenceClass).kotlin as KClass<out TypedEntity>
+        res[klass] = keys
+      }
+    }
+    return res
   }
 
   fun getOneToMany(connectionId: ConnectionId, localIndex: Int): IntIntMultiMap.IntSequence? {
