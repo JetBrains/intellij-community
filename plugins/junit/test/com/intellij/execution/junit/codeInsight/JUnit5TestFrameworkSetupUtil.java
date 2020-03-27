@@ -21,9 +21,11 @@ public class JUnit5TestFrameworkSetupUtil {
                         "public interface TestInfo {}");
     fixture.addClass( "package org.junit.jupiter.api;\n" +
                         "public interface TestReporter {}");
+    fixture.addClass("package org.junit.jupiter.params.provider;" +
+                     "public enum NullEnum {;}");
     fixture.addClass( "package org.junit.jupiter.params.provider;" +
                         "public @interface EnumSource {" +
-                        " Class<? extends Enum<?>> value();" +
+                        " Class<? extends Enum<?>> value() default NullEnum.class;" +
                         " String[] names() default {};" +
                         " Mode mode() default Mode.INCLUDE;" +
                         " enum Mode {" +
