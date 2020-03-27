@@ -3,6 +3,7 @@ package com.intellij.java.refactoring.suggested
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElementFactory
@@ -19,9 +20,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
 
   override fun setUp() {
     super.setUp()
+    var i = 0
     _suggestedChangeSignatureNewParameterValuesForTests = {
       SuggestedRefactoringExecution.NewParameterValue.Expression(
-        PsiElementFactory.getInstance(project).createExpressionFromText("default$it", null)
+        PsiElementFactory.getInstance(project).createExpressionFromText("default${i++}", null)
       )
     }
   }
@@ -1076,6 +1078,121 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  fun testUndoRename() {
+    ignoreErrorsAfter = true
+    doTestRename(
+      """
+        class C {
+            void xxx<caret>() {
+            }
+            
+            void yyy() {
+                xxx();
+            }    
+        }
+      """.trimIndent(),
+      """
+        class C {
+            void xxx1<caret>() {
+            }
+            
+            void yyy() {
+                xxx1();
+            }    
+        }
+      """.trimIndent(),
+      "xxx",
+      "xxx1",
+      {
+        executeCommand(project) { myFixture.type("1") }
+      },
+      {
+        executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
+      },
+      {
+        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+      },
+      wrapIntoCommandAndWriteAction = false
+    )
+  }
+
+  fun testUndoChangeSignature() {
+    ignoreErrorsAfter = true
+    doTestChangeSignature(
+      """
+        class C {
+            void xxx(<caret>) {
+            }
+            
+            void yyy() {
+                xxx();
+            }    
+        }
+      """.trimIndent(),
+      """
+        class C {
+            void xxx(int p<caret>) {
+            }
+            
+            void yyy() {
+                xxx(default1);
+            }    
+        }
+      """.trimIndent(),
+      "usages",
+      {
+        executeCommand(project) { myFixture.type("int p") }
+      },
+      {
+        executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
+      },
+      {
+        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+      },
+      wrapIntoCommandAndWriteAction = false
+    )
+  }
+
+  fun testUndoChangeSignature2() {
+    ignoreErrorsAfter = true
+    doTestChangeSignature(
+      """
+        class C {
+            void xxx(<caret>) {
+            }
+            
+            void yyy() {
+                xxx();
+            }    
+        }
+      """.trimIndent(),
+      """
+        class C {
+            void xxx(int p1, int p2<caret>) {
+            }
+            
+            void yyy() {
+                xxx(default1, default2);
+            }    
+        }
+      """.trimIndent(),
+      "usages",
+      {
+        executeCommand(project) { myFixture.type("int p1") }
+      },
+      {
+        executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
+      },
+      {
+        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+      },
+      {
+        executeCommand(project) { myFixture.type(", int p2") }
+      },
+      wrapIntoCommandAndWriteAction = false
+    )
+  }
+  
   private fun addFileWithAnnotations() {
     myFixture.addFileToProject(
       "Annotations.java",
