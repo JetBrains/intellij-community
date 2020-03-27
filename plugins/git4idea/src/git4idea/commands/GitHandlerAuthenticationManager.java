@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.GitUtil;
+import git4idea.config.GitExecutable;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
@@ -170,10 +171,12 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void addHandlerPathToEnvironment(@NotNull String env,
                                            @NotNull GitXmlRpcHandlerService service) throws IOException {
+    GitExecutable executable = myHandler.getExecutable();
     boolean useBatchFile = SystemInfo.isWindows &&
+                           executable.isLocal() &&
                            (!Registry.is("git.use.shell.script.on.windows") ||
                             !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion));
-    File scriptFile = service.getScriptPath(useBatchFile);
+    File scriptFile = service.getScriptPath(executable, useBatchFile);
     myHandler.addCustomEnvironmentVariable(env, scriptFile);
   }
 

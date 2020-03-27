@@ -4,16 +4,22 @@ package org.jetbrains.git4idea.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.config.GitExecutable;
+import git4idea.rebase.GitRebaseEditorMain;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
+import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Script generator utility class. It uses to generate a temporary scripts that
@@ -31,7 +37,7 @@ public class ScriptGenerator {
   /**
    * The class paths for the script
    */
-  private final ArrayList<String> myPaths = new ArrayList<>();
+  private final ArrayList<File> myPaths = new ArrayList<>();
   /**
    * The internal parameters for the script
    */
@@ -57,7 +63,7 @@ public class ScriptGenerator {
    */
   private void addClasses(final Class... classes) {
     for (Class<?> c : classes) {
-      String classPath = PathUtil.getJarPathForClass(c);
+      File classPath = new File(PathUtil.getJarPathForClass(c));
       if (!myPaths.contains(classPath)) {
         // the size of path is expected to be quite small, so no optimization is done here
         myPaths.add(classPath);
@@ -104,8 +110,8 @@ public class ScriptGenerator {
   }
 
   @NotNull
-  public File generate(boolean useBatchFile) throws IOException {
-    String commandLine = commandLine();
+  public File generate(@NotNull GitExecutable executable, boolean useBatchFile) throws IOException {
+    String commandLine = commandLine(executable);
     return useBatchFile ? generateBatch(myPrefix, commandLine)
                         : generateShell(myPrefix, commandLine);
   }
@@ -113,26 +119,45 @@ public class ScriptGenerator {
   /**
    * @return a command line for the the executable program
    */
-  public String commandLine() {
+  public String commandLine(@NotNull GitExecutable executable) {
     StringBuilder cmd = new StringBuilder();
-    cmd.append('\"').append(System.getProperty("java.home")).append(File.separatorChar).append("bin").append(File.separatorChar)
-      .append("java\" -cp \"");
-    boolean first = true;
-    for (String p : myPaths) {
-      if (!first) {
-        cmd.append(File.pathSeparatorChar);
-      }
-      else {
-        first = false;
-      }
-      cmd.append(p);
+
+    if (executable instanceof GitExecutable.Wsl) {
+      List<String> envs = ContainerUtil.newArrayList(
+        GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV,
+        GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV,
+        GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV,
+        GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV,
+        GitRebaseEditorMain.IDEA_REBASE_HANDER_NO);
+      cmd.append("export WSLENV=");
+      cmd.append(StringUtil.join(envs, it -> it + "/w", ":"));
+      cmd.append("\n");
+
+      cmd.append('"');
+      File javaExecutable = new File(String.format("%s\\bin\\java.exe", System.getProperty("java.home")));
+      cmd.append(executable.convertFilePath(javaExecutable));
+      cmd.append('"');
     }
-    cmd.append("\" ");
+    else {
+      cmd.append('"');
+      cmd.append(String.format("%s/bin/java", System.getProperty("java.home")));
+      cmd.append('"');
+    }
+
+    cmd.append(" -cp ");
+    cmd.append('"');
+    String classpathSeparator = String.valueOf(File.pathSeparatorChar);
+    cmd.append(StringUtil.join(myPaths, file -> file.getPath(), classpathSeparator));
+    cmd.append('"');
+
+    cmd.append(' ');
     cmd.append(myMainClass.getName());
+
     for (String p : myInternalParameters) {
       cmd.append(' ');
       cmd.append(p);
     }
+
     String line = cmd.toString();
     if (SystemInfo.isWindows) {
       line = line.replace('\\', '/');

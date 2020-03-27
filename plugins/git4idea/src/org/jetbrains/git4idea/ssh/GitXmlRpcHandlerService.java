@@ -5,15 +5,17 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import git4idea.config.GitExecutable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.GitExternalApp;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -42,8 +44,7 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
   @NotNull private final String myHandlerName;
   @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
 
-  @Nullable private File myBatchScriptPath;
-  @Nullable private File myShellScriptPath;
+  @NotNull private final Map<String, File> myScriptPaths = new HashMap<>();
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
   @NotNull private final THashMap<UUID, T> handlers = new THashMap<>();
@@ -74,22 +75,16 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
    * @throws IOException if script cannot be generated
    */
   @NotNull
-  public File getScriptPath(boolean useBatchFile) throws IOException {
-    ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
-
+  public File getScriptPath(@NotNull GitExecutable executable, boolean useBatchFile) throws IOException {
     synchronized (SCRIPT_FILE_LOCK) {
-      if (useBatchFile) {
-        if (myBatchScriptPath == null || !myBatchScriptPath.exists()) {
-          myBatchScriptPath = generator.generate(useBatchFile);
-        }
-        return myBatchScriptPath;
+      String id = executable.getId() + (useBatchFile ? "-bat" : "");
+      File scriptPath = myScriptPaths.get(id);
+      if (scriptPath == null || !scriptPath.exists()) {
+        ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix + "-" + executable.getId(), myScriptMainClass);
+        scriptPath = generator.generate(executable, useBatchFile);
+        myScriptPaths.put(id, scriptPath);
       }
-      else {
-        if (myShellScriptPath == null || !myShellScriptPath.exists()) {
-          myShellScriptPath = generator.generate(useBatchFile);
-        }
-        return myShellScriptPath;
-      }
+      return scriptPath;
     }
   }
 

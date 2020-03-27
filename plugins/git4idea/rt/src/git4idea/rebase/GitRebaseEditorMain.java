@@ -8,7 +8,6 @@ import org.jetbrains.git4idea.GitExternalApp;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Vector;
 
 /**
@@ -30,10 +29,6 @@ public class GitRebaseEditorMain implements GitExternalApp {
    * Rebase editor handler name
    */
   @NonNls static final String HANDLER_NAME = "Git4ideaRebaseEditorHandler";
-  /**
-   * The prefix for cygwin files
-   */
-  private static final String CYGDRIVE_PREFIX = "/cygdrive/";
 
   /**
    * A private constructor for static class
@@ -68,16 +63,14 @@ public class GitRebaseEditorMain implements GitExternalApp {
       System.exit(ERROR_EXIT_CODE);
     }
 
-    String file = args[1];
     try {
       XmlRpcClientLite client = new XmlRpcClientLite("127.0.0.1", port);
       Vector<Object> params = new Vector<>();
       params.add(handlerId);
-      if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {
-        int p = CYGDRIVE_PREFIX.length();
-        file = file.charAt(p) + ":" + file.substring(p + 1);
-      }
-      params.add(new File(file).getAbsolutePath());
+
+      params.add(args[1]);
+      params.add(new File("").getAbsolutePath());
+
       Integer exitCode = (Integer)client.execute(HANDLER_NAME + ".editCommits", params);
       if (exitCode == null) {
         exitCode = ERROR_EXIT_CODE;
