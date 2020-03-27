@@ -162,10 +162,12 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
       TextRange intersection = literalRange.intersection(mySelectionRange);
       value = literalExpression.getText().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
     }
-    DialogCustomization customization = new DialogCustomization(
-      null, true, false, null, getSuggestedName(value));
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, 
-                                         customization, true, true);
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, getCustomization(value), true, true);
+  }
+
+  @NotNull
+  I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
+    return new DialogCustomization(null, true, false, null, getSuggestedName(value));
   }
 
   private String getSuggestedName(String value) {

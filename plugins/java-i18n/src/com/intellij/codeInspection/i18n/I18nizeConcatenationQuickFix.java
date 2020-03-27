@@ -72,7 +72,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
     final List<PsiExpression> args = new ArrayList<>();
     String formatString = getValueString(concatenation, args);
 
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, null, true, true) {
+    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, getCustomization(formatString), true, true) {
       @Override
       @Nullable
       protected String getTemplateName() {
