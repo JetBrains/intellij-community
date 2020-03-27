@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -33,6 +32,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -321,7 +321,9 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
      */
     public static WidgetState getDumbModeState(String name, String widgetPrefix) {
       // todo: update accordingly to UX-252
-      return new WidgetState(ActionUtil.getUnavailableMessage(name, false), widgetPrefix + IdeBundle.message("progress.indexing.updating"), false);
+      return new WidgetState(ActionUtil.getUnavailableMessage(name, false),
+                             widgetPrefix + IndexingBundle.message("progress.indexing.updating"),
+                             false);
     }
 
     public void setIcon(Icon icon) {

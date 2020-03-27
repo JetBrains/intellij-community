@@ -47,6 +47,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
+import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.DeprecationStripePanel;
 import com.intellij.util.ui.UIUtil;
@@ -620,7 +621,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void showModalProgress() {
     NoAccessDuringPsiEvents.checkCallContext("modal indexing");
     try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IdeBundle.message("progress.indexing"), () -> {
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IndexingBundle.message("progress.indexing"), () -> {
         assertState(State.SCHEDULED_TASKS);
         runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator());
         assertState(State.SMART, State.WAITING_FOR_FINISH);
@@ -653,7 +654,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void startBackgroundProcess() {
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing"), false) {
         @Override
         public void run(@NotNull final ProgressIndicator visibleIndicator) {
           runBackgroundProcess(visibleIndicator);
@@ -730,7 +731,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         taskIndicator.checkCanceled();
 
         taskIndicator.setIndeterminate(true);
-        taskIndicator.setText(IdeBundle.message("progress.indexing.scanning"));
+        taskIndicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
         task.performInDumbMode(taskIndicator);
       }
