@@ -48,7 +48,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     return (Registry.is("ide.background.tasks") || myOption.shouldStartInBackground()) && myStatusBar != null;
   }
 
-  public BackgroundableProcessIndicator(Project project,
+  public BackgroundableProcessIndicator(@Nullable Project project,
                                         @Nls @NlsProgress.ProgressTitle final String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
                                         @Nullable @Nls @NlsUI.Button final String cancelButtonText,
