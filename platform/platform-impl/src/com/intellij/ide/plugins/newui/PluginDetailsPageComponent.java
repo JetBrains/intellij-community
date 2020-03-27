@@ -746,14 +746,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     fullRepaint();
   }
 
-  //TODO: check is this is required
   @Override
   public void doLayout() {
     super.doLayout();
     updateIconLocation();
   }
 
-  //TODO: check is this is required
   @Override
   public void paint(Graphics g) {
     super.paint(g);
@@ -767,7 +765,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
   //  super.dispose();
   //}
 
-  //TODO: check is this is required
   private void updateIconLocation() {
     if (myLoadingIcon.isVisible()) {
       myLoadingIcon.updateLocation(this);
