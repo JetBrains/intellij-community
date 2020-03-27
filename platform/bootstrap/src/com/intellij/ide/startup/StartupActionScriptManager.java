@@ -80,7 +80,7 @@ public class StartupActionScriptManager {
 
   @NotNull
   private static List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
-    if (!Files.isRegularFile(scriptFile)) {
+    if (!scriptFile.toFile().exists() || !Files.isRegularFile(scriptFile)) {
       return new ArrayList<>();
     }
 
@@ -109,7 +109,7 @@ public class StartupActionScriptManager {
         oos.writeObject(commands.toArray(ActionCommand.EMPTY_ARRAY));
       }
     }
-    else if (Files.exists(scriptFile)) {
+    else if (scriptFile.toFile().exists()) {
       FileUtilRt.delete(scriptFile.toFile());
     }
   }

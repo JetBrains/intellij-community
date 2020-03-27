@@ -75,7 +75,9 @@ public class SVGLoaderCacheIO {
 
     buff.flip();
 
-    Files.createDirectories(file.getParent());
+    if (!file.getParent().toFile().exists()) {
+      Files.createDirectories(file.getParent());
+    }
 
     // we may have a race condition:
     // thread A - is writing the cache

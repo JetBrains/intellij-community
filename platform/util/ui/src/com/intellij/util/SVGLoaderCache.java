@@ -47,7 +47,7 @@ public abstract class SVGLoaderCache {
                                            double scale,
                                            @NotNull ImageLoader.Dimension2DDouble docSize) {
     Path file = cacheFile(theme, imageBytes, scale);
-    if (!Files.isRegularFile(file)) {
+    if (!file.toFile().exists() || !Files.isRegularFile(file)) {
       return null;
     }
 
