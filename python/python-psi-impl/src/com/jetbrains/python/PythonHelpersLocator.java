@@ -48,7 +48,7 @@ public final class PythonHelpersLocator {
   }
 
   @NotNull
-  private static File getHelperRoot(@NotNull String moduleName, @NotNull String dirName) {
+  public static File getHelperRoot(@NotNull String moduleName, @NotNull String dirName) {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
     final File pluginBaseDir = getPluginBaseDir(jarPath);
     if (pluginBaseDir != null) {
