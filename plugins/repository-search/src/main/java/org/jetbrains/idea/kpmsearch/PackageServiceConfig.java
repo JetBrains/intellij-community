@@ -43,6 +43,7 @@ public class PackageServiceConfig {
   private Promise<PackageSearchEndpointUrls> reloadConfig() {
 
     AsyncPromise<PackageSearchEndpointUrls> asyncPromise = new AsyncPromise<>();
+    asyncPromise.onError(t -> {});
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         LinkedTreeMap config = GSON.fromJson(
