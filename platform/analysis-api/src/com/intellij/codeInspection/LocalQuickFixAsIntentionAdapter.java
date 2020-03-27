@@ -45,6 +45,11 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
     return myFix.getFamilyName();
   }
 
+  @NotNull
+  LocalQuickFix getFix() {
+    return myFix;
+  }
+
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myProblemDescriptor.getStartElement() != null;
