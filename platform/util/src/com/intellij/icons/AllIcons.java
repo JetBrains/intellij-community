@@ -1060,6 +1060,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Equal = load("/vcs/equal.svg");
     /** 16x16 */ public static final @NotNull Icon Folders = load("/vcs/folders.svg");
     /** 16x16 */ public static final @NotNull Icon History = load("/vcs/history.svg");
+    /** 16x16 */ public static final @NotNull Icon HistoryInline = load("/vcs/historyInline.svg");
+    /** 16x16 */ public static final @NotNull Icon HistoryInlineHovered = load("/vcs/historyInlineHovered.svg");
     /** 16x16 */ public static final @NotNull Icon Ignore_file = load("/vcs/ignore_file.svg");
     /** 16x16 */ public static final @NotNull Icon Merge = load("/vcs/merge.svg");
     /** 16x16 */ public static final @NotNull Icon Not_equal = load("/vcs/not_equal.svg");
