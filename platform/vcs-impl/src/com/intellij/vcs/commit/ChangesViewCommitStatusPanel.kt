@@ -9,16 +9,26 @@ import com.intellij.openapi.vcs.changes.ui.ChangeInfoCalculator
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.CommitLegendPanel
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getBranchPresentationBackground
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.emptyInsets
+import com.intellij.util.ui.UIUtil.getTreeBackground
 
 private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.legend.compact")
 
 class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commitWorkflowUi: CommitWorkflowUi) :
   JBPanel<ChangesViewCommitStatusPanel>(HorizontalLayout(10)),
   InclusionListener {
+
+  private val branchComponent = CurrentBranchComponent(tree.project, tree, commitWorkflowUi).apply {
+    icon = null
+    isOpaque = true
+    background = JBColor { getBranchPresentationBackground(tree.background ?: getTreeBackground()) }
+    border = empty(0, 4)
+  }
 
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator).apply {
@@ -29,7 +39,7 @@ class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commitWorkflow
   init {
     setupLegend()
 
-    add(CurrentBranchComponent(tree.project, tree, commitWorkflowUi))
+    add(branchComponent)
     add(commitLegend.component)
     border = empty(6)
     background = tree.background
