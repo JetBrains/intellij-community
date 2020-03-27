@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -9,7 +8,7 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.jdkEx.JdkEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -38,7 +37,7 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   @NotNull
@@ -54,32 +53,13 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     addValue(set, "Nav.Bar", navbar() ? "visible" : "floating");
     addValue(set, "Nav.Bar.members", UISettings.getInstance().getShowMembersInNavigationBar() ? "visible" : "hidden");
     addValue(set, "Toolbar", toolbar() ? "visible" : "hidden");
-    addValue(set, "Status.bar", status() ? "visible" : "hidden");
-    addValue(set, "Tool.Window.buttons", stripes() ? "visible" : "hidden");
 
     addValue(set, "Toolbar.and.NavBar", new FeatureUsageData().
       addData("toolbar", toolbar() ? "visible" : "hidden").
       addData("navbar", navbar() ? "visible" : "hidden")
     );
 
-    addValue(set, "Recent.files.limit", new FeatureUsageData().
-      addData("count", recent()).
-      addData("grouped", recentPeriod(recent()))
-    );
-
-    UISettings ui = UISettings.getInstance();
-    addEnabled(set, "Show.Editor.Tabs.In.Single.Row", ui.getScrollTabLayoutInEditor());
-    addEnabled(set, "Hide.Editor.Tabs.If.Needed", ui.getScrollTabLayoutInEditor() && ui.getHideTabsIfNeeded());
-    addEnabled(set, "Block.cursor", EditorSettingsExternalizable.getInstance().isBlockCursor());
-    addEnabled(set, "Line.Numbers", EditorSettingsExternalizable.getInstance().isLineNumbersShown());
-    addEnabled(set, "Gutter.Icons", EditorSettingsExternalizable.getInstance().areGutterIconsShown());
-    addEnabled(set, "Soft.Wraps", EditorSettingsExternalizable.getInstance().isUseSoftWraps());
-
-    addValue(set, "Tabs", getTabsSetting());
-
     addEnabled(set, "Retina", UIUtil.isRetina());
-    addEnabled(set, "Show.tips.on.startup", GeneralSettings.getInstance().isShowTipsOnStartup());
-    addEnabled(set, "Allow.merging.buttons", ui.getAllowMergeButtons());
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
     addEnabled(set, "QuickDoc.Show.Toolwindow", properties.isTrueValue("ShowDocumentationInToolWindow"));
@@ -91,27 +71,10 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
     addValue(set, "Hidpi.Mode", JreHiDpiUtil.isJreHiDPIEnabled() ? "per_monitor_dpi" : "system_dpi");
     addEnabled(set, "Screen.Reader", ScreenReader.isActive());
 
+    set.add(newMetric("QuickListsCount", QuickListsManager.getInstance().getAllQuickLists().length));
+
     addScreenScale(set);
     return set;
-  }
-
-  @NotNull
-  private static String recentPeriod(int recent) {
-    if (recent < 15) return "less.than.15";
-    if (16 < recent && recent < 31) return "[15_30]";
-    if (30 < recent && recent < 51) return "[30_50]";
-    return "[more.than.50]";
-  }
-
-  @NotNull
-  private static String getTabsSetting() {
-    final int place = tabPlace();
-    if (place == 0) return "None";
-    if (place == SwingConstants.TOP) return "Top";
-    if (place == SwingConstants.BOTTOM) return "Bottom";
-    if (place == SwingConstants.LEFT) return "Left";
-    if (place == SwingConstants.RIGHT) return "Right";
-    return "Unknown";
   }
 
   private static void addValue(Set<? super MetricEvent> set, String key, FeatureUsageData data) {
@@ -124,22 +87,6 @@ public class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   private static void addEnabled(Set<? super MetricEvent> set, String key, boolean enabled) {
     set.add(newBooleanMetric(key, enabled));
-  }
-
-  private static int tabPlace() {
-    return UISettings.getInstance().getEditorTabPlacement();
-  }
-
-  private static int recent() {
-    return UISettings.getInstance().getRecentFilesLimit();
-  }
-
-  private static boolean stripes() {
-    return UISettings.getInstance().getHideToolStripes();
-  }
-
-  private static boolean status() {
-    return UISettings.getInstance().getShowStatusBar();
   }
 
   private static boolean toolbar() {
