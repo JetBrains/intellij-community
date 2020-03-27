@@ -153,24 +153,29 @@ public class BatchEvaluator {
       );
       if (value != null) {
         byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
-        int pos = 0;
-        Iterator<ToStringCommand> iterator = requests.iterator();
-        while (pos < bytes.length) {
-          int length = Bits.getInt(bytes, pos);
-          boolean error = length < 0;
-          length = Math.abs(length);
-          String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
-          if (!iterator.hasNext()) {
-            return false;
+        try {
+          int pos = 0;
+          Iterator<ToStringCommand> iterator = requests.iterator();
+          while (pos < bytes.length) {
+            int length = Bits.getInt(bytes, pos);
+            boolean error = length < 0;
+            length = Math.abs(length);
+            String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
+            if (!iterator.hasNext()) {
+              return false;
+            }
+            ToStringCommand command = iterator.next();
+            if (error) {
+              command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message));
+            }
+            else {
+              command.evaluationResult(message);
+            }
+            pos += length + 4;
           }
-          ToStringCommand command = iterator.next();
-          if (error) {
-            command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message));
-          }
-          else {
-            command.evaluationResult(message);
-          }
-          pos += length + 4;
+        }
+        catch (StringIndexOutOfBoundsException e) {
+          LOG.error("Invalid batch toString response", e, Arrays.toString(bytes));
         }
       }
       return true;
