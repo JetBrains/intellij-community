@@ -740,7 +740,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun getVisibleToolWindowsOn(anchor: ToolWindowAnchor): Sequence<ToolWindowEntry> {
     return idToEntry.values
       .asSequence()
-      .filter { it.readOnlyWindowInfo.anchor == anchor && (it.toolWindow.isAvailable || UISettings.instance.alwaysShowWindowsButton) }
+      .filter { it.readOnlyWindowInfo.anchor == anchor && it.toolWindow.isAvailable }
   }
 
   // cannot be ToolWindowEx because of backward compatibility
