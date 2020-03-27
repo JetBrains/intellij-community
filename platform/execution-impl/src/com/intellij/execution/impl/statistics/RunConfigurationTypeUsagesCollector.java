@@ -68,12 +68,8 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
           final FeatureUsageData data = newFeatureUsageData(configurationType, configurationFactory);
           fillSettings(data, settings, runConfiguration);
           final Template template = new Template("configured.in.project", data);
-          if (templates.containsKey(template)) {
-            templates.increment(template);
-          }
-          else {
-            templates.put(template, 1);
-          }
+          addOrIncrement(templates, template);
+          collectRunConfigurationFeatures(runConfiguration, templates);
         }
         Set<MetricEvent> metrics = new HashSet<>();
         templates.forEachEntry((template, value) -> {
@@ -88,6 +84,54 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
       }
     });
     return result;
+  }
+
+  private static void addOrIncrement(TObjectIntHashMap<Template> templates, Template template) {
+    if (templates.containsKey(template)) {
+      templates.increment(template);
+    }
+    else {
+      templates.put(template, 1);
+    }
+  }
+
+  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration, TObjectIntHashMap<Template> templates) {
+    if (runConfiguration instanceof RunConfigurationBase) {
+      PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
+      if (!info.isSafeToReport()) return;
+      Object state = ((RunConfigurationBase)runConfiguration).getState();
+      if (state instanceof RunConfigurationOptions) {
+        RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
+        List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
+        for (StoredProperty<Object> property : properties) {
+          String name = property.getName();
+          if (name == null || name.equals("isAllowRunningInParallel") || name.equals("isNameGenerated")) continue;
+          Object value = property.getValue(runConfigurationOptions);
+          boolean featureUsed;
+          if (value instanceof Boolean) {
+            featureUsed = (Boolean)value;
+          }
+          else if (value instanceof String) {
+            featureUsed = StringUtil.isNotEmpty((String)value);
+          }
+          else if (value instanceof Collection) {
+            featureUsed = ((Collection)value).size() > 0;
+          }
+          else if (value instanceof Map) {
+            featureUsed = ((Map)value).size() > 0;
+          }
+          else {
+            continue;
+          }
+          if (featureUsed) {
+            FeatureUsageData data = new FeatureUsageData()
+              .addData(ID_FIELD, runConfiguration.getType().getId())
+              .addData("featureName", name);
+            addOrIncrement(templates, new Template("feature.used", data));
+          }
+        }
+      }
+    }
   }
 
   @NotNull
@@ -108,33 +152,6 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
       addData("activate_before_run", settings.isActivateToolWindowBeforeRun()).
       addData("parallel", runConfiguration.isAllowRunningInParallel()).
       addData("temporary", settings.isTemporary());
-
-    if (runConfiguration instanceof RunConfigurationBase) {
-      PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
-      if (!info.isSafeToReport()) return;
-      Object state = ((RunConfigurationBase)runConfiguration).getState();
-      if (state instanceof RunConfigurationOptions) {
-        RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
-        List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
-        for (StoredProperty<Object> property : properties) {
-          String name = property.getName();
-          if (name == null || name.equals("isAllowRunningInParallel") || name.equals("isNameGenerated")) continue;
-          Object value = property.getValue(runConfigurationOptions);
-          if (value instanceof Boolean) {
-            data.addData(name, (Boolean)value);
-          }
-          else if (value instanceof String) {
-            data.addData(name, StringUtil.isNotEmpty((String)value));
-          }
-          else if (value instanceof Collection) {
-            data.addData(name, ((Collection)value).size() > 0);
-          }
-          else if (value instanceof Map) {
-            data.addData(name, ((Map)value).size() > 0);
-          }
-        }
-      }
-    }
   }
 
   private static class Template {
