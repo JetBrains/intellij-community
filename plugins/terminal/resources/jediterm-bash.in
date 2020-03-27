@@ -32,7 +32,7 @@ else
 fi
 
 function override_jb_variables {
-  while read NAME VALUE
+  while read VARIABLE
   do
     NAME=${VARIABLE%%=*}
     if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
