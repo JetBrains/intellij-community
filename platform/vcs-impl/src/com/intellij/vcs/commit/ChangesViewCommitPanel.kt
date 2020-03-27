@@ -35,7 +35,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.Borders.empty
@@ -46,6 +46,7 @@ import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.log.VcsUser
+import java.awt.LayoutManager
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
@@ -58,9 +59,8 @@ import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
 
-private fun createHorizontalPanel(): JBPanel<*> {
-  return JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
-}
+private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
+private fun createHorizontalPanel(): JBPanel<*> = panel(HorizontalLayout(scale(16), SwingConstants.CENTER))
 
 private fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
@@ -168,16 +168,19 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
         createHorizontalPanel().apply {
           background = getButtonPanelBackground()
 
-          add(NonOpaquePanel(HorizontalLayout(scale(4))).apply {
-            add(commitButton)
-            add(commitAuthorComponent)
-          })
+          add(commitButton)
           add(toolbarPanel)
         }
       )
     }
-    centerPanel.addToCenter(commitMessage).addToBottom(buttonPanel)
+    centerPanel
+      .addToCenter(commitMessage)
+      .addToBottom(panel(VerticalLayout(0)).apply {
+        background = getButtonPanelBackground()
 
+        add(commitAuthorComponent.apply { border = empty(0, 6, 4, 0) })
+        add(buttonPanel)
+      })
     addToCenter(centerPanel)
     addToolbar(isToolbarHorizontal)
 
