@@ -3,7 +3,7 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntity
 
-open class EntitiesBarrel private constructor(
+open class EntitiesBarrel internal constructor(
   entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
 ) : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
 
@@ -20,17 +20,15 @@ open class EntitiesBarrel private constructor(
     return entitiesByType.iterator()
   }
 
-  fun copy(): EntitiesBarrel = EntitiesBarrel(
-    this.entitiesByType)
-  fun join(other: EntitiesBarrel): EntitiesBarrel = EntitiesBarrel(
-    entitiesByType + other.entitiesByType)
+  fun copy(): EntitiesBarrel = EntitiesBarrel(this.entitiesByType)
+
+  fun join(other: EntitiesBarrel): EntitiesBarrel = EntitiesBarrel(entitiesByType + other.entitiesByType)
 }
 
 class MutableEntitiesBarrel : EntitiesBarrel() {
-  override val entitiesByType: MutableMap<Class<out TypedEntity>, MutableEntityFamily<out TypedEntity>> = mutableMapOf()
+  override val entitiesByType: MutableMap<Class<out TypedEntity>, EntityFamily<out TypedEntity>> = mutableMapOf()
 
-  @Suppress("UNCHECKED_CAST")
-  override operator fun <T : TypedEntity> get(clazz: Class<T>): MutableEntityFamily<T>? = entitiesByType[clazz] as MutableEntityFamily<T>?
+  override operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entitiesByType[clazz] as EntityFamily<T>?
 
   fun clear() = entitiesByType.clear()
 
@@ -38,5 +36,20 @@ class MutableEntitiesBarrel : EntitiesBarrel() {
 
   operator fun <T : TypedEntity> set(clazz: Class<T>, newFamily: MutableEntityFamily<T>) {
     entitiesByType[clazz] = newFamily
+  }
+
+  fun toImmutable(): EntitiesBarrel {
+    entitiesByType.forEach { (_, family) ->
+      if (family is MutableEntityFamily<*>) family.freeze()
+    }
+    return EntitiesBarrel(HashMap(entitiesByType))
+  }
+
+  companion object {
+    fun from(original: EntitiesBarrel): MutableEntitiesBarrel {
+      val res = MutableEntitiesBarrel()
+      res.entitiesByType.putAll(original.all())
+      return res
+    }
   }
 }

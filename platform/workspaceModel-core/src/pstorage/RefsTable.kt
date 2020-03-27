@@ -21,8 +21,8 @@ data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor
   }
 }
 
-open class RefsTable private constructor(
-  protected open val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap>
+open class RefsTable internal constructor(
+  internal open val oneToManyContainer: Map<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap>
 ) {
 
   constructor() : this(HashMap())
@@ -64,40 +64,46 @@ open class RefsTable private constructor(
 
 class MutableRefsTable : RefsTable() {
   override val oneToManyContainer: MutableMap<ConnectionId<out TypedEntity, out TypedEntity>, IntIntBiMap> = HashMap()
+  private val copiedToModify: MutableSet<ConnectionId<out TypedEntity, out TypedEntity>> = HashSet()
+
+  private fun <T : TypedEntity, SUBT : TypedEntity> getMutableMap(connectionId: ConnectionId<T, SUBT>): IntIntBiMap {
+    if (connectionId in copiedToModify) return oneToManyContainer[connectionId] ?: error("")
+    val copy = oneToManyContainer[connectionId]?.copy() ?: IntIntBiMap()
+    oneToManyContainer[connectionId] = copy
+    copiedToModify.add(connectionId)
+    return copy
+  }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeOneToMany(connectionId: ConnectionId<T, SUBT>, id: Int) {
-    oneToManyContainer[connectionId]?.removeValue(id)
+    getMutableMap(connectionId).removeValue(id)
   }
 
   fun <T : TypedEntity, SUBT : TypedEntity> removeManyToOne(connectionId: ConnectionId<T, SUBT>, id: Int) {
-    oneToManyContainer[connectionId]?.removeKey(id)
+    getMutableMap(connectionId).removeKey(id)
   }
 
   fun <T : TypedEntity, SUBT : PTypedEntity<SUBT>> updateOneToMany(connectionId: ConnectionId<T, SUBT>, id: Int, updateTo: Sequence<SUBT>) {
-    val table = if (connectionId in oneToManyContainer) {
-      oneToManyContainer[connectionId]!!.also { it.removeValue(id) }
-    }
-    else {
-      IntIntBiMap().also { oneToManyContainer[connectionId] = it }
-    }
-    updateTo.forEach { table.put(it.id.arrayId, id) }
+    val copiedMap = getMutableMap(connectionId)
+    copiedMap.removeValue(id)
+    updateTo.forEach { copiedMap.put(it.id.arrayId, id) }
   }
 
   fun <T : PTypedEntity<T>, SUBT : TypedEntity> updateManyToOne(connectionId: ConnectionId<T, SUBT>, id: Int, updateTo: T) {
-    val table = if (connectionId in oneToManyContainer) {
-      oneToManyContainer[connectionId]!!.also { it.removeKey(id) }
-    }
-    else {
-      IntIntBiMap().also { oneToManyContainer[connectionId] = it }
-    }
-    table.put(id, updateTo.id.arrayId)
+    val copiedMap = getMutableMap(connectionId)
+    copiedMap.removeKey(id)
+    copiedMap.put(id, updateTo.id.arrayId)
   }
 
-  fun <T : TypedEntity, SUBT : TypedEntity> cloneTableFrom(connectionId: ConnectionId<T, SUBT>, other: RefsTable) {
-    other.getOneToManyTable(connectionId)?.let {
-      oneToManyContainer[connectionId] = it.copy()
-    }
+  fun toImmutable(): RefsTable {
+    copiedToModify.clear()
+    return RefsTable(HashMap(oneToManyContainer))
   }
 
-  fun clear() = oneToManyContainer.clear()
+  companion object {
+    fun from(other: RefsTable): MutableRefsTable {
+      val res = MutableRefsTable()
+      res.oneToManyContainer.putAll(other.oneToManyContainer)
+      return res
+    }
+  }
 }

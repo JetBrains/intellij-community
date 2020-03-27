@@ -4,14 +4,14 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.TypedEntity
 import gnu.trove.TIntHashSet
 
-open class EntityFamily<E : TypedEntity> protected constructor(
+open class EntityFamily<E : TypedEntity> internal constructor(
   protected open val entities: List<PEntityData<E>?>,
   protected val emptySlots: TIntHashSet
 ) {
 
   operator fun get(idx: Int) = entities[idx]
 
-  fun copyToMutable() = MutableEntityFamily(entities.toMutableList())
+  fun copyToMutable() = MutableEntityFamily(entities.toMutableList(), true)
 
   fun all() = entities.asSequence().filterNotNull()
 
@@ -29,7 +29,8 @@ open class EntityFamily<E : TypedEntity> protected constructor(
 }
 
 class MutableEntityFamily<E : TypedEntity>(
-  override val entities: MutableList<PEntityData<E>?>
+  override val entities: MutableList<PEntityData<E>?>,
+  var familyCopiedToModify: Boolean
 ) : EntityFamily<E>(
   entities,
   TIntHashSet().also { entities.mapIndexed { index, pEntityData -> if (pEntityData == null) it.add(index) } }
@@ -83,8 +84,12 @@ class MutableEntityFamily<E : TypedEntity>(
     return res
   }
 
+  fun freeze() {
+    this.familyCopiedToModify = false
+    this.copiedToModify.clear()
+  }
+
   companion object {
-    fun <E : TypedEntity> createEmpty() = MutableEntityFamily<E>(
-      mutableListOf())
+    fun <E : TypedEntity> createEmptyMutable() = MutableEntityFamily<E>(mutableListOf(), true)
   }
 }

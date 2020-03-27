@@ -8,14 +8,15 @@ import kotlin.reflect.full.primaryConstructor
 
 open class PEntityStorage constructor(
   open val entitiesByType: EntitiesBarrel,
-  val refs: RefsTable
+  open val refs: RefsTable
 ) : TypedEntityStorage {
   override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
-    return getEntities(entitiesByType[entityClass])
+    return entitiesByType[entityClass]?.all()?.map { it.createEntity(this) } ?: emptySequence()
   }
 
-  protected fun <E : TypedEntity> getEntities(listToSearch: EntityFamily<E>?) =
-    listToSearch?.all()?.map { it.createEntity(this) } ?: emptySequence()
+  internal fun <E : TypedEntity> entityDataById(id: PId<E>): PEntityData<E>? {
+    return entitiesByType[id.clazz.java]?.get(id.arrayId)
+  }
 
   override fun <E : TypedEntity, R : TypedEntity> referrers(e: E,
                                                             entityClass: KClass<R>,
@@ -29,23 +30,12 @@ open class PEntityStorage constructor(
 
   open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
     val entitiesList = entitiesByType[connectionId.toSequenceClass.java] ?: return emptySequence()
-    return getOneToManyRefs(connectionId, id, entitiesList, refs) ?: emptySequence()
-  }
-
-  protected fun <T : TypedEntity, SUBT : TypedEntity> getOneToManyRefs(connectionId: ConnectionId<T, SUBT>,
-                                                                       index: PId<T>,
-                                                                       entitiesList: EntityFamily<SUBT>,
-                                                                       searchedTable: RefsTable
-  ): Sequence<SUBT>? = searchedTable.getOneToMany(connectionId, index.arrayId)?.map { entitiesList[it]!!.createEntity(this) }
-
-  protected fun <T : TypedEntity, SUBT : TypedEntity> getManyToOneRef(connectionId: ConnectionId<T, SUBT>, index: Int,
-                                                                      entitiesList: EntityFamily<T>, searchedTable: RefsTable): T? {
-    return searchedTable.getManyToOne(connectionId, index) { entitiesList[it]!!.createEntity(this) }
+    return refs.getOneToMany(connectionId, id.arrayId)?.map { entitiesList[it]!!.createEntity(this) } ?: emptySequence()
   }
 
   open fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId<T, SUBT>, index: PId<SUBT>): T? {
     val entitiesList = entitiesByType[connectionId.toSingleClass.java] ?: return null
-    return getManyToOneRef(connectionId, index.arrayId, entitiesList, refs)
+    return refs.getManyToOne(connectionId, index.arrayId) { entitiesList[it]!!.createEntity(this) }
   }
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
@@ -72,17 +62,27 @@ open class PEntityStorage constructor(
 }
 
 class PEntityStorageBuilder(
-  private val origStorage: PEntityStorage
-) : TypedEntityStorageBuilder, PEntityStorage(origStorage.entitiesByType, origStorage.refs) {
+  private val origStorage: PEntityStorage,
+  override var entitiesByType: MutableEntitiesBarrel,
+  override var refs: MutableRefsTable
+) : TypedEntityStorageBuilder, PEntityStorage(entitiesByType, refs) {
 
-  constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()))
+  private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
 
-  private val modified: MutableEntitiesBarrel = MutableEntitiesBarrel()
-  private val clonedRefs: MutableRefsTable = MutableRefsTable()
+  private val changeLog: List<ChangeEntry>
+    get() = changeLogImpl
 
-  override fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E> {
-    val listToSearch = modified[entityClass] ?: entitiesByType[entityClass]
-    return getEntities(listToSearch)
+  private inline fun updateChangeLog(updater: (MutableList<ChangeEntry>) -> Unit) {
+    updater(changeLogImpl)
+    modificationCount++
+  }
+
+  constructor() : this(PEntityStorage(EntitiesBarrel(), RefsTable()), MutableEntitiesBarrel(), MutableRefsTable())
+
+  sealed class ChangeEntry {
+    data class AddEntity(val entityData: PEntityData<*>) : ChangeEntry()
+    data class RemoveEntity(val id: PId<*>) : ChangeEntry()
+    data class ReplaceEntity(val id: PId<*>, val newData: PEntityData<*>) : ChangeEntry()
   }
 
   override var modificationCount: Long = 0
@@ -98,58 +98,65 @@ class PEntityStorageBuilder(
 
     pEntityData.entitySource = source
 
-    val entities = getModifiableEntityFamily(unmodifiableEntityClass)
+    val entities = getMutableEntityFamily(unmodifiableEntityClass)
     entities.add(pEntityData)
 
     val modifiableEntity = pEntityData.wrapAsModifiable(this) as M // create modifiable after adding entity data to set
     modifiableEntity.initializer()
-    modificationCount++
+    updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData)) }
 
     return pEntityData.createEntity(this)
   }
 
   // modificationCount is not incremented
-  private fun <T : TypedEntity> addEntity(entity: PEntityData<T>, clazz: Class<T>) {
-    getModifiableEntityFamily(clazz).add(entity)
+  private fun <T : TypedEntity> addEntityWithRefs(entity: PEntityData<T>, clazz: Class<T>) {
+    getMutableEntityFamily(clazz).add(entity)
   }
 
   // modificationCount is not incremented
   private fun <T : TypedEntity> replaceEntity(newEntity: PEntityData<T>, clazz: Class<T>) {
-    val family = getModifiableEntityFamily(clazz)
+    val family = getMutableEntityFamily(clazz)
     if (!family.exists(newEntity.id)) error("Nothing to replace")  // TODO: 25.03.2020 Or just call "add"?
     family.replaceById(newEntity)
   }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     val unmodifiableEntityClass = e.javaClass
-    val copiedData = getModifiableEntityFamily(unmodifiableEntityClass).getEntityDataForModification((e as PTypedEntity<T>).id)
+    val copiedData = getMutableEntityFamily(unmodifiableEntityClass).getEntityDataForModification((e as PTypedEntity<T>).id)
     (copiedData.wrapAsModifiable(this) as M).change()
-    modificationCount++
+    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(e.id, copiedData)) }
     return copiedData.createEntity(this)
   }
 
-  private fun <T : TypedEntity> getEntityFamily(unmodifiableEntityClass: Class<T>): EntityFamily<T> {
-    return modified[unmodifiableEntityClass] ?: entitiesByType[unmodifiableEntityClass] ?: EntityFamily.empty()
-  }
-
-  private fun <T : TypedEntity> getModifiableEntityFamily(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
-    return modified[unmodifiableEntityClass] ?: let {
-      val origSet = entitiesByType[unmodifiableEntityClass]?.copyToMutable() ?: MutableEntityFamily.createEmpty()
-      modified[unmodifiableEntityClass] = origSet
-      origSet
+  private fun <T : TypedEntity> getMutableEntityFamily(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
+    val entityFamily = entitiesByType[unmodifiableEntityClass]
+    if (entityFamily == null) {
+      val newMutable = MutableEntityFamily.createEmptyMutable<T>()
+      entitiesByType[unmodifiableEntityClass] = newMutable
+      return newMutable
+    }
+    else {
+      if (entityFamily !is MutableEntityFamily<T> || !entityFamily.familyCopiedToModify) {
+        val newMutable = entityFamily.copyToMutable()
+        entitiesByType[unmodifiableEntityClass] = newMutable
+        return newMutable
+      }
+      else {
+        return entityFamily
+      }
     }
   }
 
   override fun <T : TypedEntity> changeSource(e: T, newSource: EntitySource): T {
-    val copiedData = getModifiableEntityFamily(e.javaClass).getEntityDataForModification((e as PTypedEntity<T>).id)
+    val copiedData = getMutableEntityFamily(e.javaClass).getEntityDataForModification((e as PTypedEntity<T>).id)
     copiedData.entitySource = newSource
     modificationCount++
     return copiedData.createEntity(this)
   }
 
   override fun removeEntity(e: TypedEntity) {
-    modificationCount++
     removeEntityX((e as PTypedEntity<out TypedEntity>).id)
+    updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
 
@@ -165,7 +172,7 @@ class PEntityStorageBuilder(
     accumulateEntitiesToRemove(idx, entityClass, accumulator)
 
     for ((klass, ids) in accumulator) {
-      val modifiableEntityFamily = getModifiableEntityFamily(klass)
+      val modifiableEntityFamily = getMutableEntityFamily(klass)
       ids.forEach { id ->
         modifiableEntityFamily.remove(id)
       }
@@ -175,51 +182,29 @@ class PEntityStorageBuilder(
   private fun <T : TypedEntity> accumulateEntitiesToRemove(idx: Int,
                                                            entityClass: Class<T>,
                                                            accumulator: MutableMap<Class<out TypedEntity>, MutableSet<Int>>) {
-    // TODO: 27.03.2020 Check original refs
-    val hardRef = clonedRefs.getHardReferencesOf(entityClass, idx)
+    val hardRef = refs.getHardReferencesOf(entityClass, idx)
     for ((klass, ids) in hardRef) {
       ids.forEach { id ->
         if (id in accumulator.getOrPut(klass.java) { HashSet() }) return@forEach
         accumulator.getOrPut(klass.java) { HashSet() }.add(id)
         accumulateEntitiesToRemove(id, klass.java, accumulator)
       }
-      clonedRefs.removeOneToMany(ConnectionId.create(entityClass.kotlin, klass, true), idx)
+      refs.removeOneToMany(ConnectionId.create(entityClass.kotlin, klass, true), idx)
     }
-  }
-
-  override fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
-    // TODO: 24.03.2020 Check if already removed
-    val entitiesList = getEntityFamily(connectionId.toSequenceClass.java)
-    return getOneToManyRefs(connectionId, id, entitiesList, clonedRefs)
-           ?: getOneToManyRefs(connectionId, id, entitiesList, refs)
-           ?: emptySequence()
-  }
-
-  override fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId<T, SUBT>,
-                                                                         index: PId<SUBT>): T? {
-    val entitiesList = getEntityFamily(connectionId.toSingleClass.java)
-    return getManyToOneRef(connectionId, index.arrayId, entitiesList, clonedRefs)
-           ?: getManyToOneRef(connectionId, index.arrayId, entitiesList, refs)
-  }
-
-  private fun <T : TypedEntity, SUBT : TypedEntity> copyTable(connectionId: ConnectionId<T, SUBT>) {
-    clonedRefs.cloneTableFrom(connectionId, refs)
   }
 
   fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToMany(connectionId: ConnectionId<T, SUBT>,
                                                                        id: PId<T>,
                                                                        updateTo: Sequence<SUBT>) {
-    copyTable(connectionId)
-    clonedRefs.updateOneToMany(connectionId, id.arrayId, updateTo)
+    refs.updateOneToMany(connectionId, id.arrayId, updateTo)
   }
 
   fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateManyToOne(connectionId: ConnectionId<T, SUBT>, id: PId<SUBT>, updateTo: T?) {
-    copyTable(connectionId)
     if (updateTo != null) {
-      clonedRefs.updateManyToOne(connectionId, id.arrayId, updateTo)
+      refs.updateManyToOne(connectionId, id.arrayId, updateTo)
     }
     else {
-      clonedRefs.removeManyToOne(connectionId, id.arrayId)
+      refs.removeManyToOne(connectionId, id.arrayId)
     }
   }
 
@@ -237,105 +222,88 @@ class PEntityStorageBuilder(
     data class Replaced<T : PEntityData<out TypedEntity>>(val oldEntity: T, val newEntity: T) : EntityDataChange<T>()
   }
 
-  private fun collectDataChanges(): Map<Class<*>, List<EntityDataChange<*>>> {
-    // TODO: 23.03.2020 This method doesn't take an argument into account. And should it actually have an argument?
-    if (isEmpty()) return emptyMap()
-
-    val res = mutableMapOf<Class<*>, List<EntityDataChange<*>>>()
-    for ((key, entitiesList) in modified) {
-      val originalEntitiesList = entitiesByType[key]
-      if (originalEntitiesList == null) {
-        res += key to entitiesList.all().map { EntityDataChange.Added(it) }.toList()
-      }
-      else {
-        val localChanges = mutableListOf<EntityDataChange<*>>()
-        val sizeDiff = entitiesList.size - originalEntitiesList.size
-        val smallerSize = if (sizeDiff > 0) originalEntitiesList.size else entitiesList.size
-        for (i in 0 until smallerSize) {
-          val entity = entitiesList[i]
-          val origEntity = originalEntitiesList[i]
-          if (entity != null && origEntity == null) {
-            localChanges += EntityDataChange.Added(entity)
-          }
-          else if (entity == null && origEntity != null) {
-            localChanges += EntityDataChange.Removed(origEntity)
-          }
-          else if (entity != null && origEntity != null) {
-            val origImmutableEntity = origEntity.createEntity(origStorage)
-            val immutableEntity = entity.createEntity(this)
-            if (origImmutableEntity != immutableEntity) {
-              localChanges += EntityDataChange.Replaced(origEntity, entity)
-            }
-          }
-        }
-        if (sizeDiff > 0) {
-          for (i in smallerSize until smallerSize + sizeDiff) {
-            val entity = entitiesList[i]
-            if (entity != null) {
-              localChanges += EntityDataChange.Added(entity)
-            }
-          }
-        }
-        else if (sizeDiff < 0) {
-          for (i in smallerSize until smallerSize - sizeDiff) {
-            val origEntity = originalEntitiesList[i]
-            if (origEntity != null) {
-              localChanges += EntityDataChange.Removed(origEntity)
-            }
-          }
-        }
-
-        res += key to localChanges
-      }
-    }
-    return res
-  }
-
   override fun collectChanges(original: TypedEntityStorage): Map<Class<*>, List<EntityChange<*>>> {
-    return collectDataChanges().mapValues { (_, value) ->
-      value.map { dataChange ->
-        when (dataChange) {
-          is EntityDataChange.Added<*> -> EntityChange.Added(dataChange.entity.createEntity(this))
-          is EntityDataChange.Removed<*> -> EntityChange.Removed(dataChange.entity.createEntity(origStorage))
-          is EntityDataChange.Replaced<*> -> EntityChange.Replaced(dataChange.oldEntity.createEntity(origStorage),
-                                                                   dataChange.oldEntity.createEntity(this))
+    val originalImpl = original as PEntityStorage
+    //this can be optimized to avoid creation of entity instances which are thrown away and copying the results from map to list
+    // LinkedHashMap<Long, EntityChange<T>>
+    val changes = LinkedHashMap<Int, Pair<Class<*>, EntityChange<*>>>()
+    for (change in changeLog) {
+      when (change) {
+        is ChangeEntry.AddEntity -> {
+          val addedEntity = change.entityData.createEntity(this) as PTypedEntity<*>
+          changes[change.entityData.id] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
+        }
+        is ChangeEntry.RemoveEntity -> {
+          val removedData = originalImpl.entityDataById(change.id)
+          val oldChange = changes.remove(change.id.arrayId)
+          if (oldChange?.second !is EntityChange.Added && removedData != null) {
+            val replacedEntity = removedData.createEntity(this) as PTypedEntity<*>
+            changes[change.id.arrayId] = change.id.clazz.java to EntityChange.Removed(replacedEntity)
+          }
+        }
+        is ChangeEntry.ReplaceEntity -> {
+          val oldChange = changes.remove(change.id.arrayId)
+          if (oldChange?.second is EntityChange.Added) {
+            val addedEntity = change.newData.createEntity(originalImpl) as PTypedEntity<*>
+            changes[change.id.arrayId] = addedEntity.id.clazz.java to EntityChange.Added(addedEntity)
+          }
+          else {
+            val oldData = originalImpl.entityDataById(change.id)
+            if (oldData != null) {
+              val replacedData = oldData.createEntity(originalImpl) as PTypedEntity<*>
+              val replaceToData = change.newData.createEntity(this) as PTypedEntity<*>
+              changes[change.id.arrayId] = replacedData.id.clazz.java to EntityChange.Replaced(replacedData, replaceToData)
+            }
+          }
         }
       }
     }
+    return changes.values.groupBy { it.first }.mapValues { list -> list.value.map { it.second } }
   }
 
   override fun resetChanges() {
-    modified.clear()
-    clonedRefs.clear()
-    modificationCount++
+    updateChangeLog { it.clear() }
+    entitiesByType = MutableEntitiesBarrel.from(origStorage.entitiesByType)
+    refs = MutableRefsTable.from(origStorage.refs)
   }
 
   override fun toStorage(): TypedEntityStorage {
-    val newEntities = origStorage.entitiesByType.join(modified)
-    val newRefs = origStorage.refs.overlapBy(clonedRefs)
+    val newEntities = entitiesByType.toImmutable()
+    val newRefs = refs.toImmutable()
     return PEntityStorage(newEntities, newRefs)
   }
 
-  override fun isEmpty(): Boolean = modified.isEmpty()
+  override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder) {
-    val changes = (diff as PEntityStorageBuilder).collectDataChanges()
-    modificationCount++
-    for ((entityClass, changeLog) in changes) {
-      for (change in changeLog) {
-        when (change) {
-          is EntityDataChange.Removed<*> -> this.removeEntity(change.entity.id, entityClass as Class<out TypedEntity>)
-          is EntityDataChange.Added<*> -> this.addEntity(change.entity as PEntityData<TypedEntity>, entityClass as Class<TypedEntity>)
-          is EntityDataChange.Replaced<*> -> {
-            this.replaceEntity(change.newEntity as PEntityData<TypedEntity>, entityClass as Class<TypedEntity>)
+
+    /*
+        val diffLog = (diff as PEntityStorageBuilder).changeLog
+        updateChangeLog { it.addAll(diffLog) }
+        for (change in diffLog) {
+          when (change) {
+            is ChangeEntry.AddEntity -> addEntityWithRefs(change.entityData, null)
+            is ChangeEntry.RemoveEntity -> {
+              if (change.id in entityById) {
+                removeEntity(change.id)
+              }
+            }
+            is ChangeEntry.ReplaceEntity -> {
+              if (change.id in entityById) {
+                replaceEntity(change.id, change.newData, null, null)
+              }
+            }
           }
         }
-      }
-    }
+    */
   }
 
   companion object {
-    fun from(storage: PEntityStorage) = PEntityStorageBuilder(storage)
+    fun from(storage: PEntityStorage): PEntityStorageBuilder {
+      val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
+      val copiedRefs = MutableRefsTable.from(storage.refs)
+      return PEntityStorageBuilder(storage, copiedBarrel, copiedRefs)
+    }
   }
 }
 
