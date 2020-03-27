@@ -59,6 +59,15 @@ function override_jb_variables {
         export "$NEW_NAME"="$VALUE"
       fi
     fi
+    if [[ $NAME = '_INTELLIJ_FORCE_PREPEND_'* ]]
+    then
+      NEW_NAME=${NAME:24}
+      if [ -n "$NEW_NAME" ]
+      then
+        VALUE=${VARIABLE#*=}
+        export "$NEW_NAME"="$VALUE${(P)NEW_NAME}"
+      fi
+    fi
   done
 }
 
