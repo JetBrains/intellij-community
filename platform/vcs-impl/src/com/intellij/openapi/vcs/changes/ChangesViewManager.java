@@ -553,6 +553,10 @@ public class ChangesViewManager implements ChangesViewEx,
           Disposer.register(this, myCommitPanel);
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
 
+          ChangesViewCommitStatusPanel commitStatusPanel = new ChangesViewCommitStatusPanel(myView, myCommitPanel);
+          myChangesPanel.setStatusComponent(commitStatusPanel);
+          Disposer.register(myCommitPanel, () -> myChangesPanel.setStatusComponent(null));
+
           configurePreview();
           myCommitWorkflowHandler.addActivityListener(() -> configurePreview(), myCommitWorkflowHandler);
         }
