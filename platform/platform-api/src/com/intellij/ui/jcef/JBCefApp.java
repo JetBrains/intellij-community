@@ -11,6 +11,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import org.cef.CefApp;
 import org.cef.CefSettings;
+import org.cef.CefSettings.LogSeverity;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefSchemeHandlerFactory;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
@@ -60,7 +62,7 @@ public abstract class JBCefApp {
     //noinspection AbstractMethodCallInConstructor
     CefAppConfig config = getCefAppConfig();
     config.mySettings.windowless_rendering_enabled = false;
-    config.mySettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
+    config.mySettings.log_severity = getLogLevel();
     Color bg = JBColor.background();
     config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     if (ApplicationManager.getApplication().isInternal()) {
@@ -69,6 +71,27 @@ public abstract class JBCefApp {
     CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
     myCefApp = CefApp.getInstance(config.mySettings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
+  }
+
+  private static LogSeverity getLogLevel() {
+    String level = System.getProperty("ide.browser.jcef.log.level", "disable").toLowerCase(Locale.ENGLISH);
+    switch (level) {
+      case "disable":
+        return LogSeverity.LOGSEVERITY_DISABLE;
+      case "verbose":
+        return LogSeverity.LOGSEVERITY_VERBOSE;
+      case "info":
+        return LogSeverity.LOGSEVERITY_INFO;
+      case "warning":
+        return LogSeverity.LOGSEVERITY_WARNING;
+      case "error":
+        return LogSeverity.LOGSEVERITY_ERROR;
+      case "fatal":
+        return LogSeverity.LOGSEVERITY_FATAL;
+      case "default":
+      default:
+        return LogSeverity.LOGSEVERITY_DEFAULT;
+    }
   }
 
   @NotNull
