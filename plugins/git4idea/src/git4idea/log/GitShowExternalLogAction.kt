@@ -41,7 +41,6 @@ import git4idea.repo.GitRepositoryImpl
 import git4idea.repo.GitRepositoryManager
 import java.awt.BorderLayout
 import java.io.File
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -65,13 +64,12 @@ class GitShowExternalLogAction : DumbAwareAction() {
     }
     val showContent = {
       val cm = window.contentManager
-      if (!checkIfProjectLogMatches(project, vcs, cm, roots) && !checkIfAlreadyOpened(cm, roots)) {
-        val tabName = calcTabName(cm, roots)
+      if (!selectProjectLog(project, vcs, cm, roots) && !selectAlreadyOpened(cm, roots)) {
         val component = createManagerAndContent(project, vcs, roots, true)
-        val content = ContentFactory.SERVICE.getInstance().createContent(component, tabName, false)
+        val content = ContentFactory.SERVICE.getInstance().createContent(component, calcTabName(cm, roots), false)
         content.setDisposer(component.disposable)
         content.description = GitBundle.message("git.log.external.tab.description",
-                                                StringUtil.join(roots, { obj: VirtualFile -> obj.path }, "\n"))
+                                                roots.joinToString("\n") { obj: VirtualFile -> obj.path })
         content.isCloseable = true
         cm.addContent(content)
         cm.setSelectedContent(content)
@@ -84,124 +82,105 @@ class GitShowExternalLogAction : DumbAwareAction() {
       showContent()
     }
   }
+}
 
-  private class MyContentComponent internal constructor(actualComponent: JComponent,
-                                                        val roots: Collection<VirtualFile>,
-                                                        val disposable: Disposable) : JPanel(BorderLayout()) {
+private class MyContentComponent internal constructor(actualComponent: JComponent,
+                                                      val roots: Collection<VirtualFile>,
+                                                      val disposable: Disposable) : JPanel(BorderLayout()) {
 
-    init {
-      add(actualComponent)
+  init {
+    add(actualComponent)
+  }
+}
+
+private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs) :
+  Backgroundable(project, GitBundle.message(
+    "git.log.external.loading.process"), true) {
+  override fun run(indicator: ProgressIndicator) {
+    if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject)) {
+      throw ProcessCanceledException()
     }
   }
 
-  private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs) :
-    Backgroundable(project, GitBundle.message(
-      "git.log.external.loading.process"), true) {
-    override fun run(indicator: ProgressIndicator) {
-      if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject)) {
-        throw ProcessCanceledException()
-      }
-    }
-
-    override fun onSuccess() {
-      if (!myProject.isDisposed) {
-        val content = createManagerAndContent(myProject, vcs, roots, false)
-        val window = WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
-          .setProject(myProject)
-          .setTitle(GitBundle.message("git.log.external.window.title"))
-          .setPreferredFocusedComponent(content)
-          .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
-          .build()
-        Disposer.register(window, content.disposable)
-        window.show()
-      }
+  override fun onSuccess() {
+    if (!myProject.isDisposed) {
+      val content = createManagerAndContent(myProject, vcs, roots, false)
+      val window = WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
+        .setProject(myProject)
+        .setTitle(GitBundle.message("git.log.external.window.title"))
+        .setPreferredFocusedComponent(content)
+        .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
+        .build()
+      Disposer.register(window, content.disposable)
+      window.show()
     }
   }
+}
 
-  companion object {
-    private const val EXTERNAL = "EXTERNAL"
+private const val EXTERNAL = "EXTERNAL"
 
-    private fun createManagerAndContent(project: Project,
-                                        vcs: GitVcs,
-                                        roots: List<VirtualFile>,
-                                        isToolWindowTab: Boolean): MyContentComponent {
-      val disposable = Disposer.newDisposable()
-      val repositoryManager = GitRepositoryManager.getInstance(project)
-      for (root in roots) {
-        repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable, true))
-      }
-      val manager = VcsLogManager(project, ServiceManager.getService(GitExternalLogTabsProperties::class.java),
-                                  roots.map { VcsRoot(vcs, it) })
-      Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
-      val ui = manager.createLogUi(calcLogId(roots),
-                                   if (isToolWindowTab) VcsLogManager.LogWindowKind.TOOL_WINDOW else VcsLogManager.LogWindowKind.STANDALONE,
-                                   true)
-      Disposer.register(disposable, ui)
-      return MyContentComponent(VcsLogPanel(manager, ui), roots, disposable)
-    }
-
-    private fun calcLogId(roots: List<VirtualFile>): String {
-      return "$EXTERNAL " + StringUtil.join(roots, { obj: VirtualFile -> obj.path }, File.pathSeparator)
-    }
-
-    private fun calcTabName(cm: ContentManager, roots: List<VirtualFile>): String {
-      var name = VcsLogBundle.message("vcs.log.tab.name") + " (" + roots[0].name
-      if (roots.size > 1) {
-        name += "+"
-      }
-      name += ")"
-      var candidate = name
-      var cnt = 1
-      while (cm.contents.any { content: Content -> content.displayName == candidate }) {
-        candidate = "$name-$cnt"
-        cnt++
-      }
-      return candidate
-    }
-
-    private fun getGitRootsFromUser(project: Project): List<VirtualFile> {
-      val descriptor = FileChooserDescriptor(false, true, false, true, false, true)
-      val virtualFiles = FileChooser.chooseFiles(descriptor, project, null)
-      if (virtualFiles.isEmpty()) {
-        return emptyList()
-      }
-      val correctRoots: MutableList<VirtualFile> = ArrayList()
-      for (vf in virtualFiles) {
-        if (GitUtil.isGitRoot(File(vf.path))) {
-          correctRoots.add(vf)
-        }
-      }
-      return correctRoots
-    }
-
-    private fun checkIfProjectLogMatches(project: Project,
-                                         vcs: GitVcs,
-                                         cm: ContentManager,
-                                         requestedRoots: List<VirtualFile>): Boolean {
-      val projectRoots = listOf(*ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs))
-      return if (projectRoots.containsAll(requestedRoots)) {
-        if (requestedRoots.containsAll(projectRoots)) {
-          VcsLogContentUtil.selectMainLog(cm)
-        }
-        else {
-          val filters = collection(fromRoots(requestedRoots))
-          VcsProjectLog.getInstance(project).openLogTab(filters) != null
-        }
-      }
-      else false
-    }
-
-    private fun checkIfAlreadyOpened(cm: ContentManager, roots: Collection<VirtualFile>): Boolean {
-      for (content in cm.contents) {
-        val component = content.component
-        if (component is MyContentComponent) {
-          if (Comparing.haveEqualElements(roots, component.roots)) {
-            cm.setSelectedContent(content)
-            return true
-          }
-        }
-      }
-      return false
-    }
+private fun createManagerAndContent(project: Project,
+                                    vcs: GitVcs,
+                                    roots: List<VirtualFile>,
+                                    isToolWindowTab: Boolean): MyContentComponent {
+  val disposable = Disposer.newDisposable()
+  val repositoryManager = GitRepositoryManager.getInstance(project)
+  for (root in roots) {
+    repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable, true))
   }
+  val manager = VcsLogManager(project, ServiceManager.getService(GitExternalLogTabsProperties::class.java),
+                              roots.map { VcsRoot(vcs, it) })
+  Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
+  val ui = manager.createLogUi(calcLogId(roots),
+                               if (isToolWindowTab) VcsLogManager.LogWindowKind.TOOL_WINDOW else VcsLogManager.LogWindowKind.STANDALONE,
+                               true)
+  Disposer.register(disposable, ui)
+  return MyContentComponent(VcsLogPanel(manager, ui), roots, disposable)
+}
+
+private fun calcLogId(roots: List<VirtualFile>): String {
+  return "$EXTERNAL " + roots.joinToString(File.pathSeparator) { obj: VirtualFile -> obj.path }
+}
+
+private fun calcTabName(cm: ContentManager, roots: List<VirtualFile>): String {
+  val name = VcsLogBundle.message("vcs.log.tab.name") + " (" + roots.first().name + (if (roots.size > 1) "+" else "") + ")"
+  var candidate = name
+  var cnt = 1
+  while (cm.contents.any { content: Content -> content.displayName == candidate }) {
+    candidate = "$name-$cnt"
+    cnt++
+  }
+  return candidate
+}
+
+private fun getGitRootsFromUser(project: Project): List<VirtualFile> {
+  val descriptor = FileChooserDescriptor(false, true, false, true, false, true)
+  val virtualFiles = FileChooser.chooseFiles(descriptor, project, null)
+  return virtualFiles.filter { GitUtil.isGitRoot(File(it.path)) }
+}
+
+private fun selectProjectLog(project: Project,
+                             vcs: GitVcs,
+                             cm: ContentManager,
+                             requestedRoots: List<VirtualFile>): Boolean {
+  val projectRoots = listOf(*ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs))
+  if (!projectRoots.containsAll(requestedRoots)) return false
+
+  if (requestedRoots.containsAll(projectRoots)) return VcsLogContentUtil.selectMainLog(cm)
+  val filters = collection(fromRoots(requestedRoots))
+  return VcsProjectLog.getInstance(project).openLogTab(filters) != null
+}
+
+private fun selectAlreadyOpened(cm: ContentManager, roots: Collection<VirtualFile>): Boolean {
+  val content = cm.contents.firstOrNull { content ->
+    val component = content.component
+    if (component is MyContentComponent) {
+      Comparing.haveEqualElements(roots, component.roots)
+    }
+    else {
+      false
+    }
+  } ?: return false
+  cm.setSelectedContent(content)
+  return true
 }
