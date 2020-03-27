@@ -27,28 +27,24 @@ open class PEntityStorage constructor(
     TODO("Not yet implemented")
   }
 
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId,
-                                                                      remoteClass: Class<SUBT>,
-                                                                      id: PId<T>): Sequence<SUBT> {
-    val entitiesList = entitiesByType[remoteClass] ?: return emptySequence()
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
+    val entitiesList = entitiesByType[connectionId.toSequenceClass.java] ?: return emptySequence()
     return getOneToManyRefs(connectionId, id, entitiesList, refs) ?: emptySequence()
   }
 
-  protected fun <T : TypedEntity, SUBT : TypedEntity> getOneToManyRefs(connectionId: ConnectionId,
+  protected fun <T : TypedEntity, SUBT : TypedEntity> getOneToManyRefs(connectionId: ConnectionId<T, SUBT>,
                                                                        index: PId<T>,
                                                                        entitiesList: EntityFamily<SUBT>,
                                                                        searchedTable: RefsTable
   ): Sequence<SUBT>? = searchedTable.getOneToMany(connectionId, index.arrayId)?.map { entitiesList[it]!!.createEntity(this) }
 
-  protected fun <T : TypedEntity> getManyToOneRef(connectionId: ConnectionId, index: Int,
-                                                  entitiesList: EntityFamily<T>, searchedTable: RefsTable): T? {
+  protected fun <T : TypedEntity, SUBT : TypedEntity> getManyToOneRef(connectionId: ConnectionId<T, SUBT>, index: Int,
+                                                                      entitiesList: EntityFamily<T>, searchedTable: RefsTable): T? {
     return searchedTable.getManyToOne(connectionId, index) { entitiesList[it]!!.createEntity(this) }
   }
 
-  open fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId,
-                                                                     remoteClass: Class<T>,
-                                                                     index: PId<SUBT>): T? {
-    val entitiesList = entitiesByType[remoteClass] ?: return null
+  open fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId<T, SUBT>, index: PId<SUBT>): T? {
+    val entitiesList = entitiesByType[connectionId.toSingleClass.java] ?: return null
     return getManyToOneRef(connectionId, index.arrayId, entitiesList, refs)
   }
 
@@ -132,7 +128,7 @@ class PEntityStorageBuilder(
     return copiedData.createEntity(this)
   }
 
-  private fun <T : TypedEntity> getEntities(unmodifiableEntityClass: Class<T>): EntityFamily<T> {
+  private fun <T : TypedEntity> getEntityFamily(unmodifiableEntityClass: Class<T>): EntityFamily<T> {
     return modified[unmodifiableEntityClass] ?: entitiesByType[unmodifiableEntityClass] ?: EntityFamily.empty()
   }
 
@@ -166,35 +162,33 @@ class PEntityStorageBuilder(
     getEntitiesToModify(entityClass).remove(idx)
   }
 
-  override fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId,
-                                                                          remoteClass: Class<SUBT>,
-                                                                          id: PId<T>): Sequence<SUBT> {
-
+  override fun <T : TypedEntity, SUBT : TypedEntity> extractOneToManyRefs(connectionId: ConnectionId<T, SUBT>, id: PId<T>): Sequence<SUBT> {
     // TODO: 24.03.2020 Check if already removed
-    val entitiesList = getEntities(remoteClass)
+    val entitiesList = getEntityFamily(connectionId.toSequenceClass.java)
     return getOneToManyRefs(connectionId, id, entitiesList, clonedRefs)
            ?: getOneToManyRefs(connectionId, id, entitiesList, refs)
            ?: emptySequence()
   }
 
-  override fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId,
-                                                                         remoteClass: Class<T>,
+  override fun <T : TypedEntity, SUBT : TypedEntity> extractManyToOneRef(connectionId: ConnectionId<T, SUBT>,
                                                                          index: PId<SUBT>): T? {
-    val entitiesList = getEntities(remoteClass)
+    val entitiesList = getEntityFamily(connectionId.toSingleClass.java)
     return getManyToOneRef(connectionId, index.arrayId, entitiesList, clonedRefs)
            ?: getManyToOneRef(connectionId, index.arrayId, entitiesList, refs)
   }
 
-  private fun copyTable(connectionId: ConnectionId) {
+  private fun <T : TypedEntity, SUBT : TypedEntity> copyTable(connectionId: ConnectionId<T, SUBT>) {
     clonedRefs.cloneTableFrom(connectionId, refs)
   }
 
-  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToMany(connectionId: ConnectionId, id: PId<T>, updateTo: Sequence<SUBT>) {
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateOneToMany(connectionId: ConnectionId<T, SUBT>,
+                                                                       id: PId<T>,
+                                                                       updateTo: Sequence<SUBT>) {
     copyTable(connectionId)
     clonedRefs.updateOneToMany(connectionId, id.arrayId, updateTo)
   }
 
-  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateManyToOne(connectionId: ConnectionId, id: PId<SUBT>, updateTo: T?) {
+  fun <T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>> updateManyToOne(connectionId: ConnectionId<T, SUBT>, id: PId<SUBT>, updateTo: T?) {
     copyTable(connectionId)
     if (updateTo != null) {
       clonedRefs.updateManyToOne(connectionId, id.arrayId, updateTo)
