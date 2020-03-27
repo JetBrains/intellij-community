@@ -103,8 +103,6 @@ object MarketplaceRequests {
   @JvmStatic
   fun getAllPluginsTags() = listOf("Tools integration", "Languages", "Theme", "Paid")
 
-  @JvmStatic
-  @JvmOverloads
   fun loadPluginDescriptor(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginNode {
     return readOrUpdateFile(
       getUpdateMetadataFile(ideCompatibleUpdate),
@@ -158,8 +156,6 @@ object MarketplaceRequests {
       }
   }
 
-  @JvmStatic
-  @JvmOverloads
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
