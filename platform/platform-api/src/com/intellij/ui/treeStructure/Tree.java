@@ -204,31 +204,27 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void paint(Graphics g) {
     Rectangle visible = getVisibleRect();
 
-    boolean canHoldSelection = false;
-    TreePath[] paths = getSelectionModel().getSelectionPaths();
-    if (paths != null) {
-      for (TreePath each : paths) {
-        Rectangle selection = getPathBounds(each);
-        if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
-          if (myBusy && myBusyIcon != null) {
-            Rectangle busyIconBounds = myBusyIcon.getBounds();
-            if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
-              canHoldSelection = false;
-              break;
+    if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      boolean canHoldSelection = false;
+      TreePath[] paths = getSelectionModel().getSelectionPaths();
+      if (paths != null) {
+        for (TreePath each : paths) {
+          Rectangle selection = getPathBounds(each);
+          if (selection != null && (g.getClipBounds().intersects(selection) || g.getClipBounds().contains(selection))) {
+            if (myBusy && myBusyIcon != null) {
+              Rectangle busyIconBounds = myBusyIcon.getBounds();
+              if (selection.contains(busyIconBounds) || selection.intersects(busyIconBounds)) {
+                canHoldSelection = false;
+                break;
+              }
             }
-            else {
-              canHoldSelection = true;
-            }
-          }
-          else {
             canHoldSelection = true;
+            if (!myBusy || myBusyIcon == null) break;
           }
         }
       }
-    }
 
-    if (canHoldSelection) {
-      if (!AbstractTreeBuilder.isToPaintSelection(this)) {
+      if (canHoldSelection) {
         mySelectionModel.holdSelection();
       }
     }
