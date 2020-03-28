@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -24,7 +24,6 @@ public class PsiLiteralExpressionImpl
   extends JavaStubPsiElement<PsiLiteralStub>
   implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost {
 
-  private static final String QUOT = "&quot;";
   private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(ElementType.INTEGER_LITERALS, ElementType.REAL_LITERALS);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
@@ -71,6 +70,11 @@ public class PsiLiteralExpressionImpl
     return null;
   }
 
+  @Override
+  public boolean isTextBlock() {
+    return getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL;
+  }
+
   public IElementType getLiteralElementType() {
     PsiLiteralStub stub = getGreenStub();
     if (stub != null) return stub.getLiteralType();
@@ -105,7 +109,7 @@ public class PsiLiteralExpressionImpl
       return internedParseStringCharacters(getInnerText());
     }
     if (type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      return internedParseStringCharacters(getTextBlockText());
+      return internedParseStringCharacters(PsiLiteralUtil.getTextBlockText(this));
     }
 
     String text = NUMERIC_LITERALS.contains(type) ? StringUtil.toLowerCase(getCanonicalText()) : getCanonicalText();
@@ -141,61 +145,7 @@ public class PsiLiteralExpressionImpl
 
   @Nullable
   public String getInnerText() {
-    String text = getCanonicalText();
-    int textLength = text.length();
-    if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {
-      return text.substring(1, textLength - 1);
-    }
-    if (textLength > QUOT.length() && text.startsWith(QUOT) && text.endsWith(QUOT)) {
-      return text.substring(QUOT.length(), textLength - QUOT.length());
-    }
-    return null;
-  }
-
-  @Nullable
-  public String getTextBlockText() {
-    String[] lines = getTextBlockLines();
-    if (lines == null) return null;
-
-    int prefix = PsiLiteralUtil.getTextBlockIndent(lines);
-
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      if (line.length() > 0) {
-        sb.append(trimTrailingSpaces(line.substring(prefix)));
-      }
-      if (i < lines.length - 1) {
-        sb.append('\n');
-      }
-    }
-    return sb.toString();
-  }
-
-  @NotNull
-  private static String trimTrailingSpaces(@NotNull String line) {
-    int index = line.length() - 1;
-    while (index >= 0 && line.charAt(index) == ' ') index--;
-    if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
-    return line.substring(0, index + 1);
-  }
-
-  public int getTextBlockIndent() {
-    String[] lines = getTextBlockLines();
-    if (lines == null) return -1;
-    return PsiLiteralUtil.getTextBlockIndent(lines);
-  }
-
-  public String @Nullable [] getTextBlockLines() {
-    String rawText = getText();
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
-    int start = 3;
-    while (true) {
-      char c = rawText.charAt(start++);
-      if (c == '\n') break;
-      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
-    }
-    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+    return PsiLiteralUtil.getInnerText(this);
   }
 
   @Nullable

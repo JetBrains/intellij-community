@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -6,8 +6,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -68,8 +71,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       final String text = literalExpression.getText();
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         final StringBuilder newExpression = new StringBuilder();
-        final PsiLiteralExpressionImpl literal = (PsiLiteralExpressionImpl)literalExpression;
-        if (literal.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+        if (literalExpression.isTextBlock()) {
           int offset = 0;
           int start = findUnnecessarilyEscapedChars(text, 4);
           while (start >= 0) {
@@ -77,7 +79,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
             offset = start + 2;
             final String escape = text.substring(start, offset);
             if ("\\n".equals(escape)) {
-              final int indent = literal.getTextBlockIndent();
+              final int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
               newExpression.append('\n').append(StringUtil.repeatSymbol(' ', indent));
             }
             else {
@@ -152,7 +154,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         return;
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        if (((PsiLiteralExpressionImpl)expression).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+        if (expression.isTextBlock()) {
           final String text = expression.getText();
           int start = findUnnecessarilyEscapedChars(text, 4);
           while (start >= 0) {
