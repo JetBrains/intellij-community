@@ -13,9 +13,13 @@ import java.nio.file.Paths
 private val log = logger<CustomConfigMigrationOption>()
 
 sealed class CustomConfigMigrationOption {
-  object StartWithCleanConfig : CustomConfigMigrationOption()
+  object StartWithCleanConfig : CustomConfigMigrationOption() {
+    override fun toString(): String = "Start with clean config"
+  }
 
-  class MigrateFromCustomPlace(val location: Path) : CustomConfigMigrationOption()
+  class MigrateFromCustomPlace(val location: Path) : CustomConfigMigrationOption() {
+    override fun toString(): String = "Migrate from $location"
+  }
 
   companion object {
     @JvmStatic
