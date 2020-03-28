@@ -16,6 +16,11 @@ public interface MemoryAgent {
    */
   int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
 
+  /**
+   * Maximal number of paths that will be retrieved by {@code findPathsToClosestGCRoots} call
+   */
+  int DEFAULT_GC_ROOTS_PATHS_LIMIT = 10;
+
   @NotNull
   static MemoryAgent get(@NotNull DebugProcessImpl debugProcess) {
     if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) return MemoryAgentImpl.DISABLED;
@@ -33,5 +38,9 @@ public interface MemoryAgent {
 
   @NotNull
   ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference, int limit)
+    throws EvaluateException;
+
+  @NotNull
+  ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference, int number)
     throws EvaluateException;
 }

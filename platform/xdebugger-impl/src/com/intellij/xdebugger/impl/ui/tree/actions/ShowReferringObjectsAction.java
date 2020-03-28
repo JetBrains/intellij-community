@@ -11,8 +11,9 @@ import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
+import javax.swing.tree.TreeNode;
 
+public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return node.getValueContainer().getReferrersProvider() != null;
@@ -31,9 +32,27 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
                                                    nodeName,
                                                    referrersProvider.getReferringObjectsValue(),
                                                    tree.getValueMarkers(), session, false);
+        XDebuggerTree dialogTree = (XDebuggerTree)dialog.getPreferredFocusedComponent();
+        if (dialogTree != null) {
+          dialogTree.expandNodesOnLoad(treeNode -> isInTopSubTree(dialogTree, treeNode));
+        }
+
         dialog.setTitle(XDebuggerBundle.message("showReferring.dialog.title", nodeName));
         dialog.show();
       }
     }
+  }
+
+  private static boolean isInTopSubTree(@NotNull XDebuggerTree tree, @NotNull TreeNode node) {
+    TreeNode root = tree.getRoot();
+    while (root != null) {
+      root = root.getChildAt(0);
+
+      if (root == node) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
