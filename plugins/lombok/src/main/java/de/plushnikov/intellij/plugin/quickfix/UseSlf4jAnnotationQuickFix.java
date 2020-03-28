@@ -4,7 +4,9 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,14 +17,11 @@ import static de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProce
 public class UseSlf4jAnnotationQuickFix extends AddAnnotationFix implements IntentionAction {
 
   @NotNull
-  private final PsiNamedElement elementToRemove;
-  @NotNull
-  private final PsiClass containingClass;
+  private final SmartPsiElementPointer<PsiNamedElement> elementToRemove;
 
   public UseSlf4jAnnotationQuickFix(@NotNull PsiNamedElement elementToRemove, @NotNull PsiClass containingClass) {
     super(Slf4j.class.getName(), containingClass);
-    this.elementToRemove = elementToRemove;
-    this.containingClass = containingClass;
+    this.elementToRemove = SmartPointerManager.getInstance(elementToRemove.getProject()).createSmartPsiElementPointer(elementToRemove);
   }
 
   @Override
@@ -30,13 +29,18 @@ public class UseSlf4jAnnotationQuickFix extends AddAnnotationFix implements Inte
                      @NotNull PsiElement endElement) {
     super.invoke(project, file, startElement, endElement);
 
-    final Collection<PsiReference> all = ReferencesSearch.search(elementToRemove).findAll();
+    final PsiNamedElement psiNamedElement = elementToRemove.getElement();
+    if (null != psiNamedElement) {
+      final Collection<PsiReference> all = ReferencesSearch.search(psiNamedElement).findAll();
 
-    final String loggerName = getLoggerName(containingClass);
-    for (PsiReference psiReference : all) {
-      psiReference.handleElementRename(loggerName);
+      final String loggerName = getLoggerName(PsiTreeUtil.getParentOfType(psiNamedElement, PsiClass.class));
+      for (PsiReference psiReference : all) {
+        psiReference.handleElementRename(loggerName);
+      }
+
+      psiNamedElement.delete();
+
+      JavaCodeStyleManager.getInstance(project).removeRedundantImports((PsiJavaFile) file);
     }
-    elementToRemove.setName(loggerName);
-    elementToRemove.delete();
   }
 }

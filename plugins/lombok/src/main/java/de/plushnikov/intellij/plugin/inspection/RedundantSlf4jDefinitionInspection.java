@@ -14,9 +14,7 @@ import static java.lang.String.format;
 public class RedundantSlf4jDefinitionInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final String LOGGER_SLF4J_FQCN = Slf4jProcessor.LOGGER_TYPE;
-  private static final String LOGGER_FACTORY_SLF4J_FQCN = "LoggerFactory";
-  private static final String GET_LOGGER_METHOD = ".getLogger(%s.class)";
-  private static final String LOGGER_INITIALIZATION = LOGGER_FACTORY_SLF4J_FQCN + GET_LOGGER_METHOD;
+  private static final String LOGGER_INITIALIZATION = "LoggerFactory.getLogger(%s.class)";
 
   @NotNull
   @Override

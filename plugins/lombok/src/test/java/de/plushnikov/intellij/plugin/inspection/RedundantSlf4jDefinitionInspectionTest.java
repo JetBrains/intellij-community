@@ -24,6 +24,7 @@ public class RedundantSlf4jDefinitionInspectionTest extends LombokInspectionTest
 
   public void testRedundantSlf4jDefinition() {
     doTest();
+    checkQuickFix("Annotate class 'RedundantSlf4jDefinition' as @Slf4j");
   }
 
 }
