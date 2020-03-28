@@ -23,6 +23,7 @@
   <xi:include href="/META-INF/Indexing.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/EditorEx.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Inspect.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
