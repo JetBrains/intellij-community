@@ -38,11 +38,48 @@ class MutableEntitiesBarrel : EntitiesBarrel() {
     entitiesByType[clazz] = newFamily
   }
 
+  fun remove(id: Int, clazz: Class<out TypedEntity>) {
+    getMutableEntityFamily(clazz).remove(id)
+  }
+
+  fun <E : TypedEntity> getEntityDataForModification(id: PId<E>): PEntityData<E> {
+    return getMutableEntityFamily(id.clazz.java).getEntityDataForModification(id)
+  }
+
+  fun <T : TypedEntity> add(newEntity: PEntityData<T>, clazz: Class<T>) {
+    getMutableEntityFamily(clazz).add(newEntity)
+  }
+
+  fun <T : TypedEntity> replaceById(newEntity: PEntityData<T>, clazz: Class<T>) {
+    val family = getMutableEntityFamily(clazz)
+    if (!family.exists(newEntity.id)) error("Nothing to replace")  // TODO: 25.03.2020 Or just call "add"?
+    family.replaceById(newEntity)
+  }
+
   fun toImmutable(): EntitiesBarrel {
     entitiesByType.forEach { (_, family) ->
       if (family is MutableEntityFamily<*>) family.freeze()
     }
     return EntitiesBarrel(HashMap(entitiesByType))
+  }
+
+  private fun <T : TypedEntity> getMutableEntityFamily(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
+    val entityFamily = entitiesByType[unmodifiableEntityClass] as EntityFamily<T>?
+    if (entityFamily == null) {
+      val newMutable = MutableEntityFamily.createEmptyMutable<T>()
+      entitiesByType[unmodifiableEntityClass] = newMutable
+      return newMutable
+    }
+    else {
+      if (entityFamily !is MutableEntityFamily<T> || !entityFamily.familyCopiedToModify) {
+        val newMutable = entityFamily.copyToMutable()
+        entitiesByType[unmodifiableEntityClass] = newMutable
+        return newMutable
+      }
+      else {
+        return entityFamily
+      }
+    }
   }
 
   companion object {
