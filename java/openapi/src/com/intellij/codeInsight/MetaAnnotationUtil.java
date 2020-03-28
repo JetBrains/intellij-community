@@ -231,6 +231,12 @@ public abstract class MetaAnnotationUtil {
     return isMetaAnnotatedInHierarchy(listOwner, annotations, new HashSet<>());
   }
 
+  public static boolean hasMetaAnnotatedMethods(@NotNull PsiClass psiClass,
+                                                @NotNull Collection<String> annotations) {
+    return Stream.of(psiClass.getMethods())
+        .anyMatch(psiMethod -> isMetaAnnotated(psiMethod, annotations));
+  }
+
   private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
                                                     @NotNull Collection<String> annotations,
                                                     Set<? super PsiMember> visited) {

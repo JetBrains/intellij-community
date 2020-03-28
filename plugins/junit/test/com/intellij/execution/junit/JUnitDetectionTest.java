@@ -113,4 +113,21 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
     assertFalse(framework.isTestMethod(aClass.getMethods()[0]));
     assertFalse(framework.isTestMethod(aClass.getMethods()[1]));
   }
+
+  public void testJqwikProperty() {
+    myFixture.addClass("package net.jqwik.api;" +
+                       "@org.junit.platform.commons.annotation.Testable public @interface Property {}");
+    myFixture.addClass("package net.jqwik.api; public @interface ForAll {}");
+    PsiFile file = myFixture.configureByText("JqwikPropertyTest.java",
+                                             "import net.jqwik.api.ForAll;\n" +
+                                             "import net.jqwik.api.Property;\n" +
+                                             "class JqwikPropertyTests {\n" +
+                                             "\t@Property\n" +
+                                             "\tvoid aProperty(@ForAll int anInt) {}\n" +
+                                             "}"
+    );
+
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    assertTrue(JUnitUtil.isTestClass(aClass));
+  }
 }
