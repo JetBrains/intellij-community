@@ -76,6 +76,7 @@ public final class ConfigImportHelper {
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(boolean veryFirstStartOnThisComputer, @NotNull Path newConfigDir, @NotNull Logger log) {
+    log.info("Importing configs to " + newConfigDir);
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = null;
@@ -95,6 +96,7 @@ public final class ConfigImportHelper {
     try {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
       if (customMigrationOption != null) {
+        log.info("Custom migration option: " + customMigrationOption);
         try {
           tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log);
 
@@ -161,7 +163,7 @@ public final class ConfigImportHelper {
     finally {
       if (tempBackup != null) {
         try {
-          moveTempBackupToStandardBackup(tempBackup);
+          moveTempBackupToStandardBackup(tempBackup, log);
         }
         catch (IOException e) {
           log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir [%s]",
@@ -178,12 +180,14 @@ public final class ConfigImportHelper {
   @NotNull
   private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log) throws IOException {
     File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
+    log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
     FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir);
     FileUtil.delete(currentConfig);
 
     File pluginsDir = new File(PathManager.getPluginsPath());
     if (pluginsDir.exists() && !FileUtil.isAncestor(currentConfig.toFile(), pluginsDir, false)) {
       File pluginsBackup = new File(tempBackupDir, PLUGINS);
+      log.info("Backup plugins dir separately from " + pluginsDir + " to " + pluginsBackup);
       if (pluginsBackup.mkdir()) {
         FileUtil.copyDir(pluginsDir, pluginsBackup);
         FileUtil.delete(pluginsDir);
@@ -196,8 +200,10 @@ public final class ConfigImportHelper {
     return tempBackupDir;
   }
 
-  private static void moveTempBackupToStandardBackup(@NotNull File backupToMove) throws IOException {
+  private static void moveTempBackupToStandardBackup(@NotNull File backupToMove,
+                                                     @NotNull Logger log) throws IOException {
     Path backupPath = getBackupPath();
+    log.info("Move backup from " + backupToMove + " to " + backupPath);
     FileUtil.delete(backupPath);
     FileUtil.copyDir(backupToMove, backupPath.toFile());
   }
