@@ -1,15 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.TypedEntity
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
-import kotlin.reflect.jvm.javaField
-
-fun <E : TypedEntity> KProperty1<E, *>.declaringClass(): Class<E> = this.javaField!!.declaringClass as Class<E>
 
 sealed class OneToMany<T : PTypedEntity<T>, SUBT : PTypedEntity<SUBT>>(
   protected val snapshot: PEntityStorage
