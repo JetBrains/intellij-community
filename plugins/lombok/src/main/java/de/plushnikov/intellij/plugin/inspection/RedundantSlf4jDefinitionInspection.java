@@ -4,7 +4,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.quickfix.UseSlf4jAnnotationQuickFix;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +33,6 @@ public class RedundantSlf4jDefinitionInspection extends AbstractBaseJavaLocalIns
     public void visitField(PsiField field) {
       super.visitField(field);
       findRedundantDefinition(field, field.getContainingClass());
-    }
-
-    @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
-      super.visitLocalVariable(variable);
-      final PsiClass containingClass = PsiTreeUtil.getParentOfType(variable, PsiClass.class, true);
-      findRedundantDefinition(variable, containingClass);
     }
 
     private void findRedundantDefinition(PsiVariable field, PsiClass containingClass) {
