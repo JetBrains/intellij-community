@@ -190,6 +190,14 @@
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection"/>
 
+    <localInspection
+      displayName="@Slf4j"
+      groupPath="Lombok"
+      groupName="Redundant definitions"
+      shortName="RedundantSlf4jDefinition"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"/>
+
     <codeInsight.template.postfixTemplateProvider language="JAVA"
                                                   implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>
   </extensions>

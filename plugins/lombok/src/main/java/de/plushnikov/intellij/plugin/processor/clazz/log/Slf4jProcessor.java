@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 public class Slf4jProcessor extends AbstractTopicSupportingSimpleLogProcessor {
 
-  private static final String LOGGER_TYPE = "org.slf4j.Logger";
+  public static final String LOGGER_TYPE = "org.slf4j.Logger";
   private static final String LOGGER_INITIALIZER = "org.slf4j.LoggerFactory.getLogger(%s)";
 
   public Slf4jProcessor() {
