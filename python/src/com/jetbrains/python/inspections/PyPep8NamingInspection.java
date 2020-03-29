@@ -16,7 +16,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -37,7 +37,7 @@ public class PyPep8NamingInspection extends PyPsiPep8NamingInspection {
   @Override
   public JComponent createOptionsPanel() {
     final JPanel rootPanel = new JPanel(new BorderLayout());
-    rootPanel.add(new CheckBox(PyBundle.message("ignore.overridden.functions"), this, "ignoreOverriddenFunctions"), BorderLayout.NORTH);
+    rootPanel.add(new CheckBox(PyPsiBundle.message("ignore.overridden.functions"), this, "ignoreOverriddenFunctions"), BorderLayout.NORTH);
 
     final OnePixelSplitter splitter = new OnePixelSplitter(false);
     splitter.setFirstComponent(new ListEditForm("Excluded base classes", ignoredBaseClasses).getContentPanel());
@@ -80,14 +80,14 @@ public class PyPep8NamingInspection extends PyPsiPep8NamingInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return PyBundle.message("INSP.pep8.ignore.method.names.for.descendants.of.class");
+      return PyPsiBundle.message("INSP.pep8.ignore.method.names.for.descendants.of.class");
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext ->
         JBPopupFactory.getInstance().createPopupChooserBuilder(getBaseClassNames())
-        .setTitle(PyBundle.message("INSP.pep8.ignore.base.class"))
+        .setTitle(PyPsiBundle.message("INSP.pep8.ignore.base.class"))
         .setItemChosenCallback((selectedValue) -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
           PyPep8NamingInspection inspection =
             (PyPep8NamingInspection)it.getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());

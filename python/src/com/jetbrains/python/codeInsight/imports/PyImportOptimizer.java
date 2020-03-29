@@ -36,6 +36,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesVisitor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
@@ -72,6 +73,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     final PyUnresolvedReferencesInspection.Visitor visitor = new PyUnresolvedReferencesInspection.Visitor(null,
                                                                                                           session,
                                                                                                           Collections.emptyList());
+    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new PyUnresolvedReferencesInspection());
     file.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement node) {

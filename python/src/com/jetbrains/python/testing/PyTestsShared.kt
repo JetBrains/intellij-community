@@ -626,7 +626,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    return isTestElement(element, isTestClassRequired(), context)
+    return isTestElement(element, context)
   }
 
   /**

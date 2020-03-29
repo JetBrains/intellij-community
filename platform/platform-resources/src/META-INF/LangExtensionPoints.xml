@@ -93,10 +93,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.inspectionSuppressor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInspection.InspectionSuppressor"/>
-    </extensionPoint>
-
     <extensionPoint name="lang.braceMatcher" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PairedBraceMatcher"/>
     </extensionPoint>
