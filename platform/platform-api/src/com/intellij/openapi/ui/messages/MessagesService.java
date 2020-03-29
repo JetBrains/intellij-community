@@ -76,7 +76,7 @@ public interface MessagesService {
                          @Nullable @InputDialogInitialValue String initialValue,
                          @Nullable InputValidator validator,
                          @Nullable TextRange selection,
-                         @Nullable @DialogComment String comment);
+                         @Nullable @NlsUI.CommentPanel String comment);
 
   String showMultilineInputDialog(Project project,
                                   @DialogMessage String message,

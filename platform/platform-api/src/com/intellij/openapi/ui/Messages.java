@@ -1172,7 +1172,7 @@ public class Messages {
                                        @Nullable @InputDialogInitialValue String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection,
-                                       @Nullable @DialogComment String comment) {
+                                       @Nullable @NlsUI.CommentPanel String comment) {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
   }
 
@@ -1368,7 +1368,7 @@ public class Messages {
                        @Nullable InputValidator validator,
                        String @NotNull @Nls @NlsUI.Button [] options,
                        int defaultOption,
-                       @Nullable @DialogComment String comment) {
+                       @Nullable @NlsUI.CommentPanel String comment) {
       super(project, true);
       myComment = comment;
       myValidator = validator;

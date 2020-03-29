@@ -25,25 +25,10 @@ public class NlsContexts {
   public @interface DialogMessage {
   }
 
-  @NlsContext(prefix = "dialog.comment")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface DialogComment {
-  }
-
   @NlsContext(prefix = "input.dialog.initial.value")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface InputDialogInitialValue {
-  }
-
-  /**
-   * Progress indicator
-   */
-  @NlsContext(prefix = "progress.indicator.text")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface ProgressIndicatorText {
   }
 
   /**
