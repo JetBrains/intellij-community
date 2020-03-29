@@ -52,7 +52,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   @NotNull protected final Repo myCurrentRepository;
   @NotNull protected final BranchActionGroupPopup myPopup;
-  @NotNull protected final String myRepoTitleInfo;
+  protected final boolean myInSpecificRepository;
 
   protected DvcsBranchPopup(@NotNull Repo currentRepository,
                             @NotNull AbstractRepositoryManager<Repo> repositoryManager,
@@ -65,10 +65,16 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     myVcs = currentRepository.getVcs();
     myVcsSettings = vcsSettings;
     myMultiRootBranchConfig = multiRootBranchConfig;
-    String title = myVcs.getDisplayName() + " Branches";
-    myRepoTitleInfo = (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC)
-                 ? " in " + DvcsUtil.getShortRepositoryName(currentRepository) : "";
-    myPopup = new BranchActionGroupPopup(title + myRepoTitleInfo, myProject, preselectActionCondition, createActions(), dimensionKey);
+    myInSpecificRepository = myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.DONT_SYNC;
+    String title = myInSpecificRepository ?
+                   DvcsBundle.message("branch.popup.vcs.name.branches", myVcs.getDisplayName()) :
+                   DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", myVcs.getDisplayName(),
+                                      DvcsUtil.getShortRepositoryName(currentRepository));
+    myPopup = new BranchActionGroupPopup(title,
+                                         myProject,
+                                         preselectActionCondition,
+                                         createActions(),
+                                         dimensionKey);
     initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {

@@ -244,7 +244,10 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
   @Override
   protected void fillPopupWithCurrentRepositoryActions(@NotNull LightActionGroup popupGroup, @Nullable LightActionGroup actions) {
-    popupGroup.addAll(
-      new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions, myRepoTitleInfo, true));
+    GitBranchPopupActions popupActions = new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository);
+    ActionGroup actionGroup = popupActions.createActions(actions,
+                                                         myInSpecificRepository ? myCurrentRepository : null,
+                                                         true);
+    popupGroup.addAll(actionGroup);
   }
 }
