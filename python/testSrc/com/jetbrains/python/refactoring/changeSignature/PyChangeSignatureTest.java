@@ -383,7 +383,7 @@ public class PyChangeSignatureTest extends PyTestCase {
                                              new PyParameterInfo(2, "x", null, false),
                                              new PyParameterInfo(1, "*args", null, false)));
   }
-  
+
   // PY-38076
   public void testUsedDictionaryUnpackingPreserved() {
     doChangeSignatureTest("func", Arrays.asList(new PyParameterInfo(0, "foo", null, false),
@@ -397,7 +397,25 @@ public class PyChangeSignatureTest extends PyTestCase {
     doChangeSignatureTest("func", Arrays.asList(new PyParameterInfo(0, "foo", null, false),
                                                 new PyParameterInfo(1, "bar", null, false)));
   }
-  
+
+  // PY-22023
+  public void testOtherDunderInitInHierarchyNotModified() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () ->
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "self", null, false),
+                                                new PyParameterInfo(1, "foo", null, false),
+                                                new PyParameterInfo(NEW_PARAMETER, "bar", "42", false))));
+  }
+
+  // PY-22023
+  public void testOtherDunderNewInHierarchyNotModified() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "cls", null, false),
+                                                new PyParameterInfo(1, "foo", null, false),
+                                                new PyParameterInfo(NEW_PARAMETER, "bar", "42", false)));
+    });
+  }
+
+
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);

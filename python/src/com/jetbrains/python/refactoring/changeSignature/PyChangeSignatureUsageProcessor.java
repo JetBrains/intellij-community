@@ -56,12 +56,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
     if (info instanceof PyChangeInfo) {
-      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(((PyChangeInfo)info).getMethod(), true);
-      final Query<PyFunction> search = PyOverridingMethodsSearch.search(((PyChangeInfo)info).getMethod(), true);
-      final Collection<PyFunction> functions = search.findAll();
-      for (PyFunction function : functions) {
-        usages.add(new UsageInfo(function));
-        usages.addAll(PyPsiIndexUtil.findUsages(function, true));
+      final PyFunction targetFunction = ((PyChangeInfo)info).getMethod();
+      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(targetFunction, true);
+      if (!PyUtil.isInitOrNewMethod(targetFunction)) {
+        final Query<PyFunction> search = PyOverridingMethodsSearch.search(targetFunction, true);
+        for (PyFunction override : search.findAll()) {
+          usages.add(new UsageInfo(override));
+          usages.addAll(PyPsiIndexUtil.findUsages(override, true));
+        }
       }
       return usages.toArray(UsageInfo.EMPTY_ARRAY);
     }
