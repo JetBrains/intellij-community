@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertToJBColorQuickFix implements LocalQuickFix {
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @NlsUI.ListItem @NotNull String getFamilyName() {
     return "Convert to JBColor";
   }
 

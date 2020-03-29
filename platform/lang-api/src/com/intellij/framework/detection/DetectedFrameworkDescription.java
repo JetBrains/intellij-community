@@ -40,7 +40,7 @@ public abstract class DetectedFrameworkDescription {
    * @return text to show in 'Setup Frameworks' dialog when this framework is selected
    */
   @NotNull
-  @Nls @NlsUI.Label
+  @NlsUI.Label
   public abstract String getSetupText();
 
   /**

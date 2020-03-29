@@ -13,7 +13,6 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.JBComponent;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,22 +50,22 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image);
   }
 
-  public JBLabel(@NotNull @Nls @NlsUI.Label String text) {
+  public JBLabel(@NotNull @NlsUI.Label String text) {
     super(text);
   }
 
-  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle) {
     super(text);
     setComponentStyle(componentStyle);
   }
 
-  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @NotNull UIUtil.ComponentStyle componentStyle, @NotNull UIUtil.FontColor fontColor) {
     super(text);
     setComponentStyle(componentStyle);
     setFontColor(fontColor);
   }
 
-  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, horizontalAlignment);
   }
 
@@ -74,7 +73,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     super(image, horizontalAlignment);
   }
 
-  public JBLabel(@NotNull @Nls @NlsUI.Label String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public JBLabel(@NotNull @NlsUI.Label String text, @Nullable Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(text, icon, horizontalAlignment);
   }
 
@@ -148,7 +147,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   @Override
-  public void setText(@Nls @NlsUI.Label String text) {
+  public void setText(@NlsUI.Label String text) {
     super.setText(text);
     if (myEditorPane != null) {
       myEditorPane.setText(getText());

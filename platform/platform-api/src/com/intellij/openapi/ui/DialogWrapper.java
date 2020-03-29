@@ -1513,7 +1513,7 @@ public abstract class DialogWrapper {
   @Deprecated
   protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
-  protected final void setCancelButtonText(@Nls @NlsUI.Button @NotNull String text) {
+  protected final void setCancelButtonText(@NlsUI.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
 
@@ -1542,7 +1542,7 @@ public abstract class DialogWrapper {
    *             {@link AbstractButton#setText(String)}
    *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
    */
-  protected final void setOKButtonText(@Nls @NlsUI.Button @NotNull String text) {
+  protected final void setOKButtonText(@NlsUI.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
   }
 
@@ -2235,7 +2235,7 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     @NotNull
-    @Nls @NlsUI.Checkbox
+    @NlsUI.Checkbox
     String getDoNotShowMessage();
   }
 

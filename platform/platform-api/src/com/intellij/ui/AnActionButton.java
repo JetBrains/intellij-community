@@ -31,7 +31,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private Set<AnActionButtonUpdater> myUpdaters;
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
 
-  public AnActionButton(@Nls @NlsUI.Button String text) {
+  public AnActionButton(@NlsUI.Button String text) {
     super(() -> text);
   }
 
@@ -39,8 +39,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(dynamicText);
   }
 
-  public AnActionButton(@Nls @NlsUI.Button String text,
-                        @Nls @NlsUI.ButtonTooltip String description,
+  public AnActionButton(@NlsUI.Button String text,
+                        @NlsUI.ButtonTooltip String description,
                         @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -51,7 +51,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(dynamicText, dynamicDescription, icon);
   }
 
-  public AnActionButton(@Nls @NlsUI.Button String text, Icon icon) {
+  public AnActionButton(@NlsUI.Button String text, Icon icon) {
     this(text, null, icon);
   }
 

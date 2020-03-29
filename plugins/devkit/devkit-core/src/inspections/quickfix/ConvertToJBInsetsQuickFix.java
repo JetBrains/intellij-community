@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertToJBInsetsQuickFix implements LocalQuickFix {
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @NlsUI.ListItem @NotNull String getFamilyName() {
     return "Convert to JBUI.insets(...)";
   }
 

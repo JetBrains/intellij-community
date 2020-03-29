@@ -70,7 +70,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
 
   protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
-    public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @NlsUI.ListItem @NotNull String getFamilyName() {
       return "Wrap line";
     }
 

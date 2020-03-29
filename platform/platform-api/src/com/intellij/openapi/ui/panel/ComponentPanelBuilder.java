@@ -84,7 +84,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param labelText text for the label.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withLabel(@NotNull @Nls @NlsUI.Label String labelText) {
+  public ComponentPanelBuilder withLabel(@NotNull @NlsUI.Label String labelText) {
     myLabelText = labelText;
     return this;
   }
@@ -109,7 +109,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param comment help context styled text written below the owner component.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withComment(@NotNull @Nls @NlsUI.CommentPanel String comment) {
+  public ComponentPanelBuilder withComment(@NotNull @NlsUI.CommentPanel String comment) {
     myCommentText = comment;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
     return this;
@@ -158,7 +158,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param description help tooltip description.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withTooltip(@NotNull @Nls @NlsUI.Tooltip String description) {
+  public ComponentPanelBuilder withTooltip(@NotNull @NlsUI.Tooltip String description) {
     myHTDescription = description;
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(description);
     return this;
@@ -173,7 +173,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    *
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withTooltipLink(@NotNull @Nls @NlsUI.LinkLabel String linkText, @NotNull Runnable action) {
+  public ComponentPanelBuilder withTooltipLink(@NotNull @NlsUI.LinkLabel String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
     return this;
@@ -263,17 +263,17 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   @NotNull
-  public static JLabel createCommentComponent(@Nullable @Nls @NlsUI.CommentPanel String commentText, boolean isCommentBelow) {
+  public static JLabel createCommentComponent(@Nullable @NlsUI.CommentPanel String commentText, boolean isCommentBelow) {
     return createCommentComponent(commentText, isCommentBelow, 70);
   }
 
   @NotNull
-  public static JLabel createCommentComponent(@Nullable @Nls @NlsUI.CommentPanel String commentText, boolean isCommentBelow, int maxLineLength) {
+  public static JLabel createCommentComponent(@Nullable @NlsUI.CommentPanel String commentText, boolean isCommentBelow, int maxLineLength) {
     return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength);
   }
 
   private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier,
-                                               @Nullable @Nls @NlsUI.CommentPanel String commentText,
+                                               @Nullable @NlsUI.CommentPanel String commentText,
                                                boolean isCommentBelow,
                                                int maxLineLength) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
@@ -294,7 +294,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return component;
   }
 
-  public static JLabel createNonWrappingCommentComponent(@NotNull @Nls @NlsUI.CommentPanel String commentText) {
+  public static JLabel createNonWrappingCommentComponent(@NotNull @NlsUI.CommentPanel String commentText) {
     JBLabel component = new JBLabel(commentText);
     component.setForeground(UIUtil.getContextHelpForeground());
     setCommentFont(component);
@@ -302,7 +302,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   private static void setCommentText(@NotNull JLabel component,
-                                     @Nullable @Nls @NlsUI.CommentPanel String commentText,
+                                     @Nullable @NlsUI.CommentPanel String commentText,
                                      boolean isCommentBelow,
                                      int maxLineLength) {
     if (commentText != null) {

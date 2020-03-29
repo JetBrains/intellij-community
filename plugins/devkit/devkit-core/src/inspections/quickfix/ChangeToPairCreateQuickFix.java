@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ChangeToPairCreateQuickFix implements LocalQuickFix {
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @NlsUI.ListItem @NotNull String getFamilyName() {
     return "Replace with 'Pair.create()'";
   }
 

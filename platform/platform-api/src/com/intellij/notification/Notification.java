@@ -260,7 +260,7 @@ public class Notification {
    * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
    */
   @NotNull
-  public Notification setDropDownText(@NotNull @Nls @NlsUI.LinkLabel String dropDownText) {
+  public Notification setDropDownText(@NotNull @NlsUI.LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }

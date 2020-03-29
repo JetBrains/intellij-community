@@ -65,12 +65,12 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
     return getThis();
   }
 
-  public T yesText(@NotNull @Nls @NlsUI.Button String yesText) {
+  public T yesText(@NotNull @NlsUI.Button String yesText) {
     myYesText = yesText;
     return getThis();
   }
 
-  public T noText(@NotNull @Nls @NlsUI.Button String noText) {
+  public T noText(@NotNull @NlsUI.Button String noText) {
     myNoText = noText;
     return getThis();
   }
@@ -113,7 +113,7 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
       super(title, message);
     }
 
-    public YesNoCancel cancelText(@NotNull @Nls @NlsUI.Button String cancelText) {
+    public YesNoCancel cancelText(@NotNull @NlsUI.Button String cancelText) {
       myCancelText = cancelText;
       return getThis();
     }

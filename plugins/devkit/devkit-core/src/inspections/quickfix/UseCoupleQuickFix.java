@@ -22,12 +22,12 @@ public class UseCoupleQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getName() {
+  public @NlsUI.ListItem @NotNull String getName() {
     return myText;
   }
 
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @NlsUI.ListItem @NotNull String getFamilyName() {
     return "Replace 'Pair' with 'Couple'";
   }
 

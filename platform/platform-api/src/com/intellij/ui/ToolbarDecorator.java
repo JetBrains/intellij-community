@@ -558,20 +558,20 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * Marker interface, button will be disabled if no selected element
    */
   public abstract static class ElementActionButton extends AnActionButton {
-    public ElementActionButton(@Nls @NlsUI.Button String text,
-                               @Nls @NlsUI.ButtonTooltip String description,
+    public ElementActionButton(@NlsUI.Button String text,
+                               @NlsUI.ButtonTooltip String description,
                                @Nullable Icon icon) {
       super(text, description, icon);
     }
 
-    public ElementActionButton(@Nls @NlsUI.Button String text, Icon icon) {
+    public ElementActionButton(@NlsUI.Button String text, Icon icon) {
       super(text, icon);
     }
 
     public ElementActionButton() {
     }
 
-    public ElementActionButton(@Nls @NlsUI.Button String text) {
+    public ElementActionButton(@NlsUI.Button String text) {
       super(text);
     }
   }

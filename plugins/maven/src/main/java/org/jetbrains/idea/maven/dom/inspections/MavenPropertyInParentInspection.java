@@ -98,7 +98,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
         String finalResolvedValue = resolvedValue;
         fix = new LocalQuickFix() {
           @Override
-          public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+          public @NlsUI.ListItem @NotNull String getFamilyName() {
             return MavenDomBundle.message("refactoring.inline.property");
           }
 

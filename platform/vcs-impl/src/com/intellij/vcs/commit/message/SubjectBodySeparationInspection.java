@@ -50,7 +50,7 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
 
   protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
-    public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @NlsUI.ListItem @NotNull String getFamilyName() {
       return VcsBundle.getString("settings.commit.message.body.add.blank.line.fix");
     }
 

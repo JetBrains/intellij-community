@@ -32,13 +32,13 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   }
 
   @NotNull
-  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull @Nls @NlsUI.Label String text) {
+  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull @NlsUI.Label String text) {
     return create(component, text, BorderLayout.NORTH);
   }
 
   @NotNull
   public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component,
-                                                                        @NotNull @Nls @NlsUI.Label String text,
+                                                                        @NotNull @NlsUI.Label String text,
                                                                         String labelConstraint) {
     LabeledComponent<Comp> labeledComponent = new LabeledComponent<>();
     labeledComponent.setComponent(component);
@@ -53,7 +53,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     setAnchor(myLabel);
   }
 
-  public void setText(@Nls @NlsUI.Label String text) {
+  public void setText(@NlsUI.Label String text) {
     if (!StringUtil.isEmpty(text) && !StringUtil.endsWithChar(text, ':')) {
       text += ':';
     }

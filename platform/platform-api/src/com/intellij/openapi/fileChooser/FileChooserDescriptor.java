@@ -124,11 +124,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myDescription;
   }
 
-  public void setDescription(@Nls @NlsUI.Label String description) {
+  public void setDescription(@NlsUI.Label String description) {
     withDescription(description);
   }
 
-  public FileChooserDescriptor withDescription(@Nls @NlsUI.Label String description) {
+  public FileChooserDescriptor withDescription(@NlsUI.Label String description) {
     myDescription = description;
     return this;
   }

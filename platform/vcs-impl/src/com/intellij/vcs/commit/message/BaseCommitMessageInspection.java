@@ -132,7 +132,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     implements LowPriorityAction, IntentionAction, ShortcutProvider {
 
     @Override
-    public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @NlsUI.ListItem @NotNull String getFamilyName() {
       return ReformatCommitMessageAction.NAME;
     }
 

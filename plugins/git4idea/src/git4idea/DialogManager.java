@@ -30,7 +30,7 @@ public class DialogManager {
 
   public static int showMessage(@NotNull @DialogMessage final String message,
                                 @NotNull @DialogTitle final String title,
-                                final String @NotNull @Nls @Button [] options,
+                                final String @NotNull @Button [] options,
                                 final int defaultButtonIndex,
                                 final int focusedButtonIndex,
                                 @Nullable final Icon icon,
@@ -41,8 +41,8 @@ public class DialogManager {
   public static int showOkCancelDialog(@NotNull Project project,
                                        @NotNull @DialogMessage String message,
                                        @NotNull @DialogTitle String title,
-                                       @NotNull @Nls @Button String okButtonText,
-                                       @NotNull @Nls @Button String cancelButtonText,
+                                       @NotNull @Button String okButtonText,
+                                       @NotNull @Button String cancelButtonText,
                                        @Nullable Icon icon) {
     return dialogManager().showMessageDialog(project, message, title, new String[]{okButtonText, cancelButtonText}, 0, icon);
   }
@@ -50,9 +50,9 @@ public class DialogManager {
   public static int showYesNoCancelDialog(@NotNull Project project,
                                           @NotNull @DialogMessage String message,
                                           @NotNull @DialogTitle String title,
-                                          @NotNull @Nls @Button String yesButtonText,
-                                          @NotNull @Nls @Button String noButtonText,
-                                          @NotNull @Nls @Button String cancelButtonText,
+                                          @NotNull @Button String yesButtonText,
+                                          @NotNull @Button String noButtonText,
+                                          @NotNull @Button String cancelButtonText,
                                           @Nullable Icon icon) {
     return dialogManager()
       .showMessageDialog(project, message, title, new String[]{yesButtonText, noButtonText, cancelButtonText}, 0, 1, icon);
@@ -65,7 +65,7 @@ public class DialogManager {
   protected int showMessageDialog(@NotNull Project project,
                                   @NotNull @DialogMessage String message,
                                   @NotNull @DialogTitle String title,
-                                  String @NotNull @Nls @Button [] options,
+                                  String @NotNull @Button [] options,
                                   int defaultButtonIndex,
                                   @Nullable Icon icon) {
     return Messages.showDialog(project, message, title, options, defaultButtonIndex, icon);
@@ -74,7 +74,7 @@ public class DialogManager {
   protected int showMessageDialog(@NotNull Project project,
                                   @NotNull @DialogMessage String message,
                                   @NotNull @DialogTitle String title,
-                                  String @NotNull @Nls @Button [] options,
+                                  String @NotNull @Button [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon) {
@@ -83,7 +83,7 @@ public class DialogManager {
 
   protected int showMessageDialog(@NotNull @DialogMessage String message,
                                   @NotNull @DialogTitle String title,
-                                  String @NotNull @Nls @Button [] options,
+                                  String @NotNull @Button [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon,

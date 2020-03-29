@@ -32,11 +32,11 @@ public interface ProjectTemplate {
   ProjectTemplate[] EMPTY_ARRAY = new ProjectTemplate[0];
 
   @NotNull
-  @Nls @NlsUI.ListItem
+  @NlsUI.ListItem
   String getName();
 
   @Nullable
-  @Nls @NlsUI.TextPane
+  @NlsUI.TextPane
   String getDescription();
 
   Icon getIcon();

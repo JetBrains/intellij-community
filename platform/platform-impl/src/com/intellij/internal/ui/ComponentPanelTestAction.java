@@ -867,11 +867,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         final String myText;
         final ImmutableList<Item> myChildren;
 
-        Item(@NotNull Icon icon, @NotNull @Nls @NlsUI.ComboboxItem String text) {
+        Item(@NotNull Icon icon, @NotNull @NlsUI.ComboboxItem String text) {
           this(icon, text, ImmutableList.of());
         }
 
-        Item(@NotNull Icon icon, @NotNull @Nls @NlsUI.ComboboxItem String text, @NotNull List<Item> myChildren) {
+        Item(@NotNull Icon icon, @NotNull @NlsUI.ComboboxItem String text, @NotNull List<Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
           this.myChildren = ImmutableList.copyOf(myChildren);

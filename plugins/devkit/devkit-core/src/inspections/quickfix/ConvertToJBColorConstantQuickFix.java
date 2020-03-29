@@ -25,12 +25,12 @@ public class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getName() {
+  public @NlsUI.ListItem @NotNull String getName() {
     return "Convert to JBColor." + myConstantName;
   }
 
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @NlsUI.ListItem @NotNull String getFamilyName() {
     return "Use JBColor constant";
   }
 

@@ -54,7 +54,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
         && ConvertToJBBorderQuickFix.canSimplify(expression)) {
       return manager.createProblemDescriptor(expression, "Simplify", new ConvertToJBBorderQuickFix() {
         @Override
-        public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+        public @NlsUI.ListItem @NotNull String getFamilyName() {
           return "Simplify";
         }
       }, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);

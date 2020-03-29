@@ -27,10 +27,10 @@ class VcsConfirmationDialog extends OptionsDialog {
 
   VcsConfirmationDialog(@NotNull Project project,
                         @NotNull @NlsContexts.DialogTitle String title,
-                        @NotNull @Nls @NlsUI.Button String okText,
-                        @NotNull @Nls @NlsUI.Button String cancelText,
+                        @NotNull @NlsUI.Button String okText,
+                        @NotNull @NlsUI.Button String cancelText,
                         @NotNull VcsShowConfirmationOption option,
-                        @NotNull @Nls @NlsUI.Label String message,
+                        @NotNull @NlsUI.Label String message,
                         @NotNull @NlsUI.Checkbox String doNotShowMessage) {
     super(project);
     myOkText = okText;

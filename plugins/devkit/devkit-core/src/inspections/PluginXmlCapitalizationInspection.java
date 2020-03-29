@@ -226,12 +226,12 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
       }
 
       @Override
-      public @Nls @NlsUI.ListItem @NotNull String getName() {
+      public @NlsUI.ListItem @NotNull String getName() {
         return "Properly capitalize '" + escapedValue + '\'';
       }
 
       @Override
-      public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+      public @NlsUI.ListItem @NotNull String getFamilyName() {
         return "Properly capitalize";
       }
 

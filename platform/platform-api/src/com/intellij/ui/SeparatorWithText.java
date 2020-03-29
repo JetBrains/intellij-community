@@ -140,7 +140,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 
-  public void setCaption(@Nls @NlsUI.SeparatorText String captionAboveOf) {
+  public void setCaption(@NlsUI.SeparatorText String captionAboveOf) {
     myCaption = captionAboveOf;
   }
 

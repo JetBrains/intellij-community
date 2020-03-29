@@ -20,7 +20,7 @@ public class TwoStepConfirmationDialog extends MessageDialog {
   public TwoStepConfirmationDialog(@NlsContexts.DialogMessage String message,
                                    @NlsContexts.DialogTitle String title,
                                    String @NotNull [] options,
-                                   @Nls @NlsUI.Checkbox String checkboxText,
+                                   @NlsUI.Checkbox String checkboxText,
                                    boolean checked,
                                    final int defaultOptionIndexed,
                                    final int focusedOptionIndex,

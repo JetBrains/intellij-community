@@ -132,7 +132,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setCancelText(@Nls @Button String cancelText) {
+  public final Task setCancelText(@Button String cancelText) {
     myCancelText = cancelText;
     return this;
   }
@@ -152,7 +152,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setCancelTooltipText(@Nls @ButtonTooltip String cancelTooltipText) {
+  public final Task setCancelTooltipText(@ButtonTooltip String cancelTooltipText) {
     myCancelTooltipText = cancelTooltipText;
     return this;
   }

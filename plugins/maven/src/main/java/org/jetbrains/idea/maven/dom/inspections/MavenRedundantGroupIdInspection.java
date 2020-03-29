@@ -61,7 +61,7 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
 
             LocalQuickFix fix = new LocalQuickFix() {
               @Override
-              public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+              public @NlsUI.ListItem @NotNull String getFamilyName() {
                 return MavenDomBundle.message("inspection.redundant.groupId.fix");
               }
 

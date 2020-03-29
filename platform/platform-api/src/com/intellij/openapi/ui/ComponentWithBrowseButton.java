@@ -152,7 +152,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @Nls @NlsUI.Label String description,
+                                      @Nullable @NlsUI.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor) {
@@ -164,7 +164,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    */
   @Deprecated
   public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @Nls @NlsUI.Label String description,
+                                      @Nullable @NlsUI.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
@@ -223,7 +223,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
   public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
     public BrowseFolderActionListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @Nls @NlsUI.Label String description,
+                                      @Nullable @NlsUI.Label String description,
                                       @Nullable ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,

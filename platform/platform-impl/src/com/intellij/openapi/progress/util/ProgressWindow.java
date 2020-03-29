@@ -72,7 +72,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project,
-                        @Nullable @Nls @NlsUI.Button String cancelText) {
+                        @Nullable @NlsUI.Button String cancelText) {
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
@@ -80,7 +80,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
                         boolean shouldShowBackground,
                         @Nullable Project project,
                         @Nullable JComponent parentComponent,
-                        @Nullable @Nls @NlsUI.Button String cancelText) {
+                        @Nullable @NlsUI.Button String cancelText) {
     myProject = project;
     myShouldShowCancel = shouldShowCancel;
     myCancelText = cancelText;

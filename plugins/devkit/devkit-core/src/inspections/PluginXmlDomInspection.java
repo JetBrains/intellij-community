@@ -494,7 +494,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous"), null,
                                new LocalQuickFix() {
                                  @Override
-                                 public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+                                 public @NlsUI.ListItem @NotNull String getFamilyName() {
                                    return DevKitBundle.message("inspections.plugin.xml.ep.qualifiedName.superfluous.fix");
                                  }
 

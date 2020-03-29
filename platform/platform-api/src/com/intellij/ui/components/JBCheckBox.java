@@ -24,11 +24,11 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
     this(null);
   }
 
-  public JBCheckBox(@Nullable @Nls @NlsUI.Checkbox String text) {
+  public JBCheckBox(@Nullable @NlsUI.Checkbox String text) {
     this(text, false);
   }
 
-  public JBCheckBox(@Nullable @Nls @NlsUI.Checkbox String text, boolean selected) {
+  public JBCheckBox(@Nullable @NlsUI.Checkbox String text, boolean selected) {
     super(text, null, selected);
   }
 

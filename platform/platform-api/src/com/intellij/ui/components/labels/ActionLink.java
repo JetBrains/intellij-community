@@ -27,15 +27,15 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private Color myActiveColor;
   private Color myNormalColor;
 
-  public ActionLink(@Nls @NlsUI.LinkLabel String text, @NotNull AnAction action) {
+  public ActionLink(@NlsUI.LinkLabel String text, @NotNull AnAction action) {
     this(text, ICON, action);
   }
 
-  public ActionLink(@Nls @NlsUI.LinkLabel String text, Icon icon, @NotNull AnAction action) {
+  public ActionLink(@NlsUI.LinkLabel String text, Icon icon, @NotNull AnAction action) {
     this(text, icon, action, null, ActionPlaces.UNKNOWN);
   }
 
-  public ActionLink(@Nls @NlsUI.LinkLabel String text,
+  public ActionLink(@NlsUI.LinkLabel String text,
                     Icon icon,
                     @NotNull AnAction action,
                     @Nullable Runnable onDone,

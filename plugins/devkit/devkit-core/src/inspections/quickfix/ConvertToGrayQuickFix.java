@@ -24,12 +24,12 @@ public class ConvertToGrayQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getName() {
+  public @NlsUI.ListItem @NotNull String getName() {
     return "Convert to Gray._" + myNum;
   }
 
   @Override
-  public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+  public @NlsUI.ListItem @NotNull String getFamilyName() {
     return "Convert to Gray";
   }
 

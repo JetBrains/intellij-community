@@ -51,7 +51,7 @@ public class AutomaticGetterSetterRenamer extends AutomaticRenamer {
   }
 
   @Override
-  public @Nls @NlsUI.Button String getDialogDescription() {
+  public @NlsUI.Button String getDialogDescription() {
     return JavaRefactoringBundle.message("rename.accessors.with.the.following.names.to");
   }
 

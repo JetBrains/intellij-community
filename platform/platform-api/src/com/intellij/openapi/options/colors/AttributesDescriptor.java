@@ -34,7 +34,7 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
    * @param displayName the name of the attribute shown in the colors list.
    * @param key         the attributes key for which the colors are specified.
    */
-  public AttributesDescriptor(@NotNull @Nls @NlsUI.ListItem String displayName,
+  public AttributesDescriptor(@NotNull @NlsUI.ListItem String displayName,
                               @NotNull TextAttributesKey key) {
     super(displayName, key);
   }

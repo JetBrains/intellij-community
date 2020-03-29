@@ -577,7 +577,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   public LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[]{new LocalQuickFix() {
       @Override
-      public @Nls @NlsUI.ListItem @NotNull String getFamilyName() {
+      public @NlsUI.ListItem @NotNull String getFamilyName() {
         return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
       }
 

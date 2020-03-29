@@ -70,12 +70,6 @@ public class NlsUI {
   public @interface SeparatorText {
   }
 
-  @NlsContext(prefix = "table.item.tooltip")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface TableItemTooltip {
-  }
-
   /**
    * Buttons
    */

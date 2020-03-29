@@ -25,10 +25,10 @@ public interface TaskInfo {
   @Nls @NlsProgress.ProgressTitle
   String getTitle();
 
-  @Nls @NlsUI.Button
+  @NlsUI.Button
   String getCancelText();
 
-  @Nls @NlsUI.ButtonTooltip
+  @NlsUI.ButtonTooltip
   String getCancelTooltipText();
 
   boolean isCancellable();
