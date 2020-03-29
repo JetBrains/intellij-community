@@ -427,7 +427,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         parseBranch(builder);
       }
       checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.conditional"));
-      marker.done(RegExpElementTypes.PY_COND_REF);
+      marker.done(RegExpElementTypes.CONDITIONAL);
     }
     else if (type == RegExpTT.PROPERTY) {
       marker.drop();

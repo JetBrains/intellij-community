@@ -362,10 +362,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
-    if (!myLanguageHosts.supportsPythonConditionalRefs(condRef)) {
+  public void visitRegExpConditional(RegExpConditional conditional) {
+    if (!myLanguageHosts.supportsConditionals(conditional)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR,
-                             RegExpBundle.message("error.conditional.references.are.not.supported.in.this.regex.dialect")).create();
+                             RegExpBundle.message("error.conditionals.are.not.supported.in.this.regex.dialect")).create();
     }
   }
 
@@ -585,10 +585,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
 
     @Override
-    public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
-      super.visitRegExpPyCondRef(condRef);
+    public void visitRegExpConditional(RegExpConditional conditional) {
+      super.visitRegExpConditional(conditional);
       if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {
-        stopAndReportError(condRef, RegExpBundle.message("error.conditional.group.reference.not.allowed.inside.lookbehind"));
+        stopAndReportError(conditional, RegExpBundle.message("error.conditional.group.reference.not.allowed.inside.lookbehind"));
       }
     }
 
