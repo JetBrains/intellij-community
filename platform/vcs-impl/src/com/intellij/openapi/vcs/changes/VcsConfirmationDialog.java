@@ -26,7 +26,7 @@ class VcsConfirmationDialog extends OptionsDialog {
   private final String myDoNotShowMessage;
 
   VcsConfirmationDialog(@NotNull Project project,
-                        @NotNull @Nls @NlsContexts.DialogTitle String title,
+                        @NotNull @NlsContexts.DialogTitle String title,
                         @NotNull @Nls @NlsUI.Button String okText,
                         @NotNull @Nls @NlsUI.Button String cancelText,
                         @NotNull VcsShowConfirmationOption option,

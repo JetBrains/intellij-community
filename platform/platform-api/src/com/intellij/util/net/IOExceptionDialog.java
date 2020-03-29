@@ -62,7 +62,7 @@ public class IOExceptionDialog extends DialogWrapper {
    * Show the dialog
    * @return {@code true} if "Try Again" button pressed and {@code false} if "Cancel" button pressed
    */
-  public static boolean showErrorDialog(@Nls @NlsContexts.DialogTitle String title, @NlsUI.TextPane String text) {
+  public static boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsUI.TextPane String text) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(title + ": " + text);
     }

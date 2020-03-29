@@ -24,19 +24,19 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
   protected Icon myIcon;
   protected DialogWrapper.DoNotAskOption myDoNotAskOption;
 
-  private MessageDialogBuilder(@NotNull @Nls @NlsContexts.DialogTitle String title,
-                               @NotNull @Nls @NlsContexts.DialogMessage String message) {
+  private MessageDialogBuilder(@NotNull @NlsContexts.DialogTitle String title,
+                               @NotNull @NlsContexts.DialogMessage String message) {
     myTitle = title;
     myMessage = message;
   }
 
   @NotNull
-  public static YesNo yesNo(@NotNull @Nls @NlsContexts.DialogTitle String title, @NotNull @Nls @NlsContexts.DialogMessage String message) {
+  public static YesNo yesNo(@NotNull @NlsContexts.DialogTitle String title, @NotNull @NlsContexts.DialogMessage String message) {
     return new YesNo(title, message).icon(Messages.getQuestionIcon());
   }
 
-  public static YesNoCancel yesNoCancel(@NotNull @Nls @NlsContexts.DialogTitle String title,
-                                        @NotNull @Nls @NlsContexts.DialogMessage String message) {
+  public static YesNoCancel yesNoCancel(@NotNull @NlsContexts.DialogTitle String title,
+                                        @NotNull @NlsContexts.DialogMessage String message) {
     return new YesNoCancel(title, message).icon(Messages.getQuestionIcon());
   }
 

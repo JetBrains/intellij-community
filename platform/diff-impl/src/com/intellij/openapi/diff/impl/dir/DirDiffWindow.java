@@ -26,7 +26,7 @@ public interface DirDiffWindow {
   @NotNull
   Disposable getDisposable();
 
-  void setTitle(@NotNull @Nls @NlsContexts.DialogTitle String title);
+  void setTitle(@NotNull @NlsContexts.DialogTitle String title);
 
 
   class Dialog implements DirDiffWindow {
@@ -43,7 +43,7 @@ public interface DirDiffWindow {
     }
 
     @Override
-    public void setTitle(@NotNull @Nls @NlsContexts.DialogTitle String title) {
+    public void setTitle(@NotNull @NlsContexts.DialogTitle String title) {
       myDialog.setTitle(title);
     }
   }

@@ -45,7 +45,7 @@ public class BrowseFilesListener implements ActionListener {
   protected final FileChooserDescriptor myChooserDescriptor;
 
   public BrowseFilesListener(JTextField textField,
-                             @Nls @NlsContexts.DialogTitle String title,
+                             @NlsContexts.DialogTitle String title,
                              @Nls @NlsUI.Label String description,
                              FileChooserDescriptor chooserDescriptor) {
     myTextField = textField;

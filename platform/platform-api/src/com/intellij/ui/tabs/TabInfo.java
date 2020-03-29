@@ -376,7 +376,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo setTooltipText(@Nls @NlsContexts.ContentTooltip String text) {
+  public TabInfo setTooltipText(@NlsContexts.ContentTooltip String text) {
     String old = myTooltipText;
     if (!Comparing.equal(old, text)) {
       myTooltipText = text;

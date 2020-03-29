@@ -33,7 +33,7 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @Nls @DialogTitle String title,
+  public void addBrowseFolderListener(@Nullable @DialogTitle String title,
                                       @Nullable @Nls @Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
@@ -43,7 +43,7 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @Nls @DialogTitle String title,
+  public void addBrowseFolderListener(@Nullable @DialogTitle String title,
                                       @Nullable @Nls @Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,

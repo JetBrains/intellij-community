@@ -31,7 +31,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
 
   protected OptionsMessageDialog(Project project,
                                  @Nls @NlsUI.Label String message,
-                                 @Nls @NlsContexts.DialogTitle String title,
+                                 @NlsContexts.DialogTitle String title,
                                  final Icon icon) {
     super(project);
     myMessage = message;

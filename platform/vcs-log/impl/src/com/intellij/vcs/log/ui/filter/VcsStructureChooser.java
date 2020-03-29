@@ -67,7 +67,7 @@ public class VcsStructureChooser extends DialogWrapper {
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
-                             @Nls @NlsContexts.DialogTitle @NotNull String title,
+                             @NlsContexts.DialogTitle @NotNull String title,
                              @NotNull Collection<VirtualFile> initialSelection,
                              @NotNull List<VirtualFile> roots) {
     super(project, true);

@@ -95,12 +95,12 @@ public class DialogBuilder implements Disposable {
     return this;
   }
 
-  public void setTitle(@Nls @NlsContexts.DialogTitle String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
   @NotNull
-  public DialogBuilder title(@NotNull @Nls @NlsContexts.DialogTitle String title) {
+  public DialogBuilder title(@NotNull @NlsContexts.DialogTitle String title) {
     myTitle = title;
     return this;
   }

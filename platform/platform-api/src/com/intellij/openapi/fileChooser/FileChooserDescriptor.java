@@ -111,11 +111,11 @@ public class FileChooserDescriptor implements Cloneable {
     return myTitle;
   }
 
-  public void setTitle(@Nls @NlsContexts.DialogTitle String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     withTitle(title);
   }
 
-  public FileChooserDescriptor withTitle(@Nls @NlsContexts.DialogTitle String title) {
+  public FileChooserDescriptor withTitle(@NlsContexts.DialogTitle String title) {
     myTitle = title;
     return this;
   }

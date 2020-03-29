@@ -52,7 +52,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
          browseActionListener, parent);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
                                       @Nullable @Nls @NlsUI.Label String description,
                                       @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);

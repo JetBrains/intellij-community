@@ -43,7 +43,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     myWizardContext.setWizard(this);
   }
 
-  public AbstractProjectWizard(@Nls @NlsContexts.DialogTitle String title, Project project, Component dialogParent) {
+  public AbstractProjectWizard(@NlsContexts.DialogTitle String title, Project project, Component dialogParent) {
     super(title, dialogParent);
     myWizardContext = initContext(project, null, getDisposable());
     myWizardContext.setWizard(this);

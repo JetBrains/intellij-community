@@ -133,7 +133,7 @@ public interface Configurable extends UnnamedConfigurable {
    *
    * @return the visible name of the configurable component
    */
-  @Nls @NlsContexts.Configurable
+  @NlsContexts.Configurable
   @Contract(pure = true)
   String getDisplayName();
 

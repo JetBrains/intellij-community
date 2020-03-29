@@ -27,7 +27,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   protected  T myTextComponent;
   private Project myProject;
 
-  public BrowseFolderRunnable(@Nullable @Nls @NlsContexts.DialogTitle String title,
+  public BrowseFolderRunnable(@Nullable @NlsContexts.DialogTitle String title,
                               @Nullable @Nls @NlsUI.Label String description,
                               @Nullable Project project,
                               FileChooserDescriptor fileChooserDescriptor,

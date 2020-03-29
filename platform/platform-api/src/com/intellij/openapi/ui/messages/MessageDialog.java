@@ -33,8 +33,8 @@ public class MessageDialog extends DialogWrapper {
   private MessagesBorderLayout myLayout;
 
   public MessageDialog(@Nullable Project project,
-                       @Nls @NlsContexts.DialogMessage String message,
-                       @Nls @NlsContexts.DialogTitle String title,
+                       @NlsContexts.DialogMessage String message,
+                       @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        @Nullable Icon icon,
@@ -45,8 +45,8 @@ public class MessageDialog extends DialogWrapper {
 
   public MessageDialog(@Nullable Project project,
                        @Nullable Component parentComponent,
-                       @Nls @NlsContexts.DialogMessage String message,
-                       @Nls @NlsContexts.DialogTitle String title,
+                       @NlsContexts.DialogMessage String message,
+                       @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        int focusedOptionIndex,
@@ -57,8 +57,8 @@ public class MessageDialog extends DialogWrapper {
     _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
   }
 
-  public MessageDialog(@Nls @NlsContexts.DialogMessage String message,
-                       @Nls @NlsContexts.DialogTitle String title,
+  public MessageDialog(@NlsContexts.DialogMessage String message,
+                       @NlsContexts.DialogTitle String title,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        @Nullable Icon icon) {
@@ -77,8 +77,8 @@ public class MessageDialog extends DialogWrapper {
     super(project, canBeParent);
   }
 
-  protected void _init(@Nls @NlsContexts.DialogTitle String title,
-                       @Nls @NlsContexts.DialogMessage String message,
+  protected void _init(@NlsContexts.DialogTitle String title,
+                       @NlsContexts.DialogMessage String message,
                        String @NotNull [] options,
                        int defaultOptionIndex,
                        int focusedOptionIndex,

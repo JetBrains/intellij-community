@@ -51,7 +51,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final Map<String, VcsDescriptor> myVcses;
 
-  public VcsMappingConfigurationDialog(@NotNull Project project, @Nls @NlsContexts.DialogTitle String title) {
+  public VcsMappingConfigurationDialog(@NotNull Project project, @NlsContexts.DialogTitle String title) {
     super(project, false);
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);

@@ -61,20 +61,20 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line);
 
-  public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls @NlsContexts.DialogTitle String title);
+  public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @NlsContexts.DialogTitle String title);
 
-  public abstract void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls @NlsContexts.DialogTitle String title);
+  public abstract void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @NlsContexts.DialogTitle String title);
 
   public abstract void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
                                                    @NotNull RepositoryLocation location,
-                                                   @Nullable @Nls @NlsContexts.DialogTitle String title,
+                                                   @Nullable @NlsContexts.DialogTitle String title,
                                                    @Nullable Component parent);
 
   public abstract void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
                                                @NotNull RepositoryLocation location,
                                                @NotNull ChangeBrowserSettings settings,
                                                int maxCount,
-                                               @Nullable @Nls @NlsContexts.DialogTitle String title);
+                                               @Nullable @NlsContexts.DialogTitle String title);
 
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.
@@ -123,7 +123,7 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                               @Nls @NlsContexts.DialogTitle String title,
+                                                               @NlsContexts.DialogTitle String title,
                                                                @Nullable String prompt,
                                                                @Nullable String singleFileTitle,
                                                                @Nullable String singleFilePromptTemplate,
@@ -131,7 +131,7 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                @Nls @NlsContexts.DialogTitle String title,
+                                                                @NlsContexts.DialogTitle String title,
                                                                 @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,
@@ -139,7 +139,7 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                @Nls @NlsContexts.DialogTitle String title,
+                                                                @NlsContexts.DialogTitle String title,
                                                                 @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,

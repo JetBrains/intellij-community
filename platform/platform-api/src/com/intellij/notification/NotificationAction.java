@@ -19,7 +19,7 @@ import static com.intellij.util.nls.NlsContexts.NotificationContent;
  */
 public abstract class NotificationAction extends DumbAwareAction {
 
-  public NotificationAction(@Nullable @Nls @NotificationContent String text) {
+  public NotificationAction(@Nullable @NotificationContent String text) {
     super(text);
   }
 
@@ -35,7 +35,7 @@ public abstract class NotificationAction extends DumbAwareAction {
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification);
 
   @NotNull
-  public static NotificationAction create(@NotNull @Nls @NotificationContent String text,
+  public static NotificationAction create(@NotNull @NotificationContent String text,
                                           @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
     return create(() -> text, performAction);
   }
@@ -57,13 +57,13 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   @NotNull
-  public static NotificationAction createSimple(@NotNull @Nls @NotificationContent String text,
+  public static NotificationAction createSimple(@NotNull @NotificationContent String text,
                                                 @NotNull Runnable performAction) {
     return create(() -> text, (event, notification) -> performAction.run());
   }
 
   @NotNull
-  public static NotificationAction createSimpleExpiring(@NotNull @Nls @NotificationContent String text,
+  public static NotificationAction createSimpleExpiring(@NotNull @NotificationContent String text,
                                                         @NotNull Runnable performAction) {
     return create(text, (event, notification) -> {
       performAction.run();

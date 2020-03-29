@@ -68,10 +68,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setShouldDisposeContent(boolean value);
 
-  @Nls @NlsContexts.ContentTooltip
+  @NlsContexts.ContentTooltip
   String getDescription();
 
-  void setDescription(@Nls @NlsContexts.ContentTooltip String description);
+  void setDescription(@NlsContexts.ContentTooltip String description);
 
   void addPropertyChangeListener(PropertyChangeListener l);
 

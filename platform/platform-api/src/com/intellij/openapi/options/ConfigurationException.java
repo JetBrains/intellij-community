@@ -29,7 +29,7 @@ public class ConfigurationException extends Exception {
   /**
    * @param message the detail message describing the problem
    */
-  public ConfigurationException(@Nls @NlsContexts.ConfigurationErrorMessage String message) {
+  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message) {
     super(message);
   }
 
@@ -37,15 +37,15 @@ public class ConfigurationException extends Exception {
    * @param message the detailed message describing the problem
    * @param title   the title describing the problem in short
    */
-  public ConfigurationException(@Nls @NlsContexts.ConfigurationErrorMessage String message,
-                                @Nls @NlsContexts.ConfigurationErrorTitle String title) {
+  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
+                                @NlsContexts.ConfigurationErrorTitle String title) {
     super(message);
     myTitle = title;
   }
 
-  public ConfigurationException(@Nls @NlsContexts.ConfigurationErrorMessage String message,
+  public ConfigurationException(@NlsContexts.ConfigurationErrorMessage String message,
                                 Throwable cause,
-                                @Nls @NlsContexts.ConfigurationErrorTitle String title) {
+                                @NlsContexts.ConfigurationErrorTitle String title) {
     super(message, cause);
     myTitle = title;
   }

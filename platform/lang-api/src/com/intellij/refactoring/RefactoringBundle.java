@@ -60,7 +60,7 @@ public class RefactoringBundle extends DynamicBundle {
     return message("visibility.escalate");
   }
 
-  public static String getCannotRefactorMessage(@Nls @NlsContexts.DialogMessage @Nullable final String message) {
+  public static String getCannotRefactorMessage(@NlsContexts.DialogMessage @Nullable final String message) {
     return message("cannot.perform.refactoring") + (message == null ? "" : "\n" + message);
   }
 }

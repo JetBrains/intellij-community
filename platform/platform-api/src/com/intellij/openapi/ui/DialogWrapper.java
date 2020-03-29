@@ -1607,7 +1607,7 @@ public abstract class DialogWrapper {
    * @param title title
    * @see JDialog#setTitle
    */
-  public void setTitle(@Nls @NlsContexts.DialogTitle String title) {
+  public void setTitle(@NlsContexts.DialogTitle String title) {
     myPeer.setTitle(title);
   }
 

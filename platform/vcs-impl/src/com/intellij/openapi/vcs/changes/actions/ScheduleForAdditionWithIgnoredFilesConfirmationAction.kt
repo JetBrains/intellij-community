@@ -135,7 +135,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
                         singlePathDialogTitle: (FilePath) -> String,
                         singlePathDialogMessage: (FilePath) -> String,
-                        multiplePathsDialogTitle: @Nls @NlsContexts.DialogTitle String): List<FilePath> {
+                        multiplePathsDialogTitle: @NlsContexts.DialogTitle String): List<FilePath> {
   if (paths.isEmpty()) return paths
 
   if (paths.size == 1) {

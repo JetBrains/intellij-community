@@ -1694,7 +1694,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   @Override
-  public void setCaption(@NotNull @Nls @NlsContexts.PopupTitle String title) {
+  public void setCaption(@NotNull @NlsContexts.PopupTitle String title) {
     if (myCaption instanceof TitlePanel) {
       ((TitlePanel)myCaption).setText(title);
     }

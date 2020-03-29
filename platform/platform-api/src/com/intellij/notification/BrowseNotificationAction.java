@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class BrowseNotificationAction extends NotificationAction {
   private final String myUrl;
 
-  public BrowseNotificationAction(@NotNull @Nls @NotificationContent String text, @NotNull String url) {
+  public BrowseNotificationAction(@NotNull @NotificationContent String text, @NotNull String url) {
     super(text);
     myUrl = url;
   }

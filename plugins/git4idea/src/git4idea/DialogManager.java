@@ -28,8 +28,8 @@ public class DialogManager {
     dialogManager().showDialog(dialog);
   }
 
-  public static int showMessage(@NotNull @Nls @DialogMessage final String message,
-                                @NotNull @Nls @DialogTitle final String title,
+  public static int showMessage(@NotNull @DialogMessage final String message,
+                                @NotNull @DialogTitle final String title,
                                 final String @NotNull @Nls @Button [] options,
                                 final int defaultButtonIndex,
                                 final int focusedButtonIndex,
@@ -39,8 +39,8 @@ public class DialogManager {
   }
 
   public static int showOkCancelDialog(@NotNull Project project,
-                                       @NotNull @Nls @DialogMessage String message,
-                                       @NotNull @Nls @DialogTitle String title,
+                                       @NotNull @DialogMessage String message,
+                                       @NotNull @DialogTitle String title,
                                        @NotNull @Nls @Button String okButtonText,
                                        @NotNull @Nls @Button String cancelButtonText,
                                        @Nullable Icon icon) {
@@ -48,8 +48,8 @@ public class DialogManager {
   }
 
   public static int showYesNoCancelDialog(@NotNull Project project,
-                                          @NotNull @Nls @DialogMessage String message,
-                                          @NotNull @Nls @DialogTitle String title,
+                                          @NotNull @DialogMessage String message,
+                                          @NotNull @DialogTitle String title,
                                           @NotNull @Nls @Button String yesButtonText,
                                           @NotNull @Nls @Button String noButtonText,
                                           @NotNull @Nls @Button String cancelButtonText,
@@ -63,8 +63,8 @@ public class DialogManager {
   }
 
   protected int showMessageDialog(@NotNull Project project,
-                                  @NotNull @Nls @DialogMessage String message,
-                                  @NotNull @Nls @DialogTitle String title,
+                                  @NotNull @DialogMessage String message,
+                                  @NotNull @DialogTitle String title,
                                   String @NotNull @Nls @Button [] options,
                                   int defaultButtonIndex,
                                   @Nullable Icon icon) {
@@ -72,8 +72,8 @@ public class DialogManager {
   }
 
   protected int showMessageDialog(@NotNull Project project,
-                                  @NotNull @Nls @DialogMessage String message,
-                                  @NotNull @Nls @DialogTitle String title,
+                                  @NotNull @DialogMessage String message,
+                                  @NotNull @DialogTitle String title,
                                   String @NotNull @Nls @Button [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
@@ -81,8 +81,8 @@ public class DialogManager {
     return Messages.showDialog(project, message, title, null, options, defaultButtonIndex, focusedButtonIndex, icon);
   }
 
-  protected int showMessageDialog(@NotNull @Nls @DialogMessage String message,
-                                  @NotNull @Nls @DialogTitle String title,
+  protected int showMessageDialog(@NotNull @DialogMessage String message,
+                                  @NotNull @DialogTitle String title,
                                   String @NotNull @Nls @Button [] options,
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,

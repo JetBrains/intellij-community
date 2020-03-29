@@ -11,8 +11,8 @@ import com.intellij.util.nls.NlsContexts.DialogTitle
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-fun showYesNoDialog(title: @Nls @DialogTitle String,
-                    message: @Nls @DialogMessage String,
+fun showYesNoDialog(title: @DialogTitle String,
+                    message: @DialogMessage String,
                     project: Project?,
                     yesText: @Nls @Button String = Messages.getYesButton(),
                     noText: @Nls @Button String = Messages.getNoButton(),
@@ -20,8 +20,8 @@ fun showYesNoDialog(title: @Nls @DialogTitle String,
   return Messages.showYesNoDialog(project, message, title, yesText, noText, icon) == Messages.YES
 }
 
-fun showOkNoDialog(title: @Nls @DialogTitle String,
-                   message: @Nls @DialogMessage String,
+fun showOkNoDialog(title: @DialogTitle String,
+                   message: @DialogMessage String,
                    project: Project?,
                    okText: @Nls @Button String = Messages.getOkButton(),
                    noText: @Nls @Button String = Messages.getNoButton(),
@@ -30,8 +30,8 @@ fun showOkNoDialog(title: @Nls @DialogTitle String,
 }
 
 @Messages.OkCancelResult
-fun showOkCancelDialog(title: @Nls @DialogTitle String,
-                       message: @Nls @DialogMessage String,
+fun showOkCancelDialog(title: @DialogTitle String,
+                       message: @DialogMessage String,
                        okText: @Nls @Button String,
                        cancelText: @Nls @Button String = Messages.getCancelButton(),
                        icon: Icon? = null,

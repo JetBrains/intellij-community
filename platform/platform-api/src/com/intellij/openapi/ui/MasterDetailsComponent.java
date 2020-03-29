@@ -654,7 +654,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
-  @Nls @NlsContexts.StatusText
+  @NlsContexts.StatusText
   @Nullable
   protected String getEmptySelectionString() {
     return null;

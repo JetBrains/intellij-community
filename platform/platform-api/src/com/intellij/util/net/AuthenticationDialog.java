@@ -29,7 +29,7 @@ public class AuthenticationDialog extends DialogWrapper {
   private final AuthenticationPanel panel;
 
   public AuthenticationDialog(@NotNull Component component,
-                              @Nls @NlsContexts.DialogTitle String title,
+                              @NlsContexts.DialogTitle String title,
                               String description,
                               final String login,
                               final String password,

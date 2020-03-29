@@ -266,7 +266,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     return myEmptyText;
   }
 
-  public void setEmptyText(@NotNull @Nls @NlsContexts.StatusText String text) {
+  public void setEmptyText(@NotNull @NlsContexts.StatusText String text) {
     myEmptyText.setText(text);
   }
 

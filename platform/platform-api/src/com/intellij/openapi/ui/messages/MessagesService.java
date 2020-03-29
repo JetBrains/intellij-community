@@ -28,8 +28,8 @@ import static com.intellij.util.nls.NlsContexts.*;
 public interface MessagesService {
   int showMessageDialog(@Nullable Project project,
                         @Nullable Component parentComponent,
-                        @Nls @DialogMessage String message,
-                        @Nls @DialogTitle String title,
+                        @DialogMessage String message,
+                        @DialogTitle String title,
                         String @NotNull [] options,
                         int defaultOptionIndex,
                         int focusedOptionIndex,
@@ -38,16 +38,16 @@ public interface MessagesService {
                         boolean alwaysUseIdeaUI);
 
   int showMoreInfoMessageDialog(Project project,
-                                @Nls @DialogMessage String message,
-                                @Nls @DialogTitle String title,
+                                @DialogMessage String message,
+                                @DialogTitle String title,
                                 @Nls @NlsUI.TextArea String moreInfo,
                                 String[] options,
                                 int defaultOptionIndex,
                                 int focusedOptionIndex,
                                 Icon icon);
 
-  int showTwoStepConfirmationDialog(@Nls @DialogMessage String message,
-                                    @Nls @DialogTitle String title,
+  int showTwoStepConfirmationDialog(@DialogMessage String message,
+                                    @DialogTitle String title,
                                     String[] options,
                                     @Nls @NlsUI.Checkbox String checkboxText,
                                     boolean checked,
@@ -57,60 +57,60 @@ public interface MessagesService {
                                     PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc);
 
   String showPasswordDialog(Project project,
-                            @Nls @DialogMessage String message,
-                            @Nls @DialogTitle String title,
+                            @DialogMessage String message,
+                            @DialogTitle String title,
                             Icon icon,
                             InputValidator validator);
 
   char @Nullable [] showPasswordDialog(@NotNull Component parentComponent,
-                                       @Nls @DialogMessage String message,
-                                       @Nls @DialogTitle String title,
+                                       @DialogMessage String message,
+                                       @DialogTitle String title,
                                        Icon icon,
                                        @Nullable InputValidator validator);
 
   String showInputDialog(@Nullable Project project,
                          @Nullable Component parentComponent,
-                         @Nls @DialogMessage String message,
-                         @Nls @DialogTitle String title,
+                         @DialogMessage String message,
+                         @DialogTitle String title,
                          @Nullable Icon icon,
-                         @Nullable @Nls @InputDialogInitialValue String initialValue,
+                         @Nullable @InputDialogInitialValue String initialValue,
                          @Nullable InputValidator validator,
                          @Nullable TextRange selection,
-                         @Nullable @Nls @DialogComment String comment);
+                         @Nullable @DialogComment String comment);
 
   String showMultilineInputDialog(Project project,
-                                  @Nls @DialogMessage String message,
-                                  @Nls @DialogTitle String title,
-                                  @Nls @InputDialogInitialValue String initialValue,
+                                  @DialogMessage String message,
+                                  @DialogTitle String title,
+                                  @InputDialogInitialValue String initialValue,
                                   Icon icon,
                                   @Nullable InputValidator validator);
 
-  Pair<String, Boolean> showInputDialogWithCheckBox(@Nls @DialogMessage String message,
-                                                    @Nls @DialogTitle String title,
+  Pair<String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
+                                                    @DialogTitle String title,
                                                     @Nls @NlsUI.Checkbox String checkboxText,
                                                     boolean checked,
                                                     boolean checkboxEnabled,
                                                     Icon icon,
-                                                    @Nls @InputDialogInitialValue String initialValue,
+                                                    @InputDialogInitialValue String initialValue,
                                                     InputValidator validator);
 
-  String showEditableChooseDialog(@Nls @DialogMessage String message,
-                                  @Nls @DialogTitle String title,
+  String showEditableChooseDialog(@DialogMessage String message,
+                                  @DialogTitle String title,
                                   Icon icon,
                                   String[] values,
-                                  @Nls @InputDialogInitialValue String initialValue,
+                                  @InputDialogInitialValue String initialValue,
                                   InputValidator validator);
 
   int showChooseDialog(@Nullable Project project,
                        @Nullable Component parentComponent,
-                       @Nls @DialogMessage String message,
-                       @Nls @DialogTitle String title,
+                       @DialogMessage String message,
+                       @DialogTitle String title,
                        String[] values,
-                       @Nls @InputDialogInitialValue String initialValue,
+                       @InputDialogInitialValue String initialValue,
                        @Nullable Icon icon);
 
   void showTextAreaDialog(JTextField textField,
-                          @Nls @DialogTitle String title,
+                          @DialogTitle String title,
                           String dimensionServiceKey,
                           Function<? super String, ? extends List<String>> parser,
                           Function<? super List<String>, String> lineJoiner);

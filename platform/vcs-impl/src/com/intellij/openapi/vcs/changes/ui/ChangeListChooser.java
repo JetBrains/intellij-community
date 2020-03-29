@@ -22,7 +22,7 @@ public class ChangeListChooser extends DialogWrapper {
   public ChangeListChooser(@NotNull Project project,
                            @NotNull Collection<? extends ChangeList> changelists,
                            @Nullable ChangeList defaultSelection,
-                           @Nls @NlsContexts.DialogTitle String title,
+                           @NlsContexts.DialogTitle String title,
                            @Nullable final String suggestedName) {
     super(project, false);
     myProject = project;

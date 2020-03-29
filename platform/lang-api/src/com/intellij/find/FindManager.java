@@ -61,7 +61,7 @@ public abstract class FindManager {
    * interface.
    */
   @PromptResultValue
-  public abstract int showPromptDialog(@NotNull FindModel model, @Nls @NlsContexts.DialogTitle String title);
+  public abstract int showPromptDialog(@NotNull FindModel model, @NlsContexts.DialogTitle String title);
 
   /**
    * Returns the settings of the last performed Find in File operation, or the
@@ -121,7 +121,7 @@ public abstract class FindManager {
    */
   @PromptResultValue
   public abstract int showMalformedReplacementPrompt(@NotNull FindModel model,
-                                                     @Nls @NlsContexts.DialogTitle String title,
+                                                     @NlsContexts.DialogTitle String title,
                                                      MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {

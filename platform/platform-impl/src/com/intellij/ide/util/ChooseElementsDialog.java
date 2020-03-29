@@ -25,21 +25,21 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
   private final String myDescription;
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, @Nls @NlsContexts.DialogTitle String title, @Nls @NlsUI.Label String description) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @Nls @NlsUI.Label String description) {
     this(project, items, title, description, false);
   }
 
-  public ChooseElementsDialog(Project project, List<? extends T> items, @Nls @NlsContexts.DialogTitle String title, @Nls @NlsUI.Label String description, boolean sort) {
+  public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @Nls @NlsUI.Label String description, boolean sort) {
     super(project, true);
     myDescription = description;
     initializeDialog(items, title, sort);
   }
 
-  public ChooseElementsDialog(Component parent, List<? extends T> items, @Nls @NlsContexts.DialogTitle String title) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title) {
     this(parent, items, title, null, false);
   }
 
-  public ChooseElementsDialog(Component parent, List<? extends T> items, @Nls @NlsContexts.DialogTitle String title, @Nullable @Nls @NlsUI.Label String description, final boolean sort) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, @NlsContexts.DialogTitle String title, @Nullable @Nls @NlsUI.Label String description, final boolean sort) {
     super(parent, true);
     myDescription = description;
     initializeDialog(items, title, sort);
@@ -54,7 +54,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return false;
   }
 
-  private void initializeDialog(final List<? extends T> items, @Nls @NlsContexts.DialogTitle String title, boolean sort) {
+  private void initializeDialog(final List<? extends T> items, @NlsContexts.DialogTitle String title, boolean sort) {
     setTitle(title);
     myChooser = new ElementsChooser<T>(canElementsBeMarked()) {
       @Override

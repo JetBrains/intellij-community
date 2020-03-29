@@ -69,11 +69,11 @@ public class HintUtil {
     return notNull(colorsScheme.getColor(RECENT_LOCATIONS_SELECTION_KEY), RECENT_LOCATIONS_SELECTION_KEY.getDefaultColor());
   }
 
-  public static JComponent createInformationLabel(@NotNull @Nls @HintText String text) {
+  public static JComponent createInformationLabel(@NotNull @HintText String text) {
     return createInformationLabel(text, null, null, null);
   }
 
-  public static JComponent createInformationLabel(@NotNull @Nls @HintText String text,
+  public static JComponent createInformationLabel(@NotNull @HintText String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
                                                   @Nullable MouseListener mouseListener,
                                                   @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
@@ -107,12 +107,12 @@ public class HintUtil {
     return createInformationLabel(text, null);
   }
 
-  public static JComponent createQuestionLabel(@Nls @HintText String text) {
+  public static JComponent createQuestionLabel(@HintText String text) {
     final Icon icon = AllIcons.General.ContextHelp;
     return createQuestionLabel(text, icon);
   }
 
-  public static JComponent createQuestionLabel(@Nls @HintText String text, Icon icon) {
+  public static JComponent createQuestionLabel(@HintText String text, Icon icon) {
     Color bg = getQuestionColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
       .setTextFg(JBColor.foreground())
@@ -155,7 +155,7 @@ public class HintUtil {
     return new HintLabel(component);
   }
 
-  public static JComponent createErrorLabel(@NotNull @Nls @HintText String text,
+  public static JComponent createErrorLabel(@NotNull @HintText String text,
                                             @Nullable HyperlinkListener hyperlinkListener,
                                             @Nullable MouseListener mouseListener,
                                             @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
@@ -171,12 +171,12 @@ public class HintUtil {
   }
 
   @NotNull
-  public static JComponent createErrorLabel(@NotNull @Nls @HintText String text) {
+  public static JComponent createErrorLabel(@NotNull @HintText String text) {
     return createErrorLabel(text, null, null, null);
   }
 
   @NotNull
-  private static HintLabel createLabel(@Nls @HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
+  private static HintLabel createLabel(@HintText String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(icon);
@@ -211,7 +211,7 @@ public class HintUtil {
   }
 
   @NotNull
-  public static String prepareHintText(@NotNull @Nls @HintText String text, @NotNull HintHint hintHint) {
+  public static String prepareHintText(@NotNull @HintText String text, @NotNull HintHint hintHint) {
     return prepareHintText(new Html(text), hintHint);
   }
 

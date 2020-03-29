@@ -17,8 +17,8 @@ public class TwoStepConfirmationDialog extends MessageDialog {
   private final boolean myChecked;
   private final PairFunction<? super Integer, ? super JCheckBox, Integer> myExitFunc;
 
-  public TwoStepConfirmationDialog(@Nls @NlsContexts.DialogMessage String message,
-                                   @Nls @NlsContexts.DialogTitle String title,
+  public TwoStepConfirmationDialog(@NlsContexts.DialogMessage String message,
+                                   @NlsContexts.DialogTitle String title,
                                    String @NotNull [] options,
                                    @Nls @NlsUI.Checkbox String checkboxText,
                                    boolean checked,

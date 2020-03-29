@@ -33,7 +33,7 @@ public class AuthDialog extends DialogWrapper {
    * In other cases, {@code rememberByDefault} is used.
    */
   public AuthDialog(@NotNull Project project,
-                    @NotNull @Nls @NlsContexts.DialogTitle String title,
+                    @NotNull @NlsContexts.DialogTitle String title,
                     @Nullable String description,
                     @Nullable String login,
                     @Nullable String password,

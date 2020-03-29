@@ -44,7 +44,7 @@ public abstract class AbstractFieldPanel extends JPanel {
 
   public AbstractFieldPanel(JComponent component,
                             String labelText,
-                            @Nls @NlsContexts.DialogTitle String viewerDialogTitle,
+                            @NlsContexts.DialogTitle String viewerDialogTitle,
                             ActionListener browseButtonActionListener,
                             Runnable changeListener) {
     myComponent = component;

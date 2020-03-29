@@ -84,19 +84,19 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public ListPopup createConfirmation(@Nls @PopupTitle String title, final Runnable onYes, int defaultOptionIndex) {
+  public ListPopup createConfirmation(@PopupTitle String title, final Runnable onYes, int defaultOptionIndex) {
     return createConfirmation(title, CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(), onYes, defaultOptionIndex);
   }
 
   @NotNull
   @Override
-  public ListPopup createConfirmation(@Nls @PopupTitle String title, final String yesText, String noText, final Runnable onYes, int defaultOptionIndex) {
+  public ListPopup createConfirmation(@PopupTitle String title, final String yesText, String noText, final Runnable onYes, int defaultOptionIndex) {
     return createConfirmation(title, yesText, noText, onYes, EmptyRunnable.getInstance(), defaultOptionIndex);
   }
 
   @NotNull
   @Override
-  public JBPopup createMessage(@Nls @PopupTitle String text) {
+  public JBPopup createMessage(@PopupTitle String text) {
     return createListPopup(new BaseListPopupStep<>(null, text));
   }
 
@@ -134,7 +134,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public ListPopup createConfirmation(@Nls @PopupTitle String title,
+  public ListPopup createConfirmation(@PopupTitle String title,
                                       final String yesText,
                                       String noText,
                                       final Runnable onYes,
@@ -169,7 +169,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Component myComponent;
     private final String myActionPlace;
 
-    public ActionGroupPopup(@Nls @PopupTitle String title,
+    public ActionGroupPopup(@PopupTitle String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
                             boolean showNumbers,
@@ -184,7 +184,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
            maxRowCount, preselectActionCondition, actionPlace, null, false);
     }
 
-    public ActionGroupPopup(@Nls @PopupTitle String title,
+    public ActionGroupPopup(@PopupTitle String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
                             boolean showNumbers,
@@ -200,7 +200,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
            maxRowCount, preselectActionCondition, actionPlace, null, autoSelection);
     }
 
-    public ActionGroupPopup(@Nls @PopupTitle String title,
+    public ActionGroupPopup(@PopupTitle String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
                             boolean showNumbers,
@@ -260,7 +260,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return presentation;
     }
 
-    private static ListPopupStep<ActionItem> createStep(@Nls @PopupTitle String title,
+    private static ListPopupStep<ActionItem> createStep(@PopupTitle String title,
                                                         @NotNull ActionGroup actionGroup,
                                                         @NotNull DataContext dataContext,
                                                         boolean showNumbers,
@@ -360,7 +360,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   @NotNull
-  public ListPopup createActionGroupPopup(@Nls @PopupTitle String title,
+  public ListPopup createActionGroupPopup(@PopupTitle String title,
                                           @NotNull ActionGroup actionGroup,
                                           @NotNull DataContext dataContext,
                                           ActionSelectionAid aid,
@@ -384,7 +384,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public ListPopup createActionGroupPopup(@Nls @PopupTitle String title,
+  public ListPopup createActionGroupPopup(@PopupTitle String title,
                                           @NotNull final ActionGroup actionGroup,
                                           @NotNull DataContext dataContext,
                                           boolean showNumbers,
@@ -404,7 +404,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                      @Nullable String actionPlace,
                                                      boolean showNumbers,
                                                      boolean showDisabledActions,
-                                                     @Nls @PopupTitle String title,
+                                                     @PopupTitle String title,
                                                      Component component,
                                                      boolean honorActionMnemonics,
                                                      int defaultOptionIndex,
@@ -610,7 +610,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, @Nls @PopupTitle String title) {
+  public BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, @PopupTitle String title) {
     final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(myStorage, content);
     final Color bg = UIManager.getColor("Panel.background");
     final Color borderOriginal = Color.darkGray;

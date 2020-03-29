@@ -49,7 +49,7 @@ public abstract class ElementCreator implements WriteActionAware {
   private final Project myProject;
   private final String myErrorTitle;
 
-  protected ElementCreator(Project project, @Nls @NlsContexts.DialogTitle String errorTitle) {
+  protected ElementCreator(Project project, @NlsContexts.DialogTitle String errorTitle) {
     myProject = project;
     myErrorTitle = errorTitle;
   }

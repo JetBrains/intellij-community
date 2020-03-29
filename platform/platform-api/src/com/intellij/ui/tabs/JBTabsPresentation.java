@@ -84,5 +84,5 @@ public interface JBTabsPresentation {
 
   void setFirstTabOffset(int offset);
 
-  JBTabsPresentation setEmptyText(@Nullable @Nls @NlsContexts.StatusText String text);
+  JBTabsPresentation setEmptyText(@Nullable @NlsContexts.StatusText String text);
 }

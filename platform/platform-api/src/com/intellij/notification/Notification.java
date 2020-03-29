@@ -89,9 +89,9 @@ public class Notification {
    */
   public Notification(@NotNull @NonNls String groupId,
                       @Nullable Icon icon,
-                      @Nullable @Nls @NotificationTitle String title,
-                      @Nullable @Nls @NotificationSubtitle String subtitle,
-                      @Nullable @Nls @NotificationContent String content,
+                      @Nullable @NotificationTitle String title,
+                      @Nullable @NotificationSubtitle String subtitle,
+                      @Nullable @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupId;
@@ -108,8 +108,8 @@ public class Notification {
   }
 
   public Notification(@NotNull @NonNls String groupId,
-                      @NotNull @Nls @NotificationTitle String title,
-                      @NotNull @Nls @NotificationContent String content,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
                       @NotNull NotificationType type) {
     this(groupId, title, content, type, null);
   }
@@ -122,8 +122,8 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull @NonNls String groupId,
-                      @NotNull @Nls @NotificationTitle String title,
-                      @NotNull @Nls @NotificationContent String content,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupId;
@@ -169,14 +169,14 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls @NotificationTitle String title) {
+  public Notification setTitle(@Nullable @NotificationTitle String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls @NotificationTitle String title,
-                               @Nullable @Nls @NotificationSubtitle String subtitle) {
+  public Notification setTitle(@Nullable @NotificationTitle String title,
+                               @Nullable @NotificationSubtitle String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
 

@@ -102,7 +102,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
 
   public static boolean editConfiguration(final Project project,
                                           @NotNull RunnerAndConfigurationSettings configuration,
-                                          @Nls @NlsContexts.DialogTitle String title,
+                                          @NlsContexts.DialogTitle String title,
                                           @Nullable final Executor executor) {
     SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration, executor);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, IdeModalityType.IDE) {
@@ -118,7 +118,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     return dialog.showAndGet();
   }
 
-  public static SingleConfigurableEditor editShortenClasspathSetting(final RunnerAndConfigurationSettings settings, @Nls @NlsContexts.DialogTitle String title) {
+  public static SingleConfigurableEditor editShortenClasspathSetting(final RunnerAndConfigurationSettings settings, @NlsContexts.DialogTitle String title) {
     SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(settings, null);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(settings.getConfiguration().getProject(), configurable, IdeModalityType.IDE) {
       @Override

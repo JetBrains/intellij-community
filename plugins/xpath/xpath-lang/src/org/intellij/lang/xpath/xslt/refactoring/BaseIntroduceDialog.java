@@ -49,7 +49,7 @@ public abstract class BaseIntroduceDialog extends DialogWrapper implements Refac
         if (myInputValidator.canClose(getName())) super.doOKAction();
     }
 
-    protected void init(XPathExpression expression, int numberOfExpressions, @Nls @NlsContexts.DialogTitle String title) {
+    protected void init(XPathExpression expression, int numberOfExpressions, @NlsContexts.DialogTitle String title) {
         setModal(true);
         setTitle(title);
 

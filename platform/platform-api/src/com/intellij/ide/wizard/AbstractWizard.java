@@ -57,13 +57,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
   };
 
-  public AbstractWizard(@Nls @NlsContexts.DialogTitle String title, final Component dialogParent) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final Component dialogParent) {
     super(dialogParent, true);
     mySteps = new ArrayList<>();
     initWizard(title);
   }
 
-  public AbstractWizard(@Nls @NlsContexts.DialogTitle String title, @Nullable final Project project) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
     initWizard(title);

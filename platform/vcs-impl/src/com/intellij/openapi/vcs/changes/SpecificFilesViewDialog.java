@@ -45,7 +45,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected final Project myProject;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
-                                    @NotNull @Nls @NlsContexts.DialogTitle String title,
+                                    @NotNull @NlsContexts.DialogTitle String title,
                                     @NotNull DataKey<Stream<FilePath>> shownDataKey,
                                     @NotNull List<? extends FilePath> initDataFiles) {
     super(project, true);

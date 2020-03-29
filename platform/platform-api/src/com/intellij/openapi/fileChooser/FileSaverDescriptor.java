@@ -29,7 +29,7 @@ public class FileSaverDescriptor extends FileChooserDescriptor implements Clonea
    * @param description description
    * @param extensions accepted file extensions: "txt", "jpg", etc. Accepts all if empty
    */
-  public FileSaverDescriptor(@Nls @DialogTitle @NotNull String title,
+  public FileSaverDescriptor(@DialogTitle @NotNull String title,
                              @Nls @NlsUI.Label @NotNull String description, String... extensions) {
     super(true, true, true, true, false, false);
     setTitle(title);

@@ -35,7 +35,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final Condition<? super AnAction> myPreselectActionCondition;
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
-                         @Nls @PopupTitle String title,
+                         @PopupTitle String title,
                          @NotNull Supplier<? extends DataContext> context,
                          @Nullable String actionPlace,
                          boolean enableMnemonics,
@@ -76,7 +76,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                              boolean showNumbers,
                                                                              boolean useAlphaAsNumbers,
                                                                              boolean showDisabledActions,
-                                                                             @Nls @PopupTitle String title,
+                                                                             @PopupTitle String title,
                                                                              boolean honorActionMnemonics,
                                                                              boolean autoSelectionEnabled,
                                                                              Supplier<? extends DataContext> contextSupplier,

@@ -151,7 +151,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   Dimension getSize();
 
-  void setCaption(@NotNull @Nls @NlsContexts.PopupTitle String title);
+  void setCaption(@NotNull @NlsContexts.PopupTitle String title);
 
   boolean isPersistent();
 

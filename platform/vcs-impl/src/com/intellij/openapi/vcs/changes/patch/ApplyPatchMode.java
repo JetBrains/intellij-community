@@ -30,7 +30,7 @@ public enum ApplyPatchMode {
   private final String myTitle;
   private final boolean myCanChangePatchFile;
 
-  ApplyPatchMode(@Nls @NlsContexts.DialogTitle String title, boolean canChangePatchFile) {
+  ApplyPatchMode(@NlsContexts.DialogTitle String title, boolean canChangePatchFile) {
     myTitle = title;
     myCanChangePatchFile = canChangePatchFile;
   }

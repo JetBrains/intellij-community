@@ -39,7 +39,7 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
 
   abstract fun rememberForAllProjects()
 
-  protected open val viewFilesDialogTitle: @Nls @NlsContexts.DialogTitle String? = null
+  protected open val viewFilesDialogTitle: @NlsContexts.DialogTitle String? = null
   protected open val viewFilesDialogOkActionName: @Nls @NlsUI.Button String = CommonBundle.getAddButtonText()
   protected open val viewFilesDialogCancelActionName: @Nls @NlsUI.Button String = CommonBundle.getCancelButtonText()
 

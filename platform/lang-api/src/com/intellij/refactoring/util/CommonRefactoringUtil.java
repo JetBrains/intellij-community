@@ -38,8 +38,8 @@ import static com.intellij.util.nls.NlsContexts.DialogTitle;
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() { }
 
-  public static void showErrorMessage(@Nls @DialogTitle String title,
-                                      @Nls @DialogMessage String message,
+  public static void showErrorMessage(@DialogTitle String title,
+                                      @DialogMessage String message,
                                       @NonNls @Nullable String helpId,
                                       @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
@@ -69,8 +69,8 @@ public class CommonRefactoringUtil {
 
   public static void showErrorHint(@NotNull Project project,
                                    @Nullable Editor editor,
-                                   @NotNull @Nls @DialogMessage String message,
-                                   @NotNull @Nls @DialogTitle String title,
+                                   @NotNull @DialogMessage String message,
+                                   @NotNull @DialogTitle String title,
                                    @Nullable String helpId) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RefactoringErrorHintException(message);
 

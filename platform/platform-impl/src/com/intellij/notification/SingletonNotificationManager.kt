@@ -21,13 +21,13 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
     }
   }
 
-  fun notify(content: @Nls @NotificationContent String, project: Project?): Boolean {
+  fun notify(content: @NotificationContent String, project: Project?): Boolean {
     return notify("", content, project)
   }
 
   @JvmOverloads
-  fun notify(title: @Nls @NotificationTitle String = "",
-             content: @Nls @NotificationContent String,
+  fun notify(title: @NotificationTitle String = "",
+             content: @NotificationContent String,
              project: Project? = null, listener: NotificationListener? = defaultListener, action: AnAction? = null): Boolean {
     val oldNotification = notification.get()
     // !oldNotification.isExpired() is not enough - notification could be closed, but not expired

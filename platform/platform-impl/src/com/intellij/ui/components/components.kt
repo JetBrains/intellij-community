@@ -148,7 +148,7 @@ private fun setTitledBorder(@Nls(capitalization = Nls.Capitalization.Title) titl
  * Consider using [UI DSL](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
  */
 @JvmOverloads
-fun dialog(title: @Nls @NlsContexts.DialogTitle String,
+fun dialog(title: @NlsContexts.DialogTitle String,
            panel: JComponent,
            resizable: Boolean = false,
            focusedComponent: JComponent? = null,

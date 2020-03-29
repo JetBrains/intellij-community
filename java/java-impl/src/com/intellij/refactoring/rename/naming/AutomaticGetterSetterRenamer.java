@@ -46,7 +46,7 @@ public class AutomaticGetterSetterRenamer extends AutomaticRenamer {
   }
 
   @Override
-  public @Nls @NlsContexts.DialogTitle String getDialogTitle() {
+  public @NlsContexts.DialogTitle String getDialogTitle() {
     return JavaRefactoringBundle.message("rename.accessors.title");
   }
 

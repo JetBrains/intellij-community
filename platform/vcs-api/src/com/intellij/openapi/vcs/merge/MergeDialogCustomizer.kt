@@ -75,7 +75,7 @@ open class MergeDialogCustomizer {
    *
    * Don't mix with [getMergeWindowTitle] which is the title of the 3-way merge dialog displayed for a single file.
    */
-  open fun getMultipleFileDialogTitle(): @Nls @NlsContexts.DialogTitle String = VcsBundle.message("multiple.file.merge.title")
+  open fun getMultipleFileDialogTitle(): @NlsContexts.DialogTitle String = VcsBundle.message("multiple.file.merge.title")
 
   /**
    * Allows to override the names of the columns of the multiple files merge dialog, defined in [MergeSession.getMergeInfoColumns].

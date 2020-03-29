@@ -36,7 +36,7 @@ enum class GitBranchOperationType(@Nls val text: String, @Nls val description: S
 
 internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
                                                             private val repositories: Collection<GitRepository>,
-                                                            dialogTitle: @Nls @NlsContexts.DialogTitle String,
+                                                            dialogTitle: @NlsContexts.DialogTitle String,
                                                             initialName: String?,
                                                             private val showCheckOutOption: Boolean = true,
                                                             private val showResetOption: Boolean = false,

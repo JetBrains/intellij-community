@@ -44,7 +44,7 @@ public class CertificateWarningDialog extends DialogWrapper {
   private final X509Certificate myCertificate;
 
   public CertificateWarningDialog(@NotNull X509Certificate certificate,
-                                  @NotNull @Nls @NlsContexts.DialogTitle String title,
+                                  @NotNull @NlsContexts.DialogTitle String title,
                                   @NotNull @NlsUI.TextPane String message) {
     super((Project)null, false);
 

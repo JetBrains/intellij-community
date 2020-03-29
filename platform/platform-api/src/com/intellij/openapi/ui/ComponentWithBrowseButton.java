@@ -151,7 +151,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
                                       @Nullable @Nls @NlsUI.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
@@ -163,7 +163,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    * @deprecated use {@link #addBrowseFolderListener(String, String, Project, FileChooserDescriptor, TextComponentAccessor)} instead
    */
   @Deprecated
-  public void addBrowseFolderListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
+  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
                                       @Nullable @Nls @NlsUI.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
@@ -222,7 +222,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
-    public BrowseFolderActionListener(@Nullable @Nls @NlsContexts.DialogTitle String title,
+    public BrowseFolderActionListener(@Nullable @NlsContexts.DialogTitle String title,
                                       @Nullable @Nls @NlsUI.Label String description,
                                       @Nullable ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,

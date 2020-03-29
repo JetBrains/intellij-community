@@ -101,7 +101,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setTitle(@Nls @NlsContexts.PopupTitle String title) {
+  public ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }

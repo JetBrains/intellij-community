@@ -212,7 +212,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   @Override
-  public BalloonBuilder setTitle(@Nullable @Nls @NlsContexts.PopupTitle String title) {
+  public BalloonBuilder setTitle(@Nullable @NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }
