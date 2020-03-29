@@ -103,12 +103,6 @@ public class NlsContexts {
   public @interface HintText {
   }
 
-  @NlsContext(prefix = "command.name")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface CommandName {
-  }
-
   @NlsContext(prefix = "configurable.name")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
