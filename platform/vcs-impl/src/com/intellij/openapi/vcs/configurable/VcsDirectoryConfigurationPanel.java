@@ -76,7 +76,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JBLoadingPanel myLoadingPanel;
 
   private static class MapInfo {
-    static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
+    static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR); //NON-NLS
     static final Comparator<MapInfo> COMPARATOR = (o1, o2) -> {
       if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
         return Comparing.compare(o1.mapping.getDirectory(), o2.mapping.getDirectory());
@@ -135,7 +135,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         }
 
         if (info == MapInfo.SEPARATOR) {
-          append("Unregistered roots:", getAttributes(info));
+          append(VcsBundle.message("unregistered.roots.label"), getAttributes(info));
           return;
         }
 
