@@ -13,6 +13,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.config.GitVcsSettings
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitLocalCommitCompareInfo
 import java.awt.BorderLayout
@@ -24,7 +25,9 @@ internal class ShowDiffWithBranchDialog(val project: Project,
                                         val branchName: String,
                                         val repositories: List<GitRepository>,
                                         val currentBranchName: String
-) : FrameWrapper(project, "ShowDiffWithBranchDialog", title = "Show Diff Between $branchName and Current Working Tree") {
+) : FrameWrapper(project,
+                 "ShowDiffWithBranchDialog", // NON-NLS
+                 title = GitBundle.message("show.diff.between.dialog.title", branchName)) {
   private var diffPanel : CompareBranchesDiffPanel
   private val loadingPanel: JBLoadingPanel
 
@@ -60,7 +63,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
           when (result) {
             is LoadingResult.Success -> {
               diffPanel.setCompareInfo(result.compareInfo)
-              diffPanel.setEmptyText("No differences")
+              diffPanel.setEmptyText(GitBundle.message("show.diff.between.dialog.no.differences.empty.text"))
               diffPanel.enableControls()
             }
             is LoadingResult.Error -> Messages.showErrorDialog(diffPanel, result.error)
@@ -84,7 +87,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
     }
     catch (e: Exception) {
       LOG.warn(e)
-      return LoadingResult.Error("Couldn't load diff with $branchName: ${e.message}")
+      return LoadingResult.Error(GitBundle.message("show.diff.between.dialog.could.not.load.diff.with.branch.error", branchName, e.message))
     }
   }
 
