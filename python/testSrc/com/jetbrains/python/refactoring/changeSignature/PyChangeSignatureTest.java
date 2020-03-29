@@ -116,9 +116,23 @@ public class PyChangeSignatureTest extends PyTestCase {
                                                                                              new PyParameterInfo(3, "d", null, false))));
   }
 
-  public void testClassMethod() {
+  public void testOrdinaryMethod() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "self", null, false), new PyParameterInfo(1, "a", null, true),
                                               new PyParameterInfo(NEW_PARAMETER, "b", "2", false)));
+  }
+
+  // PY-33487
+  public void testClassMethod() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "cls", null, false),
+                                               new PyParameterInfo(2, "arg2", null, false),
+                                               new PyParameterInfo(1, "arg1", null, false)));
+  }
+
+  // PY-30874
+  public void testNonStandardSelfParameterName() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "s", null, false),
+                                              new PyParameterInfo(2, "y", null, false),
+                                              new PyParameterInfo(1, "x", null, false)));
   }
 
   public void testKeywordParam() {

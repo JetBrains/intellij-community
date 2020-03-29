@@ -172,14 +172,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       return a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword();
     });
     boolean variadicKeywordArgsUsed = false;
-    for (int paramIndex = 0; paramIndex < newParamInfos.length; paramIndex++) {
+    final int implicitCount = mapping.getImplicitParameters().size();
+    for (int paramIndex = implicitCount; paramIndex < newParamInfos.length; paramIndex++) {
       PyParameterInfo info = newParamInfos[paramIndex];
       final String paramName = info.getName();
       final boolean isKeywordVararg = isKeywordVarargName(paramName);
       final boolean isPositionalVararg = isPositionalVarargName(paramName);
-      if (paramName.equals(PyNames.CANONICAL_SELF)) {
-        continue;
-      }
       if (paramName.equals("*")) {
         keywordArgsRequired = true;
         continue;
