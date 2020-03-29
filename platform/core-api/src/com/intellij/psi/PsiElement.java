@@ -4,7 +4,6 @@ package com.intellij.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
@@ -20,6 +19,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 /**
  * The common base interface for all elements of the PSI tree.
@@ -446,7 +447,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    */
   @Experimental
   default @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences() {
-    return PsiSymbolService.getInstance().getOwnReferences(this);
+    return Collections.emptyList();
   }
 
   /**
