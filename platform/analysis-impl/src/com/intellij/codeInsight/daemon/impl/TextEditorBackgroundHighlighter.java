@@ -25,7 +25,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private static final int[] IGNORE_FOR_COMPILED = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
-    Pass.UPDATE_ALL,
     Pass.LOCAL_INSPECTIONS,
     Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
     Pass.EXTERNAL_TOOLS,
