@@ -5,7 +5,6 @@ package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -156,13 +155,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
                                               function.getName(),
                                               containingClass.getName(),
                                               baseClassName);
-      final int choice;
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        choice = Messages.YES;
-      }
-      else {
-        choice = Messages.showYesNoCancelDialog(function.getProject(), message, REFACTORING_NAME, Messages.getQuestionIcon());
-      }
+      final int choice = Messages.showYesNoCancelDialog(function.getProject(), message, REFACTORING_NAME, Messages.getQuestionIcon());
       switch (choice) {
         case Messages.YES:
           return deepestSuperMethod;

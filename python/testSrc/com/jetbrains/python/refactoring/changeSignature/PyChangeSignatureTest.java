@@ -2,6 +2,8 @@
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
@@ -459,7 +461,15 @@ public class PyChangeSignatureTest extends PyTestCase {
     final PyChangeSignatureHandler changeSignatureHandler = new PyChangeSignatureHandler();
     final PyFunction function = (PyFunction)changeSignatureHandler.findTargetMember(myFixture.getFile(), myFixture.getEditor());
     assertNotNull(function);
-    final PyFunction newFunction = PyChangeSignatureHandler.getSuperMethod(function);
+    final PyFunction newFunction;
+    // Accept modifying the base method
+    final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+    try {
+      newFunction = PyChangeSignatureHandler.getSuperMethod(function);
+    }
+    finally {
+      Messages.setTestDialog(oldTestDialog);
+    }
     assertNotNull(newFunction);
     final PyMethodDescriptor method = new PyMethodDescriptor(newFunction);
     final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(newFunction.getProject(), method);                                                                                                                                                                                                     
