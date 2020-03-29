@@ -98,7 +98,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText2(String)
    */
-  void setText(@Nls @ProgressText String text);
+  void setText(@ProgressText String text);
 
   /**
    * @return text above the progress bar, set by {@link #setText(String)}
@@ -110,7 +110,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText(String)
    */
-  void setText2(@Nls @ProgressDetails String text);
+  void setText2(@ProgressDetails String text);
 
   /**
    * @return text under the progress bar, set by {@link #setText2(String)}

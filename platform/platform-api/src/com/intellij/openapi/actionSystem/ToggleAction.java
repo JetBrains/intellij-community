@@ -19,7 +19,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction() {
   }
 
-  public ToggleAction(@Nullable @Nls @ActionText final String text) {
+  public ToggleAction(@Nullable @ActionText final String text) {
     super(() -> text);
   }
 
@@ -27,8 +27,8 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text);
   }
 
-  public ToggleAction(@Nullable @Nls @ActionText final String text,
-                      @Nullable @Nls @ActionDescription final String description,
+  public ToggleAction(@Nullable @ActionText final String text,
+                      @Nullable @ActionDescription final String description,
                       @Nullable final Icon icon) {
     super(text, description, icon);
   }

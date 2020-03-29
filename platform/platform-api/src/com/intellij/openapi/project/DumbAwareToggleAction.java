@@ -17,7 +17,7 @@ public abstract class DumbAwareToggleAction extends ToggleAction implements Dumb
   protected DumbAwareToggleAction() {
   }
 
-  protected DumbAwareToggleAction(@Nullable @Nls @ActionText String text) {
+  protected DumbAwareToggleAction(@Nullable @ActionText String text) {
     this(() -> text);
   }
 
@@ -25,8 +25,8 @@ public abstract class DumbAwareToggleAction extends ToggleAction implements Dumb
     super(text);
   }
 
-  protected DumbAwareToggleAction(@Nullable @Nls @ActionText String text,
-                                  @Nullable @Nls @ActionDescription String description, @Nullable Icon icon) {
+  protected DumbAwareToggleAction(@Nullable @ActionText String text,
+                                  @Nullable @ActionDescription String description, @Nullable Icon icon) {
     this(() -> text, () -> description, icon);
   }
 

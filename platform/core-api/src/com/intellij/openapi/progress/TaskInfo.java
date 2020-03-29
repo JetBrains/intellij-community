@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface TaskInfo {
   @NotNull
-  @Nls @NlsProgress.ProgressTitle
+  @NlsProgress.ProgressTitle
   String getTitle();
 
   @NlsUI.Button

@@ -49,7 +49,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @Nls @NlsProgress.ProgressTitle final String progressTitle,
+                                        @NlsProgress.ProgressTitle final String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
                                         @Nullable @NlsUI.Button final String cancelButtonText,
                                         @NlsUI.ButtonTooltip final String backgroundStopTooltip,

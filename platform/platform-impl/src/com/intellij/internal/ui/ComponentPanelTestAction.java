@@ -969,7 +969,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   private static class MyAction extends DumbAwareAction {
-    private MyAction(@Nullable @Nls @NlsActions.ActionText String name, @Nullable Icon icon) {
+    private MyAction(@Nullable @NlsActions.ActionText String name, @Nullable Icon icon) {
       super(name, null, icon);
     }
 
@@ -983,7 +983,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return this;
     }
 
-    public MyAction withDescription(@Nullable @Nls @NlsActions.ActionDescription String description) {
+    public MyAction withDescription(@Nullable @NlsActions.ActionDescription String description) {
       getTemplatePresentation().setDescription(description);
       return this;
     }

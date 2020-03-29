@@ -21,7 +21,6 @@ import com.intellij.lang.PsiParser;
 import com.intellij.openapi.util.ParserError;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +81,7 @@ public abstract class AbstractIndentParser implements PsiParser {
     return myBuilder.getCurrentIndent();
   }
 
-  protected void error(@NotNull @Nls @ParserError String message) {
+  protected void error(@NotNull @ParserError String message) {
     myBuilder.error(message);
   }
 
@@ -121,7 +120,7 @@ public abstract class AbstractIndentParser implements PsiParser {
     return expect(elementType, "Expected: " + elementType);
   }
 
-  protected boolean expect(@NotNull final IElementType elementType, @NotNull @Nls @ParserError String expectedMessage) {
+  protected boolean expect(@NotNull final IElementType elementType, @NotNull @ParserError String expectedMessage) {
     if (getTokenType() == elementType) {
       advance();
       return true;
@@ -162,13 +161,13 @@ public abstract class AbstractIndentParser implements PsiParser {
     advanceUntil(TokenSet.EMPTY);
   }
 
-  protected void errorUntil(TokenSet tokenSet, @NotNull @Nls @ParserError String message) {
+  protected void errorUntil(TokenSet tokenSet, @NotNull @ParserError String message) {
     PsiBuilder.Marker errorMarker = mark();
     advanceUntil(tokenSet);
     errorMarker.error(message);
   }
 
-  protected void errorUntilEol(@NotNull @Nls @ParserError String message) {
+  protected void errorUntilEol(@NotNull @ParserError String message) {
     PsiBuilder.Marker errorMarker = mark();
     advanceUntilEol();
     errorMarker.error(message);

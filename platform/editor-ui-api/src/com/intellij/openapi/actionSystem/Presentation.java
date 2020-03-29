@@ -107,7 +107,7 @@ public final class Presentation implements Cloneable {
   public Presentation() {
   }
 
-  public Presentation(@NotNull @Nls @ActionText String text) {
+  public Presentation(@NotNull @ActionText String text) {
     myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(text);
   }
 
@@ -150,7 +150,7 @@ public final class Presentation implements Cloneable {
    * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
    *                           it's a plain text and no mnemonic will be used.
    */
-  public void setText(@Nullable @Nls @ActionText String text, boolean mayContainMnemonic) {
+  public void setText(@Nullable @ActionText String text, boolean mayContainMnemonic) {
     setTextWithMnemonic(getTextWithMnemonic(() -> text, mayContainMnemonic));
   }
 
@@ -194,7 +194,7 @@ public final class Presentation implements Cloneable {
    * Sets the text with mnemonic.
    * @see #setText(String, boolean)
    */
-  public void setText(@Nullable @Nls @ActionText String text) {
+  public void setText(@Nullable @ActionText String text) {
     setText(() -> text, true);
   }
 
@@ -244,7 +244,7 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), myDescriptionSupplier.get());
   }
 
-  public void setDescription(@Nls @ActionDescription String description) {
+  public void setDescription(@ActionDescription String description) {
     Supplier<String> oldDescriptionSupplier = myDescriptionSupplier;
     myDescriptionSupplier = () -> description;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);

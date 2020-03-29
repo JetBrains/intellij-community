@@ -40,8 +40,8 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   @NonNls
   public static final String GROOVY_EXTENSION = ".groovy";
 
-  public NewGroovyActionBase(@Nls @NlsActions.ActionText String text,
-                             @Nls @NlsActions.ActionDescription String description,
+  public NewGroovyActionBase(@NlsActions.ActionText String text,
+                             @NlsActions.ActionDescription String description,
                              Icon icon) {
     super(text, description, icon);
   }

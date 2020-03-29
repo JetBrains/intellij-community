@@ -22,12 +22,12 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
   protected BaseTaskAction() {
   }
 
-  protected BaseTaskAction(@Nls @NlsActions.ActionText String text) {
+  protected BaseTaskAction(@NlsActions.ActionText String text) {
     super(text);
   }
 
-  protected BaseTaskAction(@Nullable @Nls @NlsActions.ActionText final String text,
-                           @Nullable @Nls @NlsActions.ActionDescription final String description,
+  protected BaseTaskAction(@Nullable @NlsActions.ActionText final String text,
+                           @Nullable @NlsActions.ActionDescription final String description,
                            @Nullable final Icon icon) {
     super(text, description, icon);
   }

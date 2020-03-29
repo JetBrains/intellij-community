@@ -23,6 +23,6 @@ import org.jetbrains.annotations.Nls;
  * @author yole
  */
 public interface TitledHandler {
-  @Nls @NlsActions.ActionText
+  @NlsActions.ActionText
   String getActionTitle();
 }

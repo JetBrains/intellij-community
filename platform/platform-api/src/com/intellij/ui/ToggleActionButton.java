@@ -29,7 +29,7 @@ import java.util.function.Supplier;
  * @author yole
  */
 public abstract class ToggleActionButton extends AnActionButton implements Toggleable {
-  public ToggleActionButton(@Nls @NlsActions.ActionText String text, Icon icon) {
+  public ToggleActionButton(@NlsActions.ActionText String text, Icon icon) {
     super(() -> text, Presentation.NULL_STRING, icon);
   }
 

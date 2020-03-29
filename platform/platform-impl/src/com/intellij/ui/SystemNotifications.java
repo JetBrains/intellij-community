@@ -14,8 +14,8 @@ public abstract class SystemNotifications {
   private static final SystemNotifications NULL = new SystemNotifications() {
     @Override
     public void notify(@NotNull String notificationName,
-                       @NotNull @Nls @SystemNotificationTitle String title,
-                       @NotNull @Nls @SystemNotificationTitle String text) { }
+                       @NotNull @SystemNotificationTitle String title,
+                       @NotNull @SystemNotificationTitle String text) { }
   };
 
   public static SystemNotifications getInstance() {
@@ -24,6 +24,6 @@ public abstract class SystemNotifications {
   }
 
   public abstract void notify(@NotNull String notificationName,
-                              @NotNull @Nls @SystemNotificationTitle String title,
-                              @NotNull @Nls @SystemNotificationText String text);
+                              @NotNull @SystemNotificationTitle String title,
+                              @NotNull @SystemNotificationText String text);
 }

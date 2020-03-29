@@ -32,7 +32,7 @@ public interface EmptyResolveMessageProvider {
    *
    * @return pattern or message
    */
-  @Nls @InspectionMessage
+  @InspectionMessage
   @NotNull
   String getUnresolvedMessagePattern();
 }

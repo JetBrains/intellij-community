@@ -61,11 +61,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @Override
   public abstract ProgressIndicator getProgressIndicator();
 
-  public static void progress(@NotNull @Nls @ProgressText String text) throws ProcessCanceledException {
+  public static void progress(@NotNull @ProgressText String text) throws ProcessCanceledException {
     progress(text, "");
   }
 
-  public static void progress2(@NotNull @Nls @ProgressDetails String text) throws ProcessCanceledException {
+  public static void progress2(@NotNull @ProgressDetails String text) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -73,8 +73,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
-  public static void progress(@NotNull @Nls @ProgressText String text,
-                              @Nullable @Nls @ProgressDetails String text2) throws ProcessCanceledException {
+  public static void progress(@NotNull @ProgressText String text,
+                              @Nullable @ProgressDetails String text2) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -112,7 +112,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @Nls @ProgressTitle String progressTitle,
+                                                              @NotNull @ProgressTitle String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project);
 
@@ -130,7 +130,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @throws E exception thrown by process
    */
   public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
-                                                                                 @NotNull @Nls @ProgressTitle String progressTitle,
+                                                                                 @NotNull @ProgressTitle String progressTitle,
                                                                                  boolean canBeCanceled,
                                                                                  @Nullable Project project) throws E;
 
@@ -148,7 +148,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                              @NotNull @Nls @ProgressTitle String progressTitle,
+                                                              @NotNull @ProgressTitle String progressTitle,
                                                               boolean canBeCanceled,
                                                               @Nullable Project project,
                                                               @Nullable JComponent parentComponent);
@@ -168,7 +168,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls @ProgressTitle String progressTitle,
+                                                            @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
@@ -188,7 +188,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls @ProgressTitle String progressTitle,
+                                                            @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable,

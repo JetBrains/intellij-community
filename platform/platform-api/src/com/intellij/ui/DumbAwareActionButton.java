@@ -31,12 +31,12 @@ import java.util.function.Supplier;
  */
 public abstract class DumbAwareActionButton extends AnActionButton implements DumbAware {
 
-  public DumbAwareActionButton(@Nls @ActionText String text) {
+  public DumbAwareActionButton(@ActionText String text) {
     super(text);
   }
 
-  public DumbAwareActionButton(@Nls @ActionText String text,
-                               @Nls @NlsActions.ActionDescription String description,
+  public DumbAwareActionButton(@ActionText String text,
+                               @NlsActions.ActionDescription String description,
                                @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -47,7 +47,7 @@ public abstract class DumbAwareActionButton extends AnActionButton implements Du
     super(dynamicText, dynamicDescription, icon);
   }
 
-  public DumbAwareActionButton(@Nls @ActionText String text,
+  public DumbAwareActionButton(@ActionText String text,
                                Icon icon) {
     super(text, icon);
   }

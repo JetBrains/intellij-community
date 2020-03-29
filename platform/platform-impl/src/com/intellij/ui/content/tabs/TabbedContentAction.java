@@ -19,7 +19,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
 
   protected TabbedContentAction(@NotNull ContentManager manager,
                                 @NotNull AnAction shortcutTemplate,
-                                @NotNull @Nls @NlsActions.ActionText String text,
+                                @NotNull @NlsActions.ActionText String text,
                                 @NotNull Disposable parentDisposable) {
     super(text);
 

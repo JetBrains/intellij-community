@@ -96,7 +96,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
    */
-  public AnAction(@Nullable @Nls @ActionText String text) {
+  public AnAction(@Nullable @ActionText String text) {
     this(text, null, null);
   }
 
@@ -124,8 +124,8 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable @Nls @ActionText String text,
-                  @Nullable @Nls @ActionDescription String description,
+  public AnAction(@Nullable @ActionText String text,
+                  @Nullable @ActionDescription String description,
                   @Nullable Icon icon) {
     this(() -> text, () -> description, icon);
   }
