@@ -105,6 +105,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     myAfterLineEndInlayUpdated = false;
     myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
+    assertValidState();
     final int offset = event.getOffset();
     // Although the result of getMoveOffset() can point to invalid offset when used from within beforeDocumentChange(),
     // the actual value is not used until doInvalidateRange() called from documentChanged().
@@ -619,8 +620,8 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
       LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
       reset();
+      assert myLineWidths.size() == myEditor.getVisibleLineCount();
     }
-    assert myLineWidths.size() == myEditor.getVisibleLineCount();
   }
 
   private void assertCorrectCachedWidths() {
