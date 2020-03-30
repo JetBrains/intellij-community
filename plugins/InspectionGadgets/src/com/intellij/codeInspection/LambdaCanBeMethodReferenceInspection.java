@@ -621,6 +621,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambda);
       final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(denotableFunctionalInterfaceType);
       PsiExpression replace = (PsiExpression)new CommentTracker().replaceAndRestoreComments(lambda, psiExpression);
+      if (!(replace instanceof PsiMethodReferenceExpression)) {
+        throw new IllegalStateException("Generated code is not method reference: "+replace.getText()+"; "+methodRefText);
+      }
       final PsiType functionalTypeAfterReplacement = GenericsUtil.getVariableTypeByExpressionType(((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType());
       functionalInterfaceType = typePointer.getType();
       if (functionalInterfaceType != null && (functionalTypeAfterReplacement == null ||
