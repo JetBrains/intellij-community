@@ -340,7 +340,7 @@ public class ProgressIndicatorUtils {
     awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
   }
 
-  private static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
+  public static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     boolean success = false;
     while (!success) {
