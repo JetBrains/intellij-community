@@ -20,7 +20,6 @@ import com.intellij.util.Processor
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
@@ -51,12 +50,6 @@ private class ChangesViewPanel(project: Project) : BorderLayoutPanel() {
     ActionManager.getInstance().createActionToolbar(CHANGES_VIEW_TOOLBAR, toolbarActionGroup, isToolbarHorizontal).apply {
       setTargetComponent(changesView)
     }
-
-  var statusComponent by observable<JComponent?>(null) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-
-    if (newValue != null) centerPanel.addToBottom(newValue) else remove(oldValue)
-  }
 
   private val centerPanel = simplePanel(createScrollPane(changesView))
 
