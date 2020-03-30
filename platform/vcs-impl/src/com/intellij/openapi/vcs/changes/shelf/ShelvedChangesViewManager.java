@@ -492,6 +492,14 @@ public class ShelvedChangesViewManager implements Disposable {
     return notNullize(dataContext.getData(SHELVED_BINARY_FILE_KEY));
   }
 
+  @NotNull
+  public static List<String> getSelectedShelvedChangeNames(@NotNull final DataContext dataContext) {
+    ChangesTree shelvedChangeTree = dataContext.getData(SHELVED_CHANGES_TREE);
+    if (shelvedChangeTree == null) return emptyList();
+    return StreamEx.of(VcsTreeModelData.selected(shelvedChangeTree).userObjectsStream(ShelvedWrapper.class))
+      .map(ShelvedWrapper::getRequestName).toList();
+  }
+
   private static class MyShelveDeleteProvider implements DeleteProvider {
     @NotNull private final Project myProject;
     @NotNull private final ShelfTree myTree;

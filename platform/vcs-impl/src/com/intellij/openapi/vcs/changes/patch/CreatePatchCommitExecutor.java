@@ -9,6 +9,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.TextPatchBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -18,6 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.WaitForProgressToShow;
@@ -29,10 +33,11 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
@@ -65,22 +70,26 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   @NotNull
   @Override
   public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
-    return createCommitSession(myProject, commitContext);
+    return createCommitSession(myProject, new DefaultPatchBuilder(myProject), commitContext);
   }
 
-  public static CommitSession createCommitSession(@NotNull Project project, @NotNull CommitContext commitContext) {
-    return new CreatePatchCommitSession(project, commitContext);
+  public static CommitSession createCommitSession(@NotNull Project project,
+                                                  @NotNull PatchBuilder patchBuilder,
+                                                  @NotNull CommitContext commitContext) {
+    return new CreatePatchCommitSession(project, commitContext, patchBuilder);
   }
 
   private static class CreatePatchCommitSession implements CommitSession {
     @NotNull private final Project myProject;
     @NotNull private final CommitContext myCommitContext;
+    @NotNull private final PatchBuilder myPatchBuilder;
 
     private final CreatePatchConfigurationPanel myPanel;
 
-    private CreatePatchCommitSession(@NotNull Project project, @NotNull CommitContext commitContext) {
+    private CreatePatchCommitSession(@NotNull Project project, @NotNull CommitContext commitContext, @NotNull PatchBuilder patchBuilder) {
       myProject = project;
       myCommitContext = commitContext;
+      myPatchBuilder = patchBuilder;
       myPanel = new CreatePatchConfigurationPanel(myProject);
     }
 
@@ -120,10 +129,10 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
         Charset encoding = myPanel.getEncoding();
 
         if (myPanel.isToClipboard()) {
-          writePatchToClipboard(myProject, baseDir, changes, isReverse, true, myCommitContext);
+          writePatchToClipboard(myProject, baseDir, changes, isReverse, true, myPatchBuilder, myCommitContext);
         }
         else {
-          validateAndWritePatchToFile(myProject, baseDir, changes, isReverse, fileName, encoding, myCommitContext);
+          validateAndWritePatchToFile(myProject, baseDir, changes, isReverse, fileName, encoding, myPatchBuilder, myCommitContext);
         }
       }
       catch (IOException | VcsException ex) {
@@ -140,6 +149,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                                    boolean reversePatch,
                                                    @NotNull String fileName,
                                                    @NotNull Charset encoding,
+                                                   @NotNull PatchBuilder patchBuilder,
                                                    @NotNull CommitContext commitContext) throws VcsException, IOException {
       final File file = new File(fileName).getAbsoluteFile();
       if (!checkIsFileValid(project, file)) return;
@@ -151,7 +161,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       PropertiesComponent.getInstance(project).setValue(VCS_PATCH_PATH_KEY, valueToStore);
       VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = valueToStore;
 
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, baseDir, reversePatch, true);
+      List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, true);
       PatchWriter.writePatches(project, fileName, baseDir, patches, commitContext, encoding, true);
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
@@ -175,6 +185,57 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     @Override
     public String getHelpId() {
       return "reference.dialogs.PatchFileSettings"; //NON-NLS
+    }
+  }
+
+  public interface PatchBuilder {
+    List<FilePatch> buildPatches(String baseDir,
+                                 @NotNull Collection<? extends Change> changes,
+                                 boolean reversePatch, boolean honorExcludedFromCommit) throws VcsException;
+  }
+
+  public static class DefaultPatchBuilder implements PatchBuilder {
+    private final Project myProject;
+
+    public DefaultPatchBuilder(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public List<FilePatch> buildPatches(String baseDir,
+                                        @NotNull Collection<? extends Change> changes,
+                                        boolean reversePatch, boolean honorExcludedFromCommit) throws VcsException {
+      return IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDir, reversePatch, honorExcludedFromCommit);
+    }
+  }
+
+  public static class ShelfPatchBuilder implements PatchBuilder {
+    @NotNull private final Project myProject;
+    @NotNull private final ShelvedChangeList myShelvedChangeList;
+    @NotNull private final List<String> mySelectedPaths;
+
+    public ShelfPatchBuilder(@NotNull Project project,
+                             @NotNull ShelvedChangeList shelvedChangeList,
+                             @NotNull List<String> selectedPaths) {
+      myProject = project;
+      myShelvedChangeList = shelvedChangeList;
+      mySelectedPaths = selectedPaths;
+    }
+
+    @Override
+    public List<FilePatch> buildPatches(String baseDir,
+                                        @NotNull Collection<? extends Change> changes,
+                                        boolean reversePatch,
+                                        boolean honorExcludedFromCommit) throws VcsException {
+      List<FilePatch> result = new ArrayList<>(createFilePatchesFromShelf(myProject, baseDir, myShelvedChangeList, mySelectedPaths));
+
+      List<ShelvedBinaryFile> binaries = isEmpty(mySelectedPaths)
+                                         ? myShelvedChangeList.getBinaryFiles()
+                                         : filter(myShelvedChangeList.getBinaryFiles(), binary -> mySelectedPaths
+                                           .contains(chooseNotNull(binary.AFTER_PATH, binary.BEFORE_PATH)));
+      result.addAll(IdeaTextPatchBuilder.buildPatch(myProject, map(binaries, b -> b.createChange(myProject)), baseDir, reversePatch));
+
+      return result;
     }
   }
 
@@ -249,11 +310,42 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     return ref[0];
   }
 
-  public static void writePatchToClipboard(@NotNull Project project, @NotNull String baseDir, @NotNull Collection<? extends Change> changes,
-                                           boolean reversePatch, boolean honorExcludedFromCommit, @NotNull CommitContext commitContext)
-    throws VcsException, IOException {
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, baseDir, reversePatch, honorExcludedFromCommit);
+  public static void writePatchToClipboard(@NotNull Project project,
+                                           @NotNull String baseDir,
+                                           @NotNull Collection<? extends Change> changes,
+                                           boolean reversePatch,
+                                           boolean honorExcludedFromCommit,
+                                           @NotNull PatchBuilder patchBuilder,
+                                           @NotNull CommitContext commitContext) throws VcsException, IOException {
+    List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, honorExcludedFromCommit);
     writeAsPatchToClipboard(project, patches, baseDir, commitContext);
     VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
+  }
+
+  private static List<? extends FilePatch> createFilePatchesFromShelf(@NotNull Project project, String basePath,
+                                                                      @NotNull ShelvedChangeList shelvedList,
+                                                                      @Nullable Collection<String> selectedPaths) {
+    try {
+      List<TextFilePatch> textFilePatches = ShelveChangesManager.loadPatches(project, shelvedList.PATH, null);
+      List<TextFilePatch> result =
+        !isEmpty(selectedPaths) ? filter(textFilePatches, patch -> selectedPaths.contains(patch.getAfterName())) : textFilePatches;
+      mapPatchesToNewBase(Objects.requireNonNull(project.getBasePath()), basePath, result);
+      return result;
+    }
+    catch (Exception exception) {
+      LOG.error(exception);
+      return Collections.emptyList();
+    }
+  }
+
+  private static void mapPatchesToNewBase(@NotNull String oldBase, @NotNull String newBase, @NotNull List<? extends FilePatch> patches) {
+    for (FilePatch patch : patches) {
+      patch.setBeforeName(patch.getBeforeName() == null
+                          ? null
+                          : TextPatchBuilder.getRelativePath(newBase, new File(oldBase, patch.getBeforeName()).getPath()));
+      patch.setAfterName((patch.getAfterFileName() == null
+                          ? null
+                          : TextPatchBuilder.getRelativePath(newBase, new File(oldBase, patch.getAfterName()).getPath())));
+    }
   }
 }
