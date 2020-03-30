@@ -221,18 +221,18 @@ public final class PluginsAdvertiser {
   public static void installAndEnable(@Nullable Project project, @NotNull Set<PluginId> pluginIds, boolean showDialog, @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
-      private List<IdeaPluginDescriptor> myAllPlugins;
+      private List<IdeaPluginDescriptor> myCustomPlugins;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
+          myCustomPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
             if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(descriptor));
             }
           }
-          for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
+          for (IdeaPluginDescriptor loadedPlugin : myCustomPlugins) {
             if (pluginIds.contains(loadedPlugin.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
@@ -245,14 +245,14 @@ public final class PluginsAdvertiser {
 
       @Override
       public void onSuccess() {
-        if (myAllPlugins == null) {
+        if (myCustomPlugins == null) {
           return;
         }
 
         PluginsAdvertiserDialog advertiserDialog =
           new PluginsAdvertiserDialog(null,
                                       myPlugins.toArray(new PluginDownloader[0]),
-                                      myAllPlugins);
+                                      myCustomPlugins);
         if (showDialog) {
           if (advertiserDialog.showAndGet()) {
             onSuccess.run();

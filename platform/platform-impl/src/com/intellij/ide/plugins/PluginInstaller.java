@@ -55,13 +55,13 @@ public final class PluginInstaller {
   private PluginInstaller() { }
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                         List<? extends IdeaPluginDescriptor> allPlugins,
+                                         List<? extends IdeaPluginDescriptor> customOrAllPlugins,
                                          boolean allowInstallWithoutRestart,
                                          PluginManagerMain.PluginEnabler pluginEnabler,
                                          Runnable onSuccess,
                                          @NotNull ProgressIndicator indicator) {
-    //TODO: `PluginInstallOperation` expects only `customPlugins` and not `allPlugins`
-    PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, pluginEnabler, indicator);
+    //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
+    PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, customOrAllPlugins, pluginEnabler, indicator);
     operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
     operation.run();
     boolean success = operation.isSuccess();

@@ -68,15 +68,15 @@ public abstract class PluginManagerMain {
   }
 
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> allPlugins,
+                                        List<? extends IdeaPluginDescriptor> customOrAllPlugins,
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
-    return downloadPlugins(plugins, allPlugins, false, onSuccess, pluginEnabler, cleanup);
+    return downloadPlugins(plugins, customOrAllPlugins, false, onSuccess, pluginEnabler, cleanup);
   }
 
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> allPlugins,
+                                        List<? extends IdeaPluginDescriptor> customOrAllPlugins,
                                         boolean allowInstallWithoutRestart,
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
@@ -87,7 +87,7 @@ public abstract class PluginManagerMain {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, allPlugins, allowInstallWithoutRestart, pluginEnabler, onSuccess, indicator)) {
+            if (PluginInstaller.prepareToInstall(plugins, customOrAllPlugins, allowInstallWithoutRestart, pluginEnabler, onSuccess, indicator)) {
               result[0] = true;
             }
           }
