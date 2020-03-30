@@ -188,7 +188,6 @@
     <localInspection language="Python" shortName="PyOverloadsInspection" suppressId="PyOverloads" bundle="messages.PyPsiBundle" key="INSP.overloads.in.regular.python.files" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyOverloadsInspection"/>
     <localInspection language="Python" shortName="PyProtocolInspection" suppressId="PyProtocol" bundle="messages.PyPsiBundle" key="INSP.protocol.definition.and.usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyProtocolInspection"/>
     <localInspection language="Python" shortName="PyTypeHintsInspection" suppressId="PyTypeHints" bundle="messages.PyPsiBundle" key="INSP.type.hints" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeHintsInspection"/>
-    <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser" bundle="messages.PyPsiBundle" key="INSP.stub.packages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser"/>
     <localInspection language="Python" shortName="PyTypedDictInspection" suppressId="PyTypedDict" bundle="messages.PyPsiBundle" key="INSP.typed.dict" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypedDictInspection"/>
 
 
