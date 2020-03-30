@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.TypingTarget;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
@@ -29,6 +30,9 @@ import java.awt.event.ContainerListener;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
+
+  public static final Key<Boolean> FORCE_VISIBLE_ROW_COUNT_KEY = Key.create("forceVisibleRowCount");
+
   private static final MethodInvocator ourCanUseWindowBlitterMethod = new MethodInvocator(JViewport.class, "canUseWindowBlitter");
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
   private static final MethodInvocator ourGetUseTrueDoubleBufferingMethod = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
@@ -550,7 +554,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     ListModel<?> model = list.getModel();
     int modelRows = model == null ? 0 : model.getSize();
     int visibleRows = list.getVisibleRowCount();
-    boolean forceVisibleRowCount = list.getClientProperty("forceVisibleRowCount") != null;
+    boolean forceVisibleRowCount = Boolean.TRUE.equals(UIUtil.getClientProperty(list, FORCE_VISIBLE_ROW_COUNT_KEY));
     if (!forceVisibleRowCount && visibleRows > 0) {
       visibleRows = Math.min(modelRows, visibleRows);
     }
