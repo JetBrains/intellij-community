@@ -63,7 +63,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     for ((actual, inferred) in sinkMethod.parameters.zip(sourceMethod.parameters)) {
       actual.setType(inferred.type)
       actual.modifierList.setModifierProperty("def", false)
-      if (actual.isVarArgs && !inferred.isVarArgs) {
+      if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
       val currentAnnotations = actual.annotations.map { it.text }
