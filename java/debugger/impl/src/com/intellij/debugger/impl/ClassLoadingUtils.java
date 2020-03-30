@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public class ClassLoadingUtils {
       Method ctorMethod = DebuggerUtils.findMethod(loaderClass, JVMNameUtil.CONSTRUCTOR_NAME, "(Ljava/lang/ClassLoader;)V");
       return context.computeAndKeep(() -> (ClassLoaderReference)((DebugProcessImpl)process)
         .newInstance(context, loaderClass, ctorMethod, Collections.singletonList(context.getClassLoader()),
-                     0, true));
+                     MethodImpl.SKIP_ASSIGNABLE_CHECK, true));
     }
     catch (VMDisconnectedException e) {
       throw e;
@@ -54,7 +55,7 @@ public class ClassLoadingUtils {
                                                                      mirrorOf(bytes, context, process),
                                                                      proxy.mirrorOf(0),
                                                                      proxy.mirrorOf(bytes.length)),
-                                                       0,
+                                                       MethodImpl.SKIP_ASSIGNABLE_CHECK,
                                                        true);
     }
     catch (VMDisconnectedException e) {
@@ -111,7 +112,7 @@ public class ClassLoadingUtils {
       setChuckByChunk(reference, mirrors);
     }
     else {
-      reference.setValues(mirrors);
+      DebuggerUtilsEx.setValuesNoCheck(reference, mirrors);
     }
 
     return reference;

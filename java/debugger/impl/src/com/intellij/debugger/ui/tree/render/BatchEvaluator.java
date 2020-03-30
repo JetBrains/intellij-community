@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.intellij.util.io.Bits;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -146,10 +147,11 @@ public class BatchEvaluator {
       }
 
       ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
-      argArray.setValues(values);
+      DebuggerUtilsEx.setValuesNoCheck(argArray, values);
       String value = DebuggerUtils.processCollectibleValue(
         () -> ((DebugProcessImpl)debugProcess).invokeMethod(
-          evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray), true),
+          evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
+          MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
         result -> result instanceof StringReference ? ((StringReference)result).value() : null
       );
       if (value != null) {

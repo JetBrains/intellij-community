@@ -55,6 +55,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.jetbrains.jdi.ArrayReferenceImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
@@ -376,6 +377,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
+  }
+
+  public static void setValuesNoCheck(ArrayReference array, List<Value> values) throws ClassNotLoadedException, InvalidTypeException {
+    if (array instanceof ArrayReferenceImpl) {
+      ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, false);
+    }
+    else {
+      array.setValues(values);
+    }
   }
 
   @NotNull
