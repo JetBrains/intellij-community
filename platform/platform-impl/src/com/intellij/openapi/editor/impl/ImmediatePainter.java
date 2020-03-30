@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -45,6 +46,7 @@ import static com.intellij.util.ui.UIUtil.useSafely;
  * @author Pavel Fatin
  */
 class ImmediatePainter {
+  private static final Logger LOG = Logger.getInstance(ImmediatePainter.class);
   private static final int DEBUG_PAUSE_DURATION = 1000;
 
   static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
@@ -77,8 +79,13 @@ class ImmediatePainter {
 
       final int caretOffset = replacement.getBegin();
       final char c = replacement.getText().charAt(0);
-      paintImmediately((Graphics2D)g, caretOffset, c);
-      return true;
+      try {
+        paintImmediately((Graphics2D)g, caretOffset, c);
+        return true;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return false;
   }
@@ -122,7 +129,15 @@ class ImmediatePainter {
 
     final char c1 = offset == 0 ? ' ' : document.getCharsSequence().charAt(offset - 1);
 
-    final List<TextAttributes> attributes = highlighter.getAttributesForPreviousAndTypedChars(document, offset, c2);
+    final List<TextAttributes> attributes;
+    try {
+      attributes = highlighter.getAttributesForPreviousAndTypedChars(document, offset, c2);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Error calculating attributes, highlighter: " + highlighter + ", offset: " + offset + ", document length" +
+                                 document.getTextLength() + ", highlighter's last offset:" + highlighter.getSegments().getLastValidOffset(),
+                                 e);
+    }
     updateAttributes(editor, offset, attributes);
 
     final TextAttributes attributes1 = attributes.get(0);
