@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.NlsUI.Label;
-import static com.intellij.util.nls.NlsContexts.DialogTitle;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
   public TextFieldWithHistoryWithBrowseButton() {

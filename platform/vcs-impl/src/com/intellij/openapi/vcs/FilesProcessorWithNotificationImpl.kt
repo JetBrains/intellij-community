@@ -11,8 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsUI
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.nls.NlsContexts
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts
 
 abstract class FilesProcessorWithNotificationImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
   private val files = mutableSetOf<VirtualFile>()

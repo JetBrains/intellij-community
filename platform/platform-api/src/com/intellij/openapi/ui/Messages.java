@@ -34,7 +34,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import static com.intellij.util.nls.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.*;
 
 /**
  * Provides several default notification dialogs ("OK|Cancel") as well as simple input dialogs.

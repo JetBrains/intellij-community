@@ -2,7 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

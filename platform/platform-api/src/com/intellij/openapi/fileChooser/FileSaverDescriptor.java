@@ -5,8 +5,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.nls.NlsContexts.DialogTitle;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

@@ -16,8 +16,7 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

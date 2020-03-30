@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.util.nls.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.*;
 
 /**
  * Allows to replace the implementation of showing messages. If you, as a plugin developer, need to show

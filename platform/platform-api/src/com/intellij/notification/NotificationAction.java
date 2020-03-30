@@ -4,14 +4,13 @@ package com.intellij.notification;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import static com.intellij.util.nls.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 
 /**
  * @author Alexander Lobas

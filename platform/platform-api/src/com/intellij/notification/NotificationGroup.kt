@@ -7,8 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.nls.NlsContexts.*
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts.*
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 

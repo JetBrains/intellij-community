@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
-import com.intellij.util.nls.NlsContexts
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.UIUtil.BR
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE

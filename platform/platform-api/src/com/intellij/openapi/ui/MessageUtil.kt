@@ -3,12 +3,9 @@
 package com.intellij.openapi.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsUI
 import com.intellij.openapi.util.NlsUI.Button
-import com.intellij.util.nls.NlsContexts
-import com.intellij.util.nls.NlsContexts.DialogMessage
-import com.intellij.util.nls.NlsContexts.DialogTitle
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import javax.swing.Icon
 
 fun showYesNoDialog(title: @DialogTitle String,

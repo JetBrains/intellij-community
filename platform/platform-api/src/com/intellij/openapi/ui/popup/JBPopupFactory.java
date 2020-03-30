@@ -11,9 +11,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.nls.NlsContexts;
-import com.intellij.util.nls.NlsContexts.PopupTitle;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -4,9 +4,8 @@ package com.intellij.codeInsight.hint;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.nls.NlsContexts.HintText;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

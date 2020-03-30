@@ -2,7 +2,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.DynamicBundle;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;

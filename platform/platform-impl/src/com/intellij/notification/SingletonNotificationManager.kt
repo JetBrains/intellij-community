@@ -4,10 +4,8 @@ package com.intellij.notification
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.nls.NlsContexts
-import com.intellij.util.nls.NlsContexts.NotificationContent
-import com.intellij.util.nls.NlsContexts.NotificationTitle
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 
 import java.util.concurrent.atomic.AtomicReference
 

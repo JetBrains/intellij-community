@@ -20,7 +20,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +28,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.util.nls.NlsContexts.DialogMessage;
-import static com.intellij.util.nls.NlsContexts.DialogTitle;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 /**
  * @author ven

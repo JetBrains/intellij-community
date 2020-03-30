@@ -7,10 +7,9 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.nls.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

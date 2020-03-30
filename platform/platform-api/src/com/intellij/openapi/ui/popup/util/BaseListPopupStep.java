@@ -4,8 +4,7 @@ package com.intellij.openapi.ui.popup.util;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.util.nls.NlsContexts.PopupTitle;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -17,8 +17,7 @@ package com.intellij.notification;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.util.nls.NlsContexts.NotificationContent;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import org.jetbrains.annotations.NotNull;
 
 /**
