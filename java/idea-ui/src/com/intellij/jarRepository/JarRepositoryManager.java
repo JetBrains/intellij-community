@@ -237,8 +237,8 @@ public class JarRepositoryManager {
   }
 
   public static @NotNull Promise<Collection<Artifact>> loadDependenciesAsyncIgnoringRoots(@NotNull Project project,
-                                                                                          JpsMavenRepositoryLibraryDescriptor desc,
-                                                                                          final Set<ArtifactKind> artifactKinds,
+                                                                                          @NotNull JpsMavenRepositoryLibraryDescriptor desc,
+                                                                                          @NotNull final Set<ArtifactKind> artifactKinds,
                                                                                           @Nullable List<RemoteRepositoryDescription> repos
                                                                                          ) {
     Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
