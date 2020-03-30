@@ -134,6 +134,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       loadDependenciesSync(project);
+      return;
     }
 
     final Runnable syncTask = () -> {
