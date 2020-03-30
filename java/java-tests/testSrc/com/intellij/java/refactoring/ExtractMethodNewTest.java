@@ -197,7 +197,11 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSCR12245() throws Exception {
-    doTest();
+    try {
+      doTest();
+      fail("Should not work for assignment expression");
+    } catch (PrepareFailedException e){
+    }
   }
 
   public void testLeaveCommentsWhenExpressionExtracted() throws Exception {
@@ -225,11 +229,19 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testExtractAssignmentExpression() throws Exception {
-    doTest();
+    try {
+      doTest();
+      fail("Should not work for assignment expression");
+    } catch (PrepareFailedException e){
+    }
   }
 
   public void testExtractAssignmentExpressionFromStatement() throws Exception {
-    doTest();
+    try {
+      doTest();
+      fail("Should not work for assignment expression");
+    } catch (PrepareFailedException e){
+    }
   }
 
   public void testExtractFromTryFinally2() throws Exception {
@@ -977,7 +989,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testExtractUnresolvedLambdaParameter() throws Exception {
-    doTest();
+    try {
+      doTest();
+      fail("Should not work for single lambda parameter");
+    } catch (PrepareFailedException e){
+
+    }
   }
 
   public void testExtractUnresolvedLambdaExpression() throws Exception {
