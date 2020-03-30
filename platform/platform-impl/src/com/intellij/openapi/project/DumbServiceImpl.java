@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -43,6 +44,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
@@ -56,6 +60,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -466,9 +472,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     long startTimestamp = System.currentTimeMillis();
     UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonRequested, new FeatureUsageData().addProject(myProject));
     myBalloon = JBPopupFactory.getInstance().
-      createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
-      setShowCallout(false).
-      createBalloon();
+            createHtmlTextBalloonBuilder(balloonText, AllIcons.General.BalloonWarning, UIUtil.getToolTipBackground(), null).
+            setBorderColor(JBColor.border()).
+            setShowCallout(false).
+            createBalloon();
     myBalloon.setAnimationEnabled(false);
     myBalloon.addListener(new JBPopupListener() {
       @Override
@@ -501,8 +508,19 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return;
       }
       UIEventLogger.logUIEvent(UIEventId.DumbModeBalloonShown, new FeatureUsageData().addProject(myProject));
-      myBalloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(context), Balloon.Position.above);
+      myBalloon.show(getDumbBalloonPopupPoint(myBalloon, context), Balloon.Position.above);
     });
+  }
+
+  @NotNull
+  private static RelativePoint getDumbBalloonPopupPoint(@NotNull Balloon balloon, DataContext context) {
+    RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(context);
+    Dimension size = balloon.getPreferredSize();
+    Point point = relativePoint.getPoint();
+    point.translate(size.width / 2, 0);
+    //here are included hardcoded insets, icon width and small hardcoded delta to show before guessBestPopupLocation point
+    point.translate(-JBUIScale.scale(30), 0);
+    return new RelativePoint(relativePoint.getComponent(), point);
   }
 
   @Override
