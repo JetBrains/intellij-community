@@ -33,16 +33,18 @@ class CompilationOutputsUploader {
   private final String remoteCacheUrl
   private final String tmpDir
   private final Map<String, String> remotePerCommitHash
+  private final boolean updateCommitHistory
   private final SourcesStateProcessor sourcesStateProcessor
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
-                             String agentPersistentStorage, String tmpDir) {
+                             String agentPersistentStorage, String tmpDir, boolean updateCommitHistory) {
     this.agentPersistentStorage = agentPersistentStorage
     this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
     this.remotePerCommitHash = remotePerCommitHash
     this.context = context
+    this.updateCommitHistory = updateCommitHistory
 
     sourcesStateProcessor = new SourcesStateProcessor(context)
   }
@@ -98,7 +100,9 @@ class CompilationOutputsUploader {
       messages.artifactBuilt(metadataFile.absolutePath)
       FileUtil.delete(sourceStateFile)
 
-      updateCommitHistory(uploader)
+      if (updateCommitHistory) {
+        updateCommitHistory(uploader)
+      }
     }
     finally {
       executor.close()
