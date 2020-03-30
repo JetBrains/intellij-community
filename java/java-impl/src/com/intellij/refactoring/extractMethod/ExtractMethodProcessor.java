@@ -800,7 +800,6 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNullability = initNullability();
   }
 
-  @TestOnly
   public void testPrepare() {
     myInputVariables.setFoldingAvailable(myInputVariables.isFoldingSelectedByDefault());
     myMethodName = myInitialMethodName;

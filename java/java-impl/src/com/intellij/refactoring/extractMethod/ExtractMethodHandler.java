@@ -152,8 +152,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  public static boolean shouldUseNewImpl(@NotNull Project project, PsiFile file, PsiElement @NotNull [] elements){
-    if (! Registry.is("java.refactoring.extractMethod.newImplementation")) return false;
+  public static boolean canUseNewImpl(@NotNull Project project, PsiFile file, PsiElement @NotNull [] elements){
     final ExtractMethodProcessor processor = getProcessor(project, elements, file, false);
     if (processor == null) return true;
     try {
@@ -169,7 +168,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
-    if (shouldUseNewImpl(project, file, elements)) {
+    if (Registry.is("java.refactoring.extractMethod.newImplementation") && canUseNewImpl(project, file, elements)) {
       new MethodExtractor().doExtract(editor, getRefactoringName(), HelpID.EXTRACT_METHOD);
       return;
     }

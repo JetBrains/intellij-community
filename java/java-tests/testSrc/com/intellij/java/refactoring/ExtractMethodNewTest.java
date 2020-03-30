@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -709,11 +710,11 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testMethod2InterfaceFromStatic() throws Exception {
-    doTest();
+    doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   public void testMethod2InterfaceFromConstant() throws Exception {
-    doTest();
+    doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   public void testParamDetection() throws Exception {
@@ -1405,7 +1406,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testFromStaticMethodInInterface() throws Exception {
-    doTest();
+    doTestWithLanguageLevel(LanguageLevel.JDK_1_8);
   }
 
   public void testDisjunctionType() throws Exception {
@@ -1463,7 +1464,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   private void doPrepareErrorTest(final String expectedMessage) throws Exception {
     String expectedError = null;
     try {
-      doExitPointsTest(false);
+      doErrorTest();
     }
     catch(PrepareFailedException ex) {
       expectedError = ex.getMessage();
@@ -1471,11 +1472,22 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     assertEquals(expectedMessage, expectedError);
   }
 
+  private void doErrorTest() throws Exception {
+    String fileName = getTestName(false) + ".java";
+    configureByFile(BASE_PATH + fileName);
+    performAction(false,false);
+  }
+
   private void doExitPointsTest(boolean shouldSucceed) throws Exception {
     String fileName = getTestName(false) + ".java";
     configureByFile(BASE_PATH + fileName);
-    boolean success = performAction(false, false);
-    assertEquals(shouldSucceed, success);
+    boolean succeed = false;
+    try {
+      doErrorTest();
+      succeed = true;
+    } catch (PrepareFailedException e) {
+    }
+    assertEquals(shouldSucceed, succeed);
   }
 
   private void doTest() throws Exception {
@@ -1582,6 +1594,11 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
       new ExtractMethodProcessor(project, editor, elements, null, "Extract Method", "newMethod", null);
     processor.setShowErrorDialogs(false);
     processor.setChainedConstructor(extractChainedConstructor);
+
+    if (ExtractMethodHandler.canUseNewImpl(project, file, elements)) {
+      return new MethodExtractor().doTestExtract(true, editor, extractChainedConstructor, makeStatic, returnType,
+                                                 newNameOfFirstParam, targetClass, methodVisibility, disabledParams);
+    }
 
     if (!processor.prepare()) {
       return false;
