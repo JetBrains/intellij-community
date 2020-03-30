@@ -55,6 +55,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.jetbrains.jdi.ObjectReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
@@ -1076,11 +1077,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static void enableCollection(ObjectReference reference) {
-    try {
-      reference.enableCollection();
+    if (reference instanceof ObjectReferenceImpl) {
+      ((ObjectReferenceImpl)reference).enableCollection(false);
     }
-    catch (UnsupportedOperationException ignored) {
-      // ignore: some J2ME implementations does not provide this operation
+    else {
+      try {
+        reference.enableCollection();
+      }
+      catch (UnsupportedOperationException ignored) {
+        // ignore: some J2ME implementations does not provide this operation
+      }
     }
   }
 
