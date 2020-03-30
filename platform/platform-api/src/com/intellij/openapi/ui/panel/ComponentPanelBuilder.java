@@ -20,7 +20,6 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +108,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param comment help context styled text written below the owner component.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withComment(@NotNull @NlsUI.CommentPanel String comment) {
+  public ComponentPanelBuilder withComment(@NotNull @NlsUI.Text String comment) {
     myCommentText = comment;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
     return this;
@@ -263,17 +262,17 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   @NotNull
-  public static JLabel createCommentComponent(@Nullable @NlsUI.CommentPanel String commentText, boolean isCommentBelow) {
+  public static JLabel createCommentComponent(@Nullable @NlsUI.Text String commentText, boolean isCommentBelow) {
     return createCommentComponent(commentText, isCommentBelow, 70);
   }
 
   @NotNull
-  public static JLabel createCommentComponent(@Nullable @NlsUI.CommentPanel String commentText, boolean isCommentBelow, int maxLineLength) {
+  public static JLabel createCommentComponent(@Nullable @NlsUI.Text String commentText, boolean isCommentBelow, int maxLineLength) {
     return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength);
   }
 
   private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier,
-                                               @Nullable @NlsUI.CommentPanel String commentText,
+                                               @Nullable @NlsUI.Text String commentText,
                                                boolean isCommentBelow,
                                                int maxLineLength) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
@@ -294,7 +293,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return component;
   }
 
-  public static JLabel createNonWrappingCommentComponent(@NotNull @NlsUI.CommentPanel String commentText) {
+  public static JLabel createNonWrappingCommentComponent(@NotNull @NlsUI.Text String commentText) {
     JBLabel component = new JBLabel(commentText);
     component.setForeground(UIUtil.getContextHelpForeground());
     setCommentFont(component);
@@ -302,7 +301,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   private static void setCommentText(@NotNull JLabel component,
-                                     @Nullable @NlsUI.CommentPanel String commentText,
+                                     @Nullable @NlsUI.Text String commentText,
                                      boolean isCommentBelow,
                                      int maxLineLength) {
     if (commentText != null) {

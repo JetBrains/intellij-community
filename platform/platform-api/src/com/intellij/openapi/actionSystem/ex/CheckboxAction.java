@@ -31,7 +31,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   }
 
   protected CheckboxAction(@NlsUI.Checkbox String text,
-                           @NlsUI.CheckboxTooltip String description,
+                           @NlsUI.Tooltip String description,
                            final Icon icon) {
     super(text, description, icon);
   }

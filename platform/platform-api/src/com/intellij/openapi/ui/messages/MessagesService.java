@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ public interface MessagesService {
   int showMoreInfoMessageDialog(Project project,
                                 @DialogMessage String message,
                                 @DialogTitle String title,
-                                @NlsUI.TextArea String moreInfo,
+                                @NlsUI.Text String moreInfo,
                                 String[] options,
                                 int defaultOptionIndex,
                                 int focusedOptionIndex,
@@ -76,7 +75,7 @@ public interface MessagesService {
                          @Nullable @InputDialogInitialValue String initialValue,
                          @Nullable InputValidator validator,
                          @Nullable TextRange selection,
-                         @Nullable @NlsUI.CommentPanel String comment);
+                         @Nullable @NlsUI.Text String comment);
 
   String showMultilineInputDialog(Project project,
                                   @DialogMessage String message,

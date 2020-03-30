@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   }
 
   public AnActionButton(@NlsUI.Button String text,
-                        @NlsUI.ButtonTooltip String description,
+                        @NlsUI.Tooltip String description,
                         @Nullable Icon icon) {
     super(text, description, icon);
   }

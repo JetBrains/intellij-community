@@ -559,7 +559,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    */
   public abstract static class ElementActionButton extends AnActionButton {
     public ElementActionButton(@NlsUI.Button String text,
-                               @NlsUI.ButtonTooltip String description,
+                               @NlsUI.Tooltip String description,
                                @Nullable Icon icon) {
       super(text, description, icon);
     }

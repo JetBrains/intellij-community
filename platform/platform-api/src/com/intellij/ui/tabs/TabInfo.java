@@ -20,14 +20,13 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsUI;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -376,7 +375,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo setTooltipText(@NlsContexts.ContentTooltip String text) {
+  public TabInfo setTooltipText(@NlsUI.Tooltip String text) {
     String old = myTooltipText;
     if (!Comparing.equal(old, text)) {
       myTooltipText = text;

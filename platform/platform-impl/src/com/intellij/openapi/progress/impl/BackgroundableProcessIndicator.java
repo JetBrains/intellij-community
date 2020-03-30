@@ -13,7 +13,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +51,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
                                         @NlsProgress.ProgressTitle final String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
                                         @Nullable @NlsUI.Button final String cancelButtonText,
-                                        @NlsUI.ButtonTooltip final String backgroundStopTooltip,
+                                        @NlsUI.Tooltip final String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, new TaskInfo() {
 

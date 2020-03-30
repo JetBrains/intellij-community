@@ -35,7 +35,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -867,11 +866,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         final String myText;
         final ImmutableList<Item> myChildren;
 
-        Item(@NotNull Icon icon, @NotNull @NlsUI.ComboboxItem String text) {
+        Item(@NotNull Icon icon, @NotNull @NlsUI.ListItem String text) {
           this(icon, text, ImmutableList.of());
         }
 
-        Item(@NotNull Icon icon, @NotNull @NlsUI.ComboboxItem String text, @NotNull List<Item> myChildren) {
+        Item(@NotNull Icon icon, @NotNull @NlsUI.ListItem String text, @NotNull List<Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
           this.myChildren = ImmutableList.copyOf(myChildren);

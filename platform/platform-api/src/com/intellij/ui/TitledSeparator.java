@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsUI;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +38,11 @@ public class TitledSeparator extends JPanel {
     this("");
   }
 
-  public TitledSeparator(@NlsUI.TitledSeparator String text) {
+  public TitledSeparator(@NlsUI.Separator String text) {
     this(text, null);
   }
 
-  public TitledSeparator(@NlsUI.TitledSeparator String text, @Nullable JComponent labelFor) {
+  public TitledSeparator(@NlsUI.Separator String text, @Nullable JComponent labelFor) {
     mySeparator.setForeground(ENABLED_SEPARATOR_FOREGROUND);
 
     setLayout(new GridBagLayout());
@@ -61,7 +60,7 @@ public class TitledSeparator extends JPanel {
     return originalText;
   }
 
-  public void setText(@NlsUI.TitledSeparator String text) {
+  public void setText(@NlsUI.Separator String text) {
     originalText = text;
     myLabel.setText(text != null && text.startsWith("<html>") ? text : UIUtil.replaceMnemonicAmpersand(originalText));
   }

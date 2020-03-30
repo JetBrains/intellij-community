@@ -18,7 +18,6 @@ package com.intellij.platform;
 import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +35,7 @@ public interface ProjectTemplate {
   String getName();
 
   @Nullable
-  @NlsUI.TextPane
+  @NlsUI.Text
   String getDescription();
 
   Icon getIcon();

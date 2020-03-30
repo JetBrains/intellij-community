@@ -28,73 +28,34 @@ public class NlsUI {
   public @interface Checkbox {
   }
 
-  @NlsContext(prefix = "combobox.item")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface ComboboxItem {
-  }
-
   @NlsContext(prefix = "titled.border")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
   public @interface TitledBorder {
   }
 
-  @NlsContext(prefix = "checkbox.tooltip")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface CheckboxTooltip {
-  }
-
-  @NlsContext(prefix = "tooltip.help")
+  @NlsContext(prefix = "tooltip")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface Tooltip {
   }
 
-  @NlsContext(prefix = "comment.panel")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface CommentPanel {
-  }
-
-  @NlsContext(prefix = "titled.separator")
+  @NlsContext(prefix = "separator")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public @interface TitledSeparator {
+  public @interface Separator {
   }
 
-  @NlsContext(prefix = "separator.text")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Target(ElementType.TYPE_USE)
-  public @interface SeparatorText {
-  }
-
-  /**
-   * Buttons
-   */
   @NlsContext(prefix = "button")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
   public @interface Button {
   }
 
-  @NlsContext(prefix = "button.tooltip")
+  @NlsContext(prefix = "text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ButtonTooltip {
-  }
-
-  @NlsContext(prefix = "text.pane")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface TextPane {
-  }
-
-  @NlsContext(prefix = "text.area")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface TextArea {
+  public @interface Text {
   }
 
   @NlsContext(prefix = "list.item")
@@ -102,5 +63,4 @@ public class NlsUI {
   @Target(ElementType.TYPE_USE)
   public @interface ListItem {
   }
-
 }

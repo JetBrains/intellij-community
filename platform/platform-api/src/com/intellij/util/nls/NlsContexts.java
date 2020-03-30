@@ -47,15 +47,6 @@ public class NlsContexts {
   }
 
   /**
-   * Content pane
-   */
-  @NlsContext(prefix = "content.tooltip")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface ContentTooltip {
-  }
-
-  /**
    * Notifications
    */
   @NlsContext(prefix = "notification.title")
