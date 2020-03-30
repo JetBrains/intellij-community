@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
@@ -363,7 +364,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   public JPanel createPanel() {
     CommonActionsPanel.Buttons[] buttons = getButtons();
     JComponent contextComponent = getComponent();
-    contextComponent.putClientProperty("forceVisibleRowCount", true);
+    UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                              myToolbarPosition,
                              myExtraActions.toArray(new AnActionButton[0]),
