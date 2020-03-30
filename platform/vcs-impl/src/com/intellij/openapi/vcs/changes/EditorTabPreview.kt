@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -100,7 +101,13 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   protected open fun skipPreviewUpdate(): Boolean = ToolWindowManager.getInstance(project).isEditorComponentActive
 
   override fun updatePreview(fromModelRefresh: Boolean) {
-    updatePreviewProcessor?.run { if (isPreviewOpen()) refresh(false) else clear() }
+    if (isPreviewOpen()) {
+      updatePreviewProcessor?.refresh(false)
+      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)
+    }
+    else {
+      updatePreviewProcessor?.clear()
+    }
   }
 
   override fun setPreviewVisible(isPreviewVisible: Boolean) {
