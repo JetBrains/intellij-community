@@ -135,23 +135,7 @@ public final class ConfigImportHelper {
         }
 
         if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
-          if (Restarter.isSupported()) {
-            try {
-              Restarter.scheduleRestart(false);
-            }
-            catch (IOException e) {
-              Main.showMessage("Restart failed", e);
-            }
-            System.exit(0);
-          }
-          else {
-            String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
-            String message = ApplicationBundle.message("restart.import.settings");
-            String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
-            if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
-              System.exit(0);
-            }
-          }
+          restart();
         }
 
         System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
@@ -169,6 +153,26 @@ public final class ConfigImportHelper {
           log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir [%s]",
                                  tempBackup, getBackupPath()), e);
         }
+      }
+    }
+  }
+
+  private static void restart() {
+    if (Restarter.isSupported()) {
+      try {
+        Restarter.scheduleRestart(false);
+      }
+      catch (IOException e) {
+        Main.showMessage("Restart failed", e);
+      }
+      System.exit(0);
+    }
+    else {
+      String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
+      String message = ApplicationBundle.message("restart.import.settings");
+      String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
+      if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
+        System.exit(0);
       }
     }
   }
