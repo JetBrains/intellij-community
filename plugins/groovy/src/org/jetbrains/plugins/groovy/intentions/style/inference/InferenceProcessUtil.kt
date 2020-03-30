@@ -148,6 +148,9 @@ fun PsiType?.typeParameter(): PsiTypeParameter? {
 
 fun findOverridableMethod(method: GrMethod): PsiMethod? {
   val clazz = method.containingClass ?: return null
+  if (method.project.isDefault) {
+    return null
+  }
   val superMethods = method.findSuperMethods()
   val hasJavaLangOverride = method.annotations.any { it.qualifiedName == JAVA_LANG_OVERRIDE }
   if (hasJavaLangOverride && superMethods.isNotEmpty()) {
