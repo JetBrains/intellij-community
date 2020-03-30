@@ -92,11 +92,13 @@ public final class ConfigImportHelper {
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
     CustomConfigMigrationOption customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile();
     File tempBackup = null;
+    boolean vmOptionFileChanged = false;
 
     try {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
       if (customMigrationOption != null) {
         log.info("Custom migration option: " + customMigrationOption);
+        vmOptionFileChanged = doesVmOptionFileExist(newConfigDir);
         try {
           tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log);
 
@@ -134,14 +136,15 @@ public final class ConfigImportHelper {
           settings.importFinished(newConfigDir);
         }
 
-        if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
-          restart();
-        }
-
         System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
       }
       else {
         log.info("No configs imported, starting with clean configs at " + newConfigDir);
+      }
+
+      if (vmOptionFileChanged || doesVmOptionFileExist(newConfigDir)) {
+        log.info("The vmoptions file has changed, restarting...");
+        restart();
       }
     }
     finally {
@@ -155,6 +158,10 @@ public final class ConfigImportHelper {
         }
       }
     }
+  }
+
+  private static boolean doesVmOptionFileExist(@NotNull Path configDir) {
+    return Files.isRegularFile(configDir.resolve(VMOptions.getCustomVMOptionsFileName()));
   }
 
   private static void restart() {
