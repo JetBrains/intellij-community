@@ -16,9 +16,9 @@ import java.util.*
 
 class DiffUsagesCollector : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "vcs.diff"
-  override fun getVersion(): Int = 2
+  override fun getVersion(): Int = 3
 
-  override fun getMetrics(): MutableSet<MetricEvent> {
+  override fun getMetrics(): Set<MetricEvent> {
     val set = HashSet<MetricEvent>()
 
     val places = listOf(DiffPlaces.DEFAULT,
@@ -37,15 +37,19 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
       val textSettings = TextDiffSettings.getSettings(place)
       val defaultTextSettings = TextDiffSettings.getDefaultSettings(place)
 
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isEnableSyncScroll }, "sync.scroll", data)
       addIfDiffers(set, textSettings, defaultTextSettings, { it.ignorePolicy }, "ignore.policy", data)
       addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightPolicy }, "highlight.policy", data)
       addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightingLevel }, "show.warnings.policy", data)
+      addIfDiffers(set, textSettings, defaultTextSettings, { it.contextRange }, "context.range", data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { !it.isExpandByDefault }, "collapse.unchanged", data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isShowLineNumbers }, "show.line.numbers", data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isUseSoftWraps }, "use.soft.wraps", data)
       addBoolIfDiffers(set, diffSettings, defaultDiffSettings, { isUnifiedToolDefault(it) }, "use.unified.diff", data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isReadOnlyLock }, "enable.read.lock", data)
       addIfDiffers(set, textSettings, defaultTextSettings, { it.breadcrumbsPlacement }, "show.breadcrumbs", data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isAutoApplyNonConflictedChanges }, "merge.apply.non.conflicted", data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isEnableLstGutterMarkersInMerge }, "merge.enable.lst.markers", data)
     }
 
     val diffSettings = DiffSettings.getSettings(DiffPlaces.DEFAULT)
