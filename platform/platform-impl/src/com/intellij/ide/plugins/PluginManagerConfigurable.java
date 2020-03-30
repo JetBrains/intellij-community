@@ -113,14 +113,14 @@ public class PluginManagerConfigurable
 
   private final MyPluginModel myPluginModel = new MyPluginModel() {
     @Override
-    public List<IdeaPluginDescriptor> getCustomRepoPlugins() {
+    public Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
       return getCustomRepositoryPlugins();
     }
   };
 
   private PluginUpdatesService myPluginUpdatesService;
 
-  private List<IdeaPluginDescriptor> myCustomRepositoryPluginsList;
+  private Collection<IdeaPluginDescriptor> myCustomRepositoryPluginsList;
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoryPluginsMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myTagsSorted;
@@ -1501,7 +1501,7 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private List<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
+  private Collection<IdeaPluginDescriptor> getCustomRepositoryPlugins() {
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsList != null) {
         return myCustomRepositoryPluginsList;
@@ -1550,7 +1550,7 @@ public class PluginManagerConfigurable
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsMap == null) {
         myCustomRepositoryPluginsMap = customRepositoryPluginsMap;
-        myCustomRepositoryPluginsList = new ArrayList<>(latestCustomPluginsAsMap.values());
+        myCustomRepositoryPluginsList = latestCustomPluginsAsMap.values();
       }
       return myCustomRepositoryPluginsMap;
     }

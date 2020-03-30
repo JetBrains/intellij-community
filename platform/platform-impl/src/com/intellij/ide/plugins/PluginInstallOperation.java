@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public class PluginInstallOperation {
   private static final Logger LOG = Logger.getInstance(PluginInstallOperation.class);
 
   private final List<PluginNode> myPluginsToInstall;
-  private final List<? extends IdeaPluginDescriptor> myCustomReposPlugins;
+  private final Collection<? extends IdeaPluginDescriptor> myCustomReposPlugins;
   private final PluginManagerMain.PluginEnabler myPluginEnabler;
   private final ProgressIndicator myIndicator;
   private boolean mySuccess = true;
@@ -40,8 +41,20 @@ public class PluginInstallOperation {
   private boolean myRestartRequired = false;
   private boolean myShownErrors;
 
+  /**
+   * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginManagerMain.PluginEnabler, ProgressIndicator)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 List<? extends IdeaPluginDescriptor> customReposPlugins,
+                                PluginManagerMain.PluginEnabler pluginEnabler,
+                                @NotNull ProgressIndicator indicator) {
+    this(pluginsToInstall, (Collection<? extends IdeaPluginDescriptor>)customReposPlugins, pluginEnabler, indicator);
+  }
+
+  public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
+                                Collection<? extends IdeaPluginDescriptor> customReposPlugins,
                                 PluginManagerMain.PluginEnabler pluginEnabler,
                                 @NotNull ProgressIndicator indicator) {
 

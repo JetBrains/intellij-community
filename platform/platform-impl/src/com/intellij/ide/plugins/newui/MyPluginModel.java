@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * @author Alexander Lobas
  */
-public class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
+public abstract class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
 
   private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
@@ -357,7 +357,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
-                             @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
+                             @NotNull Collection<? extends IdeaPluginDescriptor> customPlugins,
                              @NotNull InstallPluginInfo info, boolean allowInstallWithoutRestart,
                              @NotNull ModalityState modalityState) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -712,7 +712,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @NotNull
-  public static List<String> getVendors(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+  public static List<String> getVendors(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     Map<String, Integer> vendors = new HashMap<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -1008,18 +1008,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return message;
   }
 
-  protected List<IdeaPluginDescriptor> getCustomRepoPlugins() {
-    //TODO: this default implementation actually takes cached plugins from main repo instead of custom repos...
-    try {
-      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
-      if (list != null) {
-        return list;
-      }
-    }
-    catch (IOException ignored) {
-    }
-    return Collections.emptyList();
-  }
+  abstract protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins();
 
   @NotNull
   private List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {
