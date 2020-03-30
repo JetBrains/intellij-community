@@ -58,7 +58,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = true)
 public final class TaskManagerImpl extends TaskManager implements PersistentStateComponent<TaskManagerImpl.Config>, Disposable {
   private static final Logger LOG = Logger.getInstance(TaskManagerImpl.class);
 
@@ -991,10 +991,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
     public int localTasksCounter = 1;
 
+    @ReportValue
     public int taskHistoryLength = 50;
 
     public boolean updateEnabled = true;
+    @ReportValue
     public int updateInterval = 20;
+    @ReportValue
     public int updateIssuesCount = 100;
 
     // create task options
