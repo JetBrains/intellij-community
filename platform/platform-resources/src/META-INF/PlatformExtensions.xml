@@ -93,6 +93,8 @@
     <applicationService serviceInterface="com.intellij.application.options.RegistryManager"
                         serviceImplementation="com.intellij.application.options.RegistryManagerImpl" preload="true"/>
 
+    <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true"/>
+
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
 
