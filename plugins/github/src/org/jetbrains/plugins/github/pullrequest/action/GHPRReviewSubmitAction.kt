@@ -35,6 +35,7 @@ import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.event.ActionListener
 import javax.swing.*
+import javax.swing.border.Border
 
 class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull request review") {
 
@@ -192,6 +193,10 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, "Submit pull r
 
       override fun dispose() {}
     }
+  }
+
+  override fun createButtonBorder(button: JButton): Border {
+    return JBUI.Borders.empty(0, if (UIUtil.isUnderDefaultMacTheme()) 6 else 4)
   }
 
   override fun createButton(): JButton {
