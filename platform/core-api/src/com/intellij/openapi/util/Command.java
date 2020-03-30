@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @NlsContext(prefix = "command.name")
 @Nls(capitalization = Nls.Capitalization.Title)
 @Target(ElementType.TYPE_USE)
-public @interface CommandName {
+public @interface Command {
 }

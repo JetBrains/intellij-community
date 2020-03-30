@@ -6,7 +6,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.CommandName;
+import com.intellij.openapi.util.Command;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -27,7 +27,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public interface Builder {
     @Contract(pure = true)
     @NotNull
-    Builder withName(@Nullable @CommandName String name);
+    Builder withName(@Nullable @Command String name);
 
     @Contract(pure = true)
     @NotNull
