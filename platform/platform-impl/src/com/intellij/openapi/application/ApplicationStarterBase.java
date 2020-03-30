@@ -4,8 +4,8 @@ package com.intellij.openapi.application;
 import com.intellij.ide.CliResult;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +70,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     return Arrays.binarySearch(myArgsCount, args.size() - 1) != -1 && getCommandName().equals(args.get(0));
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsContexts.DialogMessage
   public abstract String getUsageMessage();
 
   @NotNull

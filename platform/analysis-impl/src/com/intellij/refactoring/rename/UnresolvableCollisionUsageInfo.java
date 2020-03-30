@@ -16,14 +16,14 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 
 public abstract class UnresolvableCollisionUsageInfo extends CollisionUsageInfo {
   public UnresolvableCollisionUsageInfo(PsiElement element, PsiElement referencedElement) {
     super(element, referencedElement);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsContexts.DialogMessage
   public abstract String getDescription();
 }

@@ -14,18 +14,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.NlsUI.ListItem;
+
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @ListItem
   @Override
   public @NotNull String getText() {
     return ApplicationBundle.message("light.edit.open.in.project.intention");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @ListItem
   @Override
   public @NotNull String getFamilyName() {
     return getText();

@@ -349,7 +349,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return getModuleType().getNodeIcon(false);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsUI.Text
   public String getDescription() {
     return getModuleType().getDescription();
   }
