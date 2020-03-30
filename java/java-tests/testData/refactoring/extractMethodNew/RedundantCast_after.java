@@ -1,7 +1,7 @@
 class Test {
     void foo () {
         int a = 1;
-        newMethod(a);
+        newMethod((Object) a);
     }
 
     private void newMethod(Object a) {
