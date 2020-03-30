@@ -24,4 +24,7 @@
                 anchor="bottom" canCloseContents="true"/>
     <notificationWhitelist groupIds="FeatureUsageStatistics"/>
   </extensions>
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="com.intellij.internal.statistic.actions.localWhitelist.LocalWhitelistJsonSchemaProviderFactory"/>
+  </extensions>
 </idea-plugin>

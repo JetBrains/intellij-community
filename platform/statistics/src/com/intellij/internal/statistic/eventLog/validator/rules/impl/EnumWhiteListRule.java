@@ -41,8 +41,4 @@ public class EnumWhiteListRule extends PerformanceCareRule implements FUSRegexpA
     return "EnumWhiteListRule: myEnumValues=" + asRegexp();
   }
 
-  @Override
-  public boolean isValidRule() {
-    return !myEnumValues.isEmpty();
-  }
 }

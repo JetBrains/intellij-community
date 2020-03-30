@@ -8,6 +8,12 @@ import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 
 class LocalWhitelistGroupConfigurationTest : BasePlatformTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    System.setProperty("fus.internal.test.mode", "true")
+  }
+
   fun testValidation() {
     @Language("JSON")
     val rules = """
@@ -44,43 +50,38 @@ class LocalWhitelistGroupConfigurationTest : BasePlatformTestCase() {
     globalRules.regexps = mapOf("integer" to "testIntegerRegexp")
     globalRules.enums = mapOf("boolean" to setOf("true", "false"))
 
-    val validationInfo = LocalWhitelistGroupConfiguration.validateEventData("testGroupId", rules, globalRules)
+    val validationInfo = LocalWhitelistGroupConfiguration.validateCustomValidationRules(project, rules, null)
     assertEmpty("Validation errors were found: ${validationInfo.joinToString { "\"${it.message}\"" }}", validationInfo)
   }
 
-  fun testValidateRule() {
-    val incorrectValidationRule = "{util#lang"
+  fun testValidateEventData() {
+    val rules = """
+      {
+        "event_id": ["testEvent"],
+        "event_data": {
+          "data_2": []
+        }
+      }
+    """.trimIndent()
+    val validationInfo = LocalWhitelistGroupConfiguration.validateCustomValidationRules(project, rules, null)
+    UsefulTestCase.assertSize(1, validationInfo)
+    TestCase.assertTrue("Validation info should contains error",
+                        validationInfo.first().message.contains("Line 4"))
+  }
+
+  fun testValidateEventId() {
     val rules = """
       {
         "event_id": [],
         "event_data": {
-          "my_regexp_ref": [
-            "$incorrectValidationRule"
-          ]
+          "data": ["testRule"]
         }
       }
     """.trimIndent()
-    val validationInfo = LocalWhitelistGroupConfiguration.validateEventData("testGroupId", rules, FUStatisticsWhiteListGroupsService.WLRule())
+    val validationInfo = LocalWhitelistGroupConfiguration.validateCustomValidationRules(project, rules, null)
     UsefulTestCase.assertSize(1, validationInfo)
     TestCase.assertTrue("Validation info should contains incorrect eventId",
-                        validationInfo.first().message.contains(incorrectValidationRule))
-  }
-
-  fun testValidateEventId() {
-    val incorrectEventId = "{enum#not_exist}"
-    val rules = """
-      {
-        "event_id": [
-        "$incorrectEventId"
-        ],
-        "event_data": {
-        }
-      }
-    """.trimIndent()
-    val validationInfo = LocalWhitelistGroupConfiguration.validateEventData("testGroupId", rules, FUStatisticsWhiteListGroupsService.WLRule())
-    UsefulTestCase.assertSize(1, validationInfo)
-    TestCase.assertTrue("Validation info should contains incorrect eventId",
-                        validationInfo.first().message.contains(incorrectEventId))
+                        validationInfo.first().message.contains("Line 2"))
   }
 
 }
