@@ -22,9 +22,6 @@
       <implementation-class>com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor</implementation-class>
       <option name="workspace" value="true"/>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
-    </component>
   </project-components>
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
