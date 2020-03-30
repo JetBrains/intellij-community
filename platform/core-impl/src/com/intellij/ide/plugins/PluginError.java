@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class PluginError {
-  private final IdeaPluginDescriptorImpl plugin;
+  final IdeaPluginDescriptorImpl plugin;
   private final String message;
   private final String incompatibleReason;
 
