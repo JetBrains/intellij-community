@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.diagnostic.LoadingState;
@@ -553,20 +553,32 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     if (!forceVisibleRowCount && visibleRows > 0) {
       visibleRows = Math.min(modelRows, visibleRows);
     }
-    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
+    if (visibleRows <= 0) {
+      visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows", 10);
+    }
 
     boolean addExtraSpace = !LoadingState.COMPONENTS_REGISTERED.isOccurred() /* temp fix till IDEA-236150 */ ||
-                            Registry.is("ide.preferred.scrollable.viewport.extra.space");
+                            Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
     Insets insets = getInnerInsets(list);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (modelRows == 0) {
       int fixedWidth = list.getFixedCellWidth();
       int fixedHeight = list.getFixedCellHeight();
-      if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
-      if (fixedWidth <= 0) fixedWidth = JBUIScale.scale(256); // scaled value from JDK
-      if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("List.rowHeight");
-      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
+      if (fixedWidth <= 0) {
+        fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width", 256);
+      }
+      if (fixedWidth <= 0) {
+        fixedWidth = JBUIScale.scale(256); // scaled value from JDK
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height", 0);
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = UIManager.getInt("List.rowHeight");
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = JBUIScale.scale(16); // scaled value from JDK
+      }
 
       size.width = insets != null ? insets.left + insets.right + fixedWidth : fixedWidth;
       size.height += fixedHeight * visibleRows;
@@ -598,14 +610,22 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
     int modelRows = tree.getRowCount();
     if (modelRows <= 0) {
-      if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("Tree.rowHeight");
-      if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16);
+      if (fixedHeight <= 0) {
+        fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height", 0);
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = UIManager.getInt("Tree.rowHeight");
+      }
+      if (fixedHeight <= 0) {
+        fixedHeight = JBUIScale.scale(16);
+      }
     }
     int visibleRows = tree.getVisibleRowCount();
-    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
+    if (visibleRows <= 0) {
+      visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows", 10);
+    }
 
-    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
     Insets insets = getInnerInsets(tree);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (0 < fixedHeight) {
