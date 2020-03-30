@@ -226,8 +226,10 @@ public abstract class JBCefApp {
       settings.resources_dir_path = JCEF_PATH;
       settings.locales_dir_path = JCEF_PATH + "/locales";
       settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
+      double scale = JBUIScale.sysScale();
+      System.setProperty("jcef.forceDeviceScaleFactor", Double.toString(scale));
       return new CefAppConfig(settings, new String[] {
-        "--force-device-scale-factor=" + JBUIScale.sysScale()
+        "--force-device-scale-factor=" + scale
       });
     }
   }
