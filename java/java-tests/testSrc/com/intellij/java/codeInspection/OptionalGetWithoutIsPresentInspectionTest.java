@@ -14,6 +14,7 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightJavaCodeInsi
   }
 
   public void testAbstractEnum() { doTest(); }
+  public void testFinalInheritance() { doTest(); }
   public void testOptionalGet() { doTest(); }
   public void testOptionalGetInlineLambda() { doTest(); }
 

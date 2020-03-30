@@ -336,7 +336,12 @@ public class TypeConstraints {
     @Override
     public StreamEx<Exact> superTypes() {
       List<Exact> superTypes = new ArrayList<>();
-      InheritanceUtil.processSupers(myClass, false, t -> superTypes.add(exactClass(t)));
+      InheritanceUtil.processSupers(myClass, false, t -> {
+        if (!t.hasModifierProperty(PsiModifier.FINAL)) {
+          superTypes.add(exactClass(t));
+        }
+        return true;
+      });
       return StreamEx.of(superTypes);
     }
 
