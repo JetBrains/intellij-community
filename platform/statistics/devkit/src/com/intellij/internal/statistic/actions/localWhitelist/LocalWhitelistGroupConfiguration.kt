@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -70,6 +71,7 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
 
     tempFile = TestParseEventLogWhitelistDialog.createTempFile(project, "event-log-validation-rules", currentGroup.customRules)!!
     tempFile.virtualFile.putUserData(LocalWhitelistJsonSchemaProviderFactory.LOCAL_WHITELIST_VALIDATION_RULES_KEY, true)
+    tempFile.putUserData(FUS_WHITELIST_COMMON_RULES_KEY, ProductionRules(productionGroups.rules))
     validationRulesEditor = createEditor(project, tempFile)
     validationRulesEditor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
@@ -177,6 +179,8 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
   }
 
   companion object {
+    internal val FUS_WHITELIST_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.localWhitelist.validation.rules.file")
+
     fun validateWhitelistGroup(project: Project,
                                localWhitelistGroup: LocalWhitelistGroup,
                                groupIdTextField: JComponent): List<ValidationInfo> {
@@ -230,6 +234,11 @@ class LocalWhitelistGroupConfiguration(private val project: Project,
         return false
       }
     }
+  }
+
+  internal class ProductionRules(val regexps: Set<String>, val enums: Set<String>) {
+    constructor(rules: FUStatisticsWhiteListGroupsService.WLRule?) : this(rules?.regexps?.keys ?: emptySet(),
+                                                                          rules?.enums?.keys ?: emptySet())
   }
 
 }
