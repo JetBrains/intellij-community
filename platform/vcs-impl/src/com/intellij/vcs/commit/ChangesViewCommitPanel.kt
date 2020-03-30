@@ -172,6 +172,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
         background = getButtonPanelBackground()
 
         add(commitAuthorComponent.apply { border = empty(0, 6, 4, 0) })
+        add(ChangesViewCommitStatusPanel(changesView, this@ChangesViewCommitPanel, getButtonPanelBackground()))
         add(buttonPanel)
       })
     addToCenter(centerPanel)
