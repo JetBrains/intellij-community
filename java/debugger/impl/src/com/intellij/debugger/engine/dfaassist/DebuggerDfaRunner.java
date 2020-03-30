@@ -10,6 +10,8 @@ import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -248,7 +250,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         ReferenceType type = ref.referenceType();
         ClassLoaderReference typeLoader = type.classLoader();
         if (!isCompatibleClassLoader(typeLoader)) return;
-        PsiType psiType = getPsiReferenceType(myPsiFactory, type);
+        PsiType psiType = getType(type, myProject, myBody.getResolveScope());
         if (psiType == null) return;
         TypeConstraint exactType = TypeConstraints.exact(psiType);
         String name = type.name();
@@ -303,27 +305,6 @@ class DebuggerDfaRunner extends DataFlowRunner {
       return myParentLoaders;
     }
 
-    @Nullable
-    private PsiType getPsiReferenceType(PsiElementFactory psiFactory, ReferenceType jdiType) {
-      Type componentType = jdiType;
-      int depth = 0;
-      while (componentType instanceof ArrayType) {
-        try {
-          componentType = ((ArrayType)componentType).componentType();
-          depth++;
-        }
-        catch (ClassNotLoadedException e) {
-          return null;
-        }
-      }
-      PsiType psiType = psiFactory.createTypeByFQClassName(componentType.name(), myBody.getResolveScope());
-      while (depth > 0) {
-        psiType = psiType.createArrayType();
-        depth--;
-      }
-      return psiType;
-    }
-
     private void setSpecialField(DfaVariableValue dfaQualifier,
                                  ObjectReference jdiQualifier,
                                  ReferenceType type,
@@ -368,7 +349,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         ReferenceType type = ((ObjectReference)jdiValue).referenceType();
         String enumConstantName = getEnumConstantName((ObjectReference)jdiValue);
         if (enumConstantName != null) {
-          PsiType psiType = getPsiReferenceType(myPsiFactory, type);
+          PsiType psiType = getType(type, myProject, myBody.getResolveScope());
           if (psiType instanceof PsiClassType) {
             PsiClass enumClass = ((PsiClassType)psiType).resolve();
             if (enumClass != null && enumClass.isEnum()) {
@@ -382,5 +363,39 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
       return DfTypes.TOP;
     }
+  }
+
+  private static @Nullable PsiType getType(@NotNull Type type,
+                                           @NotNull Project project,
+                                           @NotNull GlobalSearchScope scope) {
+    if (type instanceof PrimitiveType) {
+      String name = type.name();
+      return PsiJavaParserFacadeImpl.getPrimitiveType(name);
+    }
+    else if (type instanceof ArrayType) {
+      try {
+        PsiType componentPsiType = getType(((ArrayType)type).componentType(), project, scope);
+        return componentPsiType == null ? null : componentPsiType.createArrayType();
+      }
+      catch (ClassNotLoadedException e) {
+        return null;
+      }
+    }
+    else if (type instanceof ReferenceType) {
+      String jvmName = type.name();
+      int pos = jvmName.lastIndexOf('.');
+      String javaName;
+      if (pos == -1) {
+        javaName = jvmName.replace('$', '.');
+      }
+      else {
+        javaName = jvmName.substring(0, pos + 1) + jvmName.substring(pos + 1).replace('$', '.');
+      }
+      PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(javaName, scope);
+      if (aClass != null) {
+        return JavaPsiFacade.getElementFactory(project).createType(aClass);
+      }
+    }
+    return null;
   }
 }
