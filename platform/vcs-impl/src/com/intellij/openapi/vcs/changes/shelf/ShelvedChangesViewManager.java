@@ -1061,6 +1061,8 @@ public class ShelvedChangesViewManager implements Disposable {
   public static class PostStartupActivity implements StartupActivity.Background {
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+
       getInstance(project).scheduleContentUpdate();
     }
   }
