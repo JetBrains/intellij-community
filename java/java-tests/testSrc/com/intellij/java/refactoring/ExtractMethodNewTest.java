@@ -73,7 +73,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testExitPoints6() throws Exception {
-    doExitPointsTest(false);
+    doTest();
   }
 
   public void testExitPoints7() throws Exception {

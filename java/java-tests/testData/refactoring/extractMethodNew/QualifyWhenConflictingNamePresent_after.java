@@ -9,7 +9,7 @@ class B {
     }
   }
 
-    private void newMethod() {
+    private static void newMethod() {
         System.out.println();
     }
 }

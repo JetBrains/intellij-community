@@ -6,13 +6,12 @@ public class Foo {
                 public String toString() {
                     return newMethod();
                 }
-            };
+            },
+            f2 = new Foo(){};
 
     @NotNull
     private static String newMethod() {
         return "a" + "b";
     }
-
-    static Foo f2 = new Foo(){};
 
 }

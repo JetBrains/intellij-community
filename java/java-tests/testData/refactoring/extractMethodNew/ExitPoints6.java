@@ -1,4 +1,4 @@
-// multiple output values: one for modelling control flow + output value
+// nullable variable with flow statement
 class K {
     int f(Object o) {
         <selection>if (o == null) return 0;
