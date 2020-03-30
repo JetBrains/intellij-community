@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -557,8 +556,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows", 10);
     }
 
-    boolean addExtraSpace = !LoadingState.COMPONENTS_REGISTERED.isOccurred() /* temp fix till IDEA-236150 */ ||
-                            Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space", true);
     Insets insets = getInnerInsets(list);
     size.height = insets != null ? insets.top + insets.bottom : 0;
     if (modelRows == 0) {
