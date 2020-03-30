@@ -61,7 +61,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -472,13 +471,14 @@ public class XPathEvalAction extends XPathAction {
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
                 indicator.setText("Collecting matches...");
 
-                Collections.sort(list, (Comparator)(o1, o2) -> {
-                    indicator.checkCanceled();
-                    if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
-                        return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
-                    } else {
-                        return String.valueOf(o1).compareTo(String.valueOf(o2));
-                    }
+                list.sort((Comparator)(o1, o2) -> {
+                  indicator.checkCanceled();
+                  if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
+                    return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
+                  }
+                  else {
+                    return String.valueOf(o1).compareTo(String.valueOf(o2));
+                  }
                 });
                 for (int i = 0; i < size; i++) {
                     indicator.checkCanceled();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,7 +81,7 @@ class StartUseVcsDialog extends DialogWrapper {
 
   private String @NotNull [] prepareComboData() {
     ArrayList<String> keys = new ArrayList<>(myVcses.keySet());
-    Collections.sort(keys, (String o1, String o2) -> {
+    keys.sort((String o1, String o2) -> {
       if (o1.equals(o2)) return 0;
       if (o1.equals("Git")) return -1;
       if (o2.equals("Git")) return 1;

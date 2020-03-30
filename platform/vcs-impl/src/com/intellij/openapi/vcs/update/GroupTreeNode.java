@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.icons.AllIcons;
@@ -188,7 +174,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
                         @NotNull final Collection<? extends File> files,
                         @NotNull GroupByPackages groupByPackages,
                         String parentPath) {
-    Collections.sort(roots, (file1, file2) -> {
+    roots.sort((file1, file2) -> {
       boolean containsFile1 = files.contains(file1);
       boolean containsFile2 = files.contains(file2);
       if (containsFile1 == containsFile2) {
@@ -208,7 +194,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   }
 
   private void buildFiles(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
-    Collections.sort(myFilePaths, (path1, path2) -> path1.compareToIgnoreCase(path2));
+    myFilePaths.sort((path1, path2) -> path1.compareToIgnoreCase(path2));
 
     boolean apply = false;
 

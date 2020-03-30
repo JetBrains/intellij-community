@@ -293,7 +293,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       ModuleType type = getModuleType(group);
       moduleTypes.putValue(type, group);
     }
-    Collections.sort(groups, (o1, o2) -> {
+    groups.sort((o1, o2) -> {
       int i = o2.getWeight() - o1.getWeight();
       if (i != 0) return i;
       int i1 = moduleTypes.get(getModuleType(o2)).size() - moduleTypes.get(getModuleType(o1)).size();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -32,7 +32,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -65,7 +64,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     // setting modules
     myProject = data.getProject();
     final List<Module> validModules = data.getValidModules();
-    Collections.sort(validModules, new ModulesAlphaComparator());
+    validModules.sort(new ModulesAlphaComparator());
     Module selection = validModules.size() > 0 ? validModules.get(0) : null;
     myModuleComboBox.setModules(validModules);
     myModuleComboBox.setSelectedModule(selection);
@@ -183,7 +182,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     List<Sdk> sdkList = new ArrayList<>();
     sdkList.add(null);
     final List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
-    Collections.sort(allSdks, new PreferredSdkComparator());
+    allSdks.sort(new PreferredSdkComparator());
     Sdk selection = null;
     for (Sdk sdk : allSdks) {
       String homePath = sdk.getHomePath();

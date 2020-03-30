@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.ErrorInfo;
@@ -315,7 +315,7 @@ public abstract class PropertyTable extends JBTable {
   private void sortPropertiesAndCreateGroups(List<Property> rootProperties) {
     if (!mySorted && !myShowGroups) return;
 
-    Collections.sort(rootProperties, (o1, o2) -> {
+    rootProperties.sort((o1, o2) -> {
       if (o1.getParent() != null || o2.getParent() != null) {
         if (o1.getParent() == o2) return -1;
         if (o2.getParent() == o1) return 1;

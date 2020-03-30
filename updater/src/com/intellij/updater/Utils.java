@@ -309,7 +309,7 @@ public class Utils {
     private NormalizedZipInputStream(File file) throws IOException {
       myZip = new ZipFile(file);
       myEntries = Collections.list(myZip.entries());
-      Collections.sort(myEntries, Comparator.comparing(ZipEntry::getName));
+      myEntries.sort(Comparator.comparing(ZipEntry::getName));
       loadNextEntry();
     }
 

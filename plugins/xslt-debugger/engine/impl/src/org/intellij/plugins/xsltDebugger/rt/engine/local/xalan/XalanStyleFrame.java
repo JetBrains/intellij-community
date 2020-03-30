@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.xsltDebugger.rt.engine.local.xalan;
 
 import org.apache.xalan.templates.ElemLiteralResult;
@@ -117,7 +117,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     }
 
     final ArrayList<Debugger.Variable> result = new ArrayList<Debugger.Variable>(variables);
-    Collections.sort(result, VariableComparator.INSTANCE);
+    result.sort(VariableComparator.INSTANCE);
     return result;
   }
 

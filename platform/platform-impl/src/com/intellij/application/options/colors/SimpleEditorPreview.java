@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -276,7 +276,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(page);
 
     // sort highlights to avoid overlappings
-    Collections.sort(highlights, Comparator.comparingInt(HighlightData::getStartOffset));
+    highlights.sort(Comparator.comparingInt(HighlightData::getStartOffset));
     for (int i = highlights.size() - 1; i >= 0; i--) {
       HighlightData highlightData = highlights.get(i);
       int startOffset = highlightData.getStartOffset();

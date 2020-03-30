@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -531,7 +531,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     protected void sort(List<? extends MavenSimpleNode> list) {
-      Collections.sort(list, NODE_COMPARATOR);
+      list.sort(NODE_COMPARATOR);
     }
   }
 

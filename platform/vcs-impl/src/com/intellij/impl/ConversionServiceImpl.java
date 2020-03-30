@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.impl;
 
 import com.intellij.conversion.*;
@@ -229,7 +229,7 @@ public final class ConversionServiceImpl extends ConversionService {
       LOG.error("cyclic dependencies between converters: " + pair.getFirst().getId() + " and " + pair.getSecond().getId());
     }
     final Comparator<ConverterProvider> comparator = builder.comparator();
-    Collections.sort(runners, (o1, o2) -> comparator.compare(o1.getProvider(), o2.getProvider()));
+    runners.sort((o1, o2) -> comparator.compare(o1.getProvider(), o2.getProvider()));
     return runners;
   }
 

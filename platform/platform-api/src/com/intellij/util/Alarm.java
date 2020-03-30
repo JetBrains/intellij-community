@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -182,12 +182,12 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
 
-  public void addRequest(@NotNull Runnable request, int delayMillis, @Nullable final ModalityState modalityState) {
+  public void addRequest(@NotNull Runnable request, int delayMillis, final @Nullable ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delayMillis, modalityState);
   }
 
-  public void addRequest(@NotNull Runnable request, long delayMillis, @Nullable final ModalityState modalityState) {
+  public void addRequest(@NotNull Runnable request, long delayMillis, final @Nullable ModalityState modalityState) {
     LOG.assertTrue(myThreadToUse == ThreadToUse.SWING_THREAD);
     _addRequest(request, delayMillis, modalityState);
   }
@@ -272,8 +272,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  @NotNull
-  protected List<Runnable> getUnfinishedRequests() {
+  protected @NotNull List<Runnable> getUnfinishedRequests() {
     List<Runnable> unfinishedTasks;
     synchronized (LOCK) {
       if (myRequests.isEmpty()) {
@@ -333,7 +332,7 @@ public class Alarm implements Disposable {
     private final long myDelayMillis;
 
     @Async.Schedule
-    private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
+    private Request(final @NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
       synchronized (LOCK) {
         myTask = task;
 
@@ -389,8 +388,7 @@ public class Alarm implements Disposable {
     /**
      * @return task if not yet executed
      */
-    @Nullable
-    private Runnable cancel() {
+    private @Nullable Runnable cancel() {
       synchronized (LOCK) {
         Future<?> future = myFuture;
         if (future != null) {
@@ -413,18 +411,13 @@ public class Alarm implements Disposable {
     }
   }
 
-  @NotNull
-  public Alarm setActivationComponent(@NotNull final JComponent component) {
+  public @NotNull Alarm setActivationComponent(final @NotNull JComponent component) {
     myActivationComponent = component;
     //noinspection ResultOfObjectAllocationIgnored
     new UiNotifyConnector(component, new Activatable() {
       @Override
       public void showNotify() {
         flushPending();
-      }
-
-      @Override
-      public void hideNotify() {
       }
     });
 

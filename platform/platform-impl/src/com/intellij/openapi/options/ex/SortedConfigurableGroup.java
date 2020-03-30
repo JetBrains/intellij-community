@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class SortedConfigurableGroup
@@ -32,7 +31,7 @@ public final class SortedConfigurableGroup
 
   @Override
   protected Configurable[] buildConfigurables() {
-    Collections.sort(myList, COMPARATOR);
+    myList.sort(COMPARATOR);
     Configurable[] result = myList.toArray(new Configurable[0]);
     myList.clear();
     myList = null;

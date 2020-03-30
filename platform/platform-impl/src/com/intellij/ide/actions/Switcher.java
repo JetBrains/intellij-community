@@ -402,7 +402,7 @@ public final class Switcher extends AnAction implements DumbAware {
       }
       twShortcuts = createShortcuts(windows);
       final Map<ToolWindow, String> map = ContainerUtil.reverseMap(twShortcuts);
-      Collections.sort(windows, (o1, o2) -> StringUtil.compare(map.get(o1), map.get(o2), false));
+      windows.sort((o1, o2) -> StringUtil.compare(map.get(o1), map.get(o2), false));
       for (ToolWindow window : windows) {
         twModel.add(window);
       }

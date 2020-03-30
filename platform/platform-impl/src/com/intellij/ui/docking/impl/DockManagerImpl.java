@@ -116,9 +116,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
   }
 
-  @NotNull
   @Override
-  public Set<DockContainer> getContainers() {
+  public @NotNull Set<DockContainer> getContainers() {
     return Collections.unmodifiableSet(new HashSet<>(myContainers));
   }
 
@@ -206,8 +205,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private Image myDragImage;
     private final Image myDefaultDragImage;
 
-    @NotNull
-    private final DockableContent myContent;
+    private final @NotNull DockableContent myContent;
 
     private DockContainer myCurrentOverContainer;
     private final JLabel myImageContainer;
@@ -263,9 +261,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       myWindow.setBounds(new Rectangle(showPoint, size));
     }
 
-    @NotNull
     @Override
-    public DockContainer.ContentResponse getResponse(MouseEvent e) {
+    public @NotNull DockContainer.ContentResponse getResponse(MouseEvent e) {
       RelativePoint point = new RelativePoint(e);
       for (DockContainer each : myContainers) {
         RelativeRectangle rec = each.getAcceptArea();
@@ -338,8 +335,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
   }
 
-  @Nullable
-  private DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
+  private @Nullable DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
     for (DockContainer each : myContainers) {
       RelativeRectangle rec = each.getAcceptArea();
       if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
@@ -389,9 +385,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     SwingUtilities.invokeLater(() -> window.myUiContainer.setPreferredSize(null));
   }
 
-  @NotNull
-  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file,
-                                                                            @NotNull FileEditorManagerImpl fileEditorManager) {
+  public @NotNull Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(@NotNull VirtualFile file,
+                                                                                     @NotNull FileEditorManagerImpl fileEditorManager) {
     DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
     register(container);
 
@@ -408,8 +403,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     return result;
   }
 
-  @NotNull
-  private DockWindow createWindowFor(@Nullable String id, @NotNull DockContainer container) {
+  private @NotNull DockWindow createWindowFor(@Nullable String id, @NotNull DockContainer container) {
     String windowId = id != null ? id : Integer.toString(myWindowIdCounter++);
     DockWindow window = new DockWindow(windowId, myProject, container, container instanceof DockContainer.Dialog);
     myWindows.put(container, window);
@@ -555,17 +549,15 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       return false;
     }
 
-    @NotNull
     @Override
-    protected JFrame createJFrame(@NotNull IdeFrame parent) {
+    protected @NotNull JFrame createJFrame(@NotNull IdeFrame parent) {
       JFrame frame = super.createJFrame(parent);
       installListeners(frame);
       return frame;
     }
 
     @Override
-    @NotNull
-    protected JDialog createJDialog(@NotNull IdeFrame parent) {
+    protected @NotNull JDialog createJDialog(@NotNull IdeFrame parent) {
       JDialog frame = super.createJDialog(parent);
       installListeners(frame);
       return frame;
@@ -622,7 +614,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       }
 
       String eachType = eachContent.getAttributeValue("type");
-      if (eachType == null || !type.equals(eachType) || !myFactories.containsKey(eachType)) {
+      if (!type.equals(eachType) || !myFactories.containsKey(eachType)) {
         continue;
       }
 
@@ -635,7 +627,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       register(container);
 
       DockWindow window = createWindowFor(windowElement.getAttributeValue("id"), container);
-      UIUtil.invokeLaterIfNeeded(() -> window.show());
+      UIUtil.invokeLaterIfNeeded(window::show);
     }
   }
 }

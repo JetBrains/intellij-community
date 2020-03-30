@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
@@ -268,7 +268,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     for (String coord : myShownItems) {
       items.add(new LibItem(coord));
     }
-    Collections.sort(items, (o1, o2) -> Comparing.compare(o1, o2));
+    items.sort((o1, o2) -> Comparing.compare(o1, o2));
     myShownItems.clear();
     for (LibItem it : items) {
       myShownItems.add(it.coord);

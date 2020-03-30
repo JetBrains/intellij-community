@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -179,7 +179,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         final String n2 = e2.getName();
         return (n1 != null && n2 != null) ? n1.compareTo(n2) : 0;
       };
-      Collections.sort(filtered, comparator);
+      filtered.sort(comparator);
       children.addAll(filtered);
     }
     return children;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.application.Topics;
@@ -26,11 +26,7 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * @author lex
- */
-public class TipManager implements Disposable, PopupMenuListener {
-
+public final class TipManager implements Disposable, PopupMenuListener {
   private volatile boolean myIsDisposed = false;
   private boolean myPopupShown;
   private MyAwtPreprocessor myHideCanceller;
@@ -257,10 +253,6 @@ public class TipManager implements Disposable, PopupMenuListener {
       @Override
       public void showNotify() {
         installListeners();
-      }
-
-      @Override
-      public void hideNotify() {
       }
     });
 

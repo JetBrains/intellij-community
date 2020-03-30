@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -347,7 +347,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @NotNull
   private static List<OrderRootType> sortRootTypes(@NotNull Collection<? extends OrderRootType> rootTypes) {
     List<OrderRootType> allTypes = new ArrayList<>(rootTypes);
-    Collections.sort(allTypes, (o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
+    allTypes.sort((o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;
   }
 
@@ -422,7 +422,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     for (OrderRootType rootType : rootTypes) {
       VirtualFilePointerContainer container = myRoots.get(rootType);
       List<Pair<String, Boolean>> jarDirectories = new ArrayList<>(container.getJarDirectories());
-      Collections.sort(jarDirectories, Comparator.comparing(p->p.getFirst(), String.CASE_INSENSITIVE_ORDER));
+      jarDirectories.sort(Comparator.comparing(p -> p.getFirst(), String.CASE_INSENSITIVE_ORDER));
       for (Pair<String, Boolean> pair : jarDirectories) {
         String url = pair.getFirst();
         boolean isRecursive = pair.getSecond();

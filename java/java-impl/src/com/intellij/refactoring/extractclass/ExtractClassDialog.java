@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -129,7 +129,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     final String newClassName = getClassName();
     final String packageName = getPackageName();
 
-    Collections.sort(enumConstants, Comparator.comparingInt(o -> o.getMember().getTextOffset()));
+    enumConstants.sort(Comparator.comparingInt(o -> o.getMember().getTextOffset()));
     final ExtractClassProcessor processor = new ExtractClassProcessor(sourceClass, fields, methods, classes, packageName,
                                                                       myDestinationFolderComboBox.selectDirectory(
                                                                         new PackageWrapper(PsiManager.getInstance(myProject), packageName),

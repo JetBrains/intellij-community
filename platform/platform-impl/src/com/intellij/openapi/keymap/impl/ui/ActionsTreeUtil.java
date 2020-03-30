@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -77,7 +77,7 @@ public class ActionsTreeUtil {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<>();
     Collections.addAll(plugins, PluginManagerCore.getPlugins());
-    Collections.sort(plugins, Comparator.comparing(IdeaPluginDescriptor::getName));
+    plugins.sort(Comparator.comparing(IdeaPluginDescriptor::getName));
 
     List<PluginId> collected = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : plugins) {

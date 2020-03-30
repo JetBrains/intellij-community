@@ -371,7 +371,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         }
       }
 
-      Collections.sort(rootChildren, (node1, node2) -> {
+      rootChildren.sort((node1, node2) -> {
         Object object1 = node1.getUserObject();
         Object object2 = node2.getUserObject();
         if (object1 instanceof NotificationParentGroupBean) {

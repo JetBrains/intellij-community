@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -181,7 +180,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final MyListModel model = (MyListModel)list.getModel();
     final List<Configuration> values = list.getSelectedValuesList();
     final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
-    Collections.sort(values, up ? c : c.reversed());
+    values.sort(up ? c : c.reversed());
     final int[] indices = new int[values.size()];
     for (int i = 0, size = values.size(); i < size; i++) {
       final Configuration value = values.get(i);
@@ -338,7 +337,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
       final List<Configuration> configurations = getStructuralSearchInspection().getConfigurationsWithUuid(myConfiguration.getUuid());
       cache.addAll(configurations);
-      Collections.sort(cache, Comparator.comparingInt(Configuration::getOrder));
+      cache.sort(Comparator.comparingInt(Configuration::getOrder));
     }
   }
 }

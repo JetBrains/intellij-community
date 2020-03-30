@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -79,7 +79,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       LocalTask result = super.put(key, task);
       if (size() > myConfig.taskHistoryLength) {
         ArrayList<Map.Entry<String, LocalTask>> list = new ArrayList<>(entrySet());
-        Collections.sort(list, (o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
+        list.sort((o1, o2) -> TASK_UPDATE_COMPARATOR.compare(o2.getValue(), o1.getValue()));
         for (Map.Entry<String, LocalTask> oldest : list) {
           if (!oldest.getValue().isDefault()) {
             remove(oldest.getKey());
@@ -732,7 +732,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     // search for active task
     LocalTask activeTask = null;
     final List<LocalTask> tasks = getLocalTasks();
-    Collections.sort(tasks, TASK_UPDATE_COMPARATOR);
+    tasks.sort(TASK_UPDATE_COMPARATOR);
     for (LocalTask task : tasks) {
       if (activeTask == null) {
         if (task.isActive()) {

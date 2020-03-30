@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -54,8 +54,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
@@ -272,7 +274,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   @NotNull
   public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
-    Collections.sort(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
+    selectedChangeLists.sort(CommittedChangeListByDateComparator.ASCENDING);
 
     List<Change> changes = new ArrayList<>();
     for (CommittedChangeList cl : selectedChangeLists) {

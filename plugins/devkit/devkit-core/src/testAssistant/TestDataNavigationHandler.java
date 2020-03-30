@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -82,7 +82,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
    * @param point point where the popup will be shown.
    */
   private static void showNavigationPopup(Project project, List<TestDataFile> filePaths, RelativePoint point) {
-    Collections.sort(filePaths, Comparator.comparing(TestDataFile::getName, String.CASE_INSENSITIVE_ORDER));
+    filePaths.sort(Comparator.comparing(TestDataFile::getName, String.CASE_INSENSITIVE_ORDER));
 
     List<TestDataNavigationElement> elementsToDisplay = new ArrayList<>();
     List<TestDataNavigationElement> nonExistingElementsToDisplay = new ArrayList<>();

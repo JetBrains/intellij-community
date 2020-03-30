@@ -51,7 +51,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -368,7 +367,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           Logger.getInstance(XsltRunSettingsEditor.class.getName()).info("Encountered incompatible FileType: " + fileType.getName(), e);
         }
       }
-      Collections.sort(v, Comparator.comparing(FileType::getDescription));
+      v.sort(Comparator.comparing(FileType::getDescription));
 
       // off
       v.insertElementAt(null, 0);

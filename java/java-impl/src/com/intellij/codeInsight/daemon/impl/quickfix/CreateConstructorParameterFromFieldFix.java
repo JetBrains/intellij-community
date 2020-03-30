@@ -227,7 +227,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     ParameterInfoImpl[] newParamInfos = new ParameterInfoImpl[parameters.length + fields.length];
     final List<PsiVariable> params = new ArrayList<>(Arrays.asList(parameters));
     Collections.addAll(params, fields);
-    Collections.sort(params, new FieldParameterComparator(parameterList));
+    params.sort(new FieldParameterComparator(parameterList));
 
     int i = 0;
     final Map<PsiField, String> usedFields = new HashMap<>();

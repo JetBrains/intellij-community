@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.projectImport;
 
@@ -25,7 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
@@ -138,7 +137,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
 
   private static List<ProjectImportProvider> sorted(List<? extends ProjectImportProvider> providers) {
     List<ProjectImportProvider> result = new ArrayList<>(providers);
-    Collections.sort(result, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
+    result.sort((l, r) -> l.getName().compareToIgnoreCase(r.getName()));
     return result;
   }
 

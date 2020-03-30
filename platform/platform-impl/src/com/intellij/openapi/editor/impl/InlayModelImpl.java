@@ -206,7 +206,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       if (predicate.test(inlay)) result.add(inlay);
       return true;
     });
-    Collections.sort(result, comparator);
+    result.sort(comparator);
     return result;
   }
 
@@ -226,7 +226,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       return true;
     });
     if (above) Collections.reverse(result); // matters for inlays with equal priority
-    Collections.sort(result, BLOCK_ELEMENTS_COMPARATOR);
+    result.sort(BLOCK_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)result;
   }

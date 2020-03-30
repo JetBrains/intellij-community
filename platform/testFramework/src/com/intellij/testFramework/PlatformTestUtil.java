@@ -535,7 +535,7 @@ public class PlatformTestUtil {
       List<?> list = new ArrayList<>(Arrays.asList(children));
       @SuppressWarnings({"unchecked"})
       Comparator<Object> c = (Comparator<Object>)comparator;
-      Collections.sort(list, c);
+      list.sort(c);
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {

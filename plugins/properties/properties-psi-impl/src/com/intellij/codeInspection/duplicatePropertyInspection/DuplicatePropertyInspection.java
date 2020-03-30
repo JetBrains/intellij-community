@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -303,7 +303,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                                         final Set<? super PsiFile> resultFiles) {
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
-    Collections.sort(words, (o1, o2) -> o2.length() - o1.length());
+    words.sort((o1, o2) -> o2.length() - o1.length());
     for (String word : words) {
       final Set<PsiFile> files = new THashSet<>();
       searchHelper.processAllFilesWithWord(word, scope, Processors.cancelableCollectProcessor(files), true);
