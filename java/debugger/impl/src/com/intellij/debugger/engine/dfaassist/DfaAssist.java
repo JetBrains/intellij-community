@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.*;
@@ -191,12 +192,12 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
 
   private void cleanUp() {
     cancelComputation();
-    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myInlays));
+    UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(myInlays));
   }
 
   private void displayInlays(Map<PsiExpression, DfaHint> hints) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Disposer.dispose(myInlays);
+    cleanUp();
     if (hints.isEmpty()) return;
     EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
     if (editor == null) return;
