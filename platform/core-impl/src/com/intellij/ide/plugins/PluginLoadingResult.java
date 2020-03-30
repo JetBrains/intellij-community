@@ -18,8 +18,8 @@ import java.util.*;
 @ApiStatus.Internal
 final class PluginLoadingResult {
   final Map<PluginId, Set<String>> brokenPluginVersions;
-  @NotNull
-  final BuildNumber productBuildNumber;
+
+  final @NotNull BuildNumber productBuildNumber;
 
   final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = ContainerUtil.newConcurrentMap();
 
@@ -142,6 +142,10 @@ final class PluginLoadingResult {
         return false;
       }
     }
+
+    // remove any error that occurred for plugin with the same id
+    errors.remove(pluginId);
+    incompletePlugins.remove(pluginId);
 
     IdeaPluginDescriptorImpl prevDescriptor = plugins.put(pluginId, descriptor);
     if (prevDescriptor == null) {
