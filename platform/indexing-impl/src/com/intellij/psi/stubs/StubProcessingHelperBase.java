@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
@@ -49,10 +52,15 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull Class<Psi> requiredClass) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
-      LOG.error("Stub index points to a file without PSI: " +
-                getFileTypeInfo(file, project) + ", " +
-                "used scope = " + scope);
-      onInternalError(file);
+      //TODO shared stub indexes are overcomplicated for kotlin for some reason.
+      //TODO dmitro.batko: it must! be investigated as soon as possible
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId("intellij.indexing.shared"));
+      if (plugin == null || !plugin.isEnabled()) {
+        LOG.error("Stub index points to a file without PSI: " +
+                  getFileTypeInfo(file, project) + ", " +
+                  "used scope = " + scope);
+        onInternalError(file);
+      }
       return true;
     }
 
