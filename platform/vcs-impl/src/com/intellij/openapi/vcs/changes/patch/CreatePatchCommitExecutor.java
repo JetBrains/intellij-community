@@ -28,12 +28,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
-public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
+public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
   private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path"; //NON-NLS
   private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard"; //NON-NLS
@@ -64,15 +65,23 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
   @NotNull
   @Override
   public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
-    return new CreatePatchCommitSession(commitContext);
+    return createCommitSession(myProject, commitContext);
   }
 
-  private class CreatePatchCommitSession implements CommitSession {
-    private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel(myProject);
+  public static CommitSession createCommitSession(@NotNull Project project, @NotNull CommitContext commitContext) {
+    return new CreatePatchCommitSession(project, commitContext);
+  }
+
+  private static class CreatePatchCommitSession implements CommitSession {
+    @NotNull private final Project myProject;
     @NotNull private final CommitContext myCommitContext;
 
-    CreatePatchCommitSession(@NotNull CommitContext commitContext) {
+    private final CreatePatchConfigurationPanel myPanel;
+
+    private CreatePatchCommitSession(@NotNull Project project, @NotNull CommitContext commitContext) {
+      myProject = project;
       myCommitContext = commitContext;
+      myPanel = new CreatePatchConfigurationPanel(myProject);
     }
 
     @Override
@@ -81,7 +90,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
       if (patchPath == null) {
         patchPath = VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION;
         if (patchPath == null) {
-          patchPath = getDefaultPatchPath();
+          patchPath = getDefaultPatchPath(myProject);
         }
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(patchPath), null));
@@ -105,11 +114,16 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
     public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
       PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_TO_CLIPBOARD, myPanel.isToClipboard());
       try {
+        String baseDir = myPanel.getBaseDirName();
+        boolean isReverse = myPanel.isReversePatch();
+        String fileName = myPanel.getFileName();
+        Charset encoding = myPanel.getEncoding();
+
         if (myPanel.isToClipboard()) {
-          writePatchToClipboard(myProject, myPanel.getBaseDirName(), changes, myPanel.isReversePatch(), true, myCommitContext);
+          writePatchToClipboard(myProject, baseDir, changes, isReverse, true, myCommitContext);
         }
         else {
-          validateAndWritePatchToFile(changes);
+          validateAndWritePatchToFile(myProject, baseDir, changes, isReverse, fileName, encoding, myCommitContext);
         }
       }
       catch (IOException | VcsException ex) {
@@ -120,31 +134,35 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
       }
     }
 
-    private void validateAndWritePatchToFile(@NotNull Collection<? extends Change> changes) throws VcsException, IOException {
-      final String fileName = myPanel.getFileName();
+    public static void validateAndWritePatchToFile(@NotNull Project project,
+                                                   @NotNull String baseDir,
+                                                   @NotNull Collection<? extends Change> changes,
+                                                   boolean reversePatch,
+                                                   @NotNull String fileName,
+                                                   @NotNull Charset encoding,
+                                                   @NotNull CommitContext commitContext) throws VcsException, IOException {
       final File file = new File(fileName).getAbsoluteFile();
-      if (!checkIsFileValid(file)) return;
+      if (!checkIsFileValid(project, file)) return;
       //noinspection ResultOfMethodCallIgnored
       file.getParentFile().mkdirs();
-      VcsConfiguration.getInstance(myProject).acceptLastCreatedPatchName(file.getName());
+      VcsConfiguration.getInstance(project).acceptLastCreatedPatchName(file.getName());
       String patchPath = FileUtil.toSystemIndependentName(StringUtil.notNullize(file.getParent()));
-      String valueToStore = StringUtil.isEmpty(patchPath) || patchPath.equals(getDefaultPatchPath()) ? null : patchPath;
-      PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_PATH_KEY, valueToStore);
+      String valueToStore = StringUtil.isEmpty(patchPath) || patchPath.equals(getDefaultPatchPath(project)) ? null : patchPath;
+      PropertiesComponent.getInstance(project).setValue(VCS_PATCH_PATH_KEY, valueToStore);
       VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = valueToStore;
-      final boolean reversePatch = myPanel.isReversePatch();
 
-      String baseDirName = myPanel.getBaseDirName();
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDirName, reversePatch, true);
-      PatchWriter.writePatches(myProject, fileName, baseDirName, patches, myCommitContext, myPanel.getEncoding(), true);
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, baseDir, reversePatch, true);
+      PatchWriter.writePatches(project, fileName, baseDir, patches, commitContext, encoding, true);
+
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
-        final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
+        final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
         if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
           RevealFileAction.openFile(file);
         }
         else if (configuration.SHOW_PATCH_IN_EXPLORER == null) {
-          configuration.SHOW_PATCH_IN_EXPLORER = showDialog(file);
+          configuration.SHOW_PATCH_IN_EXPLORER = showDialog(project, file);
         }
-      }, null, myProject);
+      }, null, project);
     }
 
     @Override
@@ -160,36 +178,38 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
     }
   }
 
-  private boolean checkIsFileValid(@NotNull File file) {
+  private static boolean checkIsFileValid(@NotNull Project project, @NotNull File file) {
     if (file.exists()) {
       final int[] result = new int[1];
-      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(
-        () -> result[0] = Messages.showYesNoDialog(myProject, VcsBundle
-                                                     .message("patch.apply.already.exists.overwrite.prompt", file.getName(), file.getParent()),
-                                                   VcsBundle.message("patch.creation.save.patch.file.title"),
-                                                   CommonBundle.message("button.overwrite"), CommonBundle.message("button.cancel"),
-                                                   Messages.getWarningIcon()));
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(() -> {
+        result[0] = Messages.showYesNoDialog(project,
+                                             VcsBundle.message("patch.apply.already.exists.overwrite.prompt",
+                                                               file.getName(), file.getParent()),
+                                             VcsBundle.message("patch.creation.save.patch.file.title"),
+                                             CommonBundle.message("button.overwrite"),
+                                             CommonBundle.message("button.cancel"),
+                                             Messages.getWarningIcon());
+      });
       if (Messages.NO == result[0]) return false;
     }
     if (file.getParentFile() == null) {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() ->
-                                                            Messages.showErrorDialog(myProject, VcsBundle
-                                                              .message("create.patch.error.title",
-                                                                       VcsBundle
-                                                                         .message("patch.creation.can.not.write.patch.error", file.getPath())), CommonBundle.getErrorTitle()),
-                                                          ModalityState.NON_MODAL, myProject);
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
+        Messages.showErrorDialog(project, VcsBundle
+                                   .message("create.patch.error.title", VcsBundle.message("patch.creation.can.not.write.patch.error", file.getPath())),
+                                 CommonBundle.getErrorTitle());
+      }, ModalityState.NON_MODAL, project);
       return false;
     }
     return true;
   }
 
   @NotNull
-  private String getDefaultPatchPath() {
-    String baseDir = myProject.getBasePath();
+  private static String getDefaultPatchPath(@NotNull Project project) {
+    String baseDir = project.getBasePath();
     return baseDir == null ? FileUtil.toSystemIndependentName(PathManager.getHomePath()) : baseDir;
   }
 
-  private Boolean showDialog(File file) {
+  private static Boolean showDialog(@NotNull Project project, @NotNull File file) {
     String message = VcsBundle.message("create.patch.success.confirmation", file.getPath());
     String title = VcsBundle.message("create.patch.commit.action.title");
 
@@ -224,19 +244,16 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor{
       }
     };
 
-    RevealFileAction.showDialog(myProject, message, title, file, option);
+    RevealFileAction.showDialog(project, message, title, file, option);
 
     return ref[0];
   }
 
-  public static void writePatchToClipboard(Project project,
-                                           String baseDir,
-                                           @NotNull Collection<? extends Change> changes,
-                                           boolean isReverse,
-                                           boolean honorExcludedFromCommit,
-                                           @Nullable CommitContext context) throws VcsException, IOException {
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, baseDir, isReverse, honorExcludedFromCommit);
-    writeAsPatchToClipboard(project, patches, baseDir, context);
+  public static void writePatchToClipboard(@NotNull Project project, @NotNull String baseDir, @NotNull Collection<? extends Change> changes,
+                                           boolean reversePatch, boolean honorExcludedFromCommit, @NotNull CommitContext commitContext)
+    throws VcsException, IOException {
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, baseDir, reversePatch, honorExcludedFromCommit);
+    writeAsPatchToClipboard(project, patches, baseDir, commitContext);
     VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
   }
 }
