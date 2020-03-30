@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
@@ -144,7 +143,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
-    final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<>();
+    List<TextEditorHighlightingPass> result = new ArrayList<>(myRegisteredPassFactories.size());
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
     boolean isDumb = DumbService.getInstance(myProject).isDumb();
     myRegisteredPassFactories.forEachKey(passId -> {
@@ -153,7 +152,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       }
       PassConfig passConfig = myRegisteredPassFactories.get(passId);
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      final TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory)
+      TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory)
                                               ? null : factory.createHighlightingPass(psiFile, editor);
       if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
         passesRefusedToCreate.add(passId);
@@ -173,7 +172,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         }
         pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toNativeArray());
         pass.setId(passId);
-        id2Pass.put(passId, pass);
+        result.add(pass);
       }
       return true;
     });
@@ -185,7 +184,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       return true;
     });
 
-    return (List)Arrays.asList(id2Pass.getValues());
+    return result;
   }
 
   @NotNull
