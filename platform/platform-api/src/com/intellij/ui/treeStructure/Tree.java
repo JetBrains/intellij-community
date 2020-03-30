@@ -868,8 +868,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   /**
    * Note: This is the same implementation as the base class, except we
-   * fire the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event *only when*
-   * the tree has the focus.
+   * fire the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event <em>only 
+   * when</em> the tree has the focus.
    *
    * This is required because some screen readers (e.g. nvda) hook up
    * the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event and treat it
