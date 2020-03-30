@@ -148,7 +148,8 @@ public class BatchEvaluator {
       ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
       argArray.setValues(values);
       String value = DebuggerUtils.processCollectibleValue(
-        () -> debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray)),
+        () -> ((DebugProcessImpl)debugProcess).invokeMethod(
+          evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray), true),
         result -> result instanceof StringReference ? ((StringReference)result).value() : null
       );
       if (value != null) {
