@@ -67,22 +67,6 @@ public abstract class PluginManagerMain {
            fontSize, m1, m1, fontSize, m2, m2);
   }
 
-  /**
-   * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<PluginId> allPlugins,
-                                        Runnable onSuccess,
-                                        @Nullable Runnable cleanup) throws IOException {
-    return downloadPlugins(plugins,
-                           ContainerUtil.map(allPlugins, p -> new PluginNode(p, p.getIdString(), "-1")),
-                           onSuccess,
-                           new PluginEnabler.HEADLESS(),
-                           cleanup);
-  }
-
   public static boolean downloadPlugins(List<PluginNode> plugins,
                                         List<? extends IdeaPluginDescriptor> allPlugins,
                                         Runnable onSuccess,
