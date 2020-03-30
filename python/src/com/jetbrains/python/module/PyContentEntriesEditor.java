@@ -211,7 +211,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
           Collection<VirtualFilePointer> pointers = roots.get(getContentEntry());
           if (!pointers.isEmpty()) {
             List<ExternalContentFolderRef> folderRefs = ContainerUtil.map(pointers, ExternalContentFolderRef::new);
-            final JComponent sourcesComponent = createFolderGroupComponent(provider.getName() + " Folders",
+            final JComponent sourcesComponent = createFolderGroupComponent(provider.getDescription(),
                                                                            folderRefs,
                                                                            provider.getColor(), null);
             this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH,

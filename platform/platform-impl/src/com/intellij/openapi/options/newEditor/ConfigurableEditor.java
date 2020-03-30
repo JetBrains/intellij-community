@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
@@ -47,8 +48,6 @@ import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 
 class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
-  private static final String RESET_NAME = "Reset";
-  private static final String RESET_DESCRIPTION = "Rollback changes for this configuration element";
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
   private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
     @Override
@@ -64,7 +63,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       apply();
     }
   };
-  private final AbstractAction myResetAction = new AbstractAction(RESET_NAME) {
+  private final AbstractAction myResetAction = new AbstractAction(UIBundle.message("configurable.reset.action.name")) {
     @Override
     public void actionPerformed(ActionEvent event) {
       if (myConfigurable != null) {
@@ -87,7 +86,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   protected void init(Configurable configurable, boolean enableError) {
     myApplyAction.setEnabled(false);
-    myResetAction.putValue(Action.SHORT_DESCRIPTION, RESET_DESCRIPTION);
+    myResetAction.putValue(Action.SHORT_DESCRIPTION, UIBundle.message("configurable.reset.action.description"));
     myResetAction.setEnabled(false);
     myErrorLabel.setOpaque(true);
     myErrorLabel.setEnabled(enableError);
