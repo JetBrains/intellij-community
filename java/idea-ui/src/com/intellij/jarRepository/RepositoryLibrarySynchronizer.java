@@ -9,7 +9,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -20,35 +19,25 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import org.eclipse.aether.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import static org.jetbrains.idea.maven.aether.ArtifactKind.ARTIFACT;
+import static com.intellij.jarRepository.SyncLoadingKt.loadDependenciesSync;
 
 /**
  * @author gregsh
  */
 public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
-  private static final Logger LOG = Logger.getInstance(RepositoryLibrarySynchronizer.class);
 
   private static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
@@ -176,64 +165,8 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
     });
   }
 
-  private static void loadDependenciesSync(@NotNull Project project) {
-    final Collection<Library> toSync = collectLibrariesToSync(project);
-    final List<Pair<Promise<Collection<Artifact>>, Library>> promises = new ArrayList<>();
-    for (Library library : toSync) {
-      if (LibraryTableImplUtil.isValidLibrary(library)) {
-        LibraryProperties<?> properties = ((LibraryEx)library).getProperties();
-        if (properties instanceof RepositoryLibraryProperties) {
-          RepositoryLibraryProperties repositoryProperties = (RepositoryLibraryProperties)properties;
-          JpsMavenRepositoryLibraryDescriptor descriptor = new JpsMavenRepositoryLibraryDescriptor(repositoryProperties.getMavenId());
-          Promise<Collection<Artifact>> promise =
-            JarRepositoryManager.loadDependenciesAsyncIgnoringRoots(project, descriptor, EnumSet.of(ARTIFACT), null);
-          LOG.info("Submitted job for downloading artifacts of " + library);
-          promises.add(new Pair<>(promise, library));
-        }
-      }
-    }
-
-    try {
-      int size = promises.size();
-      BlockingQueue<DownloadResult> blockingQueue = new ArrayBlockingQueue<>(size);
-
-      for (Pair<Promise<Collection<Artifact>>, Library> pair : promises) {
-        pair.first.onProcessed((artifacts) -> {
-          try {
-            blockingQueue.put(new DownloadResult(artifacts, pair.second));
-          }
-          catch (InterruptedException e) {
-            blockingQueue.clear();
-            blockingQueue.offer(DownloadResult.POISON);
-            LOG.error(e);
-          }
-        });
-      }
-
-      for (int i = 0; i < size; i++ ) {
-        DownloadResult result = blockingQueue.poll(2, TimeUnit.HOURS);
-        if (result == DownloadResult.POISON) {
-          return;
-        }
-        if (result == null) {
-          LOG.error("Cant resolve library dependencies within two hours");
-          return;
-        }
-        Collection<Artifact> artifacts = result.getArtifacts();
-        if (artifacts != null && !artifacts.isEmpty()) {
-          LOG.info("Artifacts downloading complete. Creating roots started for - " + result.getLibrary());
-          WriteAction.computeAndWait(() -> JarRepositoryManager.createRoots(artifacts, null));
-          LOG.info("Create roots finished for - " + result.getLibrary());
-        }
-      }
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
-  }
-
   @NotNull
-  private static Set<Library> collectLibrariesToSync(@NotNull Project project) {
+  public static Set<Library> collectLibrariesToSync(@NotNull Project project) {
     return collectLibraries(project, library -> {
       if (library instanceof LibraryEx) {
         final LibraryEx libraryEx = (LibraryEx)library;
@@ -242,29 +175,5 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
       }
       return false;
     });
-  }
-
-  static class DownloadResult {
-    @NotNull
-    private static final DownloadResult POISON = new DownloadResult(null, null);
-
-    @Nullable
-    private final Collection<Artifact> myArtifacts;
-    @Nullable
-    private final Library myLibrary;
-
-    DownloadResult(@Nullable Collection<Artifact> artifacts, @Nullable Library library) {
-
-      myArtifacts = artifacts;
-      myLibrary = library;
-    }
-
-    @Nullable Collection<Artifact> getArtifacts() {
-      return myArtifacts;
-    }
-
-    @Nullable Library getLibrary() {
-      return myLibrary;
-    }
   }
 }
