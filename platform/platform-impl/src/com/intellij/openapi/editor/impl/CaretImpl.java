@@ -64,24 +64,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private int myLastColumnNumber;
   private int myDesiredSelectionStartColumn = -1;
   private int myDesiredSelectionEndColumn = -1;
-  /**
-   * We check that caret is located at the target offset at the end of {@link #moveToOffset(int, boolean)} method. However,
-   * it's possible that the following situation occurs:
-   * <p/>
-   * <pre>
-   * <ol>
-   *   <li>Some client subscribes to caret change events;</li>
-   *   <li>{@link #moveToLogicalPosition(LogicalPosition)} is called;</li>
-   *   <li>Caret position is changed during {@link #moveToLogicalPosition(LogicalPosition)} processing;</li>
-   *   <li>The client receives caret position change event and adjusts the position;</li>
-   *   <li>{@link #moveToLogicalPosition(LogicalPosition)} processing is finished;</li>
-   *   <li>{@link #moveToLogicalPosition(LogicalPosition)} reports an error because the caret is not located at the target offset;</li>
-   * </ol>
-   * </pre>
-   * <p/>
-   * This field serves as a flag that reports unexpected caret position change requests nested from {@link #moveToOffset(int, boolean)}.
-   */
-  private boolean myReportCaretMoves;
+
   /**
    * This field holds initial horizontal caret position during vertical navigation. It's used to determine target position when
    * moving to the new line. It is stored in pixels, not in columns, to account for non-monospaced fonts as well.
@@ -168,9 +151,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     assertIsDispatchThread();
     if (mySkipChangeRequests) {
       return;
-    }
-    if (myReportCaretMoves) {
-      LOG.error("Unexpected caret move request", new Throwable());
     }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling()) {
       CopyPasteManager.getInstance().stopKillRings();
@@ -471,15 +451,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         }
         final int tmpOffset = myEditor.visualPositionToOffset(visualPosition);
         if (tmpOffset == newOffset) {
-          boolean restore = myReportCaretMoves;
-          myReportCaretMoves = false;
-          try {
-            moveToVisualPosition(visualPosition);
-            return null;
-          }
-          finally {
-            myReportCaretMoves = restore;
-          }
+          moveToVisualPosition(visualPosition);
+          return null;
         }
         else {
           LOG.error("Invalid editor dimension mapping", new Throwable(), AttachmentFactory.createContext(
@@ -576,9 +549,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (mySkipChangeRequests) {
       return;
     }
-    if (myReportCaretMoves) {
-      LOG.error("Unexpected caret move request");
-    }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myVisibleCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
     }
@@ -645,20 +615,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (mySkipChangeRequests) {
       return null;
     }
-    if (myReportCaretMoves) {
-      LOG.error("Unexpected caret move request");
-    }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myLogicalCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
     }
-
-    myReportCaretMoves = true;
-    try {
-      return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, adjustForInlays, fireListeners);
-    }
-    finally {
-      myReportCaretMoves = false;
-    }
+    return doMoveToLogicalPosition(pos, locateBeforeSoftWrap, debugBuffer, adjustForInlays, fireListeners);
   }
 
   private static void assertIsDispatchThread() {
@@ -686,7 +646,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public boolean isUpToDate() {
-    return !myCaretModel.myIsInUpdate && !myReportCaretMoves;
+    return !myCaretModel.myIsInUpdate;
   }
 
   @NotNull
@@ -842,7 +802,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     clone.myVisualLineEnd = myVisualLineEnd;
     clone.mySkipChangeRequests = mySkipChangeRequests;
     clone.myLastColumnNumber = myLastColumnNumber;
-    clone.myReportCaretMoves = myReportCaretMoves;
     clone.myDesiredX = myDesiredX;
     clone.myDesiredSelectionStartColumn = -1;
     clone.myDesiredSelectionEndColumn = -1;
@@ -1430,7 +1389,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
            ", skip change requests: " + mySkipChangeRequests +
            ", desired selection start column: " + myDesiredSelectionStartColumn +
            ", desired selection end column: " + myDesiredSelectionEndColumn +
-           ", report caret moves: " + myReportCaretMoves +
            ", desired x: " + myDesiredX +
            ", selection marker: " + mySelectionMarker +
            ", rangeMarker start position: " + myRangeMarkerStartPosition +
