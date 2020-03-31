@@ -5,7 +5,7 @@ class X {
       newMethod(_user, user);
   }
 
-    private static void newMethod(boolean user, String user2) {
-        System.out.println(user + " " + user2);
+    private static void newMethod(boolean _user, String user) {
+        System.out.println(_user + " " + user);
     }
 }
