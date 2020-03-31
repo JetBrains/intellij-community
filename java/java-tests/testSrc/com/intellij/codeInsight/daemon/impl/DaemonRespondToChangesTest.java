@@ -1704,7 +1704,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private volatile boolean runHeavyProcessing;
   public void testDaemonDisablesItselfDuringHeavyProcessing() {
-    executeWithoutReparseDelay(() -> {
+    executeWithReparseDelay(0, () -> {
       runHeavyProcessing = false;
       try {
         final Set<Editor> applied = Collections.synchronizedSet(new THashSet<>());
@@ -1924,7 +1924,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
     myDaemonCodeAnalyzer.restart();
-    executeWithoutReparseDelay(() -> {
+    executeWithReparseDelay(0, () -> {
       for (int i = 0; i < 1000; i++) {
         caretRight();
         UIUtil.dispatchAllInvocationEvents();
@@ -1945,10 +1945,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private static void executeWithoutReparseDelay(@NotNull Runnable task) {
+  private static void executeWithReparseDelay(int reparseDelayMs, @NotNull Runnable task) {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int oldDelay = settings.getAutoReparseDelay();
-    settings.setAutoReparseDelay(0);
+    settings.setAutoReparseDelay(reparseDelayMs);
     try {
       task.run();
     }
@@ -1996,7 +1996,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCodeFoldingPassRestartsOnRegionUnfolding() {
-    executeWithoutReparseDelay(() -> {
+    executeWithReparseDelay(0, () -> {
       @Language("JAVA")
       String text = "class Foo {\n" +
                     "    void m() {\n" +
@@ -2021,7 +2021,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testChangingSettingsHasImmediateEffectOnOpenedEditor() {
-    executeWithoutReparseDelay(() -> {
+    executeWithReparseDelay(0, () -> {
       configureByText(StdFileTypes.JAVA, "class C { \n" +
                                          "  void m() {\n" +
                                          "  } \n" +
@@ -2575,6 +2575,45 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     finally {
       myDaemonCodeAnalyzer.runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(false);
     }
+  }
+
+  static class EmptyAnnotator extends MyRecordingAnnotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      iDidIt();
+    }
+  };
+  public void testTypingMustRescheduleDaemonBackByReparseDelayMillis() {
+    EmptyAnnotator emptyAnnotator = new EmptyAnnotator();
+    executeWithReparseDelay(2000, () ->
+      useAnnotatorsIn(JavaLanguage.INSTANCE, new MyRecordingAnnotator[]{emptyAnnotator}, () -> {
+        @Language("JAVA")
+        String text = "class X {\n}";
+        configureByText(StdFileTypes.JAVA, text);
+        ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+        assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
+        doHighlighting();
+        MyRecordingAnnotator.clearAll();
+        type(" import java.lang.*;\n");
+        long start = System.currentTimeMillis();
+        for (int i=0; i<10; i++) {
+          type(" ");
+          TimeoutUtil.sleep(100);
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        long typing = System.currentTimeMillis();
+        while (!emptyAnnotator.didIDoIt()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        long end = System.currentTimeMillis();
+
+        long typingElapsed = typing - start;
+        long highlightElapsed = end - typing;
+        assertTrue("; typed in " + typingElapsed + "ms; highlighted in " + highlightElapsed + "ms",
+                   typingElapsed > 1000 && highlightElapsed > 2000);
+      })
+    );
   }
 }
 
