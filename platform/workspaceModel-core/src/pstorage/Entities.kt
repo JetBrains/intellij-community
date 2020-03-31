@@ -53,10 +53,9 @@ internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>)
   override fun toString(): String = arrayId.toString()
 }
 
-
-internal interface PEntityData<E : TypedEntity> {
-  var entitySource: EntitySource
-  var id: Int
+internal abstract class PEntityData<E : TypedEntity> {
+  lateinit var entitySource: EntitySource
+  var id: Int = -1
 
   fun createEntity(snapshot: PEntityStorage): E {
     val returnClass = (this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*>)
@@ -100,20 +99,13 @@ internal interface PEntityData<E : TypedEntity> {
   private fun KMutableProperty<*>.isList() = List::class.java.isAssignableFrom(returnType.jvmErasure.java)
 }
 
-internal class PFolderEntityData : PEntityData<PFolderEntity> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
+internal class PFolderEntityData : PEntityData<PFolderEntity>() {
   lateinit var data: String
 }
 
-internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolder> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
-}
+internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolder>()
 
-internal class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
+internal class PSubFolderEntityData : PEntityData<PSubFolderEntity>() {
   lateinit var data: String
 }
 

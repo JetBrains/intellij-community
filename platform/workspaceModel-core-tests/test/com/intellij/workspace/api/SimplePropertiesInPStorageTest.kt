@@ -4,10 +4,7 @@ import com.intellij.workspace.api.pstorage.*
 import org.junit.Assert.*
 import org.junit.Test
 
-internal class PSampleEntityData : PEntityData<PSampleEntity> {
-  override lateinit var entitySource: EntitySource
-  override var id: Int = -1
-
+internal class PSampleEntityData : PEntityData<PSampleEntity>() {
   var booleanProperty: Boolean = false
   lateinit var stringProperty: String
   lateinit var stringListProperty: List<String>
