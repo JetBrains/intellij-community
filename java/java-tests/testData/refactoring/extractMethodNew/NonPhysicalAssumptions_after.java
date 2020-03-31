@@ -6,11 +6,12 @@ class Test {
     }
 
     private UrlClassLoader newMethod() {
-        return UrlClassLoader.build().
-              useCache(new UrlClassLoader.I() {
-                  @Override
-                  public void m() {}
-              }).get();
+        UrlClassLoader loader = UrlClassLoader.build().
+          useCache(new UrlClassLoader.I() {
+              @Override
+              public void m() {}
+          }).get();
+        return loader;
     }
 
     static class UrlClassLoader {
