@@ -1070,7 +1070,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
     return null;
   }
-
+  static final Map<String, PluginId> ourConfigNames = new HashMap<>();
   private static final class XmlReader {
     static void readListeners(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element list, @NotNull ContainerDescriptor containerDescriptor) {
       List<Content> content = list.getContent();
@@ -1201,6 +1201,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         String configFile = dependency.configFile;
         if (configFile == null) {
           continue;
+        }
+        if (pathResolver instanceof ClassPathXmlPathResolver) {
+          PluginId pluginId = descriptor.getPluginId();
+          PluginId oldPlugin = ourConfigNames.put(configFile, pluginId);
+          if (oldPlugin != null && !oldPlugin.equals(pluginId)) {
+            context.parentContext.getLogger().error("Optional config file with name '" + configFile + "' already registered by '" + oldPlugin.getIdString() + "'. " +
+                                                    "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
+                                                    "Current plugin: '" + rootDescriptor.getPluginId() + "'. ");
+            continue;
+          }
         }
 
         Element element;
