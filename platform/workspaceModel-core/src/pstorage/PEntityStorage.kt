@@ -668,7 +668,8 @@ internal class PEntityStorageBuilder(
   }
 
   companion object {
-    fun from(storage: PEntityStorage): PEntityStorageBuilder {
+    fun from(storage: TypedEntityStorage): PEntityStorageBuilder {
+      storage as PEntityStorage
       val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
       val copiedRefs = MutableRefsTable.from(storage.refs)
       return PEntityStorageBuilder(storage, copiedBarrel, copiedRefs)
