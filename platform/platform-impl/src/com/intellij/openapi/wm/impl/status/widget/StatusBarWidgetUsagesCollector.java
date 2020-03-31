@@ -2,7 +2,9 @@
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
@@ -26,10 +28,12 @@ public class StatusBarWidgetUsagesCollector extends ApplicationUsagesCollector {
     Set<MetricEvent> result = new HashSet<>();
     StatusBarWidgetSettings settings = ServiceManager.getService(StatusBarWidgetSettings.class);
     StatusBarWidgetFactory.EP_NAME.processWithPluginDescriptor((factory, plugin) -> {
-      if (PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin).isSafeToReport()) {
+      PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin);
+      if (pluginInfo.isSafeToReport()) {
         boolean enabled = settings.isEnabled(factory);
         if (enabled != factory.isEnabledByDefault()) {
-          result.add(newBooleanMetric(factory.getId(), enabled));
+          FeatureUsageData data = new FeatureUsageData().addData("id", factory.getId()).addPluginInfo(pluginInfo);
+          result.add(newBooleanMetric("widget", enabled, data));
         }
       }
     });
