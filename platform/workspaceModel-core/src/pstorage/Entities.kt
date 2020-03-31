@@ -9,6 +9,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.jvmErasure
@@ -20,7 +21,7 @@ internal abstract class PTypedEntity<E : TypedEntity> : TypedEntity, Any() {
     if (this.javaClass != e.javaClass) return false
 
     this::class.memberProperties.forEach {
-      if (it.name == "id") return@forEach
+      if (it.name == PTypedEntity<*>::id.name) return@forEach
       if (it.getter.call(this) != it.getter.call(e)) return false
     }
     return true
@@ -57,7 +58,19 @@ internal interface PEntityData<E : TypedEntity> {
   var entitySource: EntitySource
   var id: Int
 
-  fun createEntity(snapshot: PEntityStorage): E
+  fun createEntity(snapshot: PEntityStorage): E {
+    val returnClass = (this::class.memberFunctions.first { it.name == this::createEntity.name }.returnType.classifier as KClass<*>)
+    val params = this::class.memberProperties.associateWith { it.getter.call(this) }
+      .mapKeys { (k, _) ->
+        returnClass.primaryConstructor!!.parameters.first { if (k.name != "id") it.name == k.name else it.name == "arrayId" }
+      }
+      .mapValues { (_, v) -> if (List::class.java.isAssignableFrom(v!!.javaClass)) ArrayList(v as List<*>) else v }.toMutableMap()
+    val snapshotParameter = returnClass.primaryConstructor!!.parameters.find { it.name == "snapshot" }
+    if (snapshotParameter != null) {
+      params[snapshotParameter] = snapshot
+    }
+    return returnClass.primaryConstructor!!.callBy(params) as E
+  }
 
   fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E>
 
@@ -82,16 +95,12 @@ internal class PFolderEntityData : PEntityData<PFolderEntity> {
   override lateinit var entitySource: EntitySource
   lateinit var data: String
 
-  override fun createEntity(snapshot: PEntityStorage) = PFolderEntity(entitySource, id, data, snapshot)
-
   override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PFolderModifiableEntity(this, diff)
 }
 
 internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolder> {
   override var id: Int = -1
   override lateinit var entitySource: EntitySource
-
-  override fun createEntity(snapshot: PEntityStorage) = PSoftSubFolder(entitySource, id, snapshot)
 
   override fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<PSoftSubFolder> {
     return PSoftSubFolderModifiableEntity(this, diff)
@@ -103,8 +112,6 @@ internal class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
   override lateinit var entitySource: EntitySource
   lateinit var data: String
 
-  override fun createEntity(snapshot: PEntityStorage) = PSubFolderEntity(entitySource, id, data, snapshot)
-
   override fun wrapAsModifiable(diff: PEntityStorageBuilder): PSubFolderModifiableEntity {
     return PSubFolderModifiableEntity(this, diff)
   }
@@ -113,8 +120,8 @@ internal class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
 internal class PFolderEntity(
   override val entitySource: EntitySource,
   arrayId: Int,
-  val data: String,
-  val snapshot: PEntityStorage
+  val snapshot: PEntityStorage,
+  val data: String
 ) : PTypedEntity<PFolderEntity>() {
 
   override val id: PId<PFolderEntity> = PId(arrayId, this.javaClass.kotlin)
@@ -137,8 +144,8 @@ internal class PSoftSubFolder(
 internal class PSubFolderEntity(
   override val entitySource: EntitySource,
   arrayId: Int,
-  val data: String,
-  val snapshot: PEntityStorage
+  val snapshot: PEntityStorage,
+  val data: String
 ) : PTypedEntity<PSubFolderEntity>() {
 
   override val id: PId<PSubFolderEntity> = PId(arrayId, this.javaClass.kotlin)

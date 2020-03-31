@@ -13,9 +13,6 @@ internal class PSampleEntityData : PEntityData<PSampleEntity> {
   lateinit var stringListProperty: List<String>
   lateinit var fileProperty: VirtualFileUrl
 
-  override fun createEntity(snapshot: PEntityStorage) =
-    PSampleEntity(entitySource, id, booleanProperty, stringProperty, ArrayList(stringListProperty), fileProperty)
-
   override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PModifiableSampleEntity(this, diff)
 }
 
