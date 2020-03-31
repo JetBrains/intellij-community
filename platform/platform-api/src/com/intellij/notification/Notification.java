@@ -14,6 +14,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +85,7 @@ public class Notification {
    * @param type           notification type
    * @param listener       notification lifecycle listener
    */
-  public Notification(@NotNull String groupDisplayId,
+  public Notification(@NotNull @NonNls String groupDisplayId,
                       @Nullable Icon icon,
                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle,
@@ -104,7 +105,7 @@ public class Notification {
     id = calculateId(this);
   }
 
-  public Notification(@NotNull @Nls String groupDisplayId,
+  public Notification(@NotNull @NonNls String groupDisplayId,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type) {
@@ -119,7 +120,7 @@ public class Notification {
    * @param type           notification type
    * @param listener       notification lifecycle listener
    */
-  public Notification(@NotNull @Nls String groupDisplayId,
+  public Notification(@NotNull @NonNls String groupDisplayId,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String content,
                       @NotNull NotificationType type,

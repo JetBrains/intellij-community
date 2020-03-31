@@ -18,6 +18,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
@@ -917,7 +918,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     public UnableToSaveProjectNotification(@NotNull Project project, @NotNull List<VirtualFile> readOnlyFiles) {
-      super(IdeBundle.message("notification.group.project.settings"), IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
+      super(NotificationGroup.createIdWithTitle("Project Settings", IdeBundle.message("notification.group.project.settings")),
+            IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"),
             IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR,
             (notification, event) -> {
               UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;

@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -100,7 +101,9 @@ public class RemoveBomAction extends AnAction implements DumbAware {
                          StringUtil.pluralize("file", filesUnableToProcess.size());
           String msg = (filesUnableToProcess.size() == 1 ? "This file has" : "These files have") +
                        " mandatory BOM:<br/>    " + StringUtil.join(filesUnableToProcess, VirtualFile::getName, "<br/>    ");
-          Notifications.Bus.notify(new Notification(IdeBundle.message("notification.group.failed.to.remove.bom"), title, msg, NotificationType.ERROR));
+          Notifications.Bus.notify(new Notification(
+            NotificationGroup.createIdWithTitle("Failed to remove BOM", IdeBundle.message("notification.group.failed.to.remove.bom")),
+            title, msg, NotificationType.ERROR));
         }
       }
     }.queue();

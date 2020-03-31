@@ -84,7 +84,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private static final int CONNECTION_TIMEOUT = 60000;
 
   public static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup(PyBundle.message("debug.notification.group"), ToolWindowId.DEBUG);
+    NotificationGroup.toolWindowGroup("Python Debugger", ToolWindowId.DEBUG, true, PyBundle.message("debug.notification.group"));
 
   private final ProcessDebugger myDebugger;
   private final XBreakpointHandler[] myBreakpointHandlers;

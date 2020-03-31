@@ -69,7 +69,7 @@ private class PyCollectImportsTask(private val module: Module,
 }
 
 internal fun syncWithImports(module: Module) {
-  val notificationGroup = NotificationGroup.balloonGroup(PyBundle.message("python.requirements.balloon"))
+  val notificationGroup = NotificationGroup.balloonGroup("Sync Python requirements", PyBundle.message("python.requirements.balloon"))
   val sdk = PythonSdkUtil.findPythonSdk(module)
   if (sdk == null) {
     val configureSdkAction = NotificationAction.createSimpleExpiring(PyBundle.message("configure.python.interpreter")) {
