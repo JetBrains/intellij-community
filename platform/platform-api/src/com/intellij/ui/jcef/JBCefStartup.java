@@ -15,8 +15,8 @@ final class JBCefStartup {
 
   JBCefStartup() {
     if (SystemInfoRt.isMac &&
-        JBCefApp.isEnabled() &&
-        "true".equalsIgnoreCase(System.getProperty("ide.browser.jcef.preinit", "true")))
+        "true".equalsIgnoreCase(System.getProperty("ide.browser.jcef.preinit", "true")) &&
+        JBCefApp.isEnabled())
     {
       CompletableFuture.runAsync(() -> {
         STARTUP_CLIENT = JBCefApp.getInstance().createClient();
