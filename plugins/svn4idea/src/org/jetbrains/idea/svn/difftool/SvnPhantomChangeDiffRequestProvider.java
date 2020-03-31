@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 
 import javax.swing.*;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestProvider {
   @NotNull
@@ -57,7 +60,7 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
     @NotNull
     @Override
     public String getName() {
-      return "SVN phantom changes viewer";
+      return message("svn.phantom.changes.viewer");
     }
 
     @Override
@@ -72,8 +75,7 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
         @NotNull
         @Override
         public JComponent getComponent() {
-          return UIVcsUtil.infoPanel("Technical record",
-                                     "This change is recorded because its target file was deleted,\nand some parent directory was copied (or moved) into the new place.");
+          return UIVcsUtil.infoPanel(message("label.svn.phantom.change"), message("text.svn.phantom.change"));
         }
 
         @Nullable

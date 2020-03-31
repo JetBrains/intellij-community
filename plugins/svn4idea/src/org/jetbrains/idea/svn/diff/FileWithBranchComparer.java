@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.diff.DiffContentFactory;
@@ -9,6 +9,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +25,7 @@ import java.io.IOException;
 public class FileWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final Ref<byte[]> content = new Ref<>();
-  @NotNull private final StringBuilder remoteTitleBuilder = new StringBuilder();
+  private final @NlsContexts.Label @NotNull StringBuilder remoteTitleBuilder = new StringBuilder();
   @NotNull private final Ref<Boolean> success = new Ref<>();
 
   public FileWithBranchComparer(@NotNull Project project,
@@ -72,7 +73,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
   }
 
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return SvnBundle.message("compare.with.branch.progress.loading.content");
   }
 }
