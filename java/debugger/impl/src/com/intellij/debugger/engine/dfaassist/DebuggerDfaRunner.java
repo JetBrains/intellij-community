@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -382,16 +383,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
     }
     else if (type instanceof ReferenceType) {
-      String jvmName = type.name();
-      int pos = jvmName.lastIndexOf('.');
-      String javaName;
-      if (pos == -1) {
-        javaName = jvmName.replace('$', '.');
-      }
-      else {
-        javaName = jvmName.substring(0, pos + 1) + jvmName.substring(pos + 1).replace('$', '.');
-      }
-      PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(javaName, scope);
+      PsiClass aClass = DebuggerUtils.findClass(type.name(), project, scope);
       if (aClass != null) {
         return JavaPsiFacade.getElementFactory(project).createType(aClass);
       }
